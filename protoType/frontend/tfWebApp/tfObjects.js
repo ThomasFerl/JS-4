@@ -34,11 +34,16 @@ export class TFObject
   constructor (parent , left , top , width , height , params ) 
   {
     if(!parent) { alert("constructor TFObject => parent = null ! "); return; }
-    this.params       = params;
+       
+    if (!params) this.params = {};
+    else         this.params = params;
+
     this.params.left  = left  || 1;
     this.params.top   = top   || 1;
     this.params.width = width || 1;
     this.params.height= height|| 1;
+    if(!this.params.stretch) this.params.stretch =true;
+    
 
     this.isTFObject   = true;
     this.objName      = this.constructor.name;  
@@ -68,9 +73,6 @@ export class TFObject
                           altKey:false , 
                           metaKey:false 
                       };   
-
-    if (params) this.params = params; 
-    else        this.params = {stretch:true};
 
     if(utils.isHTMLElement(parent)) 
     {
@@ -120,7 +122,7 @@ export class TFObject
     this.top    = this.params.top;
     this.width  = this.params.width;
     this.height = this.params.height;
-    this.DOMelement.data         =  this;
+    this.DOMelement.data =  this;
    
           this.DOMelement.addEventListener('wheel'      , (e)=>{if( this.callBack_onWheel)       this.callBack_onWheel      (e,this.dataBinding) });
           this.DOMelement.addEventListener('click'      , (e)=>{if( this.callBack_onDblClick)    this.callBack_onDblClick   (e,this.dataBinding) });
@@ -403,6 +405,17 @@ set fontWeight(value)
   }
 
 
+set placeItems(value)
+  {
+    this.DOMelement.style.placeItems = value;
+  }
+
+
+ get placeItems()
+  {
+    return this.DOMelement.style.placeItems;
+  }
+
   set justifyContent(value)
   {
     this.DOMelement.style.justifyContent = value;  
@@ -417,7 +430,7 @@ set fontWeight(value)
 
   set alignItems(value)
   {
-    this.DOMelement.style.justifyContent = value;  
+    this.DOMelement.style.alignItems = value;  
   }
 
 
@@ -623,6 +636,30 @@ set marginBottom( value )
   }
 
 
+set blur(value)
+{
+  if(this.DOMelement) this.DOMelement.style.filter = 'blur('+value+'px)';
+}
+
+get blur()
+{
+  return this.DOMelement.style.filter;
+}
+
+
+set opacity(value)  
+{
+  if(this.DOMelement) this.DOMelement.style.opacity = value;
+}
+
+get opacity()
+{
+  return this.DOMelement.style.opacity;
+}
+
+
+
+
 
   set shadow(value) 
   {
@@ -640,15 +677,55 @@ set marginBottom( value )
     }
 }
 
-
-
   get shadow()
   { 
     return this._shadowDepth; 
   }  
 
 
+  fadeOut(duration)
+  {
+    const steps    = 100;              // Anzahl der Schritte
+    const interval = duration / steps; // Zeit pro Schritt
+    let opacity    = 1;  
+    let blur       = 0;             
 
+    const fadeInterval = setInterval(() => {
+                                             opacity -= 1 / steps; // Reduziere die Transparenz
+                                             blur    += 0.2;
+                                             if (opacity <= 0) 
+                                             {
+                                              clearInterval(fadeInterval); // Stoppe den Prozess
+                                              opacity = 0; // Sicherheitshalber auf 0 setzen
+                                              this.destroy(); // Bild entfernen
+                                             } 
+                                             this.DOMelement.style.opacity = opacity; 
+                                             this.DOMelement.style.filter = 'blur('+Math.round(blur)+'px)';
+                                           } , interval );
+ }
+
+
+
+
+  set imgURL( value )
+  {
+    if(this.DOMelement) 
+      {
+        this.DOMelement.style.backgroundImage  = "url('"+value+"')";
+        this.DOMelement.style.backgroundRepeat = 'no-repeat';
+        this.DOMelement.style.backgroundSize   = 'cover';
+      }
+  }
+
+  get imgURL()
+  {// "url("./pix/21_1733947066104.jpeg")"
+    var url = this.DOMelement.style.backgroundImage;
+        url = url.slice(5);
+        url = url.slice(0,-2);
+    
+    return url;
+    
+  }
 
   destroy()
   {
@@ -663,8 +740,152 @@ set marginBottom( value )
     else this.parent.DOMelement.removeChild(this.DOMelement); 
     
   }
-
-
-  
 }   //end class ...
+
+
+export class TFSlider extends TFObject 
+{
+  constructor (parent , left , top , width , height , params ) 
+  {
+    super(parent , left , top , width , height , params );
+    
+    // this.render() wird von bereits von der TFObjects Basisklasse aufgerufen
+    // alles was jetzt passiert passiert NACH "unserem" this.render()
+    this.onChange        = null;
+    this.display         = 'flex';
+    this.alignItems      = 'center';
+    this.justifyContent  = 'center'; 
+    this.overflow        = 'hidden';
+  }  
+
+  render()
+  {
+    super.render();
+
+    this.slider       = document.createElement('INPUT');
+    this.slider.type  = 'range';
+    this.slider.min   = 0;
+    this.slider.max   = 100;
+   
+    if(this.params.position !=null) this.value = this.params.position;
+    else                            this.value = 50;
+
+    this.slider.step  = 1;
+    this.slider.style.width = '90%';
+    this.slider.style.height = '90%';
+    this.slider.style.backgroundColor = this.backgroundColor;
+
+    //this.slider.addEventListener("input", ()=>{ debugger; if(this.onChange!=null) this.onChange(this.slider.value , this.dataBinding)});
+    
+     // Eventhandler für Input
+     this.slider.addEventListener("input", () => {
+      //console.log("Slider changed:", this.slider.value);
+      console.log(this);
+
+      if (this.onChange != null) {
+        this.onChange(this.slider.value, this.dataBinding);
+      }
+    });
+    
+    this.appendChild(this.slider);
+  } 
+  // Getter und Setter für den Wert des Sliders
+  set value( v )
+  {
+    this.slider.value = v;
+  }
+
+  get value()
+  {
+    return this.slider.value;
+  }
+
+ 
+}
+
+
+export class TFLabel extends TFObject 
+{
+  
+  constructor (parent , left , top , width , height , params ) 
+  {
+    params.css = params.css || "cssLabel";
+    super(parent , left , top , width , height , params );
+    
+    // this.render() wird von bereits von der TFObjects Basisklasse aufgerufen
+    // alles was jetzt passiert passiert NACH "unserem" this.render()
+  }  
+
+  render()
+  {
+    super.render();
+
+    this.display         = 'grid';
+    this.placeItems      = 'center';
+    this.overflow        = 'hidden';
+    this.padding         = 0;
+    this.margin          = 0;
+    
+    this.paragraph = document.createElement('p');
+    this.appendChild(this.paragraph);
+    this.caption   = this.params.caption || '' ;
+  }  
+  
+  set caption( value )
+  {
+    if(this.paragraph) this.paragraph.textContent = value;
+  } 
+
+  get caption()
+  {
+    return this.paragraph.textContent;
+  } 
+
+  set textAlign( value )
+  {
+    
+    this.__ta = value;
+    if(value.toUpperCase() == 'LEFT')
+    {
+     this.paragraph.style.textAlign = 'left';
+     this.alignItems = 'center';
+     this.justifyContent = 'start';
+    }
+
+    if(value.toUpperCase() == 'RIGHT')
+    {
+     this.paragraph.style.textAlign = 'right';
+     this.alignItems = 'center';
+     this.justifyContent = 'end';
+    }
+
+    if(value.toUpperCase() == 'CENTER')
+    {
+     this.paragraph.style.textAlign = 'center';
+     this.alignItems = 'center';
+     this.justifyContent = 'center';
+    }
+} 
+
+get textAlign()
+{
+  return this.__ta;
+} 
+
+}
+
+//---------------------------------------------------------------------------
+
+
+export class TFPanel extends TFObject 
+{
+  constructor (parent , left , top , width , height , params ) 
+  {
+    if(!params) params = {css:"cssPanel"};
+    else    params.css = params.css || "cssPanel";
+  super(parent , left , top , width , height , params );
+  }  
+} 
+
+//---------------------------------------------------------------------------
 
