@@ -1,3 +1,4 @@
+
 import * as globals  from "./globals.js";
 import * as utils    from "./utils.js";
 
@@ -48,7 +49,7 @@ export class TFObject
     this.isTFObject   = true;
     this.objName      = this.constructor.name;  
     this.ID           = this.objName + Date.now()+Math.round(Math.random()*100);
-    this.dataBinding  = {};
+    this.dataBinding  = this;
     this.childList    = [];
     this.DOMelement   = null;
     this.layout       = ()=>{return window.getComputedStyle(this.DOMelement).getPropertyValue("display").toUpperCase()};
@@ -121,12 +122,12 @@ export class TFObject
     this.left   = this.params.left;
     this.top    = this.params.top;
     this.width  = this.params.width;
-    this.height = this.params.height;
-    this.DOMelement.data =  this;
+    this.height = this.params.height;  
+    this.DOMelement.data =  this;   
    
           this.DOMelement.addEventListener('wheel'      , (e)=>{if( this.callBack_onWheel)       this.callBack_onWheel      (e,this.dataBinding) });
-          this.DOMelement.addEventListener('click'      , (e)=>{if( this.callBack_onDblClick)    this.callBack_onDblClick   (e,this.dataBinding) });
-          this.DOMelement.addEventListener('dblclick'   , (e)=>{if( this.callBack_onClick)       this.callBack_onClick      (e,this.dataBinding) });
+          this.DOMelement.addEventListener('click'      , (e)=>{if( this.callBack_onClick)       this.callBack_onClick      (e,this.dataBinding) });
+          this.DOMelement.addEventListener('dblclick'   , (e)=>{if( this.callBack_onDblClick)    this.callBack_onDblClick   (e,this.dataBinding) });
           this.DOMelement.addEventListener('mousemove'  , (e)=>{if( this.callBack_onMouseMove)   this.callBack_onMouseMove  (e,this.dataBinding) });
           this.DOMelement.addEventListener('mouseleave' , (e)=>{if( this.callBack_onMouseOut )   this.callBack_onMouseOut   (e,this.dataBinding) });
           this.DOMelement.addEventListener('mousedown'  , (e)=>{if( this.callBack_onMouseDown)   this.callBack_onMouseDown  (e,this.dataBinding) });
@@ -249,6 +250,45 @@ export class TFObject
     
   } 
    
+
+  set zIndex( value )
+  {
+    if(this.DOMelement) this.DOMelement.style.zIndex = value;
+  }
+
+  get zIndex()
+  {
+    return this.DOMelement.style.zIndex;
+  }
+
+
+
+  set widthPx( value )
+  {
+    if (isNaN(value)) if(this.DOMelement) this.DOMelement.style.width = value;
+    else              if(this.DOMelement) this.DOMelement.style.width = value+'px';
+ } 
+
+  get widthPx()
+  {
+    var rect = this.DOMelement.getBoundingClientRect();
+    return rect.width;
+  } 
+
+
+  set heightPx( value )
+  {
+    if (isNaN(value)) if(this.DOMelement) this.DOMelement.style.height = value;
+    else              if(this.DOMelement) this.DOMelement.style.height = value+'px';
+  } 
+
+  get heightPx()
+  {
+    var rect = this.DOMelement.getBoundingClientRect();
+    return rect.height;
+ } 
+
+
 //------------------------------------------------------------------------
 
   set gridLeft( g )
@@ -304,6 +344,17 @@ export class TFObject
       return  this.grid.width;
     }     
   
+
+    get gridTemplateAreas()
+    {
+      return this.DOMelement.style.gridTemplateAreas; 
+    }
+
+    set gridTemplateAreas( value )
+    {
+      this.DOMelement.style.gridTemplateAreas = value;
+    }
+
   
 get fontSize()
 {
@@ -326,6 +377,16 @@ set fontWeight(value)
   this.DOMelement.style.fontWeight = value;
 }
 
+
+set gap(value)
+{
+  this.DOMelement.style.gap = value;
+}
+
+get gap()
+{
+  return this.DOMelement.style.gap;
+}
 
   buildGridLayout( gridSizeOrTemplate )
   {
@@ -683,7 +744,7 @@ get opacity()
   }  
 
 
-  fadeOut(duration)
+  async fadeOut(duration)
   {
     const steps    = 100;              // Anzahl der Schritte
     const interval = duration / steps; // Zeit pro Schritt
@@ -703,7 +764,6 @@ get opacity()
                                              this.DOMelement.style.filter = 'blur('+Math.round(blur)+'px)';
                                            } , interval );
  }
-
 
 
 
@@ -888,4 +948,291 @@ export class TFPanel extends TFObject
 } 
 
 //---------------------------------------------------------------------------
+
+export class TFButton extends TFObject
+{
+  constructor (parent , left , top , width , height , params ) 
+  {
+    if(!params) params = {css:"cssButton01", caption:"Ok"};
+    else    params.css = params.css || "cssButton01";
+
+    params.caption = params.caption || "Ok";  
+
+  super(parent , left , top , width , height , params );
+  }
+
+
+render()
+{
+   super.render();
+   this.buttonText           = document.createElement('P');
+   this.buttonText.className = "cssButtonText";
+   this.appendChild( this.buttonText );
+   this.caption = this.params.caption;
+ } 
+
+  set caption( txt )
+ {
+   this.buttonText.textContent  = txt;
+ }
+
+ get caption() 
+ {
+  return this.buttonText.textContent ; 
+ }
+}  
+
+//---------------------------------------------------------------------------
+
+export class TFileUploader
+{
+  constructor ( button , fileTyp , multiple , onChange )
+ {
+  this.uploader               = document.createElement("input");
+  this.uploader.type          = 'file';
+  this.uploader.multiple      = multiple;
+  this.uploader.accept        = fileTyp;
+  this.onChange               = onChange;
+  this.uploader.style.display = 'none';
+      button.callBack_onClick = ()=>{this.uploader.click()}
+      document.body.appendChild(this.uploader);
+      
+      // Event Listener hinzufügen, um die ausgewählten Dateien zu ggf verarbeiten / vorschauen / ...
+      this.uploader.addEventListener('change', function() { if(this.onChange) onChange( this.files ); } ); 
+}
+
+
+async upload( pathName )
+{
+  const files = this.uploader.files;
+  for (let i = 0; i < files.length; i++) utils.uploadFileToServer(files[i], globals.session.userName+'_' + utils.buildRandomID(1), ()=>{console.log('uploaded ... ' + files[i] )} ) 
+}
+}
+
+//---------------------------------------------------------------------------
+
+export class TFCheckBox extends TFObject
+{
+  constructor (parent , left , top , width , height , params ) 
+  {
+    if(!params) params = {css:"cssPanelForInput", caption:"checkBox", checked:false , checkboxLeft:true};
+    else    
+         {
+          params.css          = params.css          || "cssPanelForInput";
+          params.caption      = params.caption      || "checkBox";
+          params.checked      = params.checked      || false;
+          if(params.checkboxLeft == undefined) params.checkboxLeft = true;
+         } 
+    
+    super(parent , left , top , width , height , params );
+  }
+  
+
+  render()
+  {
+    super.render();
+    
+    if(this.params.checkboxLeft) utils.buildGridLayout_templateColumns(this , '2em 1fr');
+    else                    utils.buildGridLayout_templateColumns(this , '1fr 2em');
+    utils.buildGridLayout_templateRows(this ,'1fr');
+   
+    if(this.params.checkboxLeft) this.gridTemplateAreas    = ' "checkbox editLabel" ';
+    else                         this.gridTemplateAreas    = ' "editLabel checkbox" ';
+
+    this.label             = document.createElement("LABEL");
+    this.label.className   = "cssLabelForInput";
+    this.label.textContent = this.params.caption;
+    this.appendChild( this.label );  
+     
+    this.input             = document.createElement("INPUT");
+    this.input.className   = "cssCheckBox";
+    this.input.setAttribute('type' , 'checkbox');
+    this.appendChild(  this.input ); 
+    
+    if(this.callBack_onChange) this.input.onchange = this.callBack_onChange;
+    if(this.callBack_onClick)  this.input.onclick  = this.callBack_onClick;
+    
+  } 
+
+  get checked()
+  {
+    return this.input.checked;
+  }
+
+  set checked( value )  
+  {
+    this.input.checked = value;
+  }
+
+}
+
+//---------------------------------------------------------------------------
+
+
+
+
+export class TFListCheckbox extends TFObject
+{
+  __render()
+  {
+    this.innerHTML = '';  
+
+    for(var i=0; i<this.items.length; i++)
+      {
+        var item            = this.items[i];
+        var cbID            = 'lcb'+utils.buildRandomID(i);
+        var container       = document.createElement("DIV");
+      container.className = "cssPanelForCbListBox";
+      this.appendChild(container);
+  
+      var  input        = document.createElement("INPUT");
+      input.className   = "cssCheckBox";
+      input.setAttribute('type' , 'checkbox');
+      input.id          = cbID; 
+      input.checked     = item.checked;
+      input.cbItem      = item;   // wechselseitig verknüpfen ...
+      item.checkBox     = input;  // wechselseitig verknüpfen ...
+  
+      input.addEventListener('change', function(event) 
+                                       {
+                                         var htmlElement = event.target;
+                                         if (htmlElement.type === 'checkbox') htmlElement.cbItem.checked = htmlElement.checked
+                                       } );
+  
+      container.appendChild(  input ); 
+    
+      var  label        = document.createElement("LABEL");
+      label.className   = "cssLabelForInput";
+      label.htmlFor     = cbID;
+      label.textContent = item.text || item.caption;
+      
+      container.appendChild( label );  
+     
+    } 
+  }
+  
+  
+  render()
+  {
+    super.render();
+    utils.buildBlockLayout( this );
+
+    this.items = [];
+    if(this.params.items) this.items = this.params.items;
+
+    this.overflow = 'auto';
+    this.backgroundColor = 'gray';
+   
+    this.__render();
+ }
+
+
+  addItem( item )
+  {
+    this.items.push(item);
+    this.__render();
+  }   
+
+  removeItem( item )  
+  {
+    var ndx = this.items.indexOf(item);
+    if(ndx>=0) this.items.splice(ndx,1);
+    this.__render();
+  }
+
+  addItems( items )
+  {
+    this.items = items;
+    this.__render();
+  }
+
+
+ setCheckBox( ndx , state )
+ {
+   if (ndx<0) return;
+
+   if(ndx<this.items.length)
+   {
+    var item                  = this.items[ndx];
+        item.checked          = state;
+        item.checkBox.checked = state;
+   }
+ }
+
+ getCheckBox( ndx )
+ {
+   if (ndx<0) return null;
+   
+   if(ndx<this.items.length)
+   {
+    var item    = this.items[ndx];
+        return item.checked;
+   }
+   else return null;
+ }
+
+
+ selectAll()
+ {
+  for(var i=0; i<this.items.length; i++)
+  {
+    var item = this.items[i];
+        item.checked = true;
+        item.checkBox.checked = item.checked;
+   } 
+ }
+
+
+ deSelectAll()
+ {
+  for(var i=0; i<this.items.length; i++)
+  {
+    var item = this.items[i];
+        item.checked = false;
+        item.checkBox.checked = item.checked;
+   } 
+ }
+
+getSelectedItems()
+{
+  var r = [];
+  for(var i=0; i<this.items.length; i++)
+  {
+    var item = this.items[i];
+    if(item.checked) r.push(item);
+  } 
+  return r; 
+}
+
+
+ invert()
+ {
+  for(var i=0; i<this.items.length; i++)
+  {
+    var item = this.items[i];
+        item.checked = !item.checked;
+        item.checkBox.checked = item.checked;
+  } 
+} 
+
+
+toggle( ndx )
+{
+  if (ndx<0) return;
+  if (ndx>=this.items.length) return;
+
+  this.setCheckBox( ndx , !this.getCheckBox(ndx) );
+ }
+
+ 
+
+
+findItemByText(text) 
+{
+  const index = this.items.findIndex(i => i.caption === text);
+  if (index >= 0) return { item: this.items[index], index:index }; // Return the item and its index
+  return {item:null , index:-1}
+}
+
+} //end class
 

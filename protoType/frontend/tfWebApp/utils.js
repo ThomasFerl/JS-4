@@ -1372,7 +1372,7 @@ export function buildGridLayout( parent , gridSizeOrTemplate , params )
   var gridSize      =  1;
   var gridTemplate  =  '';
 
-  if(!params) params = {stretch:false};
+  if(!params) params = {stretch:true};
       
   if(!isNaN(gridSizeOrTemplate))
   {

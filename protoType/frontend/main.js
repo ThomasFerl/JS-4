@@ -1,129 +1,108 @@
 import * as globals      from "./tfWebApp/globals.js";
 import * as utils        from "./tfWebApp/utils.js";    
-import { TFLabel, TFPanel } from "./tfWebApp/tfObjects.js"; 
-import { TFSlider }      from "./tfWebApp/tfObjects.js"; 
-         
+import { TFLabel, 
+         TFPanel , 
+         TFSlider,
+         TFButton,
+         TFCheckBox,
+         TFListCheckbox }      from "./tfWebApp/tfObjects.js"; 
 
 
-var pix=[
-    './pix/21_1733947066104.jpeg' , 
-    './pix/21_1733947075828.jpeg' , 
-    './pix/21_1733947087021.jpeg' , 
-    './pix/21_1733947099048.jpeg' , 
-    './pix/21_1733947105455.jpeg' , 
-    './pix/21_1733947112065.jpeg' , 
-    './pix/21_1733947119823.jpeg' , 
-    './pix/21_1733947127565.jpeg' , 
-    './pix/21_1733947141947.jpeg' , 
-    './pix/21_1733947156749.jpeg' , 
-    './pix/21_1733947169309.jpeg' , 
-    './pix/21_1733947175844.jpeg' , 
-    './pix/21_1733947182061.jpeg' , 
-    './pix/21_1733947190029.jpeg' , 
-    './pix/21_1733947198034.jpeg' , 
-    './pix/21_1733947210443.jpeg' , 
-    './pix/21_1733947217776.jpeg' , 
-    './pix/21_1733947225496.jpeg' , 
-    './pix/21_1733947230324.jpeg' , 
-    './pix/21_1733947238504.jpeg' , 
-    './pix/21_1733947244694.jpeg' , 
-    './pix/21_1733947251735.jpeg' , 
-    './pix/21_1733947262316.jpeg' , 
-    './pix/21_1733947274029.jpeg' , 
-    './pix/21_1733947280556.jpeg' , 
-    './pix/21_1733947288261.jpeg' , 
-    './pix/21_1733947293781.jpeg' , 
-    './pix/21_1733947300044.jpeg' , 
-    './pix/21_1733947308896.jpeg' , 
-    './pix/21_1733947316997.jpeg' , 
-    './pix/21_1733947331155.jpeg' , 
-    './pix/21_1733947343884.jpeg' , 
-    './pix/21_1733947351255.jpeg' , 
-    './pix/21_1733947358255.jpeg' , 
-    './pix/21_1733947363523.jpeg' , 
-    './pix/21_1733947372268.jpeg' , 
-    './pix/21_1733947377828.jpeg' , 
-    './pix/21_1733947384440.jpeg' , 
-    './pix/21_1733947395581.jpeg' , 
-    './pix/21_1733947406359.jpeg' , 
-    './pix/21_1733947412843.jpeg' , 
-    './pix/21_1733947420879.jpeg' , 
-    './pix/21_1733947428164.jpeg' , 
-    './pix/21_1733947434891.jpeg' , 
-    './pix/21_1733947442183.jpeg' , 
-    './pix/21_1733947447791.jpeg' , 
-    './pix/21_1733947456298.jpeg' , 
-    './pix/21_1733947462075.jpeg' , 
-    './pix/21_1733947471982.jpeg' , 
-    './pix/21_1733947484508.jpeg' , 
-    './pix/21_1733947490196.jpeg' , 
-    './pix/21_1733947498269.jpeg' , 
-    './pix/21_1733947504973.jpeg' , 
-    './pix/21_1733947533669.jpeg' , 
-    './pix/21_1733947546079.jpeg' , 
-    './pix/21_1733947554938.jpeg' , 
-    './pix/21_1733947567014.jpeg' , 
-    './pix/21_1733947573506.jpeg' , 
-    './pix/21_1733947582564.jpeg' , 
-    './pix/21_1733947590245.jpeg' , 
-    './pix/21_1733947602099.jpeg' , 
-    './pix/21_1733947610099.jpeg' , 
-    './pix/21_1733947618813.jpeg' , 
-    './pix/21_1733947629963.jpeg' ];
+var response = utils.httpRequest('http://localhost:4000/lsPix');
 
-var largeImg = null;    
+var pix=[];
+pix = JSON.parse(response.result).result;  
 
+var diaShow =[];
 
+var images  = [];  
+for(var i=0;i<pix.length;i++) images.push({caption: './pix/'+pix[i],checked:false});
 
+var largeImg = null;  
 
 export function main(capt1,capt2)
 {
   console.log('main() called ...');
-  var rows = 7;
-  var cols = 14;
-  var gridContainer = document.body;
-      gridContainer.style.display = 'grid';
-      gridContainer.style.gridTemplateRows = `repeat(${rows}, 1fr)`;
-      gridContainer.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
-      gridContainer.style.gap = '2px'; // Abstand zwischen den Zellen
- 
- var slider = new TFSlider(gridContainer,1,1,4,1, {position:0} );  
+  var rows = 10;
+  var cols = 10;
+  var body = document.body;
+  body.style.display = 'grid';
+  body.style.gridTemplateRows = `repeat(10, 1fr)`;
+  body.style.gridTemplateColumns = `repeat(10, 1fr)`;
+      
+ var testContainer     = new TFPanel(body,8,0,3,rows, {backgroundColor:'gray'} );   
+     utils.buildGridLayout(testContainer,'1x10');
+
+ var slider = new TFSlider(testContainer,1,1,1,1, {position:30} );  
      slider.onChange = ()=> {if(largeImg) largeImg.blur=slider.value; } 
 
- var label = new TFLabel(gridContainer,5,1,3,1, {caption:capt1} );   
-     label.fontSize = '27px';
+ var label = new TFLabel(testContainer,1,2,1,1, {caption:capt1} );   
+     label.fontSize = '1em';
      label.fontWeight = 'bold';
 
-     gridContainer.onmousemove = (event)=>{label.caption = `x:${event.clientX} y:${event.clientY}`;}    
-     
-     label.callBack_onMouseMove = ()=>{label.textAlign = 'right';}
-     label.callBack_onMouseOut  = ()=>{label.textAlign = 'center';}
-      
- for(var row=2;row<=rows;row++)
-    for(var col=0;col<=cols;col++)
+ var btn = new TFButton(testContainer,1,3,1,1, {caption:"Diashow der selektierten Bilder"} );   
+     btn.heightPx = '40px';
+     btn.callBack_onClick = ()=>
+       {
+         var selected = cb2.getSelectedItems();
+         if(selected.length==0) {alert('nichts ausgewählt !');return};
+            diaShow = [];   
+            for(var i=0;i<selected.length;i++) diaShow.push(selected[i].caption);
+            var i=0;
+            var showNext = function()
+            {
+              if(i<diaShow.length)
+              {
+                if(largeImg) largeImg.fadeOut(100);
+                largeImg = new TFPanel(body ,0,0,10,10 );
+                largeImg.callBack_onClick = ()=>{largeImg.fadeOut(100); largeImg=null};
+                largeImg.zIndex = 1000;
+                largeImg.imgURL = diaShow[i];
+                setTimeout(() => {if(largeImg) {largeImg.fadeOut(1000); largeImg=null; i++; showNext()}}, slider.value*100);    
+              }
+            }
+            showNext();
+        }
+    
+
+ var cb1 = new TFCheckBox(testContainer , 1,4,1,1, {caption:'eins'} );
+    
+ //var cb2 = new TFListCheckbox(testContainer , 1,5,1,6, {items:images} );     
+ var cb2 = new TFListCheckbox(testContainer , 1,5,1,6 );     
+
+//------------------------------------------------------------
+//-------------GRID-------------------------------------------
+ var gridContainer     = new TFPanel(body,0,0,7,10, {backgroundColor:'gray'} );   
+ utils.buildGridLayout(gridContainer,''+rows+'x'+cols);  
+ gridContainer.gap = '2px'; // Abstand zwischen den Zellen
+ 
+ var blur = 4;
+ for(var row=1;row<=rows;row++)
+    for(var col=1;col<=cols;col++)
     {
       var obj = new TFPanel(gridContainer ,col,row,1,1, {} );
       obj.backgroundColor = 'black';
-      obj.imgURL = pix[(row*cols+col) % pix.length];
-      obj.dataBinding = {imgURL:obj.imgURL};
-     // obj.borderRadius=14;
-     // obj.shadow=14;
-
+      obj.imgURL = './pix/'+pix[Math.floor(Math.random()*pix.length)];
+      cb2.addItem({caption:obj.imgURL,checked:false});
+      obj.blur   = blur;
+      obj.callBack_onMouseMove   = function() { this.label.caption = this.obj.imgURL;  this.obj.blur=0 }.bind({obj:obj, label:label});
+      obj.callBack_onMouseOut    = function() { this.label.caption = '' ;              this.obj.blur=this.blur }.bind({obj:obj, label:label, blur:blur});
       obj.callBack_onMouseDown   = (event,dataBinding)=> 
                                    { 
-                                    largeImg = new TFPanel(gridContainer ,5,1,7,7 );
+                                    if(largeImg) largeImg.fadeOut(100);
+                                    largeImg = new TFPanel(body ,0,0,10,10 );
+                                    largeImg.callBack_onClick = ()=>{largeImg.fadeOut(100); largeImg=null};
+                                    largeImg.zIndex = 1000;
                                     largeImg.imgURL = dataBinding.imgURL;
-                                    setTimeout(() => {largeImg.fadeOut(2000);} , 2000);
+                                  
+                                    var fi = cb2.findItemByText(dataBinding.imgURL);
+                                    if(fi.index>-1) cb2.toggle(fi.index);
+                                    
+                                    setTimeout(() => {if(largeImg) {largeImg.fadeOut(1000); largeImg=null}} , slider.value*100);    
                                    };
 
     } 
-                                              
-    
-      /*
-      obj.callBack_onMouseMove   = function() { this.obj.borderRadius=14}.bind({obj:obj});
-      obj.callBack_onMouseOut    = function() { this.obj.borderRadius=0}.bind({obj:obj});
-      
-     */ 
+     
     }
     
     

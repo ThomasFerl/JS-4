@@ -191,6 +191,29 @@ function userLoginx( req , res )
 }  
 
 
+function lsPix( req , res )
+{
+  // ermittle alle Datein im Ordner ./frontend/pix
+  var pixPath = path.join(__dirname, 'frontend/pix');
+  var files   = fs.readdirSync(pixPath);
+  var pix     = [];
+  for(var i=0; i<files.length; i++)
+  {
+    var f = files[i];
+    var p = path.join(pixPath , f);
+    var s = fs.statSync(p);
+    if(s.isFile()) pix.push(f);
+  }
+ 
+  res.send( JSON.stringify({error:false, errMsg:"OK", result:pix}));
+}  
+
+
+
+
+
+
+
 function handle_backDoor_Request( reqStr , res)
 {
   res.send( "no_Way" );
@@ -239,6 +262,8 @@ webApp.get('/userLogin'                    ,  userLogin );
 webApp.get('/userLoginx/:username/:passwd' ,  userLoginx );
 webApp.get('/DEBUG'                        ,  handleDebug );
 webApp.get('/x'                            ,  handleRequest );
+
+webApp.get('/lsPix'                        ,  lsPix );
 
 webApp.post('/xpost'                       ,  handleRequest );
 webApp.post('/upload', upload.single('file'), (req, res) => {
