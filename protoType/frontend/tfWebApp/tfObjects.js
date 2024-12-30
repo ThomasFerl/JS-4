@@ -1126,6 +1126,13 @@ export class TFListCheckbox extends TFObject
     this.__render();
  }
 
+focus( ndx )
+{
+  if(ndx<0) return;
+  if(ndx>=this.items.length) return;
+  var item = this.items[ndx];
+  item.checkBox.focus();
+}
 
   addItem( item )
   {
