@@ -98,7 +98,7 @@ export function main(capt1,capt2)
                                     var fi = cb2.findItemByText(dataBinding.imgURL);
                                     if(fi.index>-1) cb2.toggle(fi.index);
                                     
-                                    setTimeout(() => {if(largeImg) {largeImg.fadeOut(1000); largeImg=null}} , slider.value*100);    
+                                    setTimeout(() => {if(largeImg) {largeImg.fadeOut(1000); diaShow= []; largeImg=null}} , slider.value*100);    
                                    };
 
     } 
