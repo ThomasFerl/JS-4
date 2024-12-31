@@ -766,6 +766,13 @@ html, body {
   float             : left;
 }   
 
+.cssCheckBox
+{
+   grid-area : checkbox;
+   width     : 1.5em;
+   height    : 1.5em;
+ }  
+
 .cssEditField
 {
    grid-area    : editField;
@@ -777,14 +784,6 @@ html, body {
    border-radius: 4px;
    margin       : 0;
 }
-
-
-.cssCheckBox
-{
-   grid-area : checkbox;
-   width     : 1.5em;
-   height    : 1.5em;
- }  
 
 
 .cssEditField:hover 

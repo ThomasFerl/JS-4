@@ -5,7 +5,8 @@ import { TFLabel,
          TFSlider,
          TFButton,
          TFCheckBox,
-         TFListCheckbox }      from "./tfWebApp/tfObjects.js"; 
+         TFListCheckbox,
+         TFEdit }      from "./tfWebApp/tfObjects.js"; 
 
 
 var response = utils.httpRequest('http://localhost:4000/lsPix');
@@ -58,7 +59,7 @@ export function main(capt1,capt2)
                 largeImg.callBack_onClick = ()=>{largeImg.fadeOut(100); largeImg=null};
                 largeImg.zIndex = 1000;
                 largeImg.imgURL = diaShow[i];
-                setTimeout(() => {if(largeImg) {largeImg.fadeOut(1000); largeImg=null; i++; showNext()}}, slider.value*100);    
+                setTimeout(() => {if(largeImg) {largeImg.fadeOut(1000,()=>{largeImg=null; i++; showNext()});}}, slider.value*100);    
               }
             }
             showNext();
@@ -66,9 +67,10 @@ export function main(capt1,capt2)
     
 
  var cb1 = new TFCheckBox(testContainer , 1,4,1,1, {caption:'eins'} );
+
+ var edit = new TFEdit(testContainer,1,5,1,1, {caption:'Gewicht',appendix:'kg', editLength:4 , labelPosition:'TOP'} );
     
- //var cb2 = new TFListCheckbox(testContainer , 1,5,1,6, {items:images} );     
- var cb2 = new TFListCheckbox(testContainer , 1,5,1,6 );     
+ var cb2 = new TFListCheckbox(testContainer , 1,6,1,5 );     
 
 //------------------------------------------------------------
 //-------------GRID-------------------------------------------
@@ -90,7 +92,7 @@ export function main(capt1,capt2)
       obj.callBack_onMouseDown   = (event,dataBinding)=> 
                                    { 
                                     if(largeImg) largeImg.fadeOut(100);
-                                    largeImg = new TFPanel(body ,0,0,10,10 );
+                                    largeImg = new TFPanel(body ,0,0,7,10 );
                                     largeImg.callBack_onClick = ()=>{largeImg.fadeOut(100); largeImg=null};
                                     largeImg.zIndex = 1000;
                                     largeImg.imgURL = dataBinding.imgURL;

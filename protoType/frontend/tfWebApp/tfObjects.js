@@ -1,4 +1,3 @@
-
 import * as globals  from "./globals.js";
 import * as utils    from "./utils.js";
 
@@ -744,7 +743,7 @@ get opacity()
   }  
 
 
-  async fadeOut(duration)
+  async fadeOut(duration , callBack_when_ready )
   {
     const steps    = 100;              // Anzahl der Schritte
     const interval = duration / steps; // Zeit pro Schritt
@@ -759,6 +758,7 @@ get opacity()
                                               clearInterval(fadeInterval); // Stoppe den Prozess
                                               opacity = 0; // Sicherheitshalber auf 0 setzen
                                               this.destroy(); // Bild entfernen
+                                              if(callBack_when_ready) callBack_when_ready();
                                              } 
                                              this.DOMelement.style.opacity = opacity; 
                                              this.DOMelement.style.filter = 'blur('+Math.round(blur)+'px)';
@@ -1242,4 +1242,141 @@ findItemByText(text)
 }
 
 } //end class
+
+//---------------------------------------------------------------------------
+export class TFEdit extends TFObject
+{
+  constructor (parent , left , top , width , height , params ) 
+  {
+    if(!params)        params = {};
+        params.css            = "cssContainerPanel";
+        params.caption        = params.caption        || "";
+        params.value          = params.value          || "";
+        params.labelPosition  = params.labelPosition  || "LEFT";
+        params.appendix       = params.appendix       || "";
+        params.captionLength  = (params.captionLength  || params.caption.length)+1;
+        params.appendixLength = (params.appendixLength || params.appendix.length)+1;
+        params.editLength     = params.editLength     || 7;
+        params.type           = params.type           || 'text';
+      
+    
+    super(parent , left , top , width , height , params );
+  }
+  
+
+  render()
+  {
+    super.render();
+    var gridTemplate = {variant:1 , columns:'1fr', rows:'1fr', edit:{left:1,top:1,width:1,height:1} };
+
+  // es existieren folgende Varianten:
+  // 1. kein Label, kein Appendix  --> template kann so bleiben
+  
+  // 2. kein Label, Appendix vorhanden 
+  if (this.params.caption == "" &&  this.params.appendix!="" )  
+    gridTemplate = {variant:2 , columns:'1fr ' + this.params.appendixLength + 'em', rows:'1fr', edit:{left:1,top:1,width:1,height:1}, apx:{left:2,top:1,width:1,height:1}};
+  
+  // 3. Label vorhanden, kein Appendix 
+  if (this.params.caption != "" &&  this.params.appendix=="" )
+  {
+    // 3.1 Label left 
+    if(this.params.labelPosition.toUpperCase() == "LEFT") 
+      gridTemplate = {variant:31 , columns:this.params.captionLength+'em  1fr' , rows:'1fr', caption:{left:1,top:1,width:1,height:1},edit:{left:2,top:1,width:1,height:1}};
+     
+   // 3.2 Label top
+   if(this.params.labelPosition.toUpperCase() == "TOP") 
+     gridTemplate = {variant:32 , columns:'1fr' , rows:'1fr 1fr', caption:{left:1,top:1,width:1,height:1},edit:{left:1,top:2,width:1,height:1}};
+ }
+
+  // 4. Label vorhanden, und Appendix vorhanden
+  if (this.params.caption != "" &&  this.params.appendix != "" )
+  {
+    // 4.1 Label left 
+    if(this.params.labelPosition.toUpperCase() == "LEFT") 
+      gridTemplate = {variant:41 , columns:this.params.captionLength+'em  1fr ' + this.params.appendixLength + 'em', rows:'1fr', caption:{left:1,top:1,width:1,height:1},edit:{left:2,top:1,width:1,height:1},apx:{left:3,top:1,width:1,height:1}};
+     
+   // 4.2 Label top
+   if(this.params.labelPosition.toUpperCase() == "TOP") 
+     gridTemplate = {variant:42 , columns:'1fr '+ this.params.appendixLength+ 'em' , rows:'1fr 1fr', caption:{left:1,top:1,width:1,height:1},edit:{left:1,top:2,width:1,height:1},apx:{left:3,top:1,width:1,height:2}};
+ }
+
+// nun das Gridlayout aufbauen
+utils.buildGridLayout_templateColumns(this , gridTemplate.columns  );
+utils.buildGridLayout_templateRows   (this , gridTemplate.rows    );
+this.alignItems  = 'start';
+this.justifyContent = 'start';
+
+if(gridTemplate.caption) this.caption  = new TFLabel(this , gridTemplate.caption.left , gridTemplate.caption.top , gridTemplate.caption.width , gridTemplate.caption.height , {caption:this.params.caption  , labelPosition:'LEFT'});
+if(gridTemplate.apx)     this.appendix = new TFLabel(this , gridTemplate.apx.left     , gridTemplate.apx.top    , gridTemplate.apx.width      , gridTemplate.apx.height     , {caption:this.params.appendix , labelPosition:'LEFT'});
+
+    this.input                  = document.createElement("INPUT");
+    this.input.className        = "cssEditField";
+    this.input.style.gridRow    = gridTemplate.edit.top;
+    this.input.style.gridColumn = gridTemplate.edit.left;
+    this.input.type             = this.params.type;
+    this.input.width            = this.params.editLength+'em';
+    this.input.addEventListener('change',  function() { 
+                                                       if(this.callBack_onChange) this.callBack_onChange( this.input.value )
+                                                      }.bind(this));  
+    this.appendChild(  this.input ); 
+  } 
+  
+
+  set text( txt )
+  {
+    this.input.value = txt;
+  }
+
+  get text()
+  {
+    return this.input.value;
+  }
+
+
+
+  set value( txt )
+  {
+    this.input.value = txt;
+  }
+
+  get value()
+  {
+    return this.input.value;
+  }
+
+
+  setDateTime( dt )
+  {
+    var tfDT = null;
+    if (dt.constructor.name.toUpperCase()=='TFDATETIME') tfDT = dt;
+    else                                                 tfDT = new utils.TFDateTime(dt);
+
+    this.input.value = tfDT.formatDateTime('yyyy-mm-ddThh:mn');
+  }
+
+  getDateTime()
+  {
+    var st   = this.input.value;
+    var tfdt = new utils.TFDateTime(st);
+    return tfdt.unixDateTime();
+  }
+
+  set enabled( value )
+  {
+    this.input.disabled = !value;
+  }
+  
+  get enabled() 
+  {
+    return !this.input.disabled;
+  }
+  
+  
+
+
+
+}  //end class ...
+
+
+
 
