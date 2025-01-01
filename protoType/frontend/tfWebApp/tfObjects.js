@@ -28,6 +28,73 @@ function assignMouseEventData( e , obj )
 //------------------------------------------------------------------------
 //------------------------------------------------------------------------
 
+export class TFPopUpMenu 
+{
+  constructor(menuItems) 
+  {
+      this.menuItems = menuItems;
+      this.popup     = null;
+      this.sender    = null;
+      this.onClick   = null;
+      this.createPopup();
+      this.addEventListeners();
+  }
+
+  createPopup() 
+  {
+      // Create popup div
+      this.popup = document.createElement('div');
+      this.popup.classList.add('popup');
+
+      // Create popup content div
+      const popupContent = document.createElement('div');
+      popupContent.classList.add('popup-content');
+
+      // Add menu items to the popup
+      this.menuItems.forEach(item => {
+          const menuItem = document.createElement('div');
+          menuItem.classList.add('menu-item');
+          menuItem.textContent = item.caption;
+          menuItem.addEventListener('mouseup', ()=>{if(this.onClick) this.onClick( this.sender , item )} );
+          popupContent.appendChild(menuItem);
+      });
+      // Append content to popup
+      this.popup.appendChild(popupContent);
+      document.body.appendChild(this.popup);
+  }
+
+  addEventListeners() 
+  {
+        // Hide popup on mouse up
+      document.addEventListener('mouseup', () => {
+          this.hide();
+      });
+
+      // Prevent popup from closing when clicking inside
+      this.popup.addEventListener('mousedown', (event) => {
+          event.stopPropagation();
+      });
+  
+  }
+
+  show( sender , x, y) 
+  {
+      this.sender = sender;
+      this.popup.style.display = 'block';
+      this.popup.style.left = `${x}px`;
+      this.popup.style.top = `${y}px`;
+  }
+
+  hide() {
+      this.popup.style.display = 'none';
+  }
+}
+
+//------------------------------------------------------------------------
+//------------------------------------------------------------------------
+//------------------------------------------------------------------------
+//------------------------------------------------------------------------
+
 
 export class TFObject
 {
@@ -43,8 +110,9 @@ export class TFObject
     this.params.width = width || 1;
     this.params.height= height|| 1;
     if(!this.params.stretch) this.params.stretch =true;
-    
 
+    if(this.params.popupMenu) this.popupMenu = this.params.popupMenu;
+    
     this.isTFObject   = true;
     this.objName      = this.constructor.name;  
     this.ID           = this.objName + Date.now()+Math.round(Math.random()*100);
@@ -129,6 +197,15 @@ export class TFObject
           this.DOMelement.addEventListener('dblclick'   , (e)=>{if( this.callBack_onDblClick)    this.callBack_onDblClick   (e,this.dataBinding) });
           this.DOMelement.addEventListener('mousemove'  , (e)=>{if( this.callBack_onMouseMove)   this.callBack_onMouseMove  (e,this.dataBinding) });
           this.DOMelement.addEventListener('mouseleave' , (e)=>{if( this.callBack_onMouseOut )   this.callBack_onMouseOut   (e,this.dataBinding) });
+          
+          this.DOMelement.addEventListener('contextmenu', (e)=>{ if(this.popupMenu) 
+                                                                   {
+                                                                     e.preventDefault();
+                                                                     this.popupMenu.show(this,e.pageX, e.pageY);
+                                                                   }
+                                                                  });     
+                                                                
+                                                               
           this.DOMelement.addEventListener('mousedown'  , (e)=>{if( this.callBack_onMouseDown)   this.callBack_onMouseDown  (e,this.dataBinding) });
           this.DOMelement.addEventListener('mouseup'    , (e)=>{if( this.callBack_onMouseUp  )   this.callBack_onMouseUp    (e,this.dataBinding) });
           this.DOMelement.addEventListener('contextmenu', (e)=>{if( this.callBack_onContextMenu) this.callBack_onContextMenu(e,this.dataBinding) });
@@ -1256,7 +1333,6 @@ export class TFEdit extends TFObject
         params.appendix       = params.appendix       || "";
         params.captionLength  = (params.captionLength  || params.caption.length)+1;
         params.appendixLength = (params.appendixLength || params.appendix.length)+1;
-        params.editLength     = params.editLength     || 7;
         params.type           = params.type           || 'text';
       
     
@@ -1267,6 +1343,7 @@ export class TFEdit extends TFObject
   render()
   {
     super.render();
+    
     var gridTemplate = {variant:1 , columns:'1fr', rows:'1fr', edit:{left:1,top:1,width:1,height:1} };
 
   // es existieren folgende Varianten:
@@ -1285,7 +1362,7 @@ export class TFEdit extends TFObject
      
    // 3.2 Label top
    if(this.params.labelPosition.toUpperCase() == "TOP") 
-     gridTemplate = {variant:32 , columns:'1fr' , rows:'1fr 1fr', caption:{left:1,top:1,width:1,height:1},edit:{left:1,top:2,width:1,height:1}};
+     gridTemplate = {variant:32 , columns:'1fr' , rows:'1fr 1.2em 2em 1fr', caption:{left:1,top:2,width:1,height:1},edit:{left:1,top:3,width:1,height:1}};
  }
 
   // 4. Label vorhanden, und Appendix vorhanden
@@ -1297,27 +1374,57 @@ export class TFEdit extends TFObject
      
    // 4.2 Label top
    if(this.params.labelPosition.toUpperCase() == "TOP") 
-     gridTemplate = {variant:42 , columns:'1fr '+ this.params.appendixLength+ 'em' , rows:'1fr 1fr', caption:{left:1,top:1,width:1,height:1},edit:{left:1,top:2,width:1,height:1},apx:{left:3,top:1,width:1,height:2}};
+     gridTemplate = {variant:42 , columns:'1fr '+ this.params.appendixLength+ 'em' , rows:'1fr 1.2em 2em 1fr', caption:{left:1,top:2,width:1,height:1},edit:{left:1,top:3,width:1,height:1},apx:{left:2,top:3,width:1,height:1}};
  }
 
 // nun das Gridlayout aufbauen
 utils.buildGridLayout_templateColumns(this , gridTemplate.columns  );
 utils.buildGridLayout_templateRows   (this , gridTemplate.rows    );
-this.alignItems  = 'start';
-this.justifyContent = 'start';
 
-if(gridTemplate.caption) this.caption  = new TFLabel(this , gridTemplate.caption.left , gridTemplate.caption.top , gridTemplate.caption.width , gridTemplate.caption.height , {caption:this.params.caption  , labelPosition:'LEFT'});
-if(gridTemplate.apx)     this.appendix = new TFLabel(this , gridTemplate.apx.left     , gridTemplate.apx.top    , gridTemplate.apx.width      , gridTemplate.apx.height     , {caption:this.params.appendix , labelPosition:'LEFT'});
+if(gridTemplate.caption) 
+  {
+    this.caption  = new TFLabel(this , gridTemplate.caption.left , gridTemplate.caption.top , gridTemplate.caption.width , gridTemplate.caption.height , {caption:this.params.caption  , labelPosition:'LEFT'});
+    this.caption.fontWeight = 'bold';
+    this.caption.marginLeft = '0.5em';
+    this.caption.textAlign  = 'LEFT';
+    this.caption.alignItems = 'end';
+  }  
 
-    this.input                  = document.createElement("INPUT");
-    this.input.className        = "cssEditField";
-    this.input.style.gridRow    = gridTemplate.edit.top;
-    this.input.style.gridColumn = gridTemplate.edit.left;
-    this.input.type             = this.params.type;
-    this.input.width            = this.params.editLength+'em';
+if(gridTemplate.apx) 
+  {
+    this.appendix = new TFLabel(this , gridTemplate.apx.left     , gridTemplate.apx.top    , gridTemplate.apx.width      , gridTemplate.apx.height     , {caption:this.params.appendix , labelPosition:'LEFT'});
+    this.appendix.textAlign = 'LEFT';
+    this.appendix.alignItems = 'end';
+    this.appendix.marginLeft = '0.25em';
+  }     
+    
+    // keine Items vorhanden --> normales Inputfeld  
+    if(!this.params.items) 
+    {
+     this.input                   = document.createElement(INPUT);
+     this.input.className         = "cssEditField";
+     this.input.type              = this.params.type;
+     this.combobox                = null; 
+    }
+    else {
+           this.input                   = document.createElement('SELECT');
+       this.input.className         = "cssComboBox";
+       this.combobox                = this.input; 
+     } 
+
+     this.input.style.gridRow     = gridTemplate.edit.top;
+     this.input.style.gridColumn  = gridTemplate.edit.left;
+     this.input.style.margin      = '0.5em';
+     if(this.params.editLength) 
+      {
+       this.input.style.width       = this.params.editLength+'em'; 
+       this.input.style.justifySelf = 'end';
+      } 
+    
     this.input.addEventListener('change',  function() { 
                                                        if(this.callBack_onChange) this.callBack_onChange( this.input.value )
                                                       }.bind(this));  
+
     this.appendChild(  this.input ); 
   } 
   
@@ -1371,11 +1478,157 @@ if(gridTemplate.apx)     this.appendix = new TFLabel(this , gridTemplate.apx.lef
     return !this.input.disabled;
   }
   
-  
-
-
-
 }  //end class ...
+
+//---------------------------------------------------------------------------
+
+export class TFComboBox extends TFEdit
+{
+  constructor (parent , left , top , width , height , params )
+  {
+    if(!params) params = {};
+    if(!params.items) params.items = [];
+
+    super(parent , left , top , width , height , params );
+  }
+
+
+
+  render()
+  {
+    this.items = [];
+    if(this.params.items) this.items = this.params.items;
+    super.render();
+    this.combobox = this.input;  // nur aus Gründen der besseren Lesbarkeit / Anwendbarkeit
+    this.__render();
+    this.combobox.addEventListener('change',  function() { 
+      if(this.callBack_onChange)
+      {
+       var v = this.combobox.value;
+       var c = this.items[v];
+       this.callBack_onChange( v , c )
+      }
+     }.bind(this));  
+
+     this.combobox.addEventListener('click',  function() { 
+      if(this.callBack_onClick)
+      {
+       var v = this.combobox.value;
+       var c = this.items[v];
+       this.callBack_onClick( v , c )
+      }
+     }.bind(this));  
+  }
+
+  __render()
+  {
+    if(!this.combobox) return;
+
+    this.combobox.innerHTML = '';
+    for(var i=0; i<this.items.length; i++)
+    {
+      var item = this.items[i];
+      var option = document.createElement("OPTION");
+      option.text  = item.caption || item.text;
+      option.value = item.value;
+      this.combobox.appendChild(option);
+    }
+  } 
+
+  set text( txt )
+ {
+   this.combobox.value = txt;
+ }
+
+ get text()
+ {
+  var ndx = this.combobox.selectedIndex;
+  return this.combobox.options[ndx].text;
+ }
+
+ setItems( items )
+ {
+  if(items==null)this.items = [];
+  else this.items = items;
+  __render();
+ } 
+
+getItems()
+{
+  return this.items;
+} 
+
+addItem( caption , value )
+{
+  // prüfen, ob bereits vorhanden ...
+  var ndx = this.items.findIndex( i => i.value == value );  
+  if(ndx<0)   
+  {
+    this.items.push( {caption:caption , value:value} );
+    var option = document.createElement("OPTION");
+    option.text  = caption;
+    option.value = value;
+    this.combobox.appendChild(option);
+  }
+  
+}
+
+set itemIndex(ndx) 
+{ 
+  this.combobox.selectedIndex=ndx; 
+}
+
+get itemIndex()    
+{ 
+  return this.combobox.selectedIndex; 
+}
+
+
+set value( value )  
+{
+  // ist value in der Items-Liste ?
+  var ndx = this.items.findIndex( i => i.value == value );
+  if (ndx<0) 
+    {
+      this.addItem( value , value );
+      ndx = this.items.length-1;
+    }  
+
+  this.itemIndex = ndx;
+}
+
+get value() 
+{
+  var ndx = this.itemIndex;
+  return this.items[ndx].value; 
+}
+
+
+set item( item )  
+{
+  // ist value in der Items-Liste ?
+  var ndx = this.items.indexOf( item );
+  if (ndx<0) 
+    {
+      this.addItem( item.caption , item.value );
+      ndx = this.items.length-1;
+    }  
+
+  this.itemIndex = ndx;
+}
+
+get item() 
+{
+  var ndx = this.itemIndex;
+  return this.items[ndx].value; 
+}
+
+}
+
+//---------------------------------------------------------------------------
+
+
+
 
 
 
