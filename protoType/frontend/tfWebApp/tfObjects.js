@@ -307,78 +307,51 @@ export class TFObject
   set left( value )
   {
       if(this.hasGridLayout()) this.gridLeft = value;
-      else{
-            if (isNaN(value)) if(this.DOMelement) this.DOMelement.style.left = value;
-            else              if(this.DOMelement) this.DOMelement.style.left = value+'px';
-         }   
+      else                     this.leftPx = value;
   } 
 
   get left()
   {
     if(this.hasGridLayout()) return this.gridLeft;
-    else{
-         var rect = this.DOMelement.getBoundingClientRect();
-         return rect.left;
-    } 
+    else                     return this.leftPx;
   } 
 
   set top( value )
   {
     if(this.hasGridLayout()) this.gridTop = value;
-    else{
-          if (isNaN(value)) if(this.DOMelement) this.DOMelement.style.top = value;
-          else              if(this.DOMelement) this.DOMelement.style.top = value+'px';
-       }   
+    else                     this.topPx = value;
   } 
 
   get top()
   {
     if(this.hasGridLayout()) return this.gridTop;
-    else{
-         var rect = this.DOMelement.getBoundingClientRect();
-         return rect.top;
-    } 
+    else                     return this.topPx;
   } 
 
 
   set width( value )
   {
     if(this.hasGridLayout()) this.gridWidth = value;
-    else{
-         if (isNaN(value)) if(this.DOMelement) this.DOMelement.style.width = value;
-         else              if(this.DOMelement) this.DOMelement.style.width = value+'px';
-    }  
-    
+    else this.widthPx = value;
   } 
 
   get width()
   {
     if(this.hasGridLayout()) return this.gridWidth;
-    else{
-         var rect = this.DOMelement.getBoundingClientRect();
-         return rect.width;
-    } 
+    else                     return this.widthPx;
   } 
 
 
   set height( value )
   {
     if(this.hasGridLayout()) this.gridHeight = value;
-    else{
-          if (isNaN(value)) if(this.DOMelement) this.DOMelement.style.height = value;
-          else              if(this.DOMelement) this.DOMelement.style.height = value+'px';
-    }  
-    
+    else                     this.heightPx = value;
   } 
 
   get height()
   {
     if(this.hasGridLayout()) return this.gridHeight;
-    else{
-         var rect = this.DOMelement.getBoundingClientRect();
-         return rect.height;
-    }
-    
+    else                     return this.heightPx;
   } 
    
 
