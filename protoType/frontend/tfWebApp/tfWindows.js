@@ -15,7 +15,7 @@ export class TFWindow extends TFObject
     var T=1;
     var W=1;
     var H=1;
-
+debugger;
     aWidth   = aWidth.toString();
     aHeight  = aHeight.toString();
 
@@ -77,6 +77,14 @@ export class TFWindow extends TFObject
 
   render()
   {
+   super.render();
+
+    this.DOMelement.style.position = 'absolute';
+    this.topPx    = this.params.top;
+    this.leftPx   = this.params.left;
+    this.widthPx  = this.params.width;
+    this.heightPx = this.params.height;
+   
     
     if(this.parent==document.body)
         {
@@ -87,9 +95,7 @@ export class TFWindow extends TFObject
             rootwindows.push(this);
         } else this.zIndex = this.parent.zIndex + 1;  
         
-    debugger;
-    super.render();
-
+   
     this.callBack_onDragStart = ( e )=>{ 
          // Speichere den Abstand zwischen dem Mauszeiger und der oberen linken Ecke des DIVs
             console.log('dragStart: x=' +this.leftPx+'   y='+this.topPx); 

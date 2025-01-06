@@ -116,7 +116,8 @@ export class TFObject
   
           this.parent.hasGridLayout = ()=>{ if(this.params.preventGrid) return false; 
                                             else                        return this.parent.layout().toUpperCase() == 'GRID'; }; 
-  
+          this.parent.widthPx       = ()=>{ return this.DOMelement.getBoundingClientRect().width; };
+          this.parent.heightPx      = ()=>{ return this.DOMelement.getBoundingClientRect().height; };
           this.parent.DOMelement    = aParent;
           this.parentWidth          = aParent.clientWidth;
           this.parentHeight         = aParent.clientHeight;
