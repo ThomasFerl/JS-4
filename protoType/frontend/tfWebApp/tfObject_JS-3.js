@@ -289,18 +289,6 @@ export class TFWorkSpace
 }  //end class ...
 
 
-
-
-/* eigenständiges Pop-Up-Menü außerhalb des TFObject-Zoo - Basis: ChatGPT4.0 */
-
-
-/* ***********************************************************************************************************************  */
-
-
-
-
-
-
 export class TFImage
 {
   constructor( aParent , imgURL , captionPanel , infos )

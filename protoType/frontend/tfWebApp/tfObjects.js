@@ -2,6 +2,9 @@ import * as globals  from "./globals.js";
 import * as utils    from "./utils.js";
 
 
+var screen = null;
+
+
 
 function assignMouseEventData( e , obj )
 {
@@ -98,32 +101,66 @@ export class TFPopUpMenu
 
 export class TFObject
 {
-  constructor (parent , left , top , width , height , params ) 
+  constructor (aParent , left , top , width , height , params ) 
   {
-    if(!parent) { alert("constructor TFObject => parent = null ! "); return; }
-       
+    if(!aParent) { alert("constructor TFObject => parent = null ! "); return; }
+
+    if(utils.isHTMLElement(aParent)) 
+      {
+          // Wenn das Parent-Objekt ein normales HTML-Element ist, müssen ein paar Kompatibilitätsanpassungen vorgenommen werden,
+          // damit der Prozess trotzdem funktioniert...
+          // Es wird ein "Minimal-Objekt"als Parent erstellt ...
+          this.parent               = {isTFObject:false};  // erstellung eines Minimal-Objektes mit den notw. Properties
+          this.parent.objName       = 'HTMLelement';
+          this.parent.layout        = ()=>{return window.getComputedStyle(parent).getPropertyValue("display").toUpperCase()};
+  
+          this.parent.hasGridLayout = ()=>{ if(this.params.preventGrid) return false; 
+                                            else                        return this.parent.layout().toUpperCase() == 'GRID'; }; 
+  
+          this.parent.DOMelement    = aParent;
+          this.parentWidth          = aParent.clientWidth;
+          this.parentHeight         = aParent.clientHeight;
+          this.parent.appendChild   = function (child) {this.parent.DOMelement.appendChild(child)}.bind(this);
+        }
+        else {
+               this.parent       = aParent; 
+               this.parentWidth  = parent.clientWidth
+               this.parentHeight = parent.clientHeight;
+               if(this.parent.childList) this.parent.childList.push(this);
+        }  
+
+    // Params aufbereiten / ergänzen 
+
     if (!params) this.params = {};
     else         this.params = params;
 
-    this.params.left  = left  || 1;
-    this.params.top   = top   || 1;
-    this.params.width = width || 1;
-    this.params.height= height|| 1;
+    this.params.left   = left  || 1;
+    this.params.top    = top   || 1;
+    this.params.width  = width || 1;
+    this.params.height = height|| 1;
     if(!this.params.stretch) this.params.stretch =true;
 
     if(this.params.popupMenu) this.popupMenu = this.params.popupMenu;
-    
+
+    this.isDragable   = false;
+    if( this.params.dragable)   this.isDragable   = this.params.dragable;
+
+    this.isDropTarget = false;
+    if( this.params.dropTarget) this.isDropTarget   = this.params.dropTarget;  
+  
     this.isTFObject   = true;
     this.objName      = this.constructor.name;  
     this.ID           = this.objName + Date.now()+Math.round(Math.random()*100);
-    this.dataBinding  = this;
+    this.dataBinding  = {};
     this.childList    = [];
     this.DOMelement   = null;
     this.layout       = ()=>{return window.getComputedStyle(this.DOMelement).getPropertyValue("display").toUpperCase()};
     
-    this.hasGridLayout= ()=> { return this.layout == 'GRID'; }; 
-        
-    this.grid         = {left:0, top:0, width:0, height:0};
+    this.hasGridLayout= ()=> { if(this.params.preventGrid) return false; 
+                               else                        return this.parent.layout().toUpperCase() == 'GRID'; 
+                             }; 
+
+    this.grid         = {left:1, top:1, width:1, height:1};
         
     this.mouse        = { clientX:0 , 
                           clientY:0 , 
@@ -142,26 +179,7 @@ export class TFObject
                           metaKey:false 
                       };   
 
-    if(utils.isHTMLElement(parent)) 
-    {
-        // Wenn das Parent-Objekt ein normales HTML-Element ist, müssen ein paar Kompatibilitätsanpassungen vorgenommen werden,
-        // damit der Prozess trotzdem funktioniert...
-        // Es wird ein "Minimal-Objekt"als Parent erstellt ...
-        this.parent               = {isTFObject:false};  // erstellung eines Minimal-Objektes mit den notw. Properties
-        this.parent.objName       = 'HTMLelement';
-        this.parent.layout        = ()=>{return window.getComputedStyle(parent).getPropertyValue("display").toUpperCase()};
-        this.parent.hasGridLayout = ()=>{ return this.parent.layout == 'GRID'; }; 
-        this.parent.DOMelement    = parent;
-        this.parentWidth          = parent.clientWidth;
-        this.parentHeight         = parent.clientHeight;
-        this.parent.appendChild   = function (child) {this.parent.DOMelement.appendChild(child)}.bind(this);
-      }
-      else {
-             this.parent       = parent; 
-             this.parentWidth  = parent.DOMelement.clientWidth
-             this.parentHeight = parent.DOMelement.clientHeight;
-             if(this.parent.childList) this.parent.childList.push(this);
-      }  
+    
      
     this.callBack_onKeyDown    = undefined;
     this.callBack_onKeyUp      = undefined;
@@ -174,6 +192,12 @@ export class TFObject
     this.callBack_onMouseOut   = undefined;
     this.callBack_onContextMenu= undefined;
 
+    this.callBack_onDragStart  = undefined;
+    this.callBack_onDragOver   = undefined;
+    this.callBack_onDrop       = undefined;   
+    this.callBack_onDragEnd    = undefined;
+
+
    this.render();  
 
   }
@@ -185,7 +209,50 @@ export class TFObject
      
     if(this.params.css) this.DOMelement.className =  this.params.css;
     else                this.DOMelement.className = "cssObject";
+
     this.DOMelement.setAttribute('ID'   ,  this.ID );
+
+    if(this.isDragable) 
+    {
+      this.DOMelement.setAttribute('draggable', true);
+      this.DOMelement.addEventListener('dragstart', (e)=>{
+                                                          var d = null;
+                                                          if(this.draggingData) d=this.draggingData;
+                                                          else if(this.dataBinding) d=this.dataBinding;
+                                                          if(d==null) d = '';
+                                                          if(utils.isJSON(d)) d = JSON.stringify(d);
+                                                          e.dataTransfer.setData('application/json', d );
+                                                          if( this.callBack_onDragStart) this.callBack_onDragStart(e);
+                                                          });  
+      this.DOMelement.addEventListener('dragend',   (e)=>{
+                                                            var d = null;
+                                                            if(this.draggingData) d=this.draggingData;
+                                                            else if(this.dataBinding) d=this.dataBinding;
+                                                            if(d==null) d = '';
+                                                            if(utils.isJSON(d)) d = JSON.stringify(d);
+                                                            e.dataTransfer.setData('application/json', d );
+                                                            if( this.callBack_onDragEnd) this.callBack_onDragEnd(e);
+                                                            });  
+
+    }
+    
+    if(this.isDropTarget) 
+      {
+        this.DOMelement.addEventListener('dragover', (e)=>{ 
+                                                            e.preventDefault();
+                                                            var d = e.dataTransfer.getData('application/json');
+                                                            if(utils.isJSON(d)) d = JSON.parse(d);
+                                                            if( this.callBack_onDragOver)  this.callBack_onDragOver (e ,d); 
+                                                          });
+
+        this.DOMelement.addEventListener('drop',      (e)=>{ 
+                                                            e.preventDefault();
+                                                            var d = e.dataTransfer.getData('application/json');
+                                                            if(utils.isJSON(d)) d = JSON.parse(d);
+                                                            if( this.callBack_onDrop)  this.callBack_onDrop (e ,d); 
+         });
+    }
+
     this.left   = this.params.left;
     this.top    = this.params.top;
     this.width  = this.params.width;
@@ -214,27 +281,15 @@ export class TFObject
 
   } 
 
-
-
-  setParent( aParent )
-  {
-    if(aParent != this.parent)
-    {
-      this.parent = aParent;
-      this.parent.appendChild( this.DOMelement );
-    }  
-  } 
-  
-
   set id(value)
   {
     this.ID = value;
-    this.DOMelement.setAttribute('ID'   ,  value);
+    this.DOMelement.setAttribute('id'   ,  value);
   }
 
   get id()
   {
-    return this.DOMelement.getAttribute('ID');
+    return this.DOMelement.getAttribute('id');
   }
 
 
@@ -251,7 +306,7 @@ export class TFObject
 
   set left( value )
   {
-      if(this.hasGridLayout) this.gridLeft = value;
+      if(this.hasGridLayout()) this.gridLeft = value;
       else{
             if (isNaN(value)) if(this.DOMelement) this.DOMelement.style.left = value;
             else              if(this.DOMelement) this.DOMelement.style.left = value+'px';
@@ -260,7 +315,7 @@ export class TFObject
 
   get left()
   {
-    if(this.hasGridLayout) return this.gridLeft;
+    if(this.hasGridLayout()) return this.gridLeft;
     else{
          var rect = this.DOMelement.getBoundingClientRect();
          return rect.left;
@@ -269,7 +324,7 @@ export class TFObject
 
   set top( value )
   {
-    if(this.hasGridLayout) this.gridTop = value;
+    if(this.hasGridLayout()) this.gridTop = value;
     else{
           if (isNaN(value)) if(this.DOMelement) this.DOMelement.style.top = value;
           else              if(this.DOMelement) this.DOMelement.style.top = value+'px';
@@ -278,7 +333,7 @@ export class TFObject
 
   get top()
   {
-    if(this.hasGridLayout) return this.gridTop;
+    if(this.hasGridLayout()) return this.gridTop;
     else{
          var rect = this.DOMelement.getBoundingClientRect();
          return rect.top;
@@ -288,7 +343,7 @@ export class TFObject
 
   set width( value )
   {
-    if(this.hasGridLayout) this.gridWidth = value;
+    if(this.hasGridLayout()) this.gridWidth = value;
     else{
          if (isNaN(value)) if(this.DOMelement) this.DOMelement.style.width = value;
          else              if(this.DOMelement) this.DOMelement.style.width = value+'px';
@@ -298,7 +353,7 @@ export class TFObject
 
   get width()
   {
-    if(this.hasGridLayout) return this.gridWidth;
+    if(this.hasGridLayout()) return this.gridWidth;
     else{
          var rect = this.DOMelement.getBoundingClientRect();
          return rect.width;
@@ -308,7 +363,7 @@ export class TFObject
 
   set height( value )
   {
-    if(this.hasGridLayout) this.gridHeight = value;
+    if(this.hasGridLayout()) this.gridHeight = value;
     else{
           if (isNaN(value)) if(this.DOMelement) this.DOMelement.style.height = value;
           else              if(this.DOMelement) this.DOMelement.style.height = value+'px';
@@ -318,7 +373,7 @@ export class TFObject
 
   get height()
   {
-    if(this.hasGridLayout) return this.gridHeight;
+    if(this.hasGridLayout()) return this.gridHeight;
     else{
          var rect = this.DOMelement.getBoundingClientRect();
          return rect.height;
@@ -336,6 +391,33 @@ export class TFObject
   {
     return this.DOMelement.style.zIndex;
   }
+
+
+  set leftPx( value )
+  {
+    if (isNaN(value)) if(this.DOMelement) this.DOMelement.style.left = value;
+    else              if(this.DOMelement) this.DOMelement.style.left = value+'px';
+ } 
+
+  get leftPx()
+  {
+    var rect = this.DOMelement.getBoundingClientRect();
+    return rect.left;
+  } 
+
+  set topPx( value )  
+  {
+    if (isNaN(value)) if(this.DOMelement) this.DOMelement.style.top = value;
+    else              if(this.DOMelement) this.DOMelement.style.top = value+'px';
+  }
+
+  get topPx()
+  {
+    var rect = this.DOMelement.getBoundingClientRect();
+    return rect.top;
+  }
+
+
 
 
 
@@ -466,19 +548,20 @@ get gap()
 
   buildGridLayout( gridSizeOrTemplate )
   {
-    utils.buildGridLayout( this , gridSizeOrTemplate );
+    utils.buildGridLayout( this , gridSizeOrTemplate , {stretch:this.params.stretch} );
+
   }    
 
  
   buildGridLayout_templateColumns(template)
   {
-   utils.buildGridLayout_templateColumns( this , template );
+   utils.buildGridLayout_templateColumns( this , template , {stretch:this.params.stretch}  );
   }  
 
  
   buildGridLayout_templateRows(template)
   {
-   utils.buildGridLayout_templateRows( this , template );
+   utils.buildGridLayout_templateRows( this , template , {stretch:this.params.stretch}  );
   }  
 
   buildBlockLayout() 
@@ -912,7 +995,6 @@ export class TFSlider extends TFObject
     this.slider.style.height = '90%';
     this.slider.style.backgroundColor = this.backgroundColor;
 
-    //this.slider.addEventListener("input", ()=>{ debugger; if(this.onChange!=null) this.onChange(this.slider.value , this.dataBinding)});
     
      // Eventhandler für Input
      this.slider.addEventListener("input", () => {
@@ -964,6 +1046,7 @@ export class TFLabel extends TFObject
     this.margin          = 0;
     
     this.paragraph = document.createElement('p');
+    this.paragraph.className = this.params.css;
     this.appendChild(this.paragraph);
     this.caption   = this.params.caption || '' ;
   }  
@@ -1144,10 +1227,6 @@ export class TFCheckBox extends TFObject
 }
 
 //---------------------------------------------------------------------------
-
-
-
-
 export class TFListCheckbox extends TFObject
 {
   __render()
@@ -1627,9 +1706,140 @@ get item()
 
 //---------------------------------------------------------------------------
 
+export class Screen extends TFObject
+{
+  constructor()
+  {
+    super(document.body , 0 , 0 , '100%' , '100%' , {css:"cssScreen" , preventGrid:true , fixit:true } );
+  }
+  
+  render()
+  {
+    super.render();
+    this.id = 'SCREEN_' + utils.buildRandomID(1);
+    screen = this;
+   
+  } 
+  
+  
+  setBackgroundImage( path )
+  {
+    this.imgURL = path;
+  }
 
 
+  set HTML( st ) {this.innerHTML = st;}
+  get HTML() { return this.innerHTML;}
+
+}
 
 
+//---------------------------------------------------------------------------
+
+
+export class TFWorkSpace extends TFObject
+{
+  constructor( ID , caption1 , caption2 )  
+  {
+     // vorsichtshalber ...
+     if (screen==null) screen = new Screen() ;
+    
+    super(screen , 1 , 1 , '100%' , '100%' , {css:"cssWorkSpaceJ4" , preventGrid:true , fixit:true, ID:ID, caption1:caption1, caption2:caption2 } );
+  }
+  
+  render()
+ {
+    this.isWorkspace          = true;
+    this.wsID                 = this.params.ID;
+
+    super.render();
+
+    if(this.params.caption1 || this.params.caption2)
+    {
+      this.buildGridLayout_templateColumns('1fr');
+      this.buildGridLayout_templateRows   ('4em 1fr');
+
+      //this.buildGridLayout('10x10');
+
+      //erzeuge Panel für Caption
+      this.caption                = new TFPanel(this , 1 , 1 , 1 , 1 , {css:'cssWorkSpaceCaptionJ4'} );
+      this.caption.id             = this.wsID +"_caption";
+      this.caption.buildGridLayout_templateColumns('1em 1fr 4em');
+      this.caption.buildGridLayout_templateRows('1fr 1fr');
+
+       if(this.params.caption1) 
+       {  
+        var l1 =  new TFLabel(this.caption , 2 , 1 , 1 , 1 , {css:'cssCaption1J4', caption:this.params.caption1 }); 
+            l1.textAlign = 'LEFT';  
+       }      
+           
+       if(this.params.caption2) 
+       { 
+        var l2 = new TFLabel(this.caption , 2 , 2 , 1 , 1 , {css:'cssCaption2J4', caption:this.params.caption2});
+            l2.textAlign = 'LEFT';
+       }   
+          
+       this.sysMenu   = new TFPanel(this.caption , 3 , 1 , 1 , 2 , {} ); 
+       this.sysMenu.backgroundColor = 'rgba( 255, 255, 255, 0.25)';
+       if(globals.session.admin)
+       {  
+           this.sysMenu.DOMelement.style.color = 'rgb(135, 0, 0)';
+           this.sysMenu.DOMelement.innerHTML   = '<center><i class="fa-solid fa-screwdriver-wrench fa-2xl"></i></center>';
+       }
+       else {
+              this.sysMenu.DOMelement.style.color = 'rgb( 77, 77, 77)';
+              this.sysMenu.DOMelement.innerHTML   = '<center><i class="fa-solid fa-user fa-2xl"></i></center>';
+       }    
+           
+       this.sysMenu.callBack_onClick       = ( ev )=>{ 
+                                                    var htmlElement = ev.target;
+                                                    var rect        = htmlElement.getBoundingClientRect();
+                                                    var x           = rect.left;
+                                                    var y           = rect.top;  
+                                                    dialogs.popUpMenu( x , y ) 
+                                                   };
+                                             
+                                                  
+    } 
+    else 
+         {
+          this.caption = null;
+          this.buildGridLayout_templateColumns('1fr');
+          this.buildGridLayout_templateRows('1px 1fr');
+        } 
+    utils.log("Erzeuge Workspace ");
+    //this.handle                        = new TFPanel(this, 1 , 2 , 1 , 1 , {css:'cssWorkSpaceJ4'});
+    //this.handle.id                     = this.wsID +"_dashBoard";
+  }
+  
+ 
+   
+  select()
+  {
+    /* 
+    utils.log("switch Workspace from "+globals.webApp.activeWorkspace.container.id+" to "+this.container.id+")");
+      utils.log("Workspace.select( this="+this.container.id+")");
+      globals.webApp.activeWorkspace.hide();
+      globals.webApp.activeWorkspace = this;
+      utils.log("selectWorkspace ... aktivieren von "+this.container.id);
+      globals.webApp.activeWorkspace.show()  
+   */   
+  }
+
+
+  hide()
+  {
+    if(this.container.style.display != 'none') this.previousDisplay = this.container.style.display;
+    else                                       this.previousDisplay = 'block';
+
+    this.container.style.display = 'none';
+  }
+
+  show()
+  {
+   this.container.style.display = this.previousDisplay; 
+  }
+
+}
 
 

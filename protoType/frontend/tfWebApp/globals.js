@@ -1,7 +1,6 @@
 const useHTTPS                = false;
 
 export var debug              = false;
-export var Screen             = undefined;
 export var webApp             = {};
 
 
@@ -108,4 +107,7 @@ export function print_elapsedTime( msg )
 
   return et;
 }
+
+
+
 

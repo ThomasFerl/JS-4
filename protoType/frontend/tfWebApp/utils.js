@@ -1430,9 +1430,6 @@ export function buildGridLayout( parent , gridSizeOrTemplate , params )
     log('...style.gridTemplateAreas = '+gridTemplate );
     parent.DOMelement.style.gridTemplateAreas =   gridTemplate;
   }
-
-  parent.layout       = 'grid';
-  parent.isGridLayout = true;
 }
 
 export function buildGridLayout_templateColumns( parent , template , params )
@@ -1457,8 +1454,7 @@ export function buildGridLayout_templateColumns( parent , template , params )
   { parent.DOMelement.style.alignItems='center';
     parent.DOMelement.style.justifyContent='center';
   } 
-  parent.layout                                = 'grid';
-  parent.isGridLayout                          = true;
+ 
 }  
 
 
@@ -1487,8 +1483,6 @@ else
   parent.DOMelement.style.justifyContent='center';
 } 
 
-parent.layout                                = 'grid';
-parent.isGridLayout                          = true;
 }  
 
 export function buildBlockLayout( parent ) 

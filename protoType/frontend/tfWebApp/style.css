@@ -19,7 +19,7 @@ html, body {
    top      : 0px;
    width    : 100%;
    height   : 100vh;
-   overflow : auto;
+   overflow : hidden;
  }
 
 
@@ -97,6 +97,28 @@ html, body {
 }
 
 
+.cssWorkSpaceContainerJ4
+{
+  position        : relative;
+  height          : 100%;
+  width           : 100%;
+  left            : 0px;
+  top             : 0px;
+  margin          : 0px;
+  padding         : 0px;
+  color           : rgb(255, 255, 255);
+  font-size       : 1em;
+  border          : 0;
+  background-color: rgb(48, 48, 49);	
+  overflow        : hidden;
+  cursor          : pointer;
+}
+
+
+
+
+
+
 .cssWorkSpace7x7
 {
   grid-area       : w; 
@@ -142,6 +164,18 @@ html, body {
   grid-auto-flow       : row;
 }
 
+.cssWorkSpaceJ4
+{
+  margin          : 0px;
+  padding         : 0px;
+  color           : black;
+  font-size       : 1em;
+  border          : 1px solid gray;
+  background-color: rgb(179, 179, 179);	
+  overflow        : auto;
+  cursor          : pointer;
+}
+
 
 
 
@@ -158,6 +192,18 @@ html, body {
  grid-template-columns: 1fr 4em;
  grid-template-rows   : 1fr;
  } 
+
+
+ .cssWorkSpaceCaptionJ4
+ {
+  padding          : 0;
+  margin           : 0;
+  border           : none;
+  color            : white;
+  background-color : rgb(0, 0, 0);
+  background-image : linear-gradient(to right,rgb(0, 0, 0) ,rgb(170, 170, 170)	);
+  overflow         : hidden;
+ }
 
 
  .sysMenu
@@ -199,6 +245,14 @@ html, body {
    top            : 0.5em;
 }
 
+.cssCaption1J4
+{
+   margin         : 0; 
+   padding        : 0; 
+   font-size      : 1.4em;
+   color          : rgb(247, 241, 241);
+}
+
 .cssCaption2
 {
    margin         : 0; 
@@ -209,6 +263,15 @@ html, body {
    position       : absolute;
    left           : 1.3em;
    top            : 2.5em;
+}
+
+
+.cssCaption2J4
+{
+   margin         : 0; 
+   padding        : 0; 
+   font-size      : 1em;
+   color          : lightgray;
 }
 
 
@@ -233,6 +296,8 @@ html, body {
    grid-template-areas  : "header"
                           "wnd";
 }
+
+
 
 .cssBaseWindowContainer
 {
@@ -259,6 +324,19 @@ html, body {
    background-color : whitesmoke;
    overflow         : auto;   
 }  
+
+.cssWindowJ4
+{
+   position         : absolute;
+   margin           : 0;
+   padding          : 0;
+   width            : 100%;
+   height           : 100%;
+   border           : none;
+   color            : black;
+   background-color : whitesmoke;
+   overflow         : auto;   
+}  
    
 .cssWindowCaption
 {
@@ -278,6 +356,48 @@ html, body {
    grid-template-areas  : "headerCaption headerIcon";
 }  
 
+
+.cssBaseWindowContainerJ4
+{
+   position         : absolute;
+   margin           : 0;
+   padding          : 1px;
+   border           : 0;
+   color            : rgba(0, 0, 0, 0.7);
+   background-color : rgba(0, 0, 0, 0.7);
+   box-shadow       : 14px 14px 10px rgba(0, 0, 0, 0.7);
+   overflow         : hidden;
+}
+
+.cssWindowContainerJ4
+{
+   height           : calc(100% - 4px);
+   width            : calc(100% - 4px);
+   margin           : 2px;
+   padding          : 0;
+   border           : 0;
+   border-radius    : 0px;
+   color            : rgb(0, 0, 0);
+   background-color : greenyellow;
+   overflow         : auto;
+}
+
+
+
+.cssCaptionJ4
+{
+  padding           : 0px;
+  border            : 1px solid rgb(87, 86, 86);
+  border-Radius     : 4px;
+  color             : white;
+  background-Color  : black;
+  background-image  : linear-gradient(to right,rgb(0, 0, 0) , rgb(113, 113, 247));
+  align-items       : center;
+  justify-content   : left;
+  overflow          : hidden;
+}   
+
+
 .cssWindowCaptionText
 {
    grid-area       : headerCaption; 
@@ -287,8 +407,9 @@ html, body {
    padding-top     : 0.1em; 
    font-size       : 1.1em;
  } 
- 
- 
+
+
+
  .cssWindowSysButton
  {
    grid-area          : headerIcon; 
@@ -623,7 +744,7 @@ html, body {
   border            : 1px solid gray;
   color             : black;
   background-Color  : rgb(177, 177, 177);	
-  overflow          : auto;
+  overflow          : auto;leftAlign
   display           : flex;
   flex-Flow         : wrap;
   float             : left;
