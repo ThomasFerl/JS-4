@@ -86,6 +86,7 @@ export function main(capt1,capt2)
      btn.heightPx = '40px';
      btn.callBack_onClick = ()=>
        {
+         var largeImg = null;
          var selected = cb2.getSelectedItems();
          if(selected.length==0) {alert('nichts ausgewählt !');return};
             diaShow = [];   
@@ -96,9 +97,8 @@ export function main(capt1,capt2)
               if(i<diaShow.length)
               {
                 if(largeImg) largeImg.fadeOut(100);
-                largeImg = new TFPanel(body ,0,0,7,10 );
-                largeImg.callBack_onClick = ()=>{largeImg.fadeOut(100); largeImg=null};
-                largeImg.zIndex = 1000;
+                largeImg = new TFWindow( body , imgURL , '50%' , '70%' , 'CENTER' );
+                largeImg.imgURL = imgURL;
                 largeImg.imgURL = diaShow[i];
                 setTimeout(() => {if(largeImg) {largeImg.fadeOut(1000,()=>{largeImg=null; i++; showNext()});}}, slider.value*100);    
               }
