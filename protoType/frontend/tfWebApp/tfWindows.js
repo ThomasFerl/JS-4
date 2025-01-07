@@ -15,7 +15,7 @@ export class TFWindow extends TFObject
     var T=1;
     var W=1;
     var H=1;
-debugger;
+
     aWidth   = aWidth.toString();
     aHeight  = aHeight.toString();
 
@@ -78,13 +78,6 @@ debugger;
   render()
   {
    super.render();
-
-    this.DOMelement.style.position = 'absolute';
-    this.topPx    = this.params.top;
-    this.leftPx   = this.params.left;
-    this.widthPx  = this.params.width;
-    this.heightPx = this.params.height;
-   
     
     if(this.parent==document.body)
         {
@@ -111,7 +104,6 @@ debugger;
 
         if(dx!=0 || dy!=0) 
         {    
-         debugger;
          this.leftPx = this.leftPx + dx;
          this.topPx  = this.topPx + dy;
         } 

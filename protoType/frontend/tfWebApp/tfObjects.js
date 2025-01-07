@@ -369,8 +369,9 @@ export class TFObject
 
   set leftPx( value )
   {
-    if (isNaN(value)) if(this.DOMelement) this.DOMelement.style.left = value;
-    else              if(this.DOMelement) this.DOMelement.style.left = value+'px';
+    var st  = value;
+    if(!isNaN(value)) st = st + 'px';
+    this.DOMelement.style.left = st;
  } 
 
   get leftPx()
@@ -381,8 +382,9 @@ export class TFObject
 
   set topPx( value )  
   {
-    if (isNaN(value)) if(this.DOMelement) this.DOMelement.style.top = value;
-    else              if(this.DOMelement) this.DOMelement.style.top = value+'px';
+    var st  = value;
+    if(!isNaN(value)) st = st + 'px';
+    this.DOMelement.style.top = st;
   }
 
   get topPx()
@@ -397,8 +399,9 @@ export class TFObject
 
   set widthPx( value )
   {
-    if (isNaN(value)) if(this.DOMelement) this.DOMelement.style.width = value;
-    else              if(this.DOMelement) this.DOMelement.style.width = value+'px';
+    var st  = value;
+    if(!isNaN(value)) st = st + 'px';
+    this.DOMelement.style.width = st;
  } 
 
   get widthPx()
@@ -410,8 +413,9 @@ export class TFObject
 
   set heightPx( value )
   {
-    if (isNaN(value)) if(this.DOMelement) this.DOMelement.style.height = value;
-    else              if(this.DOMelement) this.DOMelement.style.height = value+'px';
+    var st  = value;
+    if(!isNaN(value)) st = st + 'px';
+    this.DOMelement.style.height = st;
   } 
 
   get heightPx()
