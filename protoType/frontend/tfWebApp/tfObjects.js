@@ -393,10 +393,6 @@ export class TFObject
     return rect.top;
   }
 
-
-
-
-
   set widthPx( value )
   {
     var st  = value;
@@ -910,8 +906,9 @@ get opacity()
     if(this.DOMelement) 
       {
         this.DOMelement.style.backgroundImage  = "url('"+value+"')";
+        this.DOMelement.style.backgroundPosition = 'center center';
         this.DOMelement.style.backgroundRepeat = 'no-repeat';
-        this.DOMelement.style.backgroundSize   = 'cover';
+        this.DOMelement.style.backgroundSize   = 'contain';
       }
   }
 
