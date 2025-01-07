@@ -1731,11 +1731,9 @@ export class TFWorkSpace extends TFObject
 
     if(this.params.caption1 || this.params.caption2)
     {
-      this.buildGridLayout_templateColumns('1fr');
-      this.buildGridLayout_templateRows   ('4em 1fr');
-
-      //this.buildGridLayout('10x10');
-
+      utils.buildGridLayout_templateColumns(this,'1fr', {stretch:true});
+      utils.buildGridLayout_templateRows(this,'4em 1fr' , {stretch:true});
+      
       //erzeuge Panel für Caption
       this.caption                = new TFPanel(this , 1 , 1 , 1 , 1 , {css:'cssWorkSpaceCaptionJ4'} );
       this.caption.id             = this.wsID +"_caption";
@@ -1779,12 +1777,13 @@ export class TFWorkSpace extends TFObject
     else 
          {
           this.caption = null;
-          this.buildGridLayout_templateColumns('1fr');
-          this.buildGridLayout_templateRows('1px 1fr');
+          utils.buildGridLayout_templateColumns(this,'1fr', {stretch:true});
+          utils.buildGridLayout_templateRows(this,'1px 1fr' , {stretch:true});
         } 
+
     utils.log("Erzeuge Workspace ");
-    //this.handle                        = new TFPanel(this, 1 , 2 , 1 , 1 , {css:'cssWorkSpaceJ4'});
-    //this.handle.id                     = this.wsID +"_dashBoard";
+    this.handle                        = new TFPanel(this, 1 , 2 , 1 , 1 , {css:'cssWorkSpaceJ4'});
+    this.handle.id                     = this.wsID +"_dashBoard";
   }
   
  
@@ -1814,6 +1813,357 @@ export class TFWorkSpace extends TFObject
   {
    this.container.style.display = this.previousDisplay; 
   }
+
+  
+  get fontSize()
+  {
+    return this.handle.DOMelement.style.fontSize;
+  }
+  
+  set fontSize(value) 
+  {
+    this.handle.DOMelement.style.fontSize = value;
+  }
+  
+  
+  get fontWeight()  
+  {
+    return this.handle.DOMelement.style.fontWeight;
+  }
+  
+  set fontWeight(value)
+  {
+    this.handle.DOMelement.style.fontWeight = value;
+  }
+  
+  
+  set gap(value)
+  {
+    this.handle.DOMelement.style.gap = value;
+  }
+  
+  get gap()
+  {
+    return this.handle.DOMelement.style.gap;
+  }
+  
+    buildGridLayout( gridSizeOrTemplate )
+    {
+      utils.buildGridLayout( this.handle , gridSizeOrTemplate , {stretch:this.params.stretch} );
+  
+    }    
+  
+   
+    buildGridLayout_templateColumns(template)
+    {
+     utils.buildGridLayout_templateColumns( this.handle , template , {stretch:this.params.stretch}  );
+    }  
+  
+   
+    buildGridLayout_templateRows(template)
+    {
+     utils.buildGridLayout_templateRows( this.handle , template , {stretch:this.params.stretch}  );
+    }  
+  
+    buildBlockLayout() 
+    {
+      utils.buildBlockLayout( this.handle );
+    }
+  
+    buildFlexBoxLayout() 
+    {
+     utils.buildFlexBoxLayout( this.handle );
+    }
+     
+  
+    set innerHTML(html)
+    {
+      this.handle.DOMelement.innerHTML = html;
+    }
+  
+    get innerHTML()
+    {
+      return this.handle.DOMelement.innerHTML;
+    }
+  
+  
+    set display(value)
+    {
+      this.handle.DOMelement.style.display = value;  
+    }
+  
+  
+    get display()
+    {
+      return this.handle.DOMelement.style.display;  
+    }
+  
+  
+  set placeItems(value)
+    {
+      this.handle.DOMelement.style.placeItems = value;
+    }
+  
+  
+   get placeItems()
+    {
+      return this.handle.DOMelement.style.placeItems;
+    }
+  
+    set justifyContent(value)
+    {
+      this.handle.DOMelement.style.justifyContent = value;  
+    }
+  
+  
+    get justifyContent()
+    {
+      return this.handle.DOMelement.style.justifyContent;  
+    }
+  
+  
+    set alignItems(value)
+    {
+      this.handle.DOMelement.style.alignItems = value;  
+    }
+  
+  
+    get alignItems()
+    {
+      return this.handle.DOMelement.style.alignItems;  
+    }
+  
+  
+    set flexDirection(value)  
+    {
+      this.handle.DOMelement.style.flexDirection = value;
+    }
+   
+  
+    get flexDirection()   
+    {
+      return this.handle.DOMelement.style.flexDirection;
+    }
+    
+  
+    get overflow()  
+    {     
+      return this.handle.DOMelement.style.overflow;  
+    }
+  
+    set overflow(value) 
+    {
+      this.handle.DOMelement.style.overflow = value;
+    }
+  
+    set backgroundColor(value)
+    {
+      this.handle.DOMelement.style.backgroundColor = value;
+    } 
+  
+    get backgroundColor()
+    {
+      return this.handle.DOMelement.style.backgroundColor;
+    } 
+  
+    set color(value)
+    {
+      this.handle.DOMelement.style.color = value;
+    } 
+  
+    get color()
+    {
+      return this.handle.DOMelement.style.color;
+    } 
+  
+    
+    set margin( value ) 
+    {
+      this.handle.DOMelement.style.margin = value;
+    }
+  
+  
+    get margin()
+    {
+      return this.handle.DOMelement.style.margin;
+    }
+  
+  
+    set marginTop( value ) 
+    {
+      this.handle.DOMelement.style.marginTop = value;
+    }
+  
+  
+    get marginTop()
+    {
+      return this.handle.DOMelement.style.marginTop;
+    }
+  
+    set marginLeft( value ) 
+    {
+      this.handle.DOMelement.style.marginLeft = value;
+    }
+  
+  
+    get marginLeft()
+    {
+      return this.handle.DOMelement.style.marginLeft;
+    }
+  
+  
+    set marginRight( value ) 
+    {
+      this.handle.DOMelement.style.marginRight = value;
+    }
+  
+  
+    get marginRight()
+    {
+      return this.handle.DOMelement.style.marginRight;
+    }
+  
+  
+  set marginBottom( value ) 
+    {
+      this.handle.DOMelement.style.marginBottom = value;
+    }
+  
+  
+    get marginBottom()
+    {
+      return this.handle.DOMelement.style.marginBottom;
+    }
+  
+    set padding( value ) 
+    {
+      this.handle.DOMelement.style.padding = value;
+    }
+  
+    get padding()
+    {
+      return this.handle.DOMelement.style.padding;
+    }
+  
+    set paddingTop( value )   
+    {
+      this.handle.DOMelement.style.paddingTop = value; 
+    }
+  
+  
+    get paddingTop()
+    {
+      return this.handle.DOMelement.style.paddingTop;
+    }
+  
+    set paddingLeft( value )
+    {
+      this.handle.DOMelement.style.paddingLeft = value;
+    }
+  
+    get paddingLeft()
+    {
+      return this.handle.DOMelement.style.paddingLeft;
+    }
+  
+    set paddingRight( value )
+    {
+      this.handle.DOMelement.style.paddingRight = value;
+    }
+  
+    get paddingRight()
+    {
+      return this.handle.DOMelement.style.paddingRight;
+    }
+  
+    set paddingBottom( value )
+    {
+      this.handle.DOMelement.style.paddingBottom = value;
+    }
+  
+    get paddingBottom()
+    {
+      return this.handle.DOMelement.style.paddingBottom;
+    }
+  
+    set borderWidth( value )
+    {
+      this.handle.DOMelement.style.borderWidth = value;
+    }
+  
+    get borderWidth()
+    {
+      return this.handle.DOMelement.style.borderWidth;
+    }
+  
+    set borderColor( value )
+    {
+      this.handle.DOMelement.style.borderColor = value;
+    }
+  
+    get borderColor()
+    {
+      return this.handle.DOMelement.style.borderColor;
+    }
+  
+    set borderRadius(value) 
+    {
+      this.handle.DOMelement.style.borderRadius = typeof value === 'string' ? value : value + 'px';
+    }
+  
+  
+    get borderRadius()
+    {
+      return this.handle.DOMelement.style.borderRadius;
+    }
+  
+  
+  set blur(value)
+  {
+    this.handle.DOMelement.style.filter = 'blur('+value+'px)';
+  }
+  
+  get blur()
+  {
+    return this.handle.DOMelement.style.filter;
+  }
+  
+  
+  set opacity(value)  
+  {
+    this.handle.DOMelement.style.opacity = value;
+  }
+  
+  get opacity()
+  {
+    return this.handle.DOMelement.style.opacity;
+  }
+  
+    set imgURL( value )
+    {
+      this.handle.DOMelement.style.backgroundImage  = "url('"+value+"')";
+      this.handle.DOMelement.style.backgroundPosition = 'center center';
+      this.handle.DOMelement.style.backgroundRepeat = 'no-repeat';
+      this.handle.DOMelement.style.backgroundSize   = 'contain';
+    }
+  
+    get imgURL()
+    {// "url("./pix/21_1733947066104.jpeg")"
+      var url = this.handle.DOMelement.style.backgroundImage;
+          url = url.slice(5);
+          url = url.slice(0,-2);
+      
+      return url;
+      
+    }
+  
+  
+
+
+
+
+
+
 
 }
 

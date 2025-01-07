@@ -1,5 +1,7 @@
 import * as globals      from "./tfWebApp/globals.js";
 import * as utils        from "./tfWebApp/utils.js";    
+import { TFWindow }      from "./tfWebApp/tfWindows.js";
+
 import { TFLabel, 
          TFPanel , 
          TFSlider,
@@ -8,25 +10,20 @@ import { TFLabel,
          TFListCheckbox,
          TFEdit,
          TFComboBox,
+         TFWorkSpace,
          TFPopUpMenu }      from "./tfWebApp/tfObjects.js"; 
 
 
 var response = utils.httpRequest('http://localhost:4000/lsPix');
 
-var body = document.body;
-    body.style.display = 'grid';
-    body.style.gridTemplateRows = `repeat(10, 1fr)`;
-    body.style.gridTemplateColumns = `repeat(10, 1fr)`;
-
-var pix=[];
-pix = JSON.parse(response.result).result;  
+var body = null;
+var pix  = [];
+pix      = JSON.parse(response.result).result;  
 
 var diaShow =[];
 
 var images  = [];  
 for(var i=0;i<pix.length;i++) images.push({caption: './pix/'+pix[i],checked:false});
-
-var largeImg = null;  
 
 var cb1     = null;
 var cb2     = null;
@@ -57,14 +54,9 @@ var popup = new TFPopUpMenu([{caption:'view',value:1} , {caption:'selelect',valu
 
  function showImage(imgURL)
  {
-  if(largeImg) largeImg.fadeOut(100);
-  largeImg = new TFPanel(body ,0,0,7,10 );
-  largeImg.zIndex = 1000;
+  var largeImg = new TFWindow( body , imgURL , '50%' , '70%' , 'CENTER' );
   largeImg.imgURL = imgURL;
-  largeImg.callBack_onClick = ()=>{largeImg.fadeOut(100); largeImg=null};
-
   setTimeout(() => {if(largeImg) {largeImg.fadeOut(1000); diaShow= []; largeImg=null}} , slider.value*100); 
-
   combo.value = imgURL;
  } 
 
@@ -72,12 +64,15 @@ var popup = new TFPopUpMenu([{caption:'view',value:1} , {caption:'selelect',valu
 
 export function main(capt1,capt2)
 {
-  console.log('main() called ...');
+  body = new TFWorkSpace('mainWS' , capt1 , capt2 );
+  body.buildGridLayout('10x10');
+
+    console.log('main() called ...');
   var rows = 10;
   var cols = 10;
   
       
- var testContainer     = new TFPanel(body,8,0,3,rows, {backgroundColor:'gray'} );   
+ var testContainer     = new TFPanel(body,8,1,3,rows, {backgroundColor:'gray'} );   
      utils.buildGridLayout(testContainer,'1x10');
 
      slider = new TFSlider(testContainer,1,1,1,1, {position:30} );  
@@ -122,11 +117,11 @@ export function main(capt1,capt2)
 
 //------------------------------------------------------------
 //-------------GRID-------------------------------------------
- var gridContainer     = new TFPanel(body,0,0,7,10, {backgroundColor:'gray'} );   
- utils.buildGridLayout(gridContainer,''+rows+'x'+cols);  
- gridContainer.gap = '2px'; // Abstand zwischen den Zellen
+ var gridContainer     = new TFPanel(body,1,1,7,10, {backgroundColor:'gray'} );   
+     gridContainer.buildGridLayout(''+rows+'x'+cols);  
+     gridContainer.gap = '2px'; // Abstand zwischen den Zellen
  
- var blur = 4;
+ var blur = 2;
  for(var row=1;row<=rows;row++)
     for(var col=1;col<=cols;col++)
     {
