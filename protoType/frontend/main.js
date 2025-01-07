@@ -17,9 +17,9 @@ import { TFWindow }      from "./tfWebApp/tfWindows.js";
 
 export function main(capt1,capt2)
 {
-  //var ws = new TFWorkSpace('mainWS' , 'Test' , 'Hallo Welt' );
+  var ws = new TFWorkSpace('mainWS' , 'Test' , 'Hallo Welt' );
 
-  var wnd = new TFWindow( new Screen() , 'TEST' , '50%' , '70%' , 'CENTER');     
+  var wnd = new TFWindow( ws , 'TEST' , '50%' , '70%' , 'CENTER');     
   
   wnd.shadow = 0;
 }
