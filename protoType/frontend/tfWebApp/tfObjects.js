@@ -102,7 +102,7 @@ export class TFPopUpMenu
 export class TFObject
 {
   constructor (aParent , left , top , width , height , params ) 
-  {
+  { 
     if(!aParent) { alert("constructor TFObject => parent = null ! "); return; }
 
     if(utils.isHTMLElement(aParent)) 
@@ -901,26 +901,50 @@ get opacity()
 
 
 
-  set imgURL( value )
-  {
-    if(this.DOMelement) 
-      {
-        this.DOMelement.style.backgroundImage  = "url('"+value+"')";
-        this.DOMelement.style.backgroundPosition = 'center center';
-        this.DOMelement.style.backgroundRepeat = 'no-repeat';
-        this.DOMelement.style.backgroundSize   = 'contain';
-      }
+ set imgURL(value) 
+ {
+  if (value.endsWith('.svg')) 
+    {
+      this.__svgURL = value;
+      // SVG als `<img>` oder Inline-SVG einfügen
+      fetch(value)
+          .then((response) => { if (!response.ok) throw new Error('SVG konnte nicht geladen werden.');
+                                return response.text();
+                              }
+                            )
+          .then((svgContent) => {
+                                 // Alte Inhalte entfernen
+                                 this.DOMelement.innerHTML = ''; 
+              
+                                 // SVG-Inhalt direkt einfügen
+                                 this.DOMelement.innerHTML = svgContent;
+                                 this.DOMelement.style.backgroundImage = ''; // Hintergrund zurücksetzen
+                                })
+          .catch(error => console.error('Fehler beim Laden der SVG:', error));
+  } else {
+      // Standard-Fallback für andere Bildtypen
+      this.__svgURL = '';
+      this.DOMelement.style.backgroundImage = "url('" + value + "')";
+      this.DOMelement.style.backgroundPosition = 'center center';
+      this.DOMelement.style.backgroundRepeat = 'no-repeat';
+      this.DOMelement.style.backgroundSize = 'contain';
   }
+}
+
 
   get imgURL()
-  {// "url("./pix/21_1733947066104.jpeg")"
-    var url = this.DOMelement.style.backgroundImage;
-        url = url.slice(5);
-        url = url.slice(0,-2);
-    
-    return url;
-    
+  {
+    if (this.__svgURL) return this.__svgURL;
+    else 
+         {// "url("./pix/21_1733947066104.jpeg")"
+           var url = this.DOMelement.style.backgroundImage;
+               url = url.slice(5);
+               url = url.slice(0,-2);
+               return url;
+         }      
   }
+
+
 
   destroy()
   {
@@ -1720,6 +1744,7 @@ export class TFWorkSpace extends TFObject
      if (screen==null) screen = new Screen() ;
     
     super(screen , 1 , 1 , '100%' , '100%' , {css:"cssWorkSpaceJ4" , preventGrid:true , fixit:true, ID:ID, caption1:caption1, caption2:caption2 } );
+    this.self = null;
   }
   
   render()
@@ -1783,6 +1808,7 @@ export class TFWorkSpace extends TFObject
 
     utils.log("Erzeuge Workspace ");
     this.handle                        = new TFPanel(this, 1 , 2 , 1 , 1 , {css:'cssWorkSpaceJ4'});
+    this.self                          = this.handle;
     this.handle.id                     = this.wsID +"_dashBoard";
   }
   

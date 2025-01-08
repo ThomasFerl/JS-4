@@ -5,7 +5,7 @@ var   { spawn }         = require('child_process');
 const { TFLogging }     = require('./logging.js');
 
 
-module.exports.debug    = false;
+module.exports.debug    = true;
 module.exports.logging  = new TFLogging();
 
 
@@ -701,6 +701,18 @@ module.exports.scanDir = (fs , path , dirName ) =>
 
   
 }
+
+
+module.exports.getFile = function( fs , fileName )
+{
+  this.log('getFile('+fileName+')');
+  
+  try {
+  if (fs.existsSync(fileName))  return {error:false, errMsg:'OK', result:fs.readFileSync(fileName, 'utf8') }; 
+  else                         return {error:true, errMsg:'File not found', result:'' };
+  } catch(err) { return {error:true, errMsg:err.message, result:"" }; } 
+}
+
 
 
 module.exports.httpRequest = async function (url) 

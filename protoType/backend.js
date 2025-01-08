@@ -1,4 +1,3 @@
-const checkValidSession = true;
 const useHTTPS          = false;
 const port              = '4000';
 
@@ -12,6 +11,7 @@ const bodyParser  = require('body-parser');
 const Database    = require('better-sqlite3');
 const fs          = require('fs-extra');
 const path        = require('path');
+const globals     = require('./backendGlobals');
 const utils       = require('./nodeUtils');
 const webAPI      = require('./nodeAPI');
 const userAPI     = require('./userAPI');
@@ -107,7 +107,7 @@ if(strRequest)
        } catch(err) { res.send( handleError("JSON.PARAM-parse-Error: " + err.message )); return }
    
        // während des Entwickelns und Debuggens ist die SessioID sehr lästig 
-      if(checkValidSession)
+      if(!globals.ignoreSession)
       { 
         if(!session.validSession( jsnRequest.session )) { res.send( handleError("invalid Session / Session timout")); return }
       }

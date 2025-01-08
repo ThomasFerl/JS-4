@@ -117,7 +117,7 @@ export class TFWindow extends TFObject
     this.DOMelement.style.backgroundColor = 'black';
 
     utils.buildGridLayout_templateColumns(this,'1fr',{stretch:true});
-    utils.buildGridLayout_templateRows(this,'2em 1fr',{stretch:true});
+    utils.buildGridLayout_templateRows(this,'1.7em 1fr',{stretch:true});
        
     this.caption  = new TFPanel( this , 1 , 1 , 1 , 1 , {css:"cssWindowCaptionJ4"} );
     this.caption.buildGridLayout_templateColumns('1fr 2em 2em 2em');

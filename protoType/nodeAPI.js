@@ -94,6 +94,9 @@ if( CMD=='KEEPALIVE')       return session.keepAlive(sessionID)
 
 if( CMD=='SCANDIR')         return utils.scanDir ( fs , path , param.dir );
 
+if( CMD=='GETFILE')         return utils.getFile( fs , param.fileName );
+
+
 if( CMD=='CREATETABLE') 
    if(param.etc)            return dbUtils.createTable ( etc, param.tableName , param.fieldDefs );
    else                     return dbUtils.createTable ( dB , param.tableName , param.fieldDefs );

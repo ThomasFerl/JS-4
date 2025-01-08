@@ -6,6 +6,7 @@ var sessions       = [];
 var etc            = {};
 var usr            = null;
 
+const globals      = require('./backendGlobals');
 const utils        = require('./nodeUtils');
 const dbUtils      = require('./dbUtils');
 const grants       = require('./nodeGrants');
@@ -123,6 +124,8 @@ function newSession( user , remoteIP )   //  username als String oder user als O
 
 function findSessionNdxBySessionID ( sessionID )
 {
+  if(globals.ignoreSession) return 0;
+
   //console.log("findSessionNdxBySessionID(sessionID:"+sessionID+")");
   for(var i=0; i<sessions.length; i++ )
   {
@@ -138,6 +141,8 @@ function findSessionNdxBySessionID ( sessionID )
 
 function findSessionBySessionID ( sessionID )
 {
+  if(globals.ignoreSession) return { dbID :0,id :0,userID:'noName',userName:'noName',user:{},grants:[],lastActivity:currentTimestamp,sessionVars:{} };
+
   var ndx = findSessionNdxBySessionID(sessionID)
   if(ndx<0) return null;
   else      return sessions[ndx]   
