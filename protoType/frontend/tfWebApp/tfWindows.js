@@ -7,8 +7,8 @@ import {
          TFPanel  
        }           from "./tfObjects.js"; 
 
-var zIndexStart = 1000;
-var rootwindows = [];       
+var zIndexStart = 100;
+var windows     = [];       
 
 export class TFWindow extends TFObject 
 { 
@@ -81,17 +81,16 @@ export class TFWindow extends TFObject
   render()
   {
    super.render();
+
+   this.__rezising = null;
            
-    if(this.parent==document.body)
-        {
-          // finde max zIndex in rootwindows
-            var zIndex = zIndexStart; 
-            for(var i=0;i<rootwindows.length;i++) if(rootwindows[i].zIndex>zIndex) zIndex = rootwindows[i].zIndex;
-            this.zIndex = zIndex + 1;
-            rootwindows.push(this);
-        } else this.zIndex = this.parent.zIndex + 1;  
-        
+    // finde max zIndex in windows
+   var zIndex = zIndexStart; 
+   for(var i=0;i<windows.length;i++) if(windows[i].zIndex>zIndex) zIndex = windows[i].zIndex;
+   this.zIndex = zIndex + 1;
+   windows.push(this);
    
+
     this.callBack_onDragStart = ( e )=>{ 
          // Speichere den Abstand zwischen dem Mauszeiger und der oberen linken Ecke des DIVs
             console.log('dragStart: x=' +this.leftPx+'   y='+this.topPx); 
@@ -111,6 +110,49 @@ export class TFWindow extends TFObject
          this.topPx  = this.topPx + dy;
         } 
     }
+
+    this.callBack_onMouseDown = ( e )=>{
+      // bringe das Fenster in den Vordergrund
+      var zIndex = zIndexStart;
+      for(var i=0;i<windows.length;i++) if(windows[i].zIndex>zIndex) zIndex = windows[i].zIndex;
+      this.zIndex = zIndex;
+
+      // prüfe, ob die rechte untere Ecke -21 pixel angeklickt wurde
+      if( e.clientX > (this.widthPx-21) && e.clientY > (this.heightPx-21) )
+        {
+          this.__rezising = {x:e.screenX,y:e.screenY,w:this.widthPx,h:this.heightPx};
+         // erstelle ein halbtransparentes minipanel zum Resizen
+         var resizer = new TFPanel( document.body , (this.leftPx+this.widthPx-20)+'px' , (this.topPx+this.heightPx-20)+'px' , '20px' , '20px' , {preventGrid: true} );
+          resizer.backgroundColor = 'rgba(0,0,0,0.21)';
+          resizer.zIndex = this.zIndex + 1;
+          resizer.callBack_onMouseMove = ( e )=>{
+                                                 this.resizer.leftPx = e.screenX - 10;
+                                                 this.resizer.topPx  = e.screenY - 10;
+                                                 var dx = e.screenX - this.__rezising.x;
+                                                 var dy = e.screenY - this.__rezising.y;
+                                                 this.widthPx  = this.widthPx + dx;
+                                                 this.heightPx = this.heightPx + dy;
+                                                 this.__rezising.x = e.screenX;
+                                                 this.__rezising.y = e.screenY;
+          }  
+    } 
+} 
+
+  this.callBack_onMouseUp = ( e )=>{
+    this.__rezising = null;
+    this.resizer.destroy();
+  } 
+
+
+    this.callBack_onMouseMove = ( e )=>{
+      if(this.__rezising)
+      {
+       
+      }
+    }  
+        
+
+
      
     // keinen Zugridff übwer die Propertuies, weil diese überladen werden, damit diese Eigenschaften für das Fenster
     // und nicht für den Container gelten
