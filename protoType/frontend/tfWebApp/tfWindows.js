@@ -7,8 +7,8 @@ import {
          TFPanel  
        }           from "./tfObjects.js"; 
 
-var zIndexStart = 1000;
-var rootwindows = [];       
+var zIndexStart = 100;
+var windows     = [];       
 
 export class TFWindow extends TFObject 
 { 
@@ -81,17 +81,16 @@ export class TFWindow extends TFObject
   render()
   {
    super.render();
+
+   this.__rezising = null;
            
-    if(this.parent==document.body)
-        {
-          // finde max zIndex in rootwindows
-            var zIndex = zIndexStart; 
-            for(var i=0;i<rootwindows.length;i++) if(rootwindows[i].zIndex>zIndex) zIndex = rootwindows[i].zIndex;
-            this.zIndex = zIndex + 1;
-            rootwindows.push(this);
-        } else this.zIndex = this.parent.zIndex + 1;  
-        
+    // finde max zIndex in windows
+   var zIndex = zIndexStart; 
+   for(var i=0;i<windows.length;i++) if(windows[i].zIndex>zIndex) zIndex = windows[i].zIndex;
+   this.zIndex = zIndex + 1;
+   windows.push(this);
    
+
     this.callBack_onDragStart = ( e )=>{ 
          // Speichere den Abstand zwischen dem Mauszeiger und der oberen linken Ecke des DIVs
             console.log('dragStart: x=' +this.leftPx+'   y='+this.topPx); 
@@ -111,8 +110,16 @@ export class TFWindow extends TFObject
          this.topPx  = this.topPx + dy;
         } 
     }
-     
-    // keinen Zugridff übwer die Propertuies, weil diese überladen werden, damit diese Eigenschaften für das Fenster
+
+    this.callBack_onClick = ( e )=>{
+      // bringe das Fenster in den Vordergrund
+      var zIndex = zIndexStart;
+      for(var i=0;i<windows.length;i++) if(windows[i].zIndex>zIndex) zIndex = windows[i].zIndex;
+      this.zIndex = zIndex;
+    }  
+
+          
+    // keinen Zugridff über die Properties, weil diese überladen werden, damit diese Eigenschaften für das Fenster
     // und nicht für den Container gelten
     this.DOMelement.style.backgroundColor = 'black';
 
@@ -139,11 +146,6 @@ export class TFWindow extends TFObject
       this.btnMaximize.callBack_onClick = ()=>{ if(this.__ismaximized) this.normelize();
                                                 else this.maximize();}
 
-
-
-
-
-
     this.captionText = new TFLabel( this.caption , 1 , 1 , 1 , 1 , {css:'cssWindowCaptionTextJ4',caption:this.params.caption} );
     this.captionText.textAlign      = 'left';
     
@@ -155,23 +157,23 @@ export class TFWindow extends TFObject
   normelize()
   {
     this.__ismaximized = false;
-    this.width = this.__savedWidth;
-    this.height = this.__savedHeight;
-    this.left = this.__savedLeft;
-    this.top = this.__savedTop;
+    this.width         = this.__savedWidth;
+    this.height        = this.__savedHeight;
+    this.left          = this.__savedLeft;
+    this.top           = this.__savedTop;
   }
 
     maximize()
     {
       this.__ismaximized = true;
-      this.__savedWidth = this.width;
+      this.__savedWidth  = this.width;
       this.__savedHeight = this.height;
-      this.__savedLeft = this.left;
-      this.__savedTop = this.top;
-      this.width = '100%';
-      this.height = '100%';
-      this.left = 0;
-      this.top = 0;
+      this.__savedLeft   = this.left;
+      this.__savedTop    = this.top;
+      this.width         = '100%';
+      this.height        = '100%';
+      this.left          = 0;
+      this.top           = 0;
     }
 
     minimize()
@@ -199,10 +201,7 @@ export class TFWindow extends TFObject
        } 
    }
     
-
-
-
-    }
+}
 
 
  

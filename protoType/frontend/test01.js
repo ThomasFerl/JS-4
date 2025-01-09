@@ -4,6 +4,7 @@ import { TFWindow }      from "./tfWebApp/tfWindows.js";
 
 import { TFLabel, 
          TFPanel , 
+         TFImage,
          TFSlider,
          TFButton,
          TFCheckBox,
@@ -55,8 +56,9 @@ var popup = new TFPopUpMenu([{caption:'view',value:1} , {caption:'selelect',valu
  function showImage(imgURL)
  {
   var largeImg = new TFWindow( body , imgURL , '50%' , '70%' , 'CENTER' );
-  largeImg.imgURL = imgURL;
-  setTimeout(() => {if(largeImg) {largeImg.fadeOut(1000); diaShow= []; largeImg=null}} , slider.value*100); 
+  new TFImage(largeImg.hWnd,1,1,1,1, {imgURL:imgURL} );
+      
+  if(slider.value<99) setTimeout(() => {if(largeImg) {largeImg.fadeOut(1000); diaShow= []}} , slider.value*100); 
   combo.value = imgURL;
  } 
 
@@ -72,12 +74,11 @@ export function main(capt1,capt2)
   var cols = 10;
   
       
- var testContainer     = new TFPanel(body,8,1,3,rows, {backgroundColor:'gray'} );   
+ var testContainer     = new TFPanel(body.handle,8,1,3,rows, {backgroundColor:'gray'} );   
      utils.buildGridLayout(testContainer,'1x10');
 
      slider = new TFSlider(testContainer,1,1,1,1, {position:30} );  
-     slider.onChange = ()=> {if(largeImg) largeImg.blur=slider.value; } 
-
+   
      label = new TFLabel(testContainer,1,2,1,1, {caption:capt1} );   
      label.fontSize = '1em';
      label.fontWeight = 'bold';
@@ -96,7 +97,6 @@ export function main(capt1,capt2)
             {
               if(i<diaShow.length)
               {
-                if(largeImg) largeImg.fadeOut(100);
                 largeImg = new TFWindow( body , imgURL , '50%' , '70%' , 'CENTER' );
                 largeImg.imgURL = imgURL;
                 largeImg.imgURL = diaShow[i];
@@ -117,7 +117,7 @@ export function main(capt1,capt2)
 
 //------------------------------------------------------------
 //-------------GRID-------------------------------------------
- var gridContainer     = new TFPanel(body,1,1,7,10, {backgroundColor:'gray'} );   
+ var gridContainer     = new TFPanel(body.handle,1,1,7,10, {backgroundColor:'gray'} );   
      gridContainer.buildGridLayout(''+rows+'x'+cols);  
      gridContainer.gap = '2px'; // Abstand zwischen den Zellen
  
@@ -125,14 +125,14 @@ export function main(capt1,capt2)
  for(var row=1;row<=rows;row++)
     for(var col=1;col<=cols;col++)
     {
-      var obj = new TFPanel(gridContainer ,col,row,1,1, {popupMenu:popup} );
+      var obj = new TFImage(gridContainer ,col,row,1,1, {popupMenu:popup , imgURL:'./pix/'+pix[Math.floor(Math.random()*pix.length)]} );
       obj.backgroundColor = 'black';
-      obj.imgURL = './pix/'+pix[Math.floor(Math.random()*pix.length)];
       cb2.addItem({caption:obj.imgURL,checked:false});
       combo.addItem(obj.imgURL , obj.imgURL);
       obj.blur   = blur;
       obj.callBack_onMouseMove   = function() { this.label.caption = this.obj.imgURL;  this.obj.blur=0 }.bind({obj:obj, label:label});
       obj.callBack_onMouseOut    = function() { this.label.caption = '' ;              this.obj.blur=this.blur }.bind({obj:obj, label:label, blur:blur});
+      obj.callBack_onClick       = function() { showImage(this.imgURL); }.bind({imgURL:obj.imgURL});  
      
 
     } 

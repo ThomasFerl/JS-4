@@ -84,8 +84,6 @@ export function JSONstringify(obj)
 }
 
 
-
-
 export function evaluate( exp )
 {
   var operator = '?';
@@ -1509,22 +1507,26 @@ export function buildFlexBoxLayout( parent )
   if(isHTMLElement(parent))
   {
     parent.style.display             = 'flex';
-    parent.style.flexDirection       = 'column';
+    parent.style.flexDirection       = 'row';
+    parent.style.gridAutoFlow        = 'row'; // Oder "column" je nach Bedarf
+    parent.style.overflowY           = 'auto';
     parent.style.flexWrap            = 'wrap';
+  
     parent.style.gridTemplateColumns = "none";
     parent.style.gridTemplateRows    = "none";
     parent.style.gridTemplateAreas   = "none";
-    parent.style.gridAutoFlow        = "row";
     return;
   }
   parent.isGridLayout = false;
   parent.DOMelement.style.display             = 'flex';
-  parent.DOMelement.style.flexDirection       = 'column';
+  parent.DOMelement.style.flexDirection       = 'row';
+  parent.DOMelement.style.gridAutoFlow        = 'row'; // Oder "column" je nach Bedarf
+  parent.DOMelement.style.overflowY           = 'auto';
   parent.DOMelement.style.flexWrap            = 'wrap';
+
   parent.DOMelement.style.gridTemplateColumns = "none";
   parent.DOMelement.style.gridTemplateRows    = "none";
   parent.DOMelement.style.gridTemplateAreas   = "none";
-  parent.DOMelement.style.gridAutoFlow        = "row"; // Oder "column" je nach Bedarf
 }
 
 

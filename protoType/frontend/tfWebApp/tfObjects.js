@@ -1108,6 +1108,70 @@ export class TFPanel extends TFObject
 
 //---------------------------------------------------------------------------
 
+export class TFImage extends TFObject 
+{
+  constructor (parent , left , top , width , height , params ) 
+  {
+    if(!params) params = {css:"cssPanel"};
+    else    params.css = params.css || "cssPanel";
+
+    super(parent , left , top , width , height , params );
+  } 
+  
+  render()
+  { 
+    super.render();
+
+    this.imgContainer = new TFPanel(this , 0 , 0 , '100%' , '100%' , { preventGrid:true });
+ 
+    if(this.params.imgURL) this.imgContainer.imgURL = this.params.imgURL;
+  }  
+
+  set imgURL(value) 
+  {
+    this.__URL = value;
+
+   if (value.endsWith('.svg')) 
+     {
+       // SVG als `<img>` oder Inline-SVG einfügen
+       fetch(value)
+           .then((response) => { if (!response.ok) throw new Error('SVG konnte nicht geladen werden.');
+                                 return response.text();
+                               }
+                             )
+           .then((svgContent) => {
+                                  // Alte Inhalte entfernen
+                                  this.imgContainer.DOMelement.innerHTML = ''; 
+               
+                                  // SVG-Inhalt direkt einfügen
+                                  this.imgContainer.innerHTML = svgContent;
+                                  this.imgContainer.DOMelement.style.backgroundImage = ''; // Hintergrund zurücksetzen
+                                 })
+           .catch(error => console.error('Fehler beim Laden der SVG:', error));
+   } else {
+       // Standard-Fallback für andere Bildtypen
+       this.__svgURL = '';
+       this.imgContainer.DOMelement.innerHTML = '<img src="' + value + '" style="width:100%;height:100%;object-fit:contain;">'; 
+   }
+ }
+ 
+ 
+   get imgURL()
+   {
+     return this.__URL;
+   }
+ 
+
+
+
+
+
+} 
+
+
+
+//---------------------------------------------------------------------------
+
 export class TFButton extends TFObject
 {
   constructor (parent , left , top , width , height , params ) 

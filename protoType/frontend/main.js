@@ -3,6 +3,7 @@ import * as utils        from "./tfWebApp/utils.js";
 
 import { TFLabel, 
          TFPanel , 
+         TFImage,
          TFSlider,
          TFButton,
          TFCheckBox,
@@ -39,16 +40,19 @@ export function main(capt1,capt2)
 
       svgContainer = new TFPanel( ws.handle , 1 , 2 , 10 , 9 , {css:"cssWhitePanel"});
       svgContainer.backgroundColor = 'white';
-      svgContainer.buildFlexBoxLayout();
-
-}
+    }
     
     
      
-function showSVGs(type)
+async function showSVGs(type)
 { 
    //load all SVG's
    svgContainer.innerHTML = '';
+   svgContainer.buildFlexBoxLayout();
+
+   var progress = new TFLabel( svgContainer , 1 , 1 , '100%' , '100%' , {caption:"loading ..."} );
+       progress.backgroundColor = 'rgba(0,0,0,0.25)';
+       progress.color = 'white';
 
    var response = utils.webApiRequest('SCANDIR' , {dir:svgPath+type} )
    var svgs     = [];
@@ -57,8 +61,14 @@ function showSVGs(type)
        if(response.result[i].isFile) svgs.push( response.result[i].name );
 
    for(var i=0; i<svgs.length; i++)
-   {
-     var p = new TFPanel( svgContainer , 1 , 1 , "35px" , "35px" );
+   { 
+    progress.caption = 'loading ' + i + ' of ' + svgs.length + '  (' + Math.round(i/svgs.length*100) + '%)';
+
+    // Warte kurz, damit der Browser aktualisieren kann
+    await new Promise(resolve => setTimeout(resolve, 0));
+
+
+     var p = new TFImage( svgContainer , 1 , 1 , "77px" , "77px" );
          p.overflow = 'hidden';
      var svg = utils.webApiRequest('GETFILE',{fileName:svgPath + type + '/' + svgs[i]} ); 
         if (!svg.error) 
@@ -70,4 +80,5 @@ function showSVGs(type)
                                                  };
           }
     }         
+    progress.destroy();
  }
