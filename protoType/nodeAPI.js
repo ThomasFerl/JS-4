@@ -57,7 +57,10 @@ async function batchProcedureHandler( processParam , enviroment )
 
 module.exports.handleCommand = async function( sessionID , cmd , param , req ,  res , fs , path )
 {
- var CMD = cmd.toUpperCase().trim();
+ var webResponse = res;
+ var webRequest  = req;
+ 
+  var CMD = cmd.toUpperCase().trim();
  utils.log("handle nodeAPI-Command ("+CMD+")   sessionID:"+sessionID);
  utils.log("params (stringifyd): "+JSON.stringify(param) );
          
@@ -94,7 +97,20 @@ if( CMD=='KEEPALIVE')       return session.keepAlive(sessionID)
 
 if( CMD=='SCANDIR')         return utils.scanDir ( fs , path , param.dir );
 
-if( CMD=='GETFILE')         return utils.getFile( fs , param.fileName );
+if( CMD=='GETFILE')         return utils.getTextFile( fs , param.fileName );
+
+if( CMD=='GETTEXTFILE')     return utils.getTextFile( fs , param.fileName );
+
+if( CMD=='GETIMAGEFILE')    {
+                             await utils.getImageFile  ( fs , path , param.fileName , webRequest , webResponse ); // function streamt direkt 
+                             return {isStream:true};
+                            }
+
+if( CMD=='GETMOVIEFILE')    {
+                             await utils.getMovieFile  ( fs , path , param.fileName , webRequest , webResponse ); // function streamt direkt 
+                             return {isStream:true};
+                            }
+
 
 
 if( CMD=='CREATETABLE') 

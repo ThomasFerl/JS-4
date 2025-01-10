@@ -703,7 +703,7 @@ module.exports.scanDir = (fs , path , dirName ) =>
 }
 
 
-module.exports.getFile = function( fs , fileName )
+module.exports.getTextFile = function( fs , fileName )
 {
   this.log('getFile('+fileName+')');
   
@@ -713,6 +713,102 @@ module.exports.getFile = function( fs , fileName )
   } catch(err) { return {error:true, errMsg:err.message, result:"" }; } 
 }
 
+
+
+exports.getImageFile = async( fs , path , img , req , res  ) =>
+{
+    var mime =
+       {
+        gif: 'image/gif',
+        jpg: 'image/jpeg',
+        png: 'image/png',
+        svg: 'image/svg+xml',
+       };
+  
+    var type      = mime[path.extname(img).slice(1)] || 'text/plain';
+     
+    try
+    {
+      var stream    = fs.createReadStream(img);
+          res.set('Content-Type', type );
+          stream.pipe(res);
+    }      
+    catch(err)
+              {
+                res.set('Content-Type', 'text/plain');
+                res.send(err);
+              };
+  }
+  
+  exports.getMovieFile = async( fs , path , movie , req , res  ) =>
+    {
+      console.log( 'playMovie('+movie+')' );
+    
+      var mime =
+         {
+          mp4:  'video/mp4',
+          flv:  'video/x-flv',
+          m3u8: 'application/x-mpegURL',
+          ts:   'video/MP2T',
+          mov:  'video/quicktime',
+          avi:  'video/x-msvideo',
+          wmv:  'video/x-ms-wmv',
+          m4v:  'video/x-m4v',
+          webm: 'video/webm', 
+          weba: 'audio/webm', 
+          ogm:  'video/ogg',
+          ogv:  'video/ogg',
+          ogg:  'video/ogg',
+    
+         };
+    
+      if( !fs.existsSync(movie) )
+      { 
+         res.set('Content-Type', 'text/plain');
+         res.send("missing fileName"); 
+         return;
+      }
+    
+      console.log( 'try to load "' + movie +'"');
+    
+     var type      = mime[path.extname(movie).slice(1)] || 'text/plain';
+    
+     console.log( 'typ : ' + type );
+    
+     const stat      = fs.statSync(movie);
+     const fileSize  = stat.size
+     const range     = req.headers.range
+    
+     if (range)
+     {
+        const parts     = range.replace(/bytes=/, "").split("-")
+        const start     = parseInt(parts[0], 10)
+        const end       = parts[1] ? parseInt(parts[1], 10) : fileSize-1
+        const chunksize = (end-start)+1
+        const file      = fs.createReadStream( movie , {start, end} )
+        const head      =
+        {
+          'Content-Range' : `bytes ${start}-${end}/${fileSize}`,
+          'Accept-Ranges' : 'bytes',
+          'Content-Length': chunksize,
+          'Content-Type'  : 'video/mp4',
+        }
+    
+        res.writeHead(206, head);
+        file.pipe(res);
+      }
+      else
+        {
+           const head = {
+          'Content-Length': fileSize,
+          'Content-Type': 'video/mp4',
+        }
+        res.writeHead(200, head)
+        fs.createReadStream(movie).pipe(res)
+      }
+    
+    }
+    
 
 
 module.exports.httpRequest = async function (url) 
