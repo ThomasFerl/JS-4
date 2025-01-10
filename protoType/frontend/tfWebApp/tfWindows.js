@@ -89,8 +89,15 @@ export class TFWindow extends TFObject
    for(var i=0;i<windows.length;i++) if(windows[i].zIndex>zIndex) zIndex = windows[i].zIndex;
    this.zIndex = zIndex + 1;
    windows.push(this);
-   
 
+
+   this.callBack_onClick = ( e )=>{
+         // bringe das Fenster in den Vordergrund
+            var zIndex = zIndexStart;
+            for(var i=0;i<windows.length;i++) if(windows[i].zIndex>zIndex) zIndex = windows[i].zIndex;
+            this.zIndex = zIndex;
+  }  
+   
     this.callBack_onDragStart = ( e )=>{ 
          // Speichere den Abstand zwischen dem Mauszeiger und der oberen linken Ecke des DIVs
             console.log('dragStart: x=' +this.leftPx+'   y='+this.topPx); 
@@ -465,4 +472,30 @@ get opacity()
     
   }
 
-}
+  destroy()
+  {
+    this.hWnd.destroy();
+    this.caption.destroy();
+    
+     while(this.childList.lenth>0)
+     {
+        var o=this.childList.pop();
+        o.destroy();
+        o=null;
+      }
+      
+      if(utils.isHTMLElement(this.parent)) this.parent.removeChild(this.DOMelement);
+      else this.parent.DOMelement.removeChild(this.DOMelement); 
+
+      for(var i=0;i<windows.length;i++) if(windows[i]==this) windows.splice(i,1);
+
+      this.DOMelement.remove();
+  }
+ }
+    //end class ...
+  
+  
+  
+   
+   
+

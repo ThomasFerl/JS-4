@@ -1,46 +1,49 @@
 import * as globals      from "./tfWebApp/globals.js";
 import * as utils        from "./tfWebApp/utils.js";    
+import * as dialogs      from "./tfWebApp/TFDialogs.js";
 
-import { TFLabel, 
-         TFPanel , 
-         TFImage,
-         TFSlider,
-         TFButton,
-         TFCheckBox,
-         TFListCheckbox,
-         TFEdit,
-         TFComboBox,
-         TFPopUpMenu,
-         Screen,
-         TFWorkSpace, }      from "./tfWebApp/tfObjects.js";
+import { TFWorkSpace }   from "./tfWebApp/tfObjects.js";
 import { TFWindow }      from "./tfWebApp/tfWindows.js";
 
 const svgPath = '/GIT/JS-3/tfWebApp/fontAwsome/svgs/';
 
-var svgContainer = null;
+var svgContainer  = null;
+var testContainer = null;
+var menuContainer = null;
 
 
 export function main(capt1,capt2)
 {
-  var ws = new TFWorkSpace('mainWS' , 'Test' , 'Hallo Welt' );
-      ws.buildGridLayout( '10x10' );
+    var ws = new TFWorkSpace('mainWS' , capt1,capt2 );
 
-  var menuContainer = new TFPanel( ws.handle , 1 , 1 , 10 , 1 , {css:"cssWhitePanel"} );
+    var l  = dialogs.setLayout( ws.handle , {gridCount:21,head:1,left:7} )
+  
+      menuContainer = l.head;
+      testContainer = l.left;
+      svgContainer  = l.dashBoard; 
+
       menuContainer.backgroundColor = 'gray';
       menuContainer.buildGridLayout_templateColumns('10em 10em 10em 1fr ');
+      menuContainer.buildGridLayout_templateRows('0.1em 1fr 0.1em');
 
-  var btn1 = new TFButton( menuContainer , 1 , 1 , 1 , 1 , {caption:"regular"} );
+
+  var btn1 = dialogs.addButton( menuContainer , "" , 1 , 2 , 1 , 1 , "regular"  )
       btn1.callBack_onClick = function() { showSVGs('regular') };
-  
-  var btn2 = new TFButton( menuContainer , 2 , 1 , 1 , 1 , {caption:"solid"} );
+      btn1.heightPx = 21;
+
+  var btn2 = dialogs.addButton( menuContainer , "" , 2 , 2 , 1 , 1 , "solid"  )
       btn2.callBack_onClick = function() { showSVGs('solid') };
+      btn2.heightPx = 21;
 
-  var btn3 = new TFButton( menuContainer , 3 , 1 , 1 , 1 , {caption:"brands"} );
+  var btn3 = dialogs.addButton( menuContainer , "" , 3 , 2 , 1 , 1 , "brands"  )
       btn3.callBack_onClick = function() { showSVGs('brands') };
+      btn3.heightPx = 21;
 
-      svgContainer = new TFPanel( ws.handle , 1 , 2 , 10 , 9 , {css:"cssWhitePanel"});
-      svgContainer.backgroundColor = 'white';
-    }
+
+
+      
+      
+}
     
      
 async function showSVGs(type)
@@ -49,7 +52,7 @@ async function showSVGs(type)
    svgContainer.innerHTML = '';
    svgContainer.buildFlexBoxLayout();
 
-   var progress = new TFLabel( svgContainer , 1 , 1 , '100%' , '100%' , {caption:"loading ..."} );
+   var progress = dialogs.addLabel( svgContainer , "" , 1 , 1 , '100%' , '100%' , "loading ..." );
        progress.backgroundColor = 'rgba(0,0,0,0.25)';
        progress.color = 'white';
 
@@ -64,20 +67,23 @@ async function showSVGs(type)
     progress.caption = 'loading ' + i + ' of ' + svgs.length + '  (' + Math.round(i/svgs.length*100) + '%)';
 
     // Warte kurz, damit der Browser aktualisieren kann
-    await new Promise(resolve => setTimeout(resolve, 0));
+    await utils.processMessages();
 
-
-     var p = new TFImage( svgContainer , 1 , 1 , "77px" , "77px" );
-         p.overflow = 'hidden';
+     var p = dialogs.addImage( svgContainer , "" , 1 , 1 , "77px" , "77px" );
+     
      var svg = utils.webApiRequest('GETFILE',{fileName:svgPath + type + '/' + svgs[i]} ); 
+
         if (!svg.error) 
           {
-            p.innerHTML = svg.result;
+            p.svgContent = svg.result;
             p.dataBinding = {svg:svg.result};
-            p.callBack_onClick = function(e, d ) { var wnd = new TFWindow( svgContainer , 'TEST' , '400px' , '400px' , 'CENTER' ); 
-                                                       wnd.innerHTML = d.svg;
+            p.callBack_onClick = function(e, d ) { var wnd = new TFWindow( svgContainer , 'TEST' , '50%' , '70%' , 'CENTER' ); 
+                                                   var img = dialogs.addImage( wnd.hWnd ,  '' , 1, 1, '100%' , '100%' );                                       
+                                                       img.svgContent = d.svg;
                                                  };
           }
-    }         
+    }      
+
     progress.destroy();
+
  }

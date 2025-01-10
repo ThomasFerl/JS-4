@@ -1095,6 +1095,68 @@ get textAlign()
 
 //---------------------------------------------------------------------------
 
+export class TFImage extends TFObject 
+{
+  constructor (parent , left , top , width , height , params ) 
+  {
+    if(!params) params = {css:"cssPanel"};
+    else    params.css = params.css || "cssPanel";
+
+    super(parent , left , top , width , height , params );
+  } 
+  
+  render()
+  { 
+    super.render();
+
+    this.imgContainer = new TFPanel(this , 1 , 1 , '100%' , '100%' , { preventGrid:true , css:"cssImageContainer"});
+    this.imgContainer.overflow = 'hidden';
+ 
+    if(this.params.imgURL) this.imgContainer.imgURL = this.params.imgURL;
+  }  
+
+
+  set svgContent( value )
+  {
+    this.__svgContent = value; 
+    this.imgContainer.innerHTML = value;
+  }    
+
+
+  get svgContent()
+  {
+    return this.__svgContent;
+  }    
+
+  set imgURL(value) 
+  {
+    this.__URL = value;
+
+   if (value.endsWith('.svg')) 
+     {
+       // SVG als `<img>` oder Inline-SVG einfügen
+       fetch(value)
+           .then((response) => { if (!response.ok) throw new Error('SVG konnte nicht geladen werden.');
+                                 return response.text();
+                               }
+                             )
+           .then((svgContent) => { this.svgContent = svgContent; }) 
+           .catch(error => console.error('Fehler beim Laden der SVG:', error));
+   } else {
+       // Standard-Fallback für andere Bildtypen
+       this.__svgURL = '';
+       this.imgContainer.DOMelement.innerHTML = '<img src="' + value + '" style="width:100%;height:100%;object-fit:contain;">'; 
+   }
+ }
+ 
+ 
+   get imgURL()
+   {
+     return this.__URL;
+   }
+} 
+
+//---------------------------------------------------------------------------
 
 export class TFPanel extends TFObject 
 {
@@ -1112,7 +1174,7 @@ export class TFButton extends TFObject
 {
   constructor (parent , left , top , width , height , params ) 
   {
-    if(!params) params = {css:"cssButton01", caption:"Ok"};
+    if(!params) params = {css:"cssButton01", caption:"Ok" , stretch:true};
     else    params.css = params.css || "cssButton01";
 
     params.caption = params.caption || "Ok";  
@@ -1124,10 +1186,23 @@ export class TFButton extends TFObject
 render()
 {
    super.render();
+
+   this.margin = 0;
+   this.padding = 0;
+
    this.buttonText           = document.createElement('P');
    this.buttonText.className = "cssButtonText";
    this.appendChild( this.buttonText );
    this.caption = this.params.caption;
+
+   if(this.params.glyph)
+    {
+      btn.DOMelement.style.display        = 'grid';
+      btn.DOMelement.style.placeItems     = 'center';
+      btn.DOMelement.style.paddingTop     = '0.4em';
+      btn.DOMelement.innerHTML            = '<center><p style="margin:0;padding:0"><i class="'+this.params.glyph+'"></i>'+this.caption+'</p></center>';
+    }  
+
  } 
 
   set caption( txt )
@@ -1485,7 +1560,7 @@ if(gridTemplate.apx)
      this.combobox                = null; 
     }
     else {
-           this.input                   = document.createElement('SELECT');
+           this.input               = document.createElement('SELECT');
        this.input.className         = "cssComboBox";
        this.combobox                = this.input; 
      } 

@@ -9,6 +9,11 @@ const beginUnixTime      = 25569;             // 01.01.1970
 function mod(a,b) { if(b!=0) return Math.floor(a/b); else return NaN;}
 
 
+export function processMessages() { return new Promise(resolve => setTimeout(resolve, 0)); }
+
+export function wait( ms ) { return new Promise(resolve => setTimeout(resolve, ms));  }
+
+
 export function buildRandomID( offset )
 {
   var timestamp = Date.now(); 
