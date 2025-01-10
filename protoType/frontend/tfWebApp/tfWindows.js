@@ -89,8 +89,15 @@ export class TFWindow extends TFObject
    for(var i=0;i<windows.length;i++) if(windows[i].zIndex>zIndex) zIndex = windows[i].zIndex;
    this.zIndex = zIndex + 1;
    windows.push(this);
-   
 
+
+   this.callBack_onClick = ( e )=>{
+         // bringe das Fenster in den Vordergrund
+            var zIndex = zIndexStart;
+            for(var i=0;i<windows.length;i++) if(windows[i].zIndex>zIndex) zIndex = windows[i].zIndex;
+            this.zIndex = zIndex;
+  }  
+   
     this.callBack_onDragStart = ( e )=>{ 
          // Speichere den Abstand zwischen dem Mauszeiger und der oberen linken Ecke des DIVs
             console.log('dragStart: x=' +this.leftPx+'   y='+this.topPx); 
@@ -110,49 +117,6 @@ export class TFWindow extends TFObject
          this.topPx  = this.topPx + dy;
         } 
     }
-
-    this.callBack_onMouseDown = ( e )=>{
-      // bringe das Fenster in den Vordergrund
-      var zIndex = zIndexStart;
-      for(var i=0;i<windows.length;i++) if(windows[i].zIndex>zIndex) zIndex = windows[i].zIndex;
-      this.zIndex = zIndex;
-
-      // prüfe, ob die rechte untere Ecke -21 pixel angeklickt wurde
-      if( e.clientX > (this.widthPx-21) && e.clientY > (this.heightPx-21) )
-        {
-          this.__rezising = {x:e.screenX,y:e.screenY,w:this.widthPx,h:this.heightPx};
-         // erstelle ein halbtransparentes minipanel zum Resizen
-         var resizer = new TFPanel( document.body , (this.leftPx+this.widthPx-20)+'px' , (this.topPx+this.heightPx-20)+'px' , '20px' , '20px' , {preventGrid: true} );
-          resizer.backgroundColor = 'rgba(0,0,0,0.21)';
-          resizer.zIndex = this.zIndex + 1;
-          resizer.callBack_onMouseMove = ( e )=>{
-                                                 this.resizer.leftPx = e.screenX - 10;
-                                                 this.resizer.topPx  = e.screenY - 10;
-                                                 var dx = e.screenX - this.__rezising.x;
-                                                 var dy = e.screenY - this.__rezising.y;
-                                                 this.widthPx  = this.widthPx + dx;
-                                                 this.heightPx = this.heightPx + dy;
-                                                 this.__rezising.x = e.screenX;
-                                                 this.__rezising.y = e.screenY;
-          }  
-    } 
-} 
-
-  this.callBack_onMouseUp = ( e )=>{
-    this.__rezising = null;
-    this.resizer.destroy();
-  } 
-
-
-    this.callBack_onMouseMove = ( e )=>{
-      if(this.__rezising)
-      {
-       
-      }
-    }  
-        
-
-
      
     // keinen Zugridff übwer die Propertuies, weil diese überladen werden, damit diese Eigenschaften für das Fenster
     // und nicht für den Container gelten
@@ -181,11 +145,6 @@ export class TFWindow extends TFObject
       this.btnMaximize.callBack_onClick = ()=>{ if(this.__ismaximized) this.normelize();
                                                 else this.maximize();}
 
-
-
-
-
-
     this.captionText = new TFLabel( this.caption , 1 , 1 , 1 , 1 , {css:'cssWindowCaptionTextJ4',caption:this.params.caption} );
     this.captionText.textAlign      = 'left';
     
@@ -197,23 +156,23 @@ export class TFWindow extends TFObject
   normelize()
   {
     this.__ismaximized = false;
-    this.width = this.__savedWidth;
-    this.height = this.__savedHeight;
-    this.left = this.__savedLeft;
-    this.top = this.__savedTop;
+    this.width         = this.__savedWidth;
+    this.height        = this.__savedHeight;
+    this.left          = this.__savedLeft;
+    this.top           = this.__savedTop;
   }
 
     maximize()
     {
       this.__ismaximized = true;
-      this.__savedWidth = this.width;
+      this.__savedWidth  = this.width;
       this.__savedHeight = this.height;
-      this.__savedLeft = this.left;
-      this.__savedTop = this.top;
-      this.width = '100%';
-      this.height = '100%';
-      this.left = 0;
-      this.top = 0;
+      this.__savedLeft   = this.left;
+      this.__savedTop    = this.top;
+      this.width         = '100%';
+      this.height        = '100%';
+      this.left          = 0;
+      this.top           = 0;
     }
 
     minimize()
@@ -241,10 +200,7 @@ export class TFWindow extends TFObject
        } 
    }
     
-
-
-
-    }
+}
 
 
  
@@ -516,4 +472,30 @@ get opacity()
     
   }
 
-}
+  destroy()
+  {
+    this.hWnd.destroy();
+    this.caption.destroy();
+    
+     while(this.childList.lenth>0)
+     {
+        var o=this.childList.pop();
+        o.destroy();
+        o=null;
+      }
+      
+      if(utils.isHTMLElement(this.parent)) this.parent.removeChild(this.DOMelement);
+      else this.parent.DOMelement.removeChild(this.DOMelement); 
+
+      for(var i=0;i<windows.length;i++) if(windows[i]==this) windows.splice(i,1);
+
+      this.DOMelement.remove();
+  }
+ }
+    //end class ...
+  
+  
+  
+   
+   
+

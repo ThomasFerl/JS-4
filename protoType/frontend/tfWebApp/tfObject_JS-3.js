@@ -93,8 +93,6 @@ export class Screen
 
 
 
-
-
 export class TFWorkSpace
 {
   constructor( ID , caption1 , caption2 )  
@@ -289,6 +287,7 @@ export class TFWorkSpace
 }  //end class ...
 
 
+
 export class TFImage
 {
   constructor( aParent , imgURL , captionPanel , infos )
@@ -442,11 +441,6 @@ crossFade(newImageUrl)
 
 
 
-
-
-
-
-
 export class TFNavigationBar
 {
   constructor( aParent , params )
@@ -455,8 +449,6 @@ export class TFNavigationBar
     this.DOMelement_Panel = dialogs.addPanel( aParent , "cssNavigationBar" , '0','0',"100%" , "35px" )
   } 
 }  
-
-
 
 
 
@@ -894,8 +886,6 @@ export class TForm
     return result;
   }
 }  
-
-
 
 
 
