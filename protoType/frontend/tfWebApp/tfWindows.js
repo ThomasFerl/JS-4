@@ -110,16 +110,8 @@ export class TFWindow extends TFObject
          this.topPx  = this.topPx + dy;
         } 
     }
-
-    this.callBack_onClick = ( e )=>{
-      // bringe das Fenster in den Vordergrund
-      var zIndex = zIndexStart;
-      for(var i=0;i<windows.length;i++) if(windows[i].zIndex>zIndex) zIndex = windows[i].zIndex;
-      this.zIndex = zIndex;
-    }  
-
-          
-    // keinen Zugridff über die Properties, weil diese überladen werden, damit diese Eigenschaften für das Fenster
+     
+    // keinen Zugridff übwer die Propertuies, weil diese überladen werden, damit diese Eigenschaften für das Fenster
     // und nicht für den Container gelten
     this.DOMelement.style.backgroundColor = 'black';
 

@@ -42,7 +42,6 @@ export function main(capt1,capt2)
       svgContainer.backgroundColor = 'white';
     }
     
-    
      
 async function showSVGs(type)
 { 
