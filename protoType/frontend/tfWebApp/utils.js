@@ -561,7 +561,7 @@ setMinute(minute) {
 
       let dd   = String(date.getUTCDate()).padStart(2, '0');
       let mm   = String(date.getUTCMonth() + 1).padStart(2, '0'); // Monate sind nullbasiert
-      let yyyy = date.getUTCFullYear();
+      let yyyy = String(date.getUTCFullYear());
       let hh   = String(date.getUTCHours()).padStart(2, '0');
       let mn   = String(date.getUTCMinutes()).padStart(2, '0');
       let ss   = String(date.getUTCSeconds()).padStart(2, '0');
@@ -762,27 +762,31 @@ export function rgbToHex(r, g, b)
 
 
 
-export function darkenColor( color , amount )
-{// Konvertiere die Farbe zu einem HSL-Farbwert
+// Konvertiert RGB in HSL
+export function darkenColor(color, amount) {
+  // Extrahiere RGB-Werte aus Hex-Farbe
+  const hslMatch = color.match(/^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i);
+  if (!hslMatch) {
+      throw new Error("Ungültige Farbformat. Bitte Hex-Farbe angeben.");
+  }
 
-    const hslMatch = color.match(/^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i);
-    const        r = parseInt(hslMatch[1], 16);
-    const        g = parseInt(hslMatch[2], 16);
-    const        b = parseInt(hslMatch[3], 16);
-  
-    // Konvertiere RGB zu HSL
-    let hsl = rgbToHsl(r, g, b);
-  
-    // Dunkle die Helligkeit um den angegebenen Betrag ab
-    hsl[2] = Math.max(0, hsl[2] - amount);
-  
-    // Konvertiere HSL zurück zu RGB
-    let rgb = hslToRgb(hsl[0], hsl[1], hsl[2]);
-  
-    // Konvertiere RGB zu Hex
-    const darkenedColor = rgbToHex(rgb[0], rgb[1], rgb[2]);
-  
-    return darkenedColor;
+  const r = parseInt(hslMatch[1], 16);
+  const g = parseInt(hslMatch[2], 16);
+  const b = parseInt(hslMatch[3], 16);
+
+  // Konvertiere RGB zu HSL
+  let hsl = this.rgbToHsl(r, g, b);
+
+  // Dunkle die Helligkeit ab
+  hsl[2] = Math.max(0, hsl[2] - amount);
+
+  // Konvertiere zurück zu RGB
+  let rgb = this.hslToRgb(hsl[0], hsl[1], hsl[2]);
+
+  // Konvertiere zurück zu Hex
+  const darkenedColor = this.rgbToHex(rgb[0], rgb[1], rgb[2]);
+
+  return darkenedColor;
 }
 
 

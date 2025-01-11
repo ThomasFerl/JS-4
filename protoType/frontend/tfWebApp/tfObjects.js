@@ -1486,6 +1486,7 @@ export class TFEdit extends TFObject
         params.appendix       = params.appendix       || "";
         params.captionLength  = (params.captionLength  || params.caption.length)+1;
         params.appendixLength = (params.appendixLength || params.appendix.length)+1;
+        params.editLength     = params.editLength     || 4;
         params.type           = params.type           || 'text';
       
     
@@ -1495,7 +1496,10 @@ export class TFEdit extends TFObject
 
   render()
   {
-    super.render();
+    super.render(); 
+    this.padding = 0;
+    this.overflow = 'hidden';
+    this.fontSize = this.params.fontSize || '1em';
     
     var gridTemplate = {variant:1 , columns:'1fr', rows:'1fr', edit:{left:1,top:1,width:1,height:1} };
 
@@ -1538,6 +1542,7 @@ if(gridTemplate.caption)
   {
     this.caption  = new TFLabel(this , gridTemplate.caption.left , gridTemplate.caption.top , gridTemplate.caption.width , gridTemplate.caption.height , {caption:this.params.caption  , labelPosition:'LEFT'});
     this.caption.fontWeight = 'bold';
+    this.margin             =  0;
     this.caption.marginLeft = '0.5em';
     this.caption.textAlign  = 'LEFT';
     this.caption.alignItems = 'end';
@@ -1554,7 +1559,7 @@ if(gridTemplate.apx)
     // keine Items vorhanden --> normales Inputfeld  
     if(!this.params.items) 
     {
-     this.input                   = document.createElement(INPUT);
+     this.input                   = document.createElement('INPUT');
      this.input.className         = "cssEditField";
      this.input.type              = this.params.type;
      this.combobox                = null; 
@@ -1565,9 +1570,13 @@ if(gridTemplate.apx)
        this.combobox                = this.input; 
      } 
 
-     this.input.style.gridRow     = gridTemplate.edit.top;
-     this.input.style.gridColumn  = gridTemplate.edit.left;
-     this.input.style.margin      = '0.5em';
+     if(this.params.value) this.value = this.params.value;
+
+     this.input.style.gridRowStart     = gridTemplate.edit.top;
+     this.input.style.gridRowEnd       = gridTemplate.edit.top+1;
+     this.input.style.gridColumnStart  = gridTemplate.edit.left;
+     this.input.style.gridColumnEnd    = gridTemplate.edit.left+1;
+     this.input.style.margin           = '0.5px';
      if(this.params.editLength) 
       {
        this.input.style.width       = this.params.editLength+'em'; 
@@ -1607,12 +1616,20 @@ if(gridTemplate.apx)
 
   setDateTime( dt )
   {
-    var tfDT = null;
+    var tfDT = null;  
     if (dt.constructor.name.toUpperCase()=='TFDATETIME') tfDT = dt;
     else                                                 tfDT = new utils.TFDateTime(dt);
 
-    this.input.value = tfDT.formatDateTime('yyyy-mm-ddThh:mn');
-  }
+   var dtStr = '';
+   var type  = this.params.type.toUpperCase();
+   
+   if( type == 'DATE'          ) dtStr = tfDT.formatDateTime('yyyy-mm-dd');
+   if( type == 'TIME'          ) dtStr = tfDT.formatDateTime('hh:mn');
+   if( type == 'DATETIME-LOCAL') dtStr = tfDT.formatDateTime('yyyy-mm-dd hh:mn');
+
+   if (dtStr != '') this.input.value = dtStr;
+ }
+
 
   getDateTime()
   {

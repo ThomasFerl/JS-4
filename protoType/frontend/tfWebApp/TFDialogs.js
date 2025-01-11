@@ -154,7 +154,6 @@ export function addLabel( aParent , className , left , top , width , height , te
 }
 
 
-
 export function addButton( aParent , className , left , top , width , height , decoration  )
 {
   var capt  = '';
@@ -165,9 +164,9 @@ export function addButton( aParent , className , left , top , width , height , d
     capt  = decoration.caption;
     glyph = decoration.glyph;
   } else capt = decoration;
-
+  
   var params = {};
-  if (className) params.css              = className;
+  if (className) params.css              = className;     
   if (capt)      params.caption          = capt;
   if (glyph)     params.glyph            = glyph;
 
@@ -206,13 +205,10 @@ export function addInput( aParent , left , top , textLength  , labelText , appen
 {
   if(!params) params = {};
 
-  if (labelText)  params.caption  = labelText;
-  if (textLength) params.inpWidth = textLength;
-  if (appendix)   params.appendix = appendix;
-  if (preset)     params.value    = preset;
-
-  (parent , left , top , width , height , params ) 
-
+  if (labelText)  params.caption    = labelText;
+  if (textLength) params.editLength = textLength;
+  if (appendix)   params.appendix   = appendix;
+  if (preset)     params.value      = preset;
 
   return new TFEdit( aParent , left , top  , 1 , 1 , params );
 
@@ -224,16 +220,49 @@ export function addDateTimePicker( aParent , left , top , labelText , preset , d
  
   if(!params) var params = {};
 
-      params.type                 = "datetime-local";
-      var inp = addInput( aParent , left , top , 0 , labelText , "" , preset , params );
+      params.type  = "datetime-local";
+      var inp = addInput( aParent , left , top , 8 , labelText , "" , preset , params );
+
+      preset = preset || '';
+      var  d = new TFDateTime(preset); 
+      inp.setDateTime(d);
+     
+     return inp;
+   }
+
+
+
+
+export function addDatePicker( aParent , left , top , labelText , preset , dontRegister , params)
+{
  
-   if(preset) inp.setDateTime(preset);
+  if(!params) var params = {};
+
+      params.type  = "date";
+      var inp = addInput( aParent , left , top , 8 , labelText , "" , preset , params );
+
+   preset = preset || '';
+   var  d = new TFDateTime(preset); 
+   inp.setDateTime(d);
   
   return inp;
-
 }
 
 
+export function addTimePicker( aParent , left , top , labelText , preset , dontRegister , params)
+{
+ 
+  if(!params) var params = {};
+
+      params.type  = "time";
+      var inp = addInput( aParent , left , top , 8 , labelText , "" , preset , params );
+
+      preset = preset || '';
+      var  d = new TFDateTime(preset); 
+      inp.setDateTime(d);
+     
+     return inp;
+}
 
 
 

@@ -953,8 +953,10 @@ html, body {
 .cssEditField
 {
    grid-area    : editField;
-   padding      : 0.25em; 
-   height       : 2em;
+   width        : 4em;
+   padding      : 0px; 
+   padding-left : 0.5em;
+   height       : 1.7em;
    background   : white;
    color        : #555;
    border       : 1px solid gray;
