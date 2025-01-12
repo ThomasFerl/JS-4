@@ -16,6 +16,8 @@ var testContainer2 = null;
 var panels         = [];
 var menuContainer  = null;
 
+var editPath       = null;
+
 
 
 export function main(capt1,capt2)
@@ -49,7 +51,7 @@ export function main(capt1,capt2)
       btn2.heightPx = 35;
 
   var btn3 = dialogs.addButton( menuContainer , "" , 3 , 1 , 1 , 1 , "brands"  )
-      btn3.callBack_onClick = function() { showIMGs(imgPath) };
+      btn3.callBack_onClick = function() { debugger; showIMGs(editPath.value || imgPath) };
       btn3.heightPx = 35;
 
 
@@ -82,7 +84,7 @@ export function main(capt1,capt2)
 
       dialogs.addLabel( panels[0] , '' , 1 , 1 , 1 , 1 , 'Label' );
 
-      dialogs.addInput( panels[1] , 1 , 1 , 10 , 'edit' , 'apx' , '42' , {} );
+      editPath = dialogs.addInput( panels[1] , 1 , 1 , 10 , 'path' , '' , '' , {} );
 
       dialogs.addDateTimePicker( panels[2] , 1 , 1 , 'dateTime' , '01.01.2000 17:35' , null , {} );
 
