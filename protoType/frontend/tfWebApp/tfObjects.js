@@ -98,6 +98,49 @@ export class TFPopUpMenu
 //------------------------------------------------------------------------
 //------------------------------------------------------------------------
 
+export class TAnimation
+{
+  constructor( canvas , prepare , runOneStep )
+  {
+    this.runOneStep = runOneStep;
+    this.prepare    = prepare;
+    this.stop       = false;
+    this.canvas     = canvas;
+    this.ctx        = this.canvas.getContext('2d');
+  }
+
+  run()
+  {
+    if(this.prepare)
+      {
+        this.prepare( this.ctx );  
+        this.animate();
+      }
+  }           
+
+
+  animate()
+  {
+    // Canvas löschen
+    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+    if(this.runOneStep) this.runOneStep( this.ctx );
+ 
+    // ggf. Nächsten Frame anfordern
+    if(!this.stop) requestAnimationFrame(
+                                        ()=>{this.animate();}
+                                        );
+     
+  }
+
+
+
+
+
+
+}
+
+
 
 export class TFObject
 {
@@ -1166,7 +1209,65 @@ export class TFPanel extends TFObject
     else    params.css = params.css || "cssPanel";
   super(parent , left , top , width , height , params );
   }  
-} 
+
+
+  render()
+  {
+    super.render();
+    this.__canvas = null;
+
+  }
+
+  
+  set canvas( value ) 
+  {
+    this.__canvas = value;
+  }
+
+  get canvas()
+  {
+   if(this.__canvas == null)
+   {
+    var c = document.createElement("Canvas");
+        c.setAttribute('ID' , 'canvas_'+this.ID); 
+        c.style.position = 'relative';  
+        c.style.left     = '0px';
+        c.style.top      = '0px';
+        c.width          =  this.widthPx;
+        c.height         =  this.heightPx;
+        c.style.border   = '1px solid lightgray';
+        this.appendChild( c );
+        this.__canvas = c;
+  }
+  return this.__canvas;
+ } 
+
+
+ animation( prepare , runOneStep )
+ {
+   this.animation = new TAnimation(this.canvas , prepare , runOneStep);
+   this.animation.run();
+ }
+
+ stopAnimation()
+ {
+  if(this.animation)  this.animation.stop = true;
+ }
+
+ toggleAnimation()
+ {
+  if(this.animation) 
+    {
+      this.animation.stop = !this.animation.stop;
+      if(!this.animation.stop ) this.animation.animate()
+    
+    }
+ }
+
+
+
+
+} // class
 
 //---------------------------------------------------------------------------
 

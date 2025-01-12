@@ -368,48 +368,8 @@ export function valueList_basedOn_HTTPRequest( aParent , className , url )
 }
 
 
+
 /*
-export function createCanvas( aParent , ID )
-{
-  var parent = document.body;
-
-  if (aParent) parent = aParent; 
-  else
-        {
-          if(globals.webApp) 
-          {
-            if(globals.webApp.activeWorkspace) parent = globals.webApp.activeWorkspace.DOMelement; 
-            utils.log("TFObject.constructor() ... parent ermittelt aus Workspace:"+this.parent);
-          }
-          else
-          { 
-            parent = globals.Screen.DOMelement;
-            utils.log("TFObject.constructor() ... parent ermittelt aus screen:"+this.parent);
-          }  
-    } 
-    
-    var c = document.createElement("Canvas");
-        if(ID) c.setAttribute('ID' , ID ); 
-        c.width  = parent.clientWidth;  // Setzt die Breite des Canvas gleich der Breite des Elternelements
-        c.height = parent.clientHeight; // S
-        parent.appendChild( c );
-    return c;    
-}
-
-
-
-export function createImage( aParent , imgURL , captionPanel , infos ,imgIndex)
-{
-  console.log('createImage() infos -> ' + utils.JSONstringify(infos) );
-  var img = new TFImage(aParent,imgURL, captionPanel , infos );
- 
-  if(imgIndex) img.imgIndex = imgIndex; 
- 
-  img.paint();
-  return img;    
-}
-
-
 
 export function addImage( aParent , left , top , width , height , imgURL , captionPanel , infos )
 {

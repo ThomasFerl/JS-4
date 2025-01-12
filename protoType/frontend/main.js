@@ -1,6 +1,7 @@
 import * as globals      from "./tfWebApp/globals.js";
 import * as utils        from "./tfWebApp/utils.js";    
-import * as dialogs      from "./tfWebApp/TFDialogs.js";
+import * as dialogs      from "./tfWebApp/tfDialogs.js";
+import * as graphics     from "./tfWebApp/tfGrafics.js";
 
 import { TFEdit, TFWorkSpace }   from "./tfWebApp/tfObjects.js";
 import { TFWindow }      from "./tfWebApp/tfWindows.js";
@@ -110,6 +111,64 @@ export function main(capt1,capt2)
                                             {Vorname:'Thomas'},
                                             {geb:'29.10.1966'},
                                             {Wohnort:'Schönebeck'}] );
+
+
+    //animation Demo
+    // Array für die Punkte
+const points = [];
+
+// Punkte initialisieren
+for (let i = 0; i < 100; i++) {    
+    const p = {
+        x: Math.round(Math.random() * 200), // Zufällige Startposition (x)
+        y: Math.round(Math.random() * 200), // Zufällige Startposition (y)
+        radius: 4,                          // Radius des Punkts
+        dx: Math.random() * 2,              // Geschwindigkeit in x-Richtung
+        dy: Math.random() * 2,              // Geschwindigkeit in y-Richtung
+        width: 500,                         // Standardbreite
+        height: 500,                        // Standardhöhe
+        
+        // Funktion zum Zeichnen
+        draw(ctx) {
+            graphics.drawCircle(ctx, this.x, this.y, this.radius, { backgroundColor: utils.randomColor() });
+        },
+
+        // Bewegung zur nächsten Position
+        nextPosition() {
+            this.x += this.dx;
+            this.y += this.dy;
+
+            // Kollision mit Rändern: Richtung umkehren
+            if (this.x > this.width || this.x < 0) this.dx = -this.dx;
+            if (this.y > this.height || this.y < 0) this.dy = -this.dy;
+        }
+    };
+
+    points.push(p);
+}
+
+// Animations-Setup
+panels[12].callBack_onClick = () => {panels[12].toggleAnimation();};
+panels[12].animation(
+    // Vorbereitung: Canvas-Größe anpassen
+    (ctx) => {
+        points.forEach((p) => {
+            p.width = ctx.canvas.width;
+            p.height = ctx.canvas.height;
+        });
+    },
+    // Zeichnen und Bewegung
+    (ctx) => {
+        // Canvas leeren
+        ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+        
+        // Punkte zeichnen und bewegen
+        points.forEach((p) => {
+            p.draw(ctx);
+            p.nextPosition();
+        });
+    }
+);
   
     
       
