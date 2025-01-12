@@ -6,11 +6,14 @@ import { TFEdit, TFWorkSpace }   from "./tfWebApp/tfObjects.js";
 import { TFWindow }      from "./tfWebApp/tfWindows.js";
 
 const svgPath = '/home/tferl/GIT/JS-3/tfWebApp/fontAwsome/svgs/'; //'/GIT/JS-3/tfWebApp/fontAwsome/svgs/';
+const imgPath = '/home/tferl/GIT/JS-3/prodia/uploads/';
 
-var svgContainer  = null;
-var testContainer = null;
-var panels        = [];
-var menuContainer = null;
+var svgContainer   = null;
+var testContainer1 = null;
+var testContainer2 = null;
+
+var panels         = [];
+var menuContainer  = null;
 
 
 
@@ -18,41 +21,63 @@ export function main(capt1,capt2)
 {
     var ws = new TFWorkSpace('mainWS' , capt1,capt2 );
 
-    var l  = dialogs.setLayout( ws.handle , {gridCount:21,head:1,left:7} )
+    var l  = dialogs.setLayout( ws.handle , {gridCount:21,head:2,left:7} )
   
       menuContainer = l.head;
-      testContainer = l.left;
+
+      var testContainer = l.left;
+          testContainer.buildGridLayout_templateColumns('1fr 1fr');
+          testContainer.buildGridLayout_templateRows('1fr');
+
+          testContainer1 = dialogs.addPanel( testContainer , "" , 1 , 1 , 1 , 1 );  
+          testContainer2 = dialogs.addPanel( testContainer , "" , 2 , 1 , 1 , 1 );
+
       svgContainer  = l.dashBoard; 
 
       menuContainer.backgroundColor = 'gray';
       menuContainer.buildGridLayout_templateColumns('10em 10em 10em 1fr ');
-      menuContainer.buildGridLayout_templateRows('1px 1fr');
+      menuContainer.buildGridLayout_templateRows('1fr');
 
 
-  var btn1 = dialogs.addButton( menuContainer , "" , 1 , 2 , 1 , 1 , "regular"  )
+  var btn1 = dialogs.addButton( menuContainer , "" , 1 , 1 , 1 , 1 , "regular"  )
       btn1.callBack_onClick = function() { showSVGs('regular') };
-      btn1.heightPx = 27;
+      btn1.heightPx = 35;
 
-  var btn2 = dialogs.addButton( menuContainer , "" , 2 , 2 , 1 , 1 , "solid"  )
+  var btn2 = dialogs.addButton( menuContainer , "" , 2 , 1 , 1 , 1 , "solid"  )
       btn2.callBack_onClick = function() { showSVGs('solid') };
-      btn2.heightPx = 27;
+      btn2.heightPx = 35;
 
-  var btn3 = dialogs.addButton( menuContainer , "" , 3 , 2 , 1 , 1 , "brands"  )
-      btn3.callBack_onClick = function() { showSVGs('brands') };
-      btn3.heightPx = 27;
+  var btn3 = dialogs.addButton( menuContainer , "" , 3 , 1 , 1 , 1 , "brands"  )
+      btn3.callBack_onClick = function() { showIMGs(imgPath) };
+      btn3.heightPx = 35;
 
 
-      testContainer.buildGridLayout_templateRows('repeat(10,1fr)');
-      testContainer.buildGridLayout_templateColumns('1fr');
+      testContainer1.buildGridLayout_templateRows('repeat(10,1fr)');
+      testContainer1.buildGridLayout_templateColumns('1fr');
 
       for(var i=0; i<10; i++)
       {
-        var p = dialogs.addPanel( testContainer , "" , 1 , i+1 , 1 , 1 );
+        var p = dialogs.addPanel( testContainer1 , "" , 1 , i+1 , 1 , 1 );
+            p.borderRadius = '1px';
             p.margin = '0.1em';
             p.buildGridLayout('1x1');
             p.overflow = 'hidden';  
             panels.push(p);
       } 
+
+      testContainer2.buildGridLayout_templateRows('repeat(5,1fr)');
+      testContainer2.buildGridLayout_templateColumns('1fr');
+
+      for(var i=0; i<5; i++)
+      {
+        var p = dialogs.addPanel( testContainer2 , "" , 1 , i+1 , 1 , 1 );
+            p.borderRadius = '1px';
+            p.margin = '0.1em';
+            p.buildGridLayout('1x1');
+            p.overflow = 'hidden';  
+            panels.push(p);
+      } 
+
 
       dialogs.addLabel( panels[0] , '' , 1 , 1 , 1 , 1 , 'Label' );
 
@@ -72,11 +97,21 @@ export function main(capt1,capt2)
                                                                                  {caption:'cccc',value:'C'},
                                                                                  {caption:'dddd',value:'D'} ] , {} );
              
+      dialogs.addCheckBox( panels[7], 1,1,'checkBox' , true , {checkboxLeft:false} );
+
+
+      dialogs.addListCheckbox( panels[10] ,  [ {caption:'aaaa',value:'A'},
+                                              {caption:'bbbb',value:'B'},
+                                              {caption:'cccc',value:'C'},
+                                              {caption:'dddd',value:'D'} ]  );
       
 
-
-
-      
+     dialogs.valueList( panels[11] , '' , [ {Name:'Ferl'},
+                                            {Vorname:'Thomas'},
+                                            {geb:'29.10.1966'},
+                                            {Wohnort:'Schönebeck'}] );
+  
+    
       
 } 
     
@@ -117,6 +152,44 @@ async function showSVGs(type)
                                                        img.svgContent = d.svg;
                                                  };
           }
+    }      
+
+    progress.destroy();
+
+ }
+
+
+ async function showIMGs(path)
+{ 
+   //load all SVG's
+   svgContainer.innerHTML = '';
+   svgContainer.buildFlexBoxLayout();
+
+   var progress = dialogs.addLabel( svgContainer , "" , 1 , 1 , '100%' , '100%' , "loading ..." );
+       progress.backgroundColor = 'rgba(0,0,0,0.25)';
+       progress.color = 'white';
+
+   var response = utils.webApiRequest('SCANDIR' , {dir:path} )
+   var imgs     = [];
+
+   for (var i=0; i<response.result.length; i++)
+       if(response.result[i].isFile) imgs.push( response.result[i].name );
+
+   for(var i=0; i<imgs.length; i++)
+   { 
+    progress.caption = 'loading ' + i + ' of ' + imgs.length + '  (' + Math.round(i/imgs.length*100) + '%)';
+
+    // Warte kurz, damit der Browser aktualisieren kann
+    await utils.processMessages();
+
+     var p        = dialogs.addImage( svgContainer , "" , 1 , 1 , "77px" , "77px" );
+         p.imgURL = utils.buildURL('GETIMAGEFILE',{fileName:path + imgs[i]} ); 
+         p.dataBinding = p.imgURL
+         p.callBack_onClick = function(e, d ) { 
+                                                var wnd        = new TFWindow( svgContainer , 'TEST' , '70%' , '90%' , 'CENTER' ); 
+                                                var img        = dialogs.addImage( wnd.hWnd ,  '' , 1, 1, '100%' , '100%' );                                       
+                                                    img.imgURL = d;
+                                                 };
     }      
 
     progress.destroy();

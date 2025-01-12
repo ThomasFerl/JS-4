@@ -286,89 +286,25 @@ export function addCombobox( aParent , left , top , textLength  , labelText , ap
 
 }
 
-/*
-
-
-
-
-export function addCombobox( aParent , TextLength  , labelText , appendix , preset , items , aParams )
+export function addCheckBox( aParent , left , top , labelText , preset , params )
 {
-  if(aParams) var params=aParams;
-  else        var params = {};
-  
-    if (labelText)  params.labelText       = labelText;
-
-    if (TextLength) params.width           = TextLength;
-    else            params.width           = '7'; 
-
-    if (appendix)   params.appendix        = appendix;
-    if (items)      params.items           = items;
-     params.dontRegister                   = false;
-
-     if(!params.labelPosition)
-     params.labelPosition                  = "LEFT";
-  
-  
-    var cb = new TFCombobox( aParent , 0 , 0 , params );
+  if(!params) params = {css:"cssPanelForInput", checkboxLeft:true};
    
-  // Vorbelegung entweder via Listeneintrag oder über den Index des Listeneintrages ....
-  if(preset)
-  {
-    if(isNaN(preset)) cb.itemIndex = items.indexOf(preset);
-    else              cb.itemIndex = preset;
-  }  
+    params.css     = params.css || "cssPanelForInput"; 
+    params.caption = labelText  || 'checkBox';
+    params.checked = preset     || false;
 
-  return cb;
+   return new TFCheckBox( aParent , left , top , 1 , 1 , params );
 }
-
-
-
-export function addComboboxGrid( aParent , left , top , TextLength  , labelText , appendix , preset , items , aParams )
-{
-  if(aParams) var params=aParams;
-  else        var params = {};
-  
-    if (labelText)  params.labelText       = labelText;
-    if (TextLength) params.width           = TextLength;
-    if (appendix)   params.appendix        = appendix;
-    if (items)      params.items           = items;
-     params.dontRegister                   = false;
-
-     if(!params.labelPosition)
-     params.labelPosition                  = "LEFT";
-  
-   var cb = new TFCombobox( aParent , left , top , params );
-   
-  // Vorbelegung entweder via Listeneintrag oder über den Index des Listeneintrages ....
-  if(preset)
-  {
-    if(isNaN(preset)) cb.itemIndex = items.indexOf(preset);
-    else              cb.itemIndex = preset;
-  }  
-
-  return cb;
-}
-
-
-
-export function addCheckBox( aParent , className , caption , dontRegister , _params )
-{
-  var params = {};
-  if(_params) params = _params;
-
-  if (caption)   params.labelText        = caption;
-  if (className) params.css              = className;
-  if (dontRegister) params.dontRegister  = dontRegister;
-  params.labelPosition                   = "LEFT";
-  
- 
-  return new TFCheckBox( aParent , params );
-}
-   
 
 export function addListCheckbox(aParent , items )
 {
-   return  new TFListCheckbox( aParent , items );
+  var params = {items:items};
+
+      aParent.buildGridLayout_templateColumns('1fr' , {stretch:true});
+      aParent.buildGridLayout_templateRows   ('1fr' , {stretch:true});
+
+  return  new TFListCheckbox( aParent , 1 , 1 , 1 , 1 , params );
 }
 
 
@@ -380,73 +316,59 @@ function translate( fieldName , lookUpList )
   return h;
 }
 
+
+
 export function valueList( aParent , className , values , exclude , translation )
 {
-  console.log('valueList() -> ' + JSON.stringify(values) );
+ if(!exclude) exclude = ['',''];
 
-  if(!exclude) exclude = ['',''];
-
-  aParent.DOMelement.innerHTML           = '';
-  aParent.DOMelement.style.display       = 'block';
-  //aParent.DOMelement.style.flexDirection = 'column';
-
-  var css = className;
-  if (!className) css='cssvalueListPanel';
+  aParent.innerHTML = '';
+  aParent.buildBlockLayout();
   
-  var i  = 0;
+  var l   = [];
     
   // ist Values ein Array von {field:value},{...}, ....
   if(values.length>1)
   {
     for (var j=0; j<values.length; j++ )
-    for(var key in values[j]) 
-    if(exclude)
-    if(exclude.indexOf(key)<0)
-    {
-      i++;  
-      var p = addPanel( aParent , css , 0 , 0 , '99%' , '2em' );   // Dimension sind bereits im css definiert
-          p.isGridLayout = true;  // kommt vom css
-          p.backgroundColor = (i % 2) != 0 ? "RGB(240,240,240)" : "RGB(255,255,255)"; 
-          addLabel(p,'cssBoldLabel',2,2, translate(key , translation));
-          addLabel(p,'cssLabel',3,2, values[j][key] );
-    }
-  }
+        for(var key in values[j]) 
+           if(exclude.indexOf(key)<0) l.push({caption:translate(key , translation) , value: values[j][key] });
+  }  
   else 
-      {
-        for(var key in values) 
-        if(exclude)
-        if(exclude.indexOf(key)<0)
-        {
-          i++;  
-          var p = addPanel( aParent , css , 0 , 0 , '99%' , '2em' );   // Dimension sind bereits im css definiert
-          p.isGridLayout = true;  // kommt vom css
-          p.backgroundColor = (i % 2) != 0 ? "RGB(240,240,240)" : "RGB(255,255,255)"; 
-          addLabel(p,'cssBoldLabel',2,2,translate(key , translation));
-          addLabel(p,'cssLabel',3,2, values[key] );
-        }
-      }    
-}
+     {
+       for(var key in values) 
+          if(exclude.indexOf(key)<0) l.push({caption:translate(key , translation) , value:values[key] });
+      }
+  
+  var css = className || 'cssvalueListPanelJ4';    
 
+  for(var i=0; i<l.length; i++)
+  {
+    var p = this.addPanel( aParent , css , 0 , 0 , '99%' , '2em' );  
+        p.buildGridLayout_templateColumns('1fr 1fr');
+        p.buildGridLayout_templateRows('1fr');
+        p.backgroundColor = (i % 2) != 0 ? "RGB(240,240,240)" : "RGB(255,255,255)"; 
+        addLabel(p,'cssBoldLabel', 1 , 1, 1 ,1 , l[i].caption).textAlign = 'left';
+        addLabel(p,'cssLabel'    , 2 , 1, 1 ,1 , l[i].value  ).textAlign = 'left';
+    }
+      
+}
 
 
 export function valueList_basedOn_HTTPRequest( aParent , className , url )
 {
   var response = utils.httpRequest( url );
-  if(response=="ERROR")
+  if(response.error)
    {
-      console.log('Fehler bei  utils.httpRequest( '+encodeURI(url)+' )');
-      console.log(response);
-      aParent.DOMelement.innerHTML = response;
+      console.log('Fehler: ' + response.errMsg );
+      aParent.innerHTML = '';
    }
-    else
-         {
-           var jsn =  JSON.parse( response );
-           if (jsn.length>0) jsn = jsn[0];
-           valueList( aParent , className , jsn );
-         } 
+    else valueList( aParent , className , response.result );
+      
 }
 
 
+/*
 export function createCanvas( aParent , ID )
 {
   var parent = document.body;
