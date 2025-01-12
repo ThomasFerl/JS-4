@@ -54,20 +54,31 @@ export function main(capt1,capt2)
             panels.push(p);
       } 
 
-      dialogs.addLabel( panels[0] , '' , 1 , 1 , 1 , 1 , 'Test - Label' );
+      dialogs.addLabel( panels[0] , '' , 1 , 1 , 1 , 1 , 'Label' );
 
-      dialogs.addInput( panels[1] , 1 , 1 , 10 , 'Test' , 'pix' , '42' , {} );
+      dialogs.addInput( panels[1] , 1 , 1 , 10 , 'edit' , 'apx' , '42' , {} );
 
-      dialogs.addDatePicker( panels[2] , 1 , 1 , 'DT-Picker' , '01.01.2000 17:35' , null , {} );
-   
-                   
+      dialogs.addDateTimePicker( panels[2] , 1 , 1 , 'dateTime' , '01.01.2000 17:35' , null , {} );
+
+      dialogs.addDatePicker( panels[3] , 1 , 1 , 'date' , '17.01.2013 18:03' , null , {} );
+
+      dialogs.addTimePicker( panels[4] , 1 , 1 , 'time' , '01.01.2000 17:35' , null , {} );
+
+      dialogs.addFileUploader( dialogs.addButton(panels[5],'',1,1,1,1,'Upload any File') , '*.*' , true , (selectedFiles) => {console.log(JSON.stringify(selectedFiles))}  );
+                 
+      
+      dialogs.addCombobox( panels[6] , 1 , 1 , 10 , 'combobox' , '' , 'aaaa' , [ {caption:'aaaa',value:'A'},
+                                                                                 {caption:'bbbb',value:'B'},
+                                                                                 {caption:'cccc',value:'C'},
+                                                                                 {caption:'dddd',value:'D'} ] , {} );
+             
       
 
 
 
       
       
-}
+} 
     
      
 async function showSVGs(type)

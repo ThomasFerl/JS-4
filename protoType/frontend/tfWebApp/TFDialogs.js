@@ -272,6 +272,20 @@ export function addFileUploader( button , fileTyp , multiple , onChange )
 }
 
 
+export function addCombobox( aParent , left , top , textLength  , labelText , appendix , preset , items , params )
+{
+  if(!params) params = {};
+
+  if (labelText)  params.caption    = labelText;
+  if (textLength) params.editLength = textLength;
+  if (appendix)   params.appendix   = appendix;
+  if (preset)     params.value      = preset;
+  if (items)      params.items      = items;
+
+  return new TFComboBox( aParent , left , top  , 1 , 1 , params );
+
+}
+
 /*
 
 

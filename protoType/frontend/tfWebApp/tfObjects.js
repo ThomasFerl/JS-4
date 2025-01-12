@@ -1226,13 +1226,16 @@ export class TFileUploader
   this.uploader.type          = 'file';
   this.uploader.multiple      = multiple;
   this.uploader.accept        = fileTyp;
-  this.onChange               = onChange;
+
+  if(!onChange) this.onChange = ()=>{console.log('no handler for file upload')};
+  else          this.onChange = onChange;
+
   this.uploader.style.display = 'none';
-      button.callBack_onClick = ()=>{this.uploader.click()}
+      button.callBack_onClick = ()=>{console.log('uploader.click()');this.uploader.click()}
       document.body.appendChild(this.uploader);
       
       // Event Listener hinzufügen, um die ausgewählten Dateien zu ggf verarbeiten / vorschauen / ...
-      this.uploader.addEventListener('change', function() { if(this.onChange) onChange( this.files ); } ); 
+      this.uploader.addEventListener('change', function() { this.onChange( this.uploader.files ); }.bind(this) ); 
 }
 
 
