@@ -369,18 +369,17 @@ export function valueList_basedOn_HTTPRequest( aParent , className , url )
 
 
 
-/*
-
 export function addImage( aParent , left , top , width , height , imgURL , captionPanel , infos )
 {
    var p = addPanel( aParent , 'cssImageContainer' , left , top , width , height );
    p.margin=0;
    p.padding=0;
-   return this.createImage( p , imgURL , captionPanel , infos );
-}
+   p.imgURL = imgURL;
+   return p;
+}  
 
 
-
+/*
 export function createTable( aParent , jsonData , exclude , translation )
 {
   var table = new THTMLTable( jsonData , exclude );
