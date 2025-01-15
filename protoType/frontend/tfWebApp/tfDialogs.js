@@ -28,9 +28,9 @@ Eingabefeld - Typen
 import * as globals   from "./globals.js";
 import * as utils     from "./utils.js";
 
-import {TFDateTime  } from "./utils.js";
+import { TFDateTime } from "./utils.js";
 import { TFWindow   } from "./tfWindows.js";
-//import { THTMLTable } from "./tfgrid.js";
+import { THTMLTable } from "./tfGrid.js";
 
 import { TFCheckBox, 
          TFileUploader, 
@@ -369,17 +369,8 @@ export function valueList_basedOn_HTTPRequest( aParent , className , url )
 
 
 
-export function addImage( aParent , left , top , width , height , imgURL , captionPanel , infos )
-{
-   var p = addPanel( aParent , 'cssImageContainer' , left , top , width , height );
-   p.margin=0;
-   p.padding=0;
-   p.imgURL = imgURL;
-   return p;
-}  
 
 
-/*
 export function createTable( aParent , jsonData , exclude , translation )
 {
   var table = new THTMLTable( jsonData , exclude );
@@ -395,7 +386,7 @@ export function createTable( aParent , jsonData , exclude , translation )
   return table;
 }
 
-
+/*
 
 // nur nutzbar, wenn chartjs im index.html-header eingebunden ist !!! 
 export function createChart(aParent, chartType, caption, jsonData, onChartClick, hostedObject) {
