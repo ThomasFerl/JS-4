@@ -259,7 +259,8 @@ async function showSVGs(type)
                                                     imgNdx     = d.index;
                                                     wnd.callBack_onClick = ()=>{nextImage(img)} 
                                                  };
-    }   
+    }
+      
     progress.destroy();
 
  }
