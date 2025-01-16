@@ -309,13 +309,19 @@ export class TFObject
           this.DOMelement.addEventListener('mousemove'  , (e)=>{if( this.callBack_onMouseMove)   this.callBack_onMouseMove  (e,this.dataBinding) });
           this.DOMelement.addEventListener('mouseleave' , (e)=>{if( this.callBack_onMouseOut )   this.callBack_onMouseOut   (e,this.dataBinding) });
           
-          this.DOMelement.addEventListener('contextmenu', (e)=>{ if(this.popupMenu) 
+          if(this.popupMenu)
+           {  
+            this.DOMelement.addEventListener('contextmenu', (e)=>{ if(this.popupMenu) 
                                                                    {
                                                                      e.preventDefault();
                                                                      this.popupMenu.show(this,e.pageX, e.pageY);
                                                                    }
-                                                                  });     
-                                                                
+                                                                  });   
+          } 
+          else this.DOMelement.addEventListener('contextmenu', (e)=>{e.preventDefault();
+                                                                     if( this.callBack_onClick) this.callBack_onClick (e,this.dataBinding) 
+                                                                    });   
+          
                                                                
           this.DOMelement.addEventListener('mousedown'  , (e)=>{if( this.callBack_onMouseDown)   this.callBack_onMouseDown  (e,this.dataBinding) });
           this.DOMelement.addEventListener('mouseup'    , (e)=>{if( this.callBack_onMouseUp  )   this.callBack_onMouseUp    (e,this.dataBinding) });

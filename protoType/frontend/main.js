@@ -257,10 +257,13 @@ async function showSVGs(type)
                                                 var img        = dialogs.addImage( wnd.hWnd ,  '' , 1, 1, '100%' , '100%' );                                       
                                                     img.imgURL = d.imgURL;
                                                     imgNdx     = d.index;
-                                                    wnd.callBack_onClick = ()=>{nextImage(img)} 
+                                                    wnd.callBack_onClick = (e)=>{
+                                                                                  if(e.button==0) nextImage(img);
+                                                                                  if(e.button==2) prevImage(img);  
+                                                                                } 
                                                  };
     }
-      
+
     progress.destroy();
 
  }
@@ -269,5 +272,12 @@ async function showSVGs(type)
  {
     imgNdx++;
    if(imgNdx>imgs.length) imgNdx = 0;
+   img.imgURL = imgs[imgNdx]; 
+ }  
+
+ function prevImage(img)
+ {
+    imgNdx--;
+   if(imgNdx<0) imgNdx = imgs.length-1;
    img.imgURL = imgs[imgNdx]; 
  }  
