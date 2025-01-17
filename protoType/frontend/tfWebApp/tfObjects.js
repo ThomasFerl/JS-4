@@ -2555,8 +2555,7 @@ export class TFChart extends TFPanel
     super(parent, left, top, width, height, params);
   }
 
-
-  __drawChart()
+  __prepare()
   {
     // Chart type settings
     let _chartType = this.params.chartType;
@@ -2576,15 +2575,15 @@ export class TFChart extends TFPanel
           _radius    = 0;
       }
   
-    var chartOptions = {};
+    
 
-        chartOptions.showLines    = this.params.showLines;
-        chartOptions.elements     = { line: { tension: _tension }, point: { radius: _radius } };
-        chartOptions.events       = ['mousemove', 'mouseout', 'click', 'touchstart'] ;
-        chartOptions.interaction  = { mode: 'nearest', axis: 'x', intersect: true };
-        chartOptions.plugins      = { legend: { display: false } };
+        this.chartOptions.showLines    = this.params.showLines;
+        this.chartOptions.elements     = { line: { tension: _tension }, point: { radius: _radius } };
+        this.chartOptions.events       = ['mousemove', 'mouseout', 'click', 'touchstart'] ;
+        this.chartOptions.interaction  = { mode: 'nearest', axis: 'x', intersect: true };
+        this.chartOptions.plugins      = { legend: { display: false } };
 
-        chartOptions.onHover      = function(event, activeElements) 
+        this.chartOptions.onHover      = function(event, activeElements) 
                                     {
                                       // Reset all points
                                       this.data.datasets.forEach((dataset) => {
@@ -2602,7 +2601,7 @@ export class TFChart extends TFPanel
                                       this.update();
                                     } ;
   
-        chartOptions.onClick      = function(e) 
+        this.chartOptions.onClick      = function(e) 
                                     {
                                       const clickedPoints = this.getElementsAtEventForMode(e, 'nearest', { intersect: true }, false);
                                       if (clickedPoints.length > 0) 
@@ -2616,39 +2615,32 @@ export class TFChart extends TFPanel
                                         const value = this.data.datasets[clickedPoint.datasetIndex].data[clickedPoint.index];
   
                                         if(onChartClick) onChartClick({chart: this, itemIndex: clickedPoint.index, selectedLabel: label, selectedValue: value, hostedObject: hostedObject });
-                          this.update();
-                       }
-                     }
-    };
+                                        this.update();
+                                       }
+                                    }
+    
+        this.chartParams.type    =  _chartType;
+        this.chartParams.options =  this.chartOptions;
+        this.chartParams.plugins = [{beforeDraw: function(chart) {
+                                                                   const ctx     = chart.ctx;
+                                                                   ctx.fillStyle = gridAreaBackgroundColor;
+                                                                   ctx.fillRect(0, 0, chart.width, chart.height);
+                                                                 }
+                                    }];
+
+        this.chartParams.data   = { labels  : [],
+                                    datasets: [{ label               : caption, 
+                                                 pointBackgroundColor: chartPointColor,
+                                                 backgroundColor     : [],
+                                                 borderWidth         : chartBorderWidth,
+                                                 borderColor         : chartBorderColor,
+                                                 data                : [] 
+                                               }]
+                                  }
   
-    const chartParams = {
-        type: _chartType,
-        options: chartOptions,
-        plugins: [
-            {
-                beforeDraw: function(chart) {
-                    const ctx = chart.ctx;
-                    ctx.fillStyle = gridAreaBackgroundColor;
-                    ctx.fillRect(0, 0, chart.width, chart.height);
-                }
-            }
-        ],
-        data: {
-            labels: [],
-            datasets: [
-                {
-                    label: caption,
-                    pointBackgroundColor: chartPointColor,
-                    backgroundColor: [],
-                    borderWidth: chartBorderWidth,
-                    borderColor: chartBorderColor,
-                    data: []
-                }
-            ]
-        }
-    };
   
-    for (let i = 0; i < jsonData.length; i++) {
+    for (let i = 0; i < jsonData.length; i++) 
+    {
         chartParams.data.labels.push(jsonData[i].X);
         chartParams.data.datasets[0].data.push(jsonData[i].Y);
         chartParams.data.datasets[0].backgroundColor.push(charBackgroundColor);
@@ -2664,7 +2656,10 @@ export class TFChart extends TFPanel
   render()
   {
     super.render();
-    this.padding = 0;
+
+    this.padding      = 0;
+    this.chartOptions = {};
+    this.chartParams  = {}
 
     this.__drawChart();
   }
