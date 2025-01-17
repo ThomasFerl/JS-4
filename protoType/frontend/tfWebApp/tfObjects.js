@@ -1,6 +1,6 @@
 import * as globals  from "./globals.js";
 import * as utils    from "./utils.js";
-
+import * as graphics from "./tfGrafics.js";
 
 var screen = null;
 
@@ -204,9 +204,9 @@ export class TFObject
                                else                        return this.parent.layout().toUpperCase() == 'GRID'; 
                              }; 
 
-    this.grid         = {left:1, top:1, width:1, height:1};
-        
-    this.mouse        = { clientX:0 , 
+    this.grid          = {left:1, top:1, width:1, height:1};
+
+    this.mouse         = {clientX:0 , 
                           clientY:0 , 
                           pageX:0 ,
                           pageY:0 ,
@@ -253,6 +253,8 @@ export class TFObject
      
     if(this.params.css) this.DOMelement.className =  this.params.css;
     else                this.DOMelement.className = "cssObject";
+
+    this.DOMelement.style.boxSize = 'border-box';
 
     this.DOMelement.setAttribute('ID'   ,  this.ID );
 
@@ -426,7 +428,7 @@ export class TFObject
   get leftPx()
   {
     var rect = this.DOMelement.getBoundingClientRect();
-    return rect.left;
+    return Math.round(rect.left);
   } 
 
   set topPx( value )  
@@ -439,7 +441,7 @@ export class TFObject
   get topPx()
   {
     var rect = this.DOMelement.getBoundingClientRect();
-    return rect.top;
+    return  Math.round(rect.top);
   }
 
   set widthPx( value )
@@ -451,8 +453,9 @@ export class TFObject
 
   get widthPx()
   {
-    var rect = this.DOMelement.getBoundingClientRect();
-    return rect.width;
+    //var rect = this.DOMelement.getBoundingClientRect();
+    //return Math.round(rect.width);
+    return this.DOMelement.clientWidth;
   } 
 
 
@@ -465,8 +468,9 @@ export class TFObject
 
   get heightPx()
   {
-    var rect = this.DOMelement.getBoundingClientRect();
-    return rect.height;
+    //var rect = this.DOMelement.getBoundingClientRect();
+    //return  Math.round(rect.height);
+    return this.DOMelement.clientHeight;
  } 
 
 
@@ -1236,9 +1240,9 @@ export class TFPanel extends TFObject
    {
     var c = document.createElement("Canvas");
         c.setAttribute('ID' , 'canvas_'+this.ID); 
-        c.style.position = 'relative';  
-        c.style.left     = '0px';
-        c.style.top      = '0px';
+        //c.style.position = 'relative';  
+        //c.style.left     = '0px';
+        //c.style.top      = '0px';
         c.width          =  this.widthPx;
         c.height         =  this.heightPx;
         c.style.border   = '1px solid lightgray';
@@ -2385,14 +2389,289 @@ export class TFWorkSpace extends TFObject
       
     }
   
+}
+
+//---------------------------------------------------------------------------
+export class TFAnalogClock extends TFPanel
+{
+  render()
+  {
+    super.render();
+    this.padding       = 0; 
+    this.overflow      = 'hidden';
+    this.ctx           = this.canvas.getContext("2d"); 
+    var dimension      = Math.min((this.widthPx , this.heightPx)*0.97);
+    this.secHandLength = Math.round( (dimension / 2 ) - 14 );
+    this.xm            = Math.round(this.widthPx / 2);
+    this.ym            = Math.round(this.heightPx / 2);
+
+    this.__tick();
+
+    setInterval(()=>{this.__tick() }, 1000 );  
+  }
+
+  __tick()
+    {       if(!this.ctx) return;
+
+            var date   = new Date();
+
+            // CLEAR EVERYTHING ON THE this.canvas. RE-DRAW NEW ELEMENTS EVERY SECOND.
+            this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);        
+
+            //OUTER_DIAL1() 
+                this.ctx.lineWidth = 2;
+                this.ctx.beginPath();
+                this.ctx.arc(this.xm, this.ym, this.secHandLength + 14, 0, Math.PI * 2);
+                this.ctx.strokeStyle = '#92949C';
+                this.ctx.stroke();
+            
+            // OUTER_DIAL2() 
+                this.ctx.lineWidth = 2;
+                this.ctx.beginPath();
+                this.ctx.arc(this.xm, this.ym, this.secHandLength + 7, 0, Math.PI * 2);
+                this.ctx.strokeStyle = '#929BAC';
+                this.ctx.stroke();
+                        
+            //CENTER_DIAL() 
+                this.ctx.lineWidth = 2;
+                this.ctx.beginPath();
+                this.ctx.arc(this.xm, this.ym, 7, 0, Math.PI * 2);
+                this.ctx.lineWidth = 3;
+                this.ctx.fillStyle = '#353535';
+                this.ctx.strokeStyle = '#0C3D4A';
+                this.ctx.stroke();
+            
+            // MARK_THE_HOURS() 
+                for (var i = 0; i < 12; i++) 
+				        {
+                    var angle = (i - 3) * (Math.PI * 2) / 12;       // THE ANGLE TO MARK.
+			              this.ctx.lineWidth = 4;            // HAND WIDTH.
+                    this.ctx.beginPath();
+
+                    var x1 = (this.xm) + Math.cos(angle) * (this.secHandLength);
+                    var y1 = (this.ym) + Math.sin(angle) * (this.secHandLength);
+                    var x2 = (this.xm) + Math.cos(angle) * (this.secHandLength - (this.secHandLength / 14));
+                    var y2 = (this.ym) + Math.sin(angle) * (this.secHandLength - (this.secHandLength / 14));
+
+                    this.ctx.moveTo(x1, y1);
+                    this.ctx.lineTo(x2, y2);
+
+                    this.ctx.strokeStyle = '#466B76';
+                    this.ctx.stroke();
+                }
+            
+
+            // MARK_THE_SECONDS() 
+                for (var i = 0; i < 60; i++) 
+				{
+                    angle = (i - 3) * (Math.PI * 2) / 60;       // THE ANGLE TO MARK.
+                    this.ctx.lineWidth = 1;            // HAND WIDTH.
+                    this.ctx.beginPath();
+
+                    var x1 = (this.canvas.width / 2) + Math.cos(angle) * (this.secHandLength);
+                    var y1 = (this.canvas.height / 2) + Math.sin(angle) * (this.secHandLength);
+                    var x2 = (this.canvas.width / 2) + Math.cos(angle) * (this.secHandLength - (this.secHandLength / 30));
+                    var y2 = (this.canvas.height / 2) + Math.sin(angle) * (this.secHandLength - (this.secHandLength / 30));
+
+                    this.ctx.moveTo(x1, y1);
+                    this.ctx.lineTo(x2, y2);
+
+                    this.ctx.strokeStyle = '#C4D1D5';
+                    this.ctx.stroke();
+                }
+            
+            //SHOW_SECONDS() 
+                var sec = date.getSeconds();
+                angle   = ((Math.PI * 2) * (sec / 60)) - ((Math.PI * 2) / 4);
+                this.ctx.lineWidth = 1;              // HAND WIDTH.
+
+                this.ctx.beginPath();
+                // START FROM CENTER OF THE CLOCK.
+                this.ctx.moveTo(this.canvas.width / 2, this.canvas.height / 2);   
+                // DRAW THE LENGTH.
+                this.ctx.lineTo((this.canvas.width / 2 + Math.cos(angle) * this.secHandLength),
+                    this.canvas.height / 2 + Math.sin(angle) * this.secHandLength);
+
+                // DRAW THE TAIL OF THE SECONDS HAND.
+                this.ctx.moveTo(this.canvas.width / 2, this.canvas.height / 2);    // START FROM CENTER.
+                // DRAW THE LENGTH.
+                this.ctx.lineTo((this.canvas.width / 2 - Math.cos(angle) * 20),
+                    this.canvas.height / 2 - Math.sin(angle) * 20);
+
+                this.ctx.strokeStyle = '#586A73';        // COLOR OF THE HAND.
+                this.ctx.stroke();
+           
+
+            //SHOW_MINUTES() 
+                var min = date.getMinutes();
+                angle   = ((Math.PI * 2) * (min / 60)) - ((Math.PI * 2) / 4);
+                this.ctx.lineWidth = 4;              // HAND WIDTH.
+
+                this.ctx.beginPath();
+                this.ctx.moveTo(this.canvas.width / 2, this.canvas.height / 2);  // START FROM CENTER.
+                // DRAW THE LENGTH.
+                this.ctx.lineTo((this.canvas.width / 2 + Math.cos(angle) * this.secHandLength / 1.1),      
+                    this.canvas.height / 2 + Math.sin(angle) * this.secHandLength / 1.1);
+
+                this.ctx.strokeStyle = '#000';  // COLOR OF THE HAND.
+                this.ctx.stroke();
+            
+
+            //SHOW_HOURS() 
+                var hour = date.getHours();
+                var min  = date.getMinutes();
+                angle = ((Math.PI * 2) * ((hour * 5 + (min / 60) * 5) / 60)) - ((Math.PI * 2) / 4);
+                this.ctx.lineWidth = 7;              // HAND WIDTH.
+
+                this.ctx.beginPath();
+                this.ctx.moveTo(this.canvas.width / 2, this.canvas.height / 2);     // START FROM CENTER.
+                // DRAW THE LENGTH.
+                this.ctx.lineTo((this.canvas.width / 2 + Math.cos(angle) * this.secHandLength / 1.5),      
+                    this.canvas.height / 2 + Math.sin(angle) * this.secHandLength / 1.5);
+
+                this.ctx.strokeStyle = '#000';   // COLOR OF THE HAND.
+                this.ctx.stroke();         
+    }
+
+   
+}
+
+//---------------------------------------------------------------------------
+
+export class TFChart extends TFPanel
+{
+  constructor(parent, left, top, width, height, params)
+  {
+    if (!params) this.params = {};
+    else this.params = params;
+
+    params.chartType = params.chartType  || 'SPLINE_NO_POINTS';
+    params.caption   = params.caption    || '';
+    params.chartData = params.chartData  || [];  
+    params.tension   = params.tension    || 0.4;
+    params.radius    = params.radius     || 4;
+    params.showLines = params.showLines  || true;
+
+    super(parent, left, top, width, height, params);
+  }
+
+
+  __drawChart()
+  {
+    // Chart type settings
+    let _chartType = this.params.chartType;
+    let _tension   = this.params.tension;
+    let _radius    = this.params.radius;
+
+    if (this.params.chartType.toUpperCase().indexOf('SPLINE') > -1) 
+      {
+        _chartType = 'line';
+        _tension   = 0.4;
+      }
+    
+    if (this.params.chartType.toUpperCase().indexOf('SPLINE_NO_POINTS') > -1) 
+      {
+          _chartType = 'line';
+          _tension   = 0.4;
+          _radius    = 0;
+      }
+  
+    var chartOptions = {};
+
+        chartOptions.showLines    = this.params.showLines;
+        chartOptions.elements     = { line: { tension: _tension }, point: { radius: _radius } };
+        chartOptions.events       = ['mousemove', 'mouseout', 'click', 'touchstart'] ;
+        chartOptions.interaction  = { mode: 'nearest', axis: 'x', intersect: true };
+        chartOptions.plugins      = { legend: { display: false } };
+
+        chartOptions.onHover      = function(event, activeElements) 
+                                    {
+                                      // Reset all points
+                                      this.data.datasets.forEach((dataset) => {
+                                                                                dataset.backgroundColor = dataset.backgroundColor.map(() => 'rgb(147, 147, 147)');    
+                                                                              });
+  
+                                      // Highlight the current point
+                                      if (activeElements.length > 0) 
+                                      {
+                                        const index        = activeElements[0].index;
+                                        const datasetIndex = activeElements[0].datasetIndex;
+                                        this.data.datasets[datasetIndex].backgroundColor[index] = 'red';
+                                      }
+  
+                                      this.update();
+                                    } ;
+  
+        chartOptions.onClick      = function(e) 
+                                    {
+                                      const clickedPoints = this.getElementsAtEventForMode(e, 'nearest', { intersect: true }, false);
+                                      if (clickedPoints.length > 0) 
+                                      {
+                                        const clickedPoint = clickedPoints[0];
+                                        // Reset all points to original color
+                                        this.data.datasets[clickedPoint.datasetIndex].backgroundColor = this.data.datasets[clickedPoint.datasetIndex].backgroundColor.map(() => 'rgb(147, 147, 147)');
+                                        // Mark the clicked point
+                                        this.data.datasets[clickedPoint.datasetIndex].backgroundColor[clickedPoint.index] = chartSelectedColor;
+                                        const label = this.data.labels[clickedPoint.index];
+                                        const value = this.data.datasets[clickedPoint.datasetIndex].data[clickedPoint.index];
+  
+                                        if(onChartClick) onChartClick({chart: this, itemIndex: clickedPoint.index, selectedLabel: label, selectedValue: value, hostedObject: hostedObject });
+                          this.update();
+                       }
+                     }
+    };
+  
+    const chartParams = {
+        type: _chartType,
+        options: chartOptions,
+        plugins: [
+            {
+                beforeDraw: function(chart) {
+                    const ctx = chart.ctx;
+                    ctx.fillStyle = gridAreaBackgroundColor;
+                    ctx.fillRect(0, 0, chart.width, chart.height);
+                }
+            }
+        ],
+        data: {
+            labels: [],
+            datasets: [
+                {
+                    label: caption,
+                    pointBackgroundColor: chartPointColor,
+                    backgroundColor: [],
+                    borderWidth: chartBorderWidth,
+                    borderColor: chartBorderColor,
+                    data: []
+                }
+            ]
+        }
+    };
+  
+    for (let i = 0; i < jsonData.length; i++) {
+        chartParams.data.labels.push(jsonData[i].X);
+        chartParams.data.datasets[0].data.push(jsonData[i].Y);
+        chartParams.data.datasets[0].backgroundColor.push(charBackgroundColor);
+    }
+  
+    return new Chart(canvas, chartParams);
+  }
   
 
+  }
 
 
+  render()
+  {
+    super.render();
+    this.padding = 0;
 
+    this.__drawChart();
+  }
 
-
-
+    
+  
 }
+
 
 

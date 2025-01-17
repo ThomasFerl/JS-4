@@ -369,8 +369,6 @@ export function valueList_basedOn_HTTPRequest( aParent , className , url )
 
 
 
-
-
 export function createTable( aParent , jsonData , exclude , translation )
 {
   var table = new THTMLTable( jsonData , exclude );
@@ -386,10 +384,10 @@ export function createTable( aParent , jsonData , exclude , translation )
   return table;
 }
 
-/*
 
 // nur nutzbar, wenn chartjs im index.html-header eingebunden ist !!! 
-export function createChart(aParent, chartType, caption, jsonData, onChartClick, hostedObject) {
+export function createChart(aParent, chartType, caption, jsonData, onChartClick, hostedObject)
+ {
   aParent.DOMelement.innerHTML = '';
 
   // Chart type settings
@@ -497,6 +495,7 @@ export function createChart(aParent, chartType, caption, jsonData, onChartClick,
 }
 
 
+/*
 export function buildInputForm( parent , data , idField , caption , appendix , exclude , types )
 {
  var form = new TForm( parent , data , caption , appendix , exclude );

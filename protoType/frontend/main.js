@@ -6,10 +6,11 @@ import * as dialogs      from "./tfWebApp/tfDialogs.js";
 import * as graphics     from "./tfWebApp/tfGrafics.js";
 
 import { TFEdit, 
+         TFAnalogClock,
          TFWorkSpace }   from "./tfWebApp/tfObjects.js";
 import { TFWindow }      from "./tfWebApp/tfWindows.js";
-
-const svgPath = '/home/tferl/GIT/JS-3/tfWebApp/fontAwsome/svgs/'; //'/GIT/JS-3/tfWebApp/fontAwsome/svgs/';
+import { TFDateTime }    from "./tfWebApp/utils.js";
+const svgPath = '/GIT/JS-3/tfWebApp/fontAwsome/svgs/';  // '/home/tferl/GIT/JS-3/tfWebApp/fontAwsome/svgs/';
 const imgPath = '/home/tferl/GIT/JS-3/prodia/uploads/';
 
 var svgContainer   = null;
@@ -23,6 +24,8 @@ var panels         = [];
 var menuContainer  = null;
 
 var editPath       = null;
+var clock          = null;
+
 
 
 
@@ -44,7 +47,7 @@ export function main(capt1,capt2)
       svgContainer  = l.dashBoard; 
 
       menuContainer.backgroundColor = 'gray';
-      menuContainer.buildGridLayout_templateColumns('10em 10em 10em 1fr ');
+      menuContainer.buildGridLayout_templateColumns('10em 10em 10em 10em 1fr ');
       menuContainer.buildGridLayout_templateRows('1fr');
 
 
@@ -57,8 +60,27 @@ export function main(capt1,capt2)
       btn2.heightPx = 35;
 
   var btn3 = dialogs.addButton( menuContainer , "" , 3 , 1 , 1 , 1 , "brands"  )
+      btn3.callBack_onClick = function() { ; showIMGs(editPath.value || imgPath) };
       btn3.callBack_onClick = function() { showIMGs(editPath.value || imgPath) };
       btn3.heightPx = 35;
+
+  var btn4 = dialogs.addButton( menuContainer , "" , 4 , 1 , 1 , 1 , "Grid-Test"  )
+      btn4.callBack_onClick = function() { 
+                                           var g = dialogs.createTable( svgContainer , [{Name:"Ferl",Vorname:"Thomas",gebDatum:"29.10.1966"},
+                                                                                        {Name:"Mustermann",Vorname:"Max",gebDatum:"01.01.2000"},
+                                                                                        {Name:"Schmidt",Vorname:"Klaus",gebDatum:"15.03.1975"}] , '' , ''); }
+      btn4.heightPx = 35;
+
+
+  var btn5 = dialogs.addButton( menuContainer , "" , 4 , 1 , 1 , 1 , "Clock-Test"  )
+      btn5.callBack_onClick = function() { 
+                                           if(clock==null) clock = new TFAnalogClock( svgContainer , 1 , 1 , 200 , 200 , {} );
+                                           else {clock.destroy(); clock = null;}
+                                         }
+      btn5.heightPx = 35;
+
+
+
 
 
       testContainer1.buildGridLayout_templateRows('repeat(10,1fr)');
@@ -190,6 +212,7 @@ async function showSVGs(type)
    svgContainer.buildFlexBoxLayout();
 
    var progress = dialogs.addLabel( svgContainer , "" , 1 , 1 , '100%' , '100%' , "loading ..." );
+       progress.position = 'relative';
        progress.backgroundColor = 'rgba(0,0,0,0.25)';
        progress.color = 'white';
 
