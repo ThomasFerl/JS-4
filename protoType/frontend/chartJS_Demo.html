@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chart.js Minimal Example</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <div style="width: 50%; margin: auto;">
+    <canvas id="myChart"></canvas>
+  </div>
+
+  <script>
+    // Hole den Canvas-Context
+    const ctx = document.getElementById('myChart').getContext('2d');
+
+    // Erstelle das Chart
+    const myChart = new Chart(ctx, {
+      type: 'bar', // Diagrammtyp (Balkendiagramm)
+      data: {
+        labels: ['Red', 'Blue', 'Yellow', 'Green', 'Purple', 'Orange'], // X-Achsen-Beschriftungen
+        datasets: [{
+          label: '# of Votes', // Legende
+          data: [12, 19, 3, 5, 2, 3], // Daten für die Balken
+          backgroundColor: [
+            'rgba(255, 99, 132, 0.2)',
+            'rgba(54, 162, 235, 0.2)',
+            'rgba(255, 206, 86, 0.2)',
+            'rgba(75, 192, 192, 0.2)',
+            'rgba(153, 102, 255, 0.2)',
+            'rgba(255, 159, 64, 0.2)'
+          ],
+          borderColor: [
+            'rgba(255, 99, 132, 1)',
+            'rgba(54, 162, 235, 1)',
+            'rgba(255, 206, 86, 1)',
+            'rgba(75, 192, 192, 1)',
+            'rgba(153, 102, 255, 1)',
+            'rgba(255, 159, 64, 1)'
+          ],
+          borderWidth: 1 // Rahmenbreite
+        }]
+      },
+      options: {
+        responsive: true, // Diagramm passt sich der Bildschirmgröße an
+        plugins: {
+          legend: {
+            display: true, // Zeige die Legende
+            position: 'top'
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true // Y-Achse startet bei 0
+          }
+        }
+      }
+    });
+  </script>
+</body>
+</html>

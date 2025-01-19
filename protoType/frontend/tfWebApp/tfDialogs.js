@@ -44,16 +44,7 @@ import { TFCheckBox,
          // TPropertyEditor,
          TFListCheckbox } from "./tfObjects.js";
 
-
-
-const charBackgroundColor       = 'rgba( 77,  77,  77, 0.35)' ;
-const gridAreaBackgroundColor   = 'rgb(237,237,237)';
-const chartPointColor           = 'rgba(240, 240, 240, 0.4)' ;
-const chartBorderColor          = 'rgba(0  ,   0, 100, 0.21)' ;
-const chartBorderWidth          = 2;
-const chartSelectedColor        = 'rgba(0  , 100, 200, 0.35)' ;
-
-var   splash                    = {panel:null, imgPanel:null, msgPanel:null, msg:'...' , activ:false};
+var   splash  = {panel:null, imgPanel:null, msgPanel:null, msg:'...' , activ:false};
 
 
 export function createWindow(aParent , aCaption , aWidth , aHeight , position )

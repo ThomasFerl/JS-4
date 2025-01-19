@@ -1,9 +1,10 @@
 import * as globals  from "./globals.js";
 import * as utils    from "./utils.js";
 import * as graphics from "./tfGrafics.js";
+import * as chartJS  from "./chart.js";
+
 
 var screen = null;
-
 
 
 function assignMouseEventData( e , obj )
@@ -2542,131 +2543,236 @@ export class TFChart extends TFPanel
 {
   constructor(parent, left, top, width, height, params)
   {
-    if (!params) this.params = {};
-    else this.params = params;
-
-    params.chartType = params.chartType  || 'SPLINE_NO_POINTS';
-    params.caption   = params.caption    || '';
-    params.chartData = params.chartData  || [];  
-    params.tension   = params.tension    || 0.4;
-    params.radius    = params.radius     || 4;
-    params.showLines = params.showLines  || true;
+    if (!params) params = {};
+    params.chartData               = params.chartData               || [];
+    params.chartType               = params.chartType               || 'line';
+    params.tension                 = params.tension                 || 0.4;
+    params.radius                  = params.radius                  || 3;
+    params.showLines               = params.showLines               || true;
+    params.chartPointColor         = params.chartPointColor         || 'rgb(147, 147, 147)';
+    params.chartBorderColor        = params.chartBorderColor        || 'rgb(2, 10, 70)';
+    params.chartBorderWidth        = params.chartBorderWidth        || 1;
+    params.chartSelectedColor      = params.chartSelectedColor      || 'rgb(255, 0, 0)';
+    params.chartBackgroundColor    = params.chartBackgroundColor    || 'rgb(210, 238, 197)';
+    params.gridAreaBackgroundColor = params.gridAreaBackgroundColor || 'rgb(147, 147, 147)';
 
     super(parent, left, top, width, height, params);
-  }
+ }  
+ 
 
-  __prepare()
-  {
-    // Chart type settings
-    let _chartType = this.params.chartType;
-    let _tension   = this.params.tension;
-    let _radius    = this.params.radius;
-
-    if (this.params.chartType.toUpperCase().indexOf('SPLINE') > -1) 
-      {
-        _chartType = 'line';
-        _tension   = 0.4;
-      }
-    
-    if (this.params.chartType.toUpperCase().indexOf('SPLINE_NO_POINTS') > -1) 
-      {
-          _chartType = 'line';
-          _tension   = 0.4;
-          _radius    = 0;
-      }
-  
-    
-
-        this.chartOptions.showLines    = this.params.showLines;
-        this.chartOptions.elements     = { line: { tension: _tension }, point: { radius: _radius } };
-        this.chartOptions.events       = ['mousemove', 'mouseout', 'click', 'touchstart'] ;
-        this.chartOptions.interaction  = { mode: 'nearest', axis: 'x', intersect: true };
-        this.chartOptions.plugins      = { legend: { display: false } };
-
-        this.chartOptions.onHover      = function(event, activeElements) 
-                                    {
-                                      // Reset all points
-                                      this.data.datasets.forEach((dataset) => {
-                                                                                dataset.backgroundColor = dataset.backgroundColor.map(() => 'rgb(147, 147, 147)');    
-                                                                              });
-  
-                                      // Highlight the current point
-                                      if (activeElements.length > 0) 
-                                      {
-                                        const index        = activeElements[0].index;
-                                        const datasetIndex = activeElements[0].datasetIndex;
-                                        this.data.datasets[datasetIndex].backgroundColor[index] = 'red';
-                                      }
-  
-                                      this.update();
-                                    } ;
-  
-        this.chartOptions.onClick      = function(e) 
-                                    {
-                                      const clickedPoints = this.getElementsAtEventForMode(e, 'nearest', { intersect: true }, false);
-                                      if (clickedPoints.length > 0) 
-                                      {
-                                        const clickedPoint = clickedPoints[0];
-                                        // Reset all points to original color
-                                        this.data.datasets[clickedPoint.datasetIndex].backgroundColor = this.data.datasets[clickedPoint.datasetIndex].backgroundColor.map(() => 'rgb(147, 147, 147)');
-                                        // Mark the clicked point
-                                        this.data.datasets[clickedPoint.datasetIndex].backgroundColor[clickedPoint.index] = chartSelectedColor;
-                                        const label = this.data.labels[clickedPoint.index];
-                                        const value = this.data.datasets[clickedPoint.datasetIndex].data[clickedPoint.index];
-  
-                                        if(onChartClick) onChartClick({chart: this, itemIndex: clickedPoint.index, selectedLabel: label, selectedValue: value, hostedObject: hostedObject });
-                                        this.update();
-                                       }
-                                    }
-    
-        this.chartParams.type    =  _chartType;
-        this.chartParams.options =  this.chartOptions;
-        this.chartParams.plugins = [{beforeDraw: function(chart) {
-                                                                   const ctx     = chart.ctx;
-                                                                   ctx.fillStyle = gridAreaBackgroundColor;
-                                                                   ctx.fillRect(0, 0, chart.width, chart.height);
-                                                                 }
-                                    }];
-
-        this.chartParams.data   = { labels  : [],
-                                    datasets: [{ label               : caption, 
-                                                 pointBackgroundColor: chartPointColor,
-                                                 backgroundColor     : [],
-                                                 borderWidth         : chartBorderWidth,
-                                                 borderColor         : chartBorderColor,
-                                                 data                : [] 
-                                               }]
-                                  }
-  
-  
-    for (let i = 0; i < jsonData.length; i++) 
-    {
-        chartParams.data.labels.push(jsonData[i].X);
-        chartParams.data.datasets[0].data.push(jsonData[i].Y);
-        chartParams.data.datasets[0].backgroundColor.push(charBackgroundColor);
-    }
-  
-    return new Chart(canvas, chartParams);
-  }
-  
-
-  }
-
-
-  render()
-  {
-    super.render();
-
-    this.padding      = 0;
-    this.chartOptions = {};
-    this.chartParams  = {}
-
-    this.__drawChart();
-  }
-
-    
-  
+ _convertColor(color) 
+ {
+  const ctx = this.canvas.getContext('2d');
+  ctx.fillStyle = color;
+  return ctx.fillStyle;
 }
+ 
+ __prepareChart()
+ {  
+   // Chart type settings
+   let _chartType = this.params.chartType;
+   let _tension   = this.params.tension;
+   let _radius    = this.params.radius;
+
+   this.params.chartPointColor         = this._convertColor(this.params.chartPointColor);
+   this.params.chartBorderColor        = this._convertColor(this.params.chartBorderColor);
+   this.params.chartSelectedColor      = this._convertColor(this.params.chartSelectedColor);
+   this.params.chartBackgroundColor    = this._convertColor(this.params.chartBackgroundColor);
+
+   if (this.params.chartType.toUpperCase().indexOf('LINE') > -1) 
+    {
+      _chartType = 'line';
+      _tension   = 0;
+    }
+
+   if (this.params.chartType.toUpperCase().indexOf('SPLINE') > -1) 
+     {
+       _chartType = 'line';
+       _tension   = 0.4;
+     }
+   
+   if (this.params.chartType.toUpperCase().indexOf('SPLINE_NO_POINTS') > -1) 
+     {
+         _chartType = 'line';
+         _tension   = 0.4;
+         _radius    = 0;
+     }
+ 
+       this.chartOptions.showLines    = this.params.showLines;
+       this.chartOptions.elements     = { line: { tension: _tension }, point: { radius: _radius } };
+       this.chartOptions.events       = ['mousemove', 'mouseout', 'click', 'touchstart'] ;
+       this.chartOptions.interaction  = { mode: 'nearest', axis: 'x', intersect: true };
+       this.chartOptions.plugins      = { legend: { display: false } };
+
+       this.chartOptions.onHover = function(event, activeElements) 
+                                   {
+                                     console.log('onHover-activeElements:', activeElements);
+                                     console.log('onHover-even', event);
+                                     // Reset all points
+                                     this.data.datasets.forEach((dataset) => {
+                                                                               console.log('onHover-dataset:', dataset);
+                                                                               dataset.backgroundColor = dataset.backgroundColor.map(() => 'rgb(147, 147, 147)');    
+                                                                             });
+ 
+                                     // Highlight the current point
+                                     if (activeElements.length > 0) 
+                                     {
+                                       const index        = activeElements[0].index;
+                                       const datasetIndex = activeElements[0].datasetIndex;
+                                       this.data.datasets[datasetIndex].backgroundColor[index] = 'red';
+                                     }
+ 
+                                     this.update();
+                                   } ;
+ 
+       this.chartOptions.onClick = function(e) 
+                                   {debugger
+                                     var c = this.chart;
+                                     const clickedPoints = c.getElementsAtEventForMode(e, 'nearest', { intersect: true }, false);
+                                     if (clickedPoints.length > 0) 
+                                     {
+                                       const clickedPoint = clickedPoints[0];
+                                       // Reset all points to original color
+                                       c.data.datasets[clickedPoint.datasetIndex].backgroundColor = c.data.datasets[clickedPoint.datasetIndex].backgroundColor.map(() => 'rgb(147, 147, 147)');
+                                       // Mark the clicked point
+                                       c.data.datasets[clickedPoint.datasetIndex].backgroundColor[clickedPoint.index] = this.self.params.chartSelectedColor;
+                                       const label = c.data.labels[clickedPoint.index];
+                                       const value = c.data.datasets[clickedPoint.datasetIndex].data[clickedPoint.index];
+ 
+                                       if(this.self.onChartClick) this.self.onChartClick({chart: c, itemIndex: clickedPoint.index, selectedLabel: label, selectedValue: value, hostedObject: hostedObject || {} });
+                                       c.update();
+                                      }
+                                   }.bind({chart:this.chart , self:this});
+   
+       this.chartParams.type    =  _chartType;
+       this.chartParams.options =  this.chartOptions;
+       this.chartParams.plugins = [{beforeDraw: function(chart) {
+                                                                  const ctx     = chart.ctx;
+                                                                  ctx.fillStyle = this.params.gridAreaBackgroundColor || this.backgroundColor;
+                                                                  ctx.fillRect(0, 0, chart.width, chart.height);
+                                                                }.bind(this)
+                                   }];
+
+       this.chartParams.data   = { labels  : [],
+                                   datasets: []
+                                 }
+ }
+
+
+
+ render()
+ {
+   super.render();
+   this.chart        = null;
+   this.series       = [];
+   this.chartParams  = {};
+   this.chartOptions = {}
+   this.maxPoints    = this.params.maxPoints || -1;
+
+   this.__prepareChart();
+
+  this.ctx   = this.canvas.getContext('2d');
+  this.chart = new Chart(this.ctx, this.chartParams); 
+
+  if(this.params.chartData.length > 0) 
+    { 
+      var s = this.addSeries(this.params.seriesName || '' , this.params.seriesColor || 'black');
+      this.addPoint(s , this.params.chartData);
+    }  
+    
+    
+ } 
+
+
+ // Add a new series (dataset) to the chart
+ addSeries(seriesName, color) 
+ {
+   color = this._convertColor(color);
+   var newSeries = {
+                     label           : seriesName,
+                     data            : [],
+                     borderColor     : Array.isArray(this.params.chartBorderColor) ? data.map(() => this.params.chartBorderColor) : this.params.chartBorderColor,
+                     backgroundColor : Array.isArray(color) ? data.map(() => color) : color,
+                     fill            : false
+                   };
+
+  this.chart.data.datasets.push(newSeries);
+  this.series.push(newSeries);
+  this.chart.update();
+  return newSeries;
+}
+
+// Internal helper to add a single point and handle osci-mode
+_addSinglePoint(seriesIndex, point) 
+{ 
+  console.log('addSinglePoint', seriesIndex, JSON.stringify(point));
+
+  this.chart.data.labels.push(point.x);
+  this.chart.data.datasets[seriesIndex].data.push(point.y);
+
+if(this.maxPoints>0)  
+  if (this.maxPoints && this.chart.data.labels.length > this.maxPoints) 
+  {
+      this.chart.data.labels.shift();
+      this.chart.data.datasets.forEach(ds => ds.data.shift());
+  }
+}
+
+addPoint(aSeries, point ) 
+{
+  if (aSeries) 
+  {
+      const index = this.chart.data.datasets.indexOf(aSeries);
+      if(index < 0 ) return;
+       
+      if (Array.isArray(point)) point.forEach((p , i) => { this._addSinglePoint(index,p) });
+      else this._addSinglePoint(index, point); 
+      this.chart.update();
+  }   
+  else console.error(`missed series`);
+}
+
+setTitle(title) 
+{
+  this.chart.options.plugins = this.chart.options.plugins || {};
+  this.chart.options.plugins.title = {
+                                       display: true,
+                                       text   : title
+                                     };
+  this.chart.update();
+}
+
+setChartType(newType) 
+{
+  this.chart.config.type = newType;
+  this.chart.update();
+}
+
+
+
+clear(aSeries) 
+{
+  if(!aSeries) 
+  {
+    this.chart.data.labels = [];
+    this.chart.data.datasets.forEach((dataset) => dataset.data = []);
+    this.chart.update();
+    this.series = [];
+    return;
+  }
+
+    const index = this.chart.data.datasets.indexOf(aSeries);
+    if (index === -1) return;
+    this.chart.data.labels = [];
+    this.chart.data.datasets[index].data = [];
+    this.chart.update();
+    // serie löschen
+    this.series.splice(index, 1);
+  
+ }
+
+}  // TFChart
+
 
 
 

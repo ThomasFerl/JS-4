@@ -8,8 +8,11 @@ import * as graphics     from "./tfWebApp/tfGrafics.js";
 import { TFEdit, 
          TFAnalogClock,
          TFWorkSpace }   from "./tfWebApp/tfObjects.js";
-import { TFWindow }      from "./tfWebApp/tfWindows.js";
+import { TFWindow }      from "./tfWebApp/tfWindows.js"; 
+import { TFChart }       from "./tfWebApp/tfObjects.js";
 import { TFDateTime }    from "./tfWebApp/utils.js";
+
+
 const svgPath = '/GIT/JS-3/tfWebApp/fontAwsome/svgs/';  // '/home/tferl/GIT/JS-3/tfWebApp/fontAwsome/svgs/';
 const imgPath = '/home/tferl/GIT/JS-3/prodia/uploads/';
 
@@ -25,6 +28,7 @@ var menuContainer  = null;
 
 var editPath       = null;
 var clock          = null;
+var chart          = null;    
 
 
 
@@ -47,7 +51,7 @@ export function main(capt1,capt2)
       svgContainer  = l.dashBoard; 
 
       menuContainer.backgroundColor = 'gray';
-      menuContainer.buildGridLayout_templateColumns('10em 10em 10em 10em 1fr ');
+      menuContainer.buildGridLayout_templateColumns('10em 10em 10em 10em 10em 1fr ');
       menuContainer.buildGridLayout_templateRows('1fr');
 
 
@@ -80,8 +84,27 @@ export function main(capt1,capt2)
       btn5.heightPx = 35;
 
 
+var btn6 = dialogs.addButton( menuContainer , "" , 5 , 1 , 1 , 1 , "Chart-Test"  )
+    btn6.callBack_onClick = function() { 
+                                           if(chart==null)
+                                            {
+                                             chart = new TFChart( svgContainer , 1 , 1 , '100%' , '100%' , {chartType:'Spline',maxPoints:50} );
+                                             var dummyData = [];
+                                             var series    = chart.addSeries('dummyData','rgba(0,0,100,0.5)');
+                                             for(var i=0; i<50; i++) dummyData.push({x:i, y:Math.random()*100});   
+                                             chart.addPoint(series , dummyData);
+                                             setInterval( function (){
+                                                                       this.chart.addPoint(this.series , {x:100, y:Math.random()*100} )
+                                                                     }.bind({chart:chart,series:series}) , 100 );
+                                             }    
+                    
+                                           else {chart.destroy(); chart = null;}
+                                         }
+    btn6.heightPx = 35;
 
 
+
+      
 
       testContainer1.buildGridLayout_templateRows('repeat(10,1fr)');
       testContainer1.buildGridLayout_templateColumns('1fr');
@@ -282,7 +305,9 @@ async function showSVGs(type)
                                                     imgNdx     = d.index;
                                                     wnd.callBack_onClick = (e)=>{
                                                                                   if(e.button==0) nextImage(img);
-                                                                                  if(e.button==2) prevImage(img);  
+                                                                                  if(e.button==2) prevImage(img);
+                                                                                  if(e.altKey)    diaShow(img);
+                                                                                  
                                                                                 } 
                                                  };
     }
@@ -304,3 +329,9 @@ async function showSVGs(type)
    if(imgNdx<0) imgNdx = imgs.length-1;
    img.imgURL = imgs[imgNdx]; 
  }  
+
+
+ function diaShow(img)
+ {
+   setInterval( () => { nextImage(img); }, 4000 ); 
+ }
