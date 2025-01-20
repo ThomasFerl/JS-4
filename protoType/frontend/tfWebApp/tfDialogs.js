@@ -31,6 +31,7 @@ import * as utils     from "./utils.js";
 import { TFDateTime } from "./utils.js";
 import { TFWindow   } from "./tfWindows.js";
 import { THTMLTable } from "./tfGrid.js";
+import { TFTreeView } from "./tfTreeView.js"; 
 
 import { TFCheckBox, 
          TFileUploader, 
@@ -484,6 +485,45 @@ export function createChart(aParent, chartType, caption, jsonData, onChartClick,
 
   return new Chart(canvas, chartParams);
 }
+
+
+export function createTreeView(aParent , tree , params )
+{
+  var t = new TFTreeView( aParent , params );
+  // tree rekursiv durchlaufen und Knoten hinzufügen
+
+  var __scanNodes = function( treeNode , subTree )
+  {
+   for (var key in subTree) 
+   {
+     var value = tree[key];
+     var n     =t.addSubNode(treeNode , key, {value:value} );
+     if (typeof value === 'object' && value !== null) __scanNodes(n, value);
+   }
+ }
+  
+
+  if (typeof tree === 'object' && tree !== null) 
+  {
+     for (var key in tree) 
+      {
+        var value = tree[key];
+        // Erstelle einen root-Knoten für den aktuellen Schlüssel
+        var n=t.addNode( key, {value:value} );
+
+        // Rekursiv fortfahren, falls der Wert ein Objekt oder Array ist
+            if (typeof value === 'object' && value !== null) __scanNodes(n, value);
+     }
+  }
+
+  t.buildNodeList();
+
+
+  return t;
+}
+
+
+
 
 
 /*

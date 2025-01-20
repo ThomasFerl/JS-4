@@ -2606,6 +2606,7 @@ export class TFChart extends TFPanel
  render()
  {
    super.render();
+   this.overflow                        = 'hidden';
    this.chart                           = null;
    this.series                          = [];
    this.chartParams                     = {};

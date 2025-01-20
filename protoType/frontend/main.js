@@ -19,6 +19,8 @@ const imgPath = '/home/tferl/GIT/JS-3/prodia/uploads/';
 var svgContainer   = null;
 var testContainer1 = null;
 var testContainer2 = null;
+var testContainer3 = null;
+
 var imgs           = [];
 var imgNdx         = -1;
 
@@ -30,6 +32,8 @@ var editPath       = null;
 var clock          = null;
 var chart          = null; 
 var osziX          = 0;   
+var treeView       = null;
+var treeData       = {};
 
 
 
@@ -38,21 +42,22 @@ export function main(capt1,capt2)
 {
     var ws = new TFWorkSpace('mainWS' , capt1,capt2 );
 
-    var l  = dialogs.setLayout( ws.handle , {gridCount:21,head:2,left:7} )
+    var l  = dialogs.setLayout( ws.handle , {gridCount:27,head:2,left:14} )
   
       menuContainer = l.head;
 
       var testContainer = l.left;
-          testContainer.buildGridLayout_templateColumns('1fr 1fr');
+          testContainer.buildGridLayout_templateColumns('1fr 1fr 1fr');
           testContainer.buildGridLayout_templateRows('1fr');
 
           testContainer1 = dialogs.addPanel( testContainer , "" , 1 , 1 , 1 , 1 );  
           testContainer2 = dialogs.addPanel( testContainer , "" , 2 , 1 , 1 , 1 );
+          testContainer3 = dialogs.addPanel( testContainer , "" , 3 , 1 , 1 , 1 );
 
       svgContainer  = l.dashBoard; 
 
       menuContainer.backgroundColor = 'gray';
-      menuContainer.buildGridLayout_templateColumns('10em 10em 10em 10em 10em 1fr ');
+      menuContainer.buildGridLayout_templateColumns('10em 10em 10em 10em 10em 10em 10em 1fr ');
       menuContainer.buildGridLayout_templateRows('1fr');
 
 
@@ -77,19 +82,19 @@ export function main(capt1,capt2)
       btn4.heightPx = 35;
 
 
-  var btn5 = dialogs.addButton( menuContainer , "" , 4 , 1 , 1 , 1 , "Clock-Test"  )
+  var btn5 = dialogs.addButton( menuContainer , "" , 5 , 1 , 1 , 1 , "Clock-Test"  )
       btn5.callBack_onClick = function() { 
-                                           if(clock==null) clock = new TFAnalogClock( svgContainer , 1 , 1 , 200 , 200 , {} );
+                                           if(clock==null) clock = new TFAnalogClock( panels[14] , 1 , 1 , '100%' , '100%' , {isDragable:true} );
                                            else {clock.destroy(); clock = null;}
                                          }
       btn5.heightPx = 35;
 
 
-var btn6 = dialogs.addButton( menuContainer , "" , 5 , 1 , 1 , 1 , "Chart-Test"  )
+var btn6 = dialogs.addButton( menuContainer , "" , 6 , 1 , 1 , 1 , "Chart-Test"  )
     btn6.callBack_onClick = function() { 
                                            if(chart==null)
                                             {
-                                             chart = new TFChart( svgContainer , 1 , 1 , '100%' , '100%' , {chartBackgroundColor:'white',chartType:'Spline',maxPoints:50} );
+                                             chart = new TFChart( panels[13] , 1 , 1 , '100%' , '100%' , {chartBackgroundColor:'white',chartType:'Spline',maxPoints:50} );
                                              var dummyData = [];
                                              var series    = chart.addSeries('dummyData','green');
                                              for(var i=0; i<50; i++) dummyData.push({x:i, y:Math.random()*100, color:utils.randomColor() });   
@@ -109,9 +114,15 @@ var btn6 = dialogs.addButton( menuContainer , "" , 5 , 1 , 1 , 1 , "Chart-Test" 
     btn6.heightPx = 35;
 
 
+    treeData ={A:1,B:2,C:{CC:30},D:4,E:5,F:6,G:7}
 
-      
-
+    var btn7 = dialogs.addButton( menuContainer , "" , 7 , 1 , 1 , 1 , "TreeView-Test"  );
+    btn7.heightPx = 35;
+    btn7.callBack_onClick = function() { 
+                                           if(treeView==null) treeView = dialogs.createTreeView( testContainer3 , treeData , {} );
+                                           else {treeView.destroy(); treeView = null;}
+                                         }
+   
       testContainer1.buildGridLayout_templateRows('repeat(10,1fr)');
       testContainer1.buildGridLayout_templateColumns('1fr');
 
@@ -207,7 +218,7 @@ for (let i = 0; i < 100; i++) {
 }
 
 // Animations-Setup
-/*
+
 panels[12].callBack_onClick = () => {panels[12].toggleAnimation();};
 panels[12].animation(
     // Vorbereitung: Canvas-Größe anpassen
@@ -231,7 +242,7 @@ panels[12].animation(
         
 );
   
-*/    
+ 
       
 } 
     
@@ -293,7 +304,7 @@ async function showSVGs(type)
    var response = utils.webApiRequest('SCANDIR' , {dir:path} )
    imgs = [];
 
-   for (var i=0; i<response.result.length; i++)
+   for (var i=0; i<Math.min(response.result.length , 2000); i++)
        if(response.result[i].isFile) imgs.push( utils.buildURL('GETIMAGEFILE',{fileName:path + response.result[i].name }  ));
 
    for(var i=0; i<imgs.length; i++)
