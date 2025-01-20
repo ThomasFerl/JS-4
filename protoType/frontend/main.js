@@ -28,7 +28,8 @@ var menuContainer  = null;
 
 var editPath       = null;
 var clock          = null;
-var chart          = null;    
+var chart          = null; 
+var osziX          = 0;   
 
 
 
@@ -88,13 +89,18 @@ var btn6 = dialogs.addButton( menuContainer , "" , 5 , 1 , 1 , 1 , "Chart-Test" 
     btn6.callBack_onClick = function() { 
                                            if(chart==null)
                                             {
-                                             chart = new TFChart( svgContainer , 1 , 1 , '100%' , '100%' , {chartType:'Spline',maxPoints:50} );
+                                             chart = new TFChart( svgContainer , 1 , 1 , '100%' , '100%' , {chartBackgroundColor:'white',chartType:'Spline',maxPoints:50} );
                                              var dummyData = [];
-                                             var series    = chart.addSeries('dummyData','rgba(0,0,100,0.5)');
-                                             for(var i=0; i<50; i++) dummyData.push({x:i, y:Math.random()*100});   
+                                             var series    = chart.addSeries('dummyData','green');
+                                             for(var i=0; i<50; i++) dummyData.push({x:i, y:Math.random()*100, color:utils.randomColor() });   
+
                                              chart.addPoint(series , dummyData);
+
+                                             osziX = 50;
+
                                              setInterval( function (){
-                                                                       this.chart.addPoint(this.series , {x:100, y:Math.random()*100} )
+                                                                       osziX++; 
+                                                                       this.chart.addPoint(this.series , {x:osziX, y:Math.random()*100 , color:utils.randomColor()} )
                                                                      }.bind({chart:chart,series:series}) , 100 );
                                              }    
                     
@@ -201,6 +207,7 @@ for (let i = 0; i < 100; i++) {
 }
 
 // Animations-Setup
+/*
 panels[12].callBack_onClick = () => {panels[12].toggleAnimation();};
 panels[12].animation(
     // Vorbereitung: Canvas-Größe anpassen
@@ -221,9 +228,10 @@ panels[12].animation(
             p.nextPosition();
         });
     }
+        
 );
   
-    
+*/    
       
 } 
     

@@ -6,7 +6,7 @@ const debug              = globals.debug;
 function mod(a,b) { if(b!=0) return Math.floor(a/b); else return NaN;}
 
 
-export function processMessages() { return new Promise(resolve => setTimeout(resolve, 0)); }
+export function processMessages(wait) { return new Promise(resolve => setTimeout(resolve, wait ||  0)); }
 
 export function wait( ms ) { return new Promise(resolve => setTimeout(resolve, ms));  }
 
@@ -695,6 +695,23 @@ export function prefix0( value )
   else         return ''  + value;
 }
 
+export function parseRGBstring( rgbStr )
+{
+ // Entfernen von "rgb(" und ")"
+ if(!rgbStr) return;
+ if(rgbStr.toUpperCase().indexOf('RGB')<0) return;
+
+const start = rgbStr.indexOf('(') + 1; 
+const end   = rgbStr.indexOf(')'); 
+const colorValues = rgbStr.slice(start, end); 
+// Splitte den String anhand der Kommata
+const v      = colorValues.split(',').map(Number);
+const result = { r: v[0], g: v[1], b: v[2] };
+if (v.length > 3) result.a = v[3];
+
+return result;
+
+}
 
 export function randomColor() {return "#" +  Math.floor(Math.random()*16777215).toString(16);};
 
@@ -759,17 +776,43 @@ export function rgbToHex(r, g, b)
 
 
 // Konvertiert RGB in HSL
-export function darkenColor(color, amount) {
-  // Extrahiere RGB-Werte aus Hex-Farbe
-  const hslMatch = color.match(/^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i);
-  if (!hslMatch) {
-      throw new Error("Ungültige Farbformat. Bitte Hex-Farbe angeben.");
-  }
+export function darkenColor(color, amount) 
+{
+  var r = 0;
+  var g = 0;
+  var b = 0;
+  var d = false;
+  
+  // liegt Farbe als RGB() vor ? 
+  if(color.toUpperCase().indexOf('RGB')>-1)
+    { // Extrahiere RGB-Werte aus RGB-String
+      const rgb = parseRGBstring(color);
+      r = rgb.r;
+      g = rgb.g;
+      b = rgb.b;
+      d = true;
+  } 
 
-  const r = parseInt(hslMatch[1], 16);
-  const g = parseInt(hslMatch[2], 16);
-  const b = parseInt(hslMatch[3], 16);
+  if(color.indexOf('#')>-1)
+    { // Extrahiere RGB-Werte aus Hex-Farbe
+      const hslMatch = color.match(/^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i);
+     if (hslMatch) 
+      { 
+        r = parseInt(hslMatch[1], 16);
+        g = parseInt(hslMatch[2], 16);
+        b = parseInt(hslMatch[3], 16);
+        d = true;
+      }  
+    }   
 
+  if (!d)
+    {
+       var ctx = document.createElement('canvas').getContext('2d');
+           ctx.fillStyle = color;
+       return this.darkenColor(ctx.fillStyle , amount);
+     }
+      
+  
   // Konvertiere RGB zu HSL
   let hsl = this.rgbToHsl(r, g, b);
 

@@ -1,0 +1,24 @@
+const aedes = require('aedes')(); // MQTT-Broker-Instanz
+const server = require('net').createServer(aedes.handle);
+
+const TARGET_PORT = 4701; // Port für den Target-Broker
+
+// Starte den MQTT-Broker
+server.listen(TARGET_PORT, () => {
+    console.log(`Target-Broker läuft auf Port ${TARGET_PORT}`);
+});
+
+// Ereignis: Client verbindet sich
+aedes.on('client', (client) => {
+    console.log(`Client verbunden: ${client.id}`);
+});
+
+// Ereignis: Nachricht empfangen
+aedes.on('publish', (packet, client) => {
+    console.log(`Nachricht empfangen: ${packet.topic} -> ${packet.payload.toString()}`);
+});
+
+// Ereignis: Client trennt sich
+aedes.on('clientDisconnect', (client) => {
+    console.log(`Client getrennt: ${client.id}`);
+});

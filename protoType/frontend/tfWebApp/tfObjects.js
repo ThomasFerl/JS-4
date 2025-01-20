@@ -2541,26 +2541,7 @@ export class TFAnalogClock extends TFPanel
 
 export class TFChart extends TFPanel
 {
-  constructor(parent, left, top, width, height, params)
-  {
-    if (!params) params = {};
-    params.chartData               = params.chartData               || [];
-    params.chartType               = params.chartType               || 'line';
-    params.tension                 = params.tension                 || 0.4;
-    params.radius                  = params.radius                  || 3;
-    params.showLines               = params.showLines               || true;
-    params.chartPointColor         = params.chartPointColor         || 'rgb(147, 147, 147)';
-    params.chartBorderColor        = params.chartBorderColor        || 'rgb(2, 10, 70)';
-    params.chartBorderWidth        = params.chartBorderWidth        || 1;
-    params.chartSelectedColor      = params.chartSelectedColor      || 'rgb(255, 0, 0)';
-    params.chartBackgroundColor    = params.chartBackgroundColor    || 'rgb(210, 238, 197)';
-    params.gridAreaBackgroundColor = params.gridAreaBackgroundColor || 'rgb(147, 147, 147)';
-
-    super(parent, left, top, width, height, params);
- }  
- 
-
- _convertColor(color) 
+ __convertColor(color) 
  {
   const ctx = this.canvas.getContext('2d');
   ctx.fillStyle = color;
@@ -2574,10 +2555,10 @@ export class TFChart extends TFPanel
    let _tension   = this.params.tension;
    let _radius    = this.params.radius;
 
-   this.params.chartPointColor         = this._convertColor(this.params.chartPointColor);
-   this.params.chartBorderColor        = this._convertColor(this.params.chartBorderColor);
-   this.params.chartSelectedColor      = this._convertColor(this.params.chartSelectedColor);
-   this.params.chartBackgroundColor    = this._convertColor(this.params.chartBackgroundColor);
+   this.params.chartPointColor         = this.__convertColor(this.params.chartPointColor);
+   this.params.chartBorderColor        = this.__convertColor(this.params.chartBorderColor);
+   this.params.chartSelectedColor      = this.__convertColor(this.params.chartSelectedColor);
+   this.params.chartBackgroundColor    = this.__convertColor(this.params.chartBackgroundColor);
 
    if (this.params.chartType.toUpperCase().indexOf('LINE') > -1) 
     {
@@ -2603,55 +2584,17 @@ export class TFChart extends TFPanel
        this.chartOptions.events       = ['mousemove', 'mouseout', 'click', 'touchstart'] ;
        this.chartOptions.interaction  = { mode: 'nearest', axis: 'x', intersect: true };
        this.chartOptions.plugins      = { legend: { display: false } };
+       this.chartOptions.onHover      = null;
+       this.chartOptions.onClick      = null;
 
-       this.chartOptions.onHover = function(event, activeElements) 
-                                   {
-                                     console.log('onHover-activeElements:', activeElements);
-                                     console.log('onHover-even', event);
-                                     // Reset all points
-                                     this.data.datasets.forEach((dataset) => {
-                                                                               console.log('onHover-dataset:', dataset);
-                                                                               dataset.backgroundColor = dataset.backgroundColor.map(() => 'rgb(147, 147, 147)');    
-                                                                             });
- 
-                                     // Highlight the current point
-                                     if (activeElements.length > 0) 
-                                     {
-                                       const index        = activeElements[0].index;
-                                       const datasetIndex = activeElements[0].datasetIndex;
-                                       this.data.datasets[datasetIndex].backgroundColor[index] = 'red';
-                                     }
- 
-                                     this.update();
-                                   } ;
- 
-       this.chartOptions.onClick = function(e) 
-                                   {debugger
-                                     var c = this.chart;
-                                     const clickedPoints = c.getElementsAtEventForMode(e, 'nearest', { intersect: true }, false);
-                                     if (clickedPoints.length > 0) 
-                                     {
-                                       const clickedPoint = clickedPoints[0];
-                                       // Reset all points to original color
-                                       c.data.datasets[clickedPoint.datasetIndex].backgroundColor = c.data.datasets[clickedPoint.datasetIndex].backgroundColor.map(() => 'rgb(147, 147, 147)');
-                                       // Mark the clicked point
-                                       c.data.datasets[clickedPoint.datasetIndex].backgroundColor[clickedPoint.index] = this.self.params.chartSelectedColor;
-                                       const label = c.data.labels[clickedPoint.index];
-                                       const value = c.data.datasets[clickedPoint.datasetIndex].data[clickedPoint.index];
- 
-                                       if(this.self.onChartClick) this.self.onChartClick({chart: c, itemIndex: clickedPoint.index, selectedLabel: label, selectedValue: value, hostedObject: hostedObject || {} });
-                                       c.update();
-                                      }
-                                   }.bind({chart:this.chart , self:this});
-   
-       this.chartParams.type    =  _chartType;
-       this.chartParams.options =  this.chartOptions;
-       this.chartParams.plugins = [{beforeDraw: function(chart) {
-                                                                  const ctx     = chart.ctx;
-                                                                  ctx.fillStyle = this.params.gridAreaBackgroundColor || this.backgroundColor;
-                                                                  ctx.fillRect(0, 0, chart.width, chart.height);
-                                                                }.bind(this)
-                                   }];
+       this.chartParams.type          =  _chartType;
+       this.chartParams.options       =  this.chartOptions;
+       this.chartParams.plugins       = [{beforeDraw: function(chart) {
+                                                                       const ctx     = chart.ctx;
+                                                                       ctx.fillStyle = this.params.chartBackgroundColor || this.backgroundColor;
+                                                                       ctx.fillRect(0, 0, chart.width, chart.height);
+                                                                      }.bind(this)
+                                         }];
 
        this.chartParams.data   = { labels  : [],
                                    datasets: []
@@ -2663,17 +2606,70 @@ export class TFChart extends TFPanel
  render()
  {
    super.render();
-   this.chart        = null;
-   this.series       = [];
-   this.chartParams  = {};
-   this.chartOptions = {}
-   this.maxPoints    = this.params.maxPoints || -1;
+   this.chart                           = null;
+   this.series                          = [];
+   this.chartParams                     = {};
+   this.chartOptions                    = {}
+   this.maxPoints                       = this.params.maxPoints || -1;
 
-   this.__prepareChart();
+    this.params.chartData               = this.params.chartData               || [];
+    this.params.chartType               = this.params.chartType               || 'line';
+    this.params.tension                 = this.params.tension                 || 0;
+    this.params.radius                  = this.params.radius                  || 3;
+    this.params.showLines               = this.params.showLines               || true;
+    this.params.chartPointColor         = this.params.chartPointColor         || 'rgb(147, 147, 147)';
+    this.params.chartBorderColor        = this.params.chartBorderColor        || 'rgba(2, 10, 70, 0.35)';
+    this.params.chartBorderWidth        = this.params.chartBorderWidth        || 1;
+    this.params.chartSelectedColor      = this.params.chartSelectedColor      || 'rgb(255, 0, 0)';
+    this.params.chartBackgroundColor    = this.params.chartBackgroundColor    || this.backgroundColor;
+    this.params.gridAreaBackgroundColor = this.params.gridAreaBackgroundColor || this.backgroundColor;
+ 
+    this.__prepareChart();
 
-  this.ctx   = this.canvas.getContext('2d');
-  this.chart = new Chart(this.ctx, this.chartParams); 
+   this.ctx   = this.canvas.getContext('2d');
+   this.chart = new Chart(this.ctx, this.chartParams); 
 
+
+  this.chart.options.onHover = function(event, activeElements) 
+  { 
+    var c   =this.chart;
+    var self=this.self;
+    // Reset all points
+    c.data.datasets.forEach((ds) => {ds.backgroundColor = ds.backgroundColor.map(() => self.params.chartPointColor); });
+
+    // Highlight the current point
+    if (activeElements.length > 0) 
+    {
+      const index        = activeElements[0].index;
+      const datasetIndex = activeElements[0].datasetIndex;
+      c.data.datasets[datasetIndex].backgroundColor[index] = self.params.chartSelectedColor;
+    }
+
+    c.update();
+  }.bind({chart:this.chart, self:this}); 
+
+
+  this.chart.options.onClick = function(e) 
+  {
+      var c    = this.chart;
+      var self = this.self;
+                                     
+      const clickedPoints = c.getElementsAtEventForMode(e, 'nearest', { intersect: true }, false);
+      if (clickedPoints.length > 0) 
+         {
+           const clickedPoint = clickedPoints[0];
+           // Reset all points to original color
+           c.data.datasets[clickedPoint.datasetIndex].backgroundColor = c.data.datasets[clickedPoint.datasetIndex].backgroundColor.map(() => self.params.chartPointColor);
+           // Mark the clicked point
+           c.data.datasets[clickedPoint.datasetIndex].backgroundColor[clickedPoint.index] = self.params.chartSelectedColor;
+           const label = c.data.labels[clickedPoint.index];
+           const value = c.data.datasets[clickedPoint.datasetIndex].data[clickedPoint.index];
+           if(self.onChartClick) self.onChartClick({chart: c, itemIndex: clickedPoint.index, selectedLabel: label, selectedValue: value, hostedObject: hostedObject || {} });
+           c.update();
+         }
+  }.bind({chart:this.chart , self:this});
+
+ 
   if(this.params.chartData.length > 0) 
     { 
       var s = this.addSeries(this.params.seriesName || '' , this.params.seriesColor || 'black');
@@ -2687,13 +2683,16 @@ export class TFChart extends TFPanel
  // Add a new series (dataset) to the chart
  addSeries(seriesName, color) 
  {
-   color = this._convertColor(color);
+   // Farbein Form: rgb(rrr, ggg, bbb) bringen
+   color = this.__convertColor(color);
+
    var newSeries = {
                      label           : seriesName,
                      data            : [],
-                     borderColor     : Array.isArray(this.params.chartBorderColor) ? data.map(() => this.params.chartBorderColor) : this.params.chartBorderColor,
-                     backgroundColor : Array.isArray(color) ? data.map(() => color) : color,
-                     fill            : false
+                     borderColor     : this.params.chartBorderColor,
+                     backgroundColor : [],
+                     fill            : false,
+                     seriesColor     : color
                    };
 
   this.chart.data.datasets.push(newSeries);
@@ -2705,16 +2704,23 @@ export class TFChart extends TFPanel
 // Internal helper to add a single point and handle osci-mode
 _addSinglePoint(seriesIndex, point) 
 { 
-  console.log('addSinglePoint', seriesIndex, JSON.stringify(point));
+  console.log(`addSinglePoint: ${JSON.stringify(point)}`);
 
+  const dataset = this.chart.data.datasets[seriesIndex];
+  if(!dataset) return;
+
+  // Punkt hinzufügen
   this.chart.data.labels.push(point.x);
-  this.chart.data.datasets[seriesIndex].data.push(point.y);
+  dataset.data.push(point.y);
+  dataset.backgroundColor.push(point.color);
 
-if(this.maxPoints>0)  
-  if (this.maxPoints && this.chart.data.labels.length > this.maxPoints) 
-  {
+  // Begrenzung der maximalen Punkte
+  if (this.maxPoints > 0 && this.chart.data.labels.length > this.maxPoints) 
+    { 
+      console.log(`Oszi-Mode: ${this.chart.data.labels.length} > ${this.maxPoints}`);
       this.chart.data.labels.shift();
-      this.chart.data.datasets.forEach(ds => ds.data.shift());
+      dataset.data.shift();
+      dataset.backgroundColor.shift(); // Entferne die älteste Farbe
   }
 }
 
@@ -2725,9 +2731,17 @@ addPoint(aSeries, point )
       const index = this.chart.data.datasets.indexOf(aSeries);
       if(index < 0 ) return;
        
-      if (Array.isArray(point)) point.forEach((p , i) => { this._addSinglePoint(index,p) });
-      else this._addSinglePoint(index, point); 
-      this.chart.update();
+      if (Array.isArray(point)) point.forEach((p , i) => {
+                                                            p.color = p.color || aSeries.seriesColor; 
+                                                           this._addSinglePoint(index,p);
+                                                         });  
+      else 
+          {
+            point.color = point.color || aSeries.seriesColor;
+            this._addSinglePoint(index, point); 
+          } 
+
+      this.chart.update('none');
   }   
   else console.error(`missed series`);
 }
