@@ -59,7 +59,7 @@ function safePayload( ID_topic, payload)
 
     // 2. Speichere die Payload in der Tabelle mqttRawValues
     db.run('INSERT INTO mqttPayloads (ID_topic, source  , mqttid , name   , timestamp   , value   , unit ) VALUES (?, ?, ?, ?, ?, ?, ?)', 
-                                     [ID_topic, p.source, p.id   , p.name , p.timestamp , p.value , p.unit ], (err)=>{
+                                     [ID_topic, p.source, p.id   , p.name , p.timestamp , p.value , p.unit ], function(err){
                                      if (err) { console.error('Fehler beim Speichern der Payload:', err.message); return; }
                                      console.log(`Payload gespeichert  => ID: ${this.lastID}`);
     });
@@ -99,7 +99,6 @@ function setupDatabase()
             timestamp TEXT NOT NULL,
             value REAL NOT NULL,
             unit TEXT NOT NULL,
-            payload TEXT NOT NULL,
             FOREIGN KEY (ID_topic) REFERENCES mqttTopics (ID)
         )
     `;
