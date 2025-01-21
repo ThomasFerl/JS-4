@@ -51,7 +51,28 @@ function handleTopic( topic, payload)
 
 // payload-example:
 //  {"source":"analog","id":2,"type":"float","name":"PT500_IT-Werkstatt","timestamp":"2025-01-21-16:12:17","value":21.1,"unit":"°C"}
- 
+
+// Datumswandung von yyyy-mm-dd-hh:mn:ss in Excel-Zeit
+function toExcelDate(dateString) 
+{
+    var parts = dateString.split("-");
+    if (parts.length > 3) {
+        parts[2] += "T" + parts[3];
+        parts.splice(3, 1); // Entfernt den vierten Teil (jetzt überflüssig)
+        dateString = parts.join("-");
+    }
+    // Wandelt das Datum in einen Unix-Timestamp um (ms seit 1970)
+    const date = new Date(dateString);
+    const unixTimestamp = date.getTime() / 1000; // in Sekunden
+
+    // Unix-Timestamp in Excel-Datum umrechnen
+    const daysSinceUnixEpoch = unixTimestamp / 86400; // Sekunden in Tage
+    var excelDate = daysSinceUnixEpoch + 25569; // Differenz zu Excel-Datum
+        excelDate = excelDate + (1/24); // Zeitzone: 1 Stunde
+
+    return (Math.round(excelDate*1000)/1000);
+}
+
 function safePayload( ID_topic, payload)
 {
     try { var p = JSON.parse(payload); }
@@ -59,7 +80,7 @@ function safePayload( ID_topic, payload)
 
     // 2. Speichere die Payload in der Tabelle mqttRawValues
     db.run('INSERT INTO mqttPayloads (ID_topic, source  , mqttid , name   , timestamp   , value   , unit ) VALUES (?, ?, ?, ?, ?, ?, ?)', 
-                                     [ID_topic, p.source, p.id   , p.name , p.timestamp , p.value , p.unit ], function(err){
+                                     [ID_topic, p.source, p.id   , p.name , toExcelDate(p.timestamp) , p.value , p.unit ], function(err){
                                      if (err) { console.error('Fehler beim Speichern der Payload:', err.message); return; }
                                      console.log(`Payload gespeichert  => ID: ${this.lastID}`);
     });
@@ -93,13 +114,13 @@ function setupDatabase()
         CREATE TABLE IF NOT EXISTS mqttPayloads (
             ID INTEGER PRIMARY KEY AUTOINCREMENT,
             ID_topic INTEGER NOT NULL,
-            source TEXT NOT NULL,
-            mqttid INTEGER NOT NULL,
-            name TEXT NOT NULL,
-            timestamp TEXT NOT NULL,
-            value REAL NOT NULL,
-            unit TEXT NOT NULL,
-            FOREIGN KEY (ID_topic) REFERENCES mqttTopics (ID)
+            source TEXT ,
+            mqttid INTEGER ,
+            name TEXT ,
+            timestamp TEXT ,
+            exceltime REAL ,
+            value REAL,
+            unit TEXT 
         )
     `;
     db.run(createMessagesTable, (err) => {
@@ -110,3 +131,108 @@ function setupDatabase()
         }
     });
 }
+
+
+/*
+
+Stunden-Aggregation:
+SELECT exceltime , AVG/SUM/MAX/MIN(value) as value
+FROM mqttPayloads
+GROUP BY CAST(exceltime*24 AS INTEGER);
+
+Tages-Aggregation:
+SELECT exceltime , AVG/SUM/MAX/MIN(value) as value
+FROM mqttPayloads
+GROUP BY ROUND(exceltime);
+
+Monats-Aggregation: 
+SELECT exceltime , AVG/SUM/MAX/MIN(value) as value
+FROM mqttPayloads
+GROUP BY strftime('%Y-%m', datetime((exceltime - 25569) * 86400, 'unixepoch'));
+
+Jahres-Aggregation: 
+SELECT exceltime , AVG/SUM/MAX/MIN(value) as value
+FROM mqttPayloads
+GROUP BY strftime('%Y', datetime((exceltime - 25569) * 86400, 'unixepoch'));
+
+
+Archivierung in Stunden-Werten:
+INSERT INTO mqttArchive_hour (ID_Topic,source,mqttid,name,dt,value,unit)
+SELECT 
+    ID_Topic, 
+    source, 
+    mqttid, 
+    name,
+    CAST(exceltime * 24 AS INTEGER) / 24.0 , 
+    AVG/SUM/MIN/MAX(value) ,
+    unit
+FROM mqttPayloads 
+GROUP BY ID_Topic, 
+         source, 
+         mqttid, 
+         name,
+         CAST(exceltime * 24 AS INTEGER) / 24.0 , 
+         AVG/SUM/MIN/MAX(value) ,
+         unit
+*/
+
+
+
+// Die Archivierung als stündlicher Job
+function doArchive() 
+{
+    console.log("Starte Archivierungsroutine...");
+
+    db.serialize(() => {
+        db.run("BEGIN TRANSACTION");
+
+        // Aggregation und Einfügen in die Archiv-Tabelle
+        db.run(`
+                INSERT INTO mqttArchive_hour (ID_Topic,source,mqttid,name,dt,value,unit)
+                SELECT 
+                ID_Topic, 
+                source, 
+                mqttid, 
+                name,
+                CAST(exceltime * 24 AS INTEGER) / 24.0 , 
+                AVG/SUM/MIN/MAX(value) ,
+                unit
+                FROM mqttPayloads 
+                GROUP BY ID_Topic, 
+                         source, 
+                         mqttid, 
+                         name,
+                         CAST(exceltime * 24 AS INTEGER) / 24.0 , 
+                         AVG/SUM/MIN/MAX(value) ,
+                         unit
+        `, function (err) {
+            if (err) {
+                console.error("Fehler beim Einfügen in die Archiv-Tabelle:", err.message);
+                return db.run("ROLLBACK");
+            }
+        });
+
+        // Löschen der verarbeiteten Daten
+        db.run(`
+            DELETE FROM mqttPayloads
+            WHERE exceltime < (strftime('%s', 'now', 'localtime') / 86400.0)
+        `, function (err) {
+            if (err) {
+                console.error("Fehler beim Löschen aus mqttPayloads:", err.message);
+                return db.run("ROLLBACK");
+            }
+        });
+
+        db.run("COMMIT", (err) => {
+            if (!err) {
+                console.log("Archivierungsroutine erfolgreich abgeschlossen.");
+            }
+        });
+    });
+}
+
+// Routine alle 60 Minuten ausführen
+setInterval(doArchive, 60 * 60 * 1000);
+
+
+
