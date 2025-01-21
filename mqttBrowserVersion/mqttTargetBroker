@@ -1,24 +1,113 @@
-const aedes = require('aedes')(); // MQTT-Broker-Instanz
-const server = require('net').createServer(aedes.handle);
-
+const aedes       = require('aedes')(); // MQTT-Broker-Instanz
+const server      = require('net').createServer(aedes.handle);
+const sqlite3     = require('sqlite3').verbose();
 const TARGET_PORT = 4701; // Port für den Target-Broker
+const TARGET_DB   = './mqtt_RawValues.db'; // SQLite-Datenbank für die Rohdaten 
+
+const db = new sqlite3.Database( TARGET_DB , (err) => {
+    if (err) console.error('Fehler beim Verbinden mit der Datenbank:', err.message);
+    else     console.log('Verbunden mit der SQLite-Datenbank "'+TARGET_DB+'"');
+});
+
+// Prüft, ob die Tabellen existieren, und erstellt sie bei Bedarf.
+setupDatabase();
+
 
 // Starte den MQTT-Broker
-server.listen(TARGET_PORT, () => {
-    console.log(`Target-Broker läuft auf Port ${TARGET_PORT}`);
-});
+server.listen(TARGET_PORT, () => { console.log(`Target-Broker läuft auf Port ${TARGET_PORT}`); });
 
 // Ereignis: Client verbindet sich
-aedes.on('client', (client) => {
-    console.log(`Client verbunden: ${client.id}`);
-});
-
-// Ereignis: Nachricht empfangen
-aedes.on('publish', (packet, client) => {
-    console.log(`Nachricht empfangen: ${packet.topic} -> ${packet.payload.toString()}`);
-});
+aedes.on('client', (client) => {console.log(`Client verbunden: ${client.id}`);});
 
 // Ereignis: Client trennt sich
-aedes.on('clientDisconnect', (client) => {
-    console.log(`Client getrennt: ${client.id}`);
-});
+aedes.on('clientDisconnect', (client) => {console.log(`Client getrennt: ${client.id}`);});
+
+// Ereignis: Nachricht empfangen
+aedes.on('publish', (packet, client) => { 
+                                          console.log(`Nachricht empfangen: ${packet.topic} -> ${packet.payload.toString()}`); 
+                                          handleTopic(packet.topic, packet.payload.toString()); 
+                                        });
+
+//--------------------------------------------------------------------------------------------------------------------------------------
+
+function handleTopic( topic, payload)
+ {
+    // 1. Prüfen, ob das Topic existiert
+    db.get('SELECT ID FROM mqttTopics WHERE topic = ?', [topic], (err, row) => {
+                                                  if (err) { console.error('Fehler beim Prüfen des Topics:', err.message); return; }
+                                                 
+                                                  if (row) { safePayload(row.ID, payload); }
+                                                  else {
+                                                          // Topic ist neu -> füge es hinzu und gib die neue ID zurück
+                                                          db.run('INSERT INTO mqttTopics (topic) VALUES (?)', [topic], function (err) {
+                                                             if (err) { console.error('Fehler beim Prüfen des Topics:', err.message); return; }
+                                                             safePayload(this.lastID, payload);  
+                                                          });
+                                                       }
+                                              });
+}
+
+
+
+// payload-example:
+//  {"source":"analog","id":2,"type":"float","name":"PT500_IT-Werkstatt","timestamp":"2025-01-21-16:12:17","value":21.1,"unit":"°C"}
+ 
+function safePayload( ID_topic, payload)
+{
+    try { var p = JSON.parse(payload); }
+    catch (e) { console.error('Fehler beim Parsen der Payload:', e.message); return; }
+
+    // 2. Speichere die Payload in der Tabelle mqttRawValues
+    db.run('INSERT INTO mqttPayloads (ID_topic, source  , mqttid , name   , timestamp   , value   , unit ) VALUES (?, ?, ?, ?, ?, ?, ?)', 
+                                     [ID_topic, p.source, p.id   , p.name , p.timestamp , p.value , p.unit ], (err)=>{
+                                     if (err) { console.error('Fehler beim Speichern der Payload:', err.message); return; }
+                                     console.log(`Payload gespeichert  => ID: ${this.lastID}`);
+    });
+}
+
+
+
+
+
+//Prüft, ob die Tabellen existieren, und erstellt sie bei Bedarf.
+
+function setupDatabase() 
+{
+    // Tabelle mqttTopics erstellen, falls sie nicht existiert
+    const createTopicsTable = `
+        CREATE TABLE IF NOT EXISTS mqttTopics (
+            ID INTEGER PRIMARY KEY AUTOINCREMENT,
+            topic TEXT UNIQUE NOT NULL
+        )
+    `;
+    db.run(createTopicsTable, (err) => {
+        if (err) {
+            console.error('Fehler beim Erstellen der Tabelle mqttTopics:', err.message);
+        } else {
+            console.log('Tabelle mqttTopics überprüft/erstellt.');
+        }
+    });
+
+    // Tabelle mqttMessages erstellen, falls sie nicht existiert
+    const createMessagesTable = `
+        CREATE TABLE IF NOT EXISTS mqttPayloads (
+            ID INTEGER PRIMARY KEY AUTOINCREMENT,
+            ID_topic INTEGER NOT NULL,
+            source TEXT NOT NULL,
+            mqttid INTEGER NOT NULL,
+            name TEXT NOT NULL,
+            timestamp TEXT NOT NULL,
+            value REAL NOT NULL,
+            unit TEXT NOT NULL,
+            payload TEXT NOT NULL,
+            FOREIGN KEY (ID_topic) REFERENCES mqttTopics (ID)
+        )
+    `;
+    db.run(createMessagesTable, (err) => {
+        if (err) {
+            console.error('Fehler beim Erstellen der Tabelle mqttMessages:', err.message);
+        } else {
+            console.log('Tabelle mqttMessages überprüft/erstellt.');
+        }
+    });
+}
