@@ -2,65 +2,13 @@ const aedes       = require('aedes')(); // MQTT-Broker-Instanz
 const server      = require('net').createServer(aedes.handle);
 const sqlite3     = require('sqlite3').verbose();
 
-// als Socket-Server für direkte Abos zu einem Webbrowser
-const http        = require('http');
-const webSocket   = require('ws');
-const net         = require('net');
-
-const TARGET_PORT     = 4701; // Port für den Target-Broker
-const WEBSOCKET_PORT  = 4400; // Port für den WebSocket-Server
-const TARGET_DB       = './mqtt_RawValues.db'; // SQLite-Datenbank für die Rohdaten 
-
-
-//-----------------------------------------------------------------------------------
-//---------WEBSOCKET-Server----------------------------------------------------------
-//-----------------------------------------------------------------------------------
-
-const httpServer  = http.createServer();
-const wsServer    = new webSocket.Server({ server: httpServer });
-const tcpServer   = net.createServer(aedes.handle);
-
-// Start des WebSocket-Servers
-wsServer.on('connection', (socket) => {
-    const stream = require('stream');
-    const duplex = new stream.Duplex({
-      write(chunk, encoding, callback) {
-        socket.send(chunk, callback);
-      },
-      read(size) {},
-    });
-  
-    duplex.on('data', (data) => {
-      socket.emit('data', data);
-    });
-  
-    duplex.on('end', () => {
-      socket.emit('end');
-    });
-  
-    socket.on('message', (data) => {
-      duplex.push(data);
-    });
-  
-    socket.on('close', () => {
-      duplex.emit('end');
-    });
-  
-    aedes.handle(duplex);
-  });
-  
-  // Start des HTTP-Servers
-  httpServer.listen( WEBSOCKET_PORT , () => {
-    console.log(`WebSocket-Server zur mqtt-Übermittlung läuft auf Port ${WEBSOCKET_PORT}`);
-  });
-
+const TARGET_PORT = 4701; // Port für den Target-Broker
+const TARGET_DB   = './mqtt_RawValues.db'; // SQLite-Datenbank für die Rohdaten 
 
 
 //-----------------------------------------------------------------------------------
 //-----------------------------------------------------------------------------------
 //-----------------------------------------------------------------------------------
-
-
 
 
 const db = new sqlite3.Database( TARGET_DB , (err) => {
@@ -70,6 +18,12 @@ const db = new sqlite3.Database( TARGET_DB , (err) => {
 
 // Prüft, ob die Tabellen existieren, und erstellt sie bei Bedarf.
 setupDatabase();
+
+
+//-----------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------------
+
 
 
 // Starte den MQTT-Broker
@@ -87,7 +41,9 @@ aedes.on('publish', (packet, client) => {
                                           handleTopic(packet.topic, packet.payload.toString()); 
                                         });
 
-//--------------------------------------------------------------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------------
 
 function handleTopic( topic, payload)
  {
@@ -159,6 +115,9 @@ function safePayload( ID_topic, payload)
 }
 
 
+//-----------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------------
 
 
 

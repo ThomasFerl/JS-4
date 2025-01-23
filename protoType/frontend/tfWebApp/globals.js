@@ -36,6 +36,11 @@ export function getServer()
    else          {console.log("use HTTP Server");  return 'http://' + __Server + ':' + __Port; } 
 }
 
+export function getWebSocketServerURL(port)   
+{ 
+   return 'ws://' + __Server + ':' + port;  
+}
+
 
 export function getUploadURL()   
 { 

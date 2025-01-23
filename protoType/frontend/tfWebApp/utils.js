@@ -131,6 +131,39 @@ export function strCompare(str, rule)
 }
 
 
+export function strMatches(searchStr, topic) 
+{
+  // (1) Kein WildCard -> searchStr muss identisch mit topic sein
+  if (!searchStr.includes('*')) {
+      return searchStr === topic;
+  }
+
+  // (2) searchStr ist ein '*' -> Jedes topic liefert einen Treffer
+  if (searchStr === '*') {
+      return true;
+  }
+
+  // (3) searchStr beginnt mit einem '*' -> topic muss mit dem Rest enden
+  if (searchStr.startsWith('*')) {
+      const ending = searchStr.slice(1); // Entferne das '*'
+      return topic.endsWith(ending);
+  }
+
+  // (4) searchStr endet mit einem '*' -> topic muss mit dem Rest beginnen
+  if (searchStr.endsWith('*')) {
+      const beginning = searchStr.slice(0, -1); // Entferne das '*'
+      return topic.startsWith(beginning);
+  }
+
+  // (5) searchStr enthält mitten im String einen '*' -> Anfang und Ende prüfen
+  const [start, end] = searchStr.split('*'); // Splitte am '*'
+  return topic.startsWith(start) && topic.endsWith(end);
+}
+
+
+
+
+
 export function containing( key , list )
 {
  return  list.some(element => element.toUpperCase() == key.toUpperCase());

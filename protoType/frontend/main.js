@@ -14,11 +14,11 @@ import { TFDateTime }    from "./tfWebApp/utils.js";
 
 import * as mqtt from 'https://unpkg.com/mqtt@4.3.7/dist/mqtt.min.js';
 
-//import {TFDistributor,
-//        TFMQTTlabel  }   from "./tfWebApp/tfMQTT.js";
+import {TFDistributor,
+        TFMQTTChart,
+        TFMQTTPanel  }   from "./tfWebApp/tfMQTT.js";
 
 
-var objects        = [];
 var head           = null;
 var menu           = null;
 var dashBoard      = null;
@@ -36,17 +36,27 @@ export function main(capt1,capt2)
         menu       = l.left;
         dashBoard  = l.dashBoard;
 
-        mqttClient = mqtt.connect(  'mqtt://10.102.13.5:4400' );
-
-
-/*
     var dist       = new TFDistributor( 'mqtt://10.102.13.5:4400' );     // Verbindung zum Broker herstellen
-    debugger;
-        dist.start();
 
-    var temperatur = new TFMQTTlabel( dashBoard , 1,1,200,70,{distributor:dist , topic:'ems/wago/WAGO001/PT500/Temperatur/IT-Werkstatt'} );
-*/
+    new TFMQTTChart( dashBoard , 1,1,'90%',200, {
+                                                  distributor            : dist , 
+                                                  captionBackgroundColor : 'gray',
+                                                  topic                  :'ems/wago/WAGO001/PT500/Temperatur/IT-Werkstatt',
+                                                  value                  :'value',
+                                                  caption                :'"Temperatur"'
+                                                } )
+    
+    for(var i=0; i<40; i++)
+    var temperatur = new TFMQTTPanel( dashBoard , 1,1,200,70, {
+                                                               backgroundColor        : 'white',
+                                                               captionBackgroundColor : 'gray',
+                                                               valueColor             : 'green',
+                                                               fontSize               : '1em',
+                                                               distributor            : dist , 
+                                                               topic                  :'ems/wago/WAGO001/PT500/Temperatur/IT-Werkstatt',
+                                                               value                  :'value',
+                                                               caption                :'"Temperatur"',
+                                                               appendix               :'unit'
+                                                               } );
 
-
- 
-} 
+}    

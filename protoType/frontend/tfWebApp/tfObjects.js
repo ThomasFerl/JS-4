@@ -304,6 +304,37 @@ export class TFObject
     this.top    = this.params.top;
     this.width  = this.params.width;
     this.height = this.params.height;  
+
+    if(this.params.backgroundColor) this.backgroundColor = this.params.backgroundColor;
+    if(this.params.color)           this.color           = this.params.color;
+    if(this.params.fontSize)        this.fontSize        = this.params.fontSize;
+    if(this.params.fontWeight)      this.fontWeight      = this.params.fontWeight;
+    if(this.params.gap)             this.gap             = this.params.gap;
+    if(this.params.placeItems)      this.placeItems      = this.params.placeItems;
+    if(this.params.justifyContent)  this.justifyContent  = this.params.justifyContent;
+    if(this.params.alignItems)      this.alignItems      = this.params.alignItems;
+    if(this.params.flexDirection)   this.flexDirection   = this.params.flexDirection;
+    if(this.params.overflow)        this.overflow        = this.params.overflow;
+    if(this.params.display)         this.display         = this.params.display;
+    if(this.params.opacity)         this.opacity         = this.params.opacity;
+    if(this.params.shadow)          this.shadow          = this.params.shadow;
+    if(this.params.borderRadius)    this.borderRadius    = this.params.borderRadius;
+    if(this.params.borderWidth)     this.borderWidth     = this.params.borderWidth;
+    if(this.params.borderColor)     this.borderColor     = this.params.borderColor;
+    if(this.params.padding)         this.padding         = this.params.padding;
+    if(this.params.paddingTop)      this.paddingTop      = this.params.paddingTop;
+    if(this.params.paddingLeft)     this.paddingLeft     = this.params.paddingLeft;
+    if(this.params.paddingRight)    this.paddingRight    = this.params.paddingRight;
+    if(this.params.paddingBottom)   this.paddingBottom   = this.params.paddingBottom;
+    if(this.params.margin)          this.margin          = this.params.margin;
+    if(this.params.marginTop)       this.marginTop       = this.params.marginTop;
+    if(this.params.marginLeft)      this.marginLeft      = this.params.marginLeft;
+    if(this.params.marginRight)     this.marginRight     = this.params.marginRight;
+    if(this.params.marginBottom)    this.marginBottom    = this.params.marginBottom;
+    if(this.params.gridTemplateAreas) this.gridTemplateAreas = this.params.gridTemplateAreas;
+    if(this.params.blur)            this.blur            = this.params.blur;
+
+
     this.DOMelement.data =  this;   
    
           this.DOMelement.addEventListener('wheel'      , (e)=>{if( this.callBack_onWheel)       this.callBack_onWheel      (e,this.dataBinding) });
@@ -1081,6 +1112,7 @@ export class TFLabel extends TFObject
   
   constructor (parent , left , top , width , height , params ) 
   {
+    params     = params || {};
     params.css = params.css || "cssLabel";
     super(parent , left , top , width , height , params );
     
@@ -1145,8 +1177,17 @@ get textAlign()
   return this.__ta;
 } 
 
+set fontSize( value )
+{
+  this.paragraph.style.fontSize = value;
 }
 
+get fontSize()
+{
+  return this.paragraph.style.fontSize;
+}
+
+}
 //---------------------------------------------------------------------------
 
 export class TFImage extends TFObject 
