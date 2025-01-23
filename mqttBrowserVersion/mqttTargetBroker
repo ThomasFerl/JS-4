@@ -1,8 +1,67 @@
 const aedes       = require('aedes')(); // MQTT-Broker-Instanz
 const server      = require('net').createServer(aedes.handle);
 const sqlite3     = require('sqlite3').verbose();
-const TARGET_PORT = 4701; // Port für den Target-Broker
-const TARGET_DB   = './mqtt_RawValues.db'; // SQLite-Datenbank für die Rohdaten 
+
+// als Socket-Server für direkte Abos zu einem Webbrowser
+const http        = require('http');
+const webSocket   = require('ws');
+const net         = require('net');
+
+const TARGET_PORT     = 4701; // Port für den Target-Broker
+const WEBSOCKET_PORT  = 4400; // Port für den WebSocket-Server
+const TARGET_DB       = './mqtt_RawValues.db'; // SQLite-Datenbank für die Rohdaten 
+
+
+//-----------------------------------------------------------------------------------
+//---------WEBSOCKET-Server----------------------------------------------------------
+//-----------------------------------------------------------------------------------
+
+const httpServer  = http.createServer();
+const wsServer    = new webSocket.Server({ server: httpServer });
+const tcpServer   = net.createServer(aedes.handle);
+
+// Start des WebSocket-Servers
+wsServer.on('connection', (socket) => {
+    const stream = require('stream');
+    const duplex = new stream.Duplex({
+      write(chunk, encoding, callback) {
+        socket.send(chunk, callback);
+      },
+      read(size) {},
+    });
+  
+    duplex.on('data', (data) => {
+      socket.emit('data', data);
+    });
+  
+    duplex.on('end', () => {
+      socket.emit('end');
+    });
+  
+    socket.on('message', (data) => {
+      duplex.push(data);
+    });
+  
+    socket.on('close', () => {
+      duplex.emit('end');
+    });
+  
+    aedes.handle(duplex);
+  });
+  
+  // Start des HTTP-Servers
+  httpServer.listen( WEBSOCKET_PORT , () => {
+    console.log(`WebSocket-Server zur mqtt-Übermittlung läuft auf Port ${WEBSOCKET_PORT}`);
+  });
+
+
+
+//-----------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------------
+
+
+
 
 const db = new sqlite3.Database( TARGET_DB , (err) => {
     if (err) console.error('Fehler beim Verbinden mit der Datenbank:', err.message);
@@ -32,8 +91,12 @@ aedes.on('publish', (packet, client) => {
 
 function handleTopic( topic, payload)
  {
+    // 0. Prüfen, ob das Topic mit "$SYS" beginnt, da es sich dabei um interne Systemnachrichten handelt
+    if (topic.startsWith('$SYS')) { return; }
+    
     // 1. Prüfen, ob das Topic existiert
-    db.get('SELECT ID FROM mqttTopics WHERE topic = ?', [topic], (err, row) => {
+    db.get('SELECT ID FROM mqttTopics WHERE topic = ?', [topic], (err, row) => 
+                                              {
                                                   if (err) { console.error('Fehler beim Prüfen des Topics:', err.message); return; }
                                                  
                                                   if (row) { safePayload(row.ID, payload); }
@@ -52,17 +115,24 @@ function handleTopic( topic, payload)
 // payload-example:
 //  {"source":"analog","id":2,"type":"float","name":"PT500_IT-Werkstatt","timestamp":"2025-01-21-16:12:17","value":21.1,"unit":"°C"}
 
-// Datumswandung von yyyy-mm-dd-hh:mn:ss in Excel-Zeit
-function toExcelDate(dateString) 
+// Reperatur des Zeitstempels von yyyy-mm-dd-hh:mn:ss zu yyyy-mm-ddThh:mn:ss
+function repairTimestamp( timestamp)
 {
-    var parts = dateString.split("-");
+    var parts = timestamp.split("-");
     if (parts.length > 3) {
         parts[2] += "T" + parts[3];
         parts.splice(3, 1); // Entfernt den vierten Teil (jetzt überflüssig)
-        dateString = parts.join("-");
+        return parts.join("-");
     }
+    return timestamp;
+}   
+
+
+// Datumswandung von yyyy-mm-dd-hh:mn:ss in Excel-Zeit
+function toExcelDate(dateString) 
+{
     // Wandelt das Datum in einen Unix-Timestamp um (ms seit 1970)
-    const date = new Date(dateString);
+    const date = new Date(repairTimestamp(dateString));
     const unixTimestamp = date.getTime() / 1000; // in Sekunden
 
     // Unix-Timestamp in Excel-Datum umrechnen
@@ -78,20 +148,21 @@ function safePayload( ID_topic, payload)
     try { var p = JSON.parse(payload); }
     catch (e) { console.error('Fehler beim Parsen der Payload:', e.message); return; }
 
-    // 2. Speichere die Payload in der Tabelle mqttRawValues
-    db.run('INSERT INTO mqttPayloads (ID_topic, source  , mqttid , name   , timestamp   , value   , unit ) VALUES (?, ?, ?, ?, ?, ?, ?)', 
-                                     [ID_topic, p.source, p.id   , p.name , toExcelDate(p.timestamp) , p.value , p.unit ], function(err){
-                                     if (err) { console.error('Fehler beim Speichern der Payload:', err.message); return; }
-                                     console.log(`Payload gespeichert  => ID: ${this.lastID}`);
-    });
+    // 2. Speichere die Payload in der Tabelle mqttRawValues   
+    //                                    1       2         3        4        5           6                          7          8             1  2  3  4  5  6  7  8
+    db.run('INSERT INTO mqttPayloads (ID_topic, source  , mqttid , name   , timestamp  , exceltime                , value   , unit ) VALUES ( ?, ?, ?, ?, ?, ?, ?, ? )', 
+                                     [ID_topic, p.source, p.id   , p.name , p.timestamp, toExcelDate(p.timestamp) , p.value , p.unit ] , 
+                                     (err)=>{
+                                             if (err) { console.error('Fehler beim Speichern der Payload:', err.message); return; }
+                                                 console.log(`Payload gespeichert  => ID: ${this.lastID}`);
+                                            });
 }
 
 
 
 
 
-//Prüft, ob die Tabellen existieren, und erstellt sie bei Bedarf.
-
+//Prüft, ob die Tabellen existieren, und erstellt sie bei Bedarf...
 function setupDatabase() 
 {
     // Tabelle mqttTopics erstellen, falls sie nicht existiert
@@ -174,7 +245,7 @@ GROUP BY ID_Topic,
          CAST(exceltime * 24 AS INTEGER) / 24.0 , 
          AVG/SUM/MIN/MAX(value) ,
          unit
-*/
+
 
 
 
@@ -234,5 +305,5 @@ function doArchive()
 // Routine alle 60 Minuten ausführen
 setInterval(doArchive, 60 * 60 * 1000);
 
-
+*/
 
