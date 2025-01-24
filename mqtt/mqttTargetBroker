@@ -160,56 +160,76 @@ function setupDatabase()
             console.log('Tabelle mqttMessages überprüft/erstellt.');
         }
     });
-}
+
+    // Tabelle mqttMessages erstellen, falls sie nicht existiert
+    const archiv_hour = `
+        CREATE TABLE IF NOT EXISTS archiv_hour (
+            ID INTEGER PRIMARY KEY AUTOINCREMENT,
+            ID_topic INTEGER NOT NULL,
+            source TEXT ,
+            mqttid INTEGER ,
+            name TEXT ,
+            timestamp TEXT ,
+            exceltime REAL ,
+            day REAL,
+            month REAL,
+            year REAL,
+            hour REAL,
+            cnt INTEGER,
+            value_avg REAL,
+            value_sum REAL,
+            value_min REAL,
+            value_max REAL,
+            unit TEXT 
+        )
+    `;
+    db.run(archiv_hour, (err) => {
+        if (err) {
+            console.error('Fehler beim Erstellen der Tabelle archiv_hour:', err.message);
+        } else {
+            console.log('Tabelle archiv_hour überprüft/erstellt.');
+        }
+    });
+
+ 
+
+    // Tabelle mqttMessages erstellen, falls sie nicht existiert
+    const archiv_day = `  
+        CREATE TABLE IF NOT EXISTS archiv_day (
+        ID INTEGER PRIMARY KEY AUTOINCREMENT,
+        ID_topic INTEGER NOT NULL,
+        source TEXT ,
+        mqttid INTEGER ,
+        name TEXT ,
+        timestamp TEXT ,
+        exceltime REAL ,
+        day REAL,
+        month REAL,
+        year REAL,
+        cnt INTEGER,
+        value_avg REAL,
+        value_sum REAL,
+        value_min REAL,
+        value_max REAL,
+        unit TEXT 
+    )
+   `;
+    db.run(archiv_day, (err) => {
+    if (err) {
+        console.error('Fehler beim Erstellen der Tabelle archiv_day:', err.message);
+    } else {
+    console.log('Tabelle archiv_day überprüft/erstellt.'); 
+   }
+  });
+}  
 
 
-/*
-
-Stunden-Aggregation:
-SELECT exceltime , AVG/SUM/MAX/MIN(value) as value
-FROM mqttPayloads
-GROUP BY CAST(exceltime*24 AS INTEGER);
-
-Tages-Aggregation:
-SELECT exceltime , AVG/SUM/MAX/MIN(value) as value
-FROM mqttPayloads
-GROUP BY ROUND(exceltime);
-
-Monats-Aggregation: 
-SELECT exceltime , AVG/SUM/MAX/MIN(value) as value
-FROM mqttPayloads
-GROUP BY strftime('%Y-%m', datetime((exceltime - 25569) * 86400, 'unixepoch'));
-
-Jahres-Aggregation: 
-SELECT exceltime , AVG/SUM/MAX/MIN(value) as value
-FROM mqttPayloads
-GROUP BY strftime('%Y', datetime((exceltime - 25569) * 86400, 'unixepoch'));
-
-
-Archivierung in Stunden-Werten:
-INSERT INTO mqttArchive_hour (ID_Topic,source,mqttid,name,dt,value,unit)
-SELECT 
-    ID_Topic, 
-    source, 
-    mqttid, 
-    name,
-    CAST(exceltime * 24 AS INTEGER) / 24.0 , 
-    AVG/SUM/MIN/MAX(value) ,
-    unit
-FROM mqttPayloads 
-GROUP BY ID_Topic, 
-         source, 
-         mqttid, 
-         name,
-         CAST(exceltime * 24 AS INTEGER) / 24.0 , 
-         AVG/SUM/MIN/MAX(value) ,
-         unit
-
-
-
+//------------------------------------------------------------------------------------
+//---------------------ARCHIVIERUNG---------------------------------------------------
+//------------------------------------------------------------------------------------
 
 // Die Archivierung als stündlicher Job
-function doArchive() 
+function doArchive_hour() 
 {
     console.log("Starte Archivierungsroutine...");
 
@@ -218,23 +238,33 @@ function doArchive()
 
         // Aggregation und Einfügen in die Archiv-Tabelle
         db.run(`
-                INSERT INTO mqttArchive_hour (ID_Topic,source,mqttid,name,dt,value,unit)
+                INSERT INTO archiv_hour (ID_Topic,source,mqttid,name,exceltime,year,month,day,hour,value_avg,value_sum,value_min,value_max,cnt,unit)
                 SELECT 
-                ID_Topic, 
-                source, 
-                mqttid, 
-                name,
-                CAST(exceltime * 24 AS INTEGER) / 24.0 , 
-                AVG/SUM/MIN/MAX(value) ,
-                unit
+                      ID_Topic, 
+                      source, 
+                      mqttid, 
+                      name,
+                      CAST(exceltime * 24 AS INTEGER) / 24.0 as exceltime, 
+                      strftime('%Y', datetime((exceltime - 25569) * 86400, 'unixepoch')) as year,
+	                  strftime('%m', datetime((exceltime - 25569) * 86400, 'unixepoch')) as month,
+	                  strftime('%d', datetime((exceltime - 25569) * 86400, 'unixepoch')) as day,
+	                  strftime('%H', datetime((exceltime - 25569) * 86400, 'unixepoch')) as hour,
+                      AVG(value) as value_avg,
+	                  SUM(value) as value_sum,
+	                  MIN(value) as value_min,
+	                  MAX(value) as value_max,
+	                  count(*)   as cnt,
+                      unit
                 FROM mqttPayloads 
+                Where  CAST(((julianday('now') - (exceltime + 2415018.5)) * 24 ) as INTEGER) > 1
                 GROUP BY ID_Topic, 
                          source, 
                          mqttid, 
                          name,
                          CAST(exceltime * 24 AS INTEGER) / 24.0 , 
-                         AVG/SUM/MIN/MAX(value) ,
-                         unit
+		                 unit
+
+
         `, function (err) {
             if (err) {
                 console.error("Fehler beim Einfügen in die Archiv-Tabelle:", err.message);
@@ -245,7 +275,7 @@ function doArchive()
         // Löschen der verarbeiteten Daten
         db.run(`
             DELETE FROM mqttPayloads
-            WHERE exceltime < (strftime('%s', 'now', 'localtime') / 86400.0)
+            WHERE CAST(((julianday('now') - (exceltime + 2415018.5)) * 24 ) as INTEGER) > 1
         `, function (err) {
             if (err) {
                 console.error("Fehler beim Löschen aus mqttPayloads:", err.message);
@@ -261,8 +291,9 @@ function doArchive()
     });
 }
 
-// Routine alle 60 Minuten ausführen
-setInterval(doArchive, 60 * 60 * 1000);
 
-*/
+
+// Routine alle 60 Minuten ausführen
+setInterval(doArchive_hour, 60 * 60 * 1000);
+
 

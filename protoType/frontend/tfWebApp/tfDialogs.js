@@ -495,10 +495,10 @@ export function createTreeView(aParent , tree , params )
   var __scanNodes = function( treeNode , subTree )
   {
    for (var key in subTree) 
-   {
-     var value = tree[key];
-     var n     =t.addSubNode(treeNode , key, {value:value} );
-     if (typeof value === 'object' && value !== null) __scanNodes(n, value);
+   { 
+     var n = t.addSubNode(treeNode , key, {} );
+     var v = subTree[key];
+     if (typeof v === 'object' && v !== null) __scanNodes(n, v);
    }
  }
   

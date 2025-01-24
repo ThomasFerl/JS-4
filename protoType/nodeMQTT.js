@@ -51,7 +51,7 @@ class TMQTTDistributor
     
     // MQTT-Nachrichten empfangen und an WebSocket-Clients senden
     this.mqttClient.on('message', (topic, message) => {
-                                                   console.log(`MQTT-Nachricht empfangen: ${topic} -> ${message.toString()}`);
+                                                   //console.log(`MQTT-Nachricht empfangen: ${topic} -> ${message.toString()}`);
                                                    // Nachricht an alle WebSocket-Clients senden
                                                    for (const ws of this.wsClients) ws.send(JSON.stringify({ topic, payload: message.toString() }));
                                                  });
