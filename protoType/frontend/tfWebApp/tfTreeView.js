@@ -49,7 +49,6 @@ isRootNode() { return this.parentNode==null }
 collabse(yesOrNo)
 {
     console.log('collabse '+this.caption+' -> ' + yesOrNo)
-
     this.collabsed = yesOrNo;
     this.visible   = this.collabsed;
 
@@ -263,13 +262,16 @@ constructor( aParent , params )
   }
 
 
-
-
   debugLog()
   {
     console.log("");
     console.log("---------------TFTreeView-------------------------");
     this.forEachNode( null , function(rootNode) {rootNode.debugLog();} , true )
+  }
+
+  collabseAll(yesOrNo)
+  {
+    this.forEachNode(  this.rootNodes[0] , function (node){ if(node.parentNode!=null) node.collabse(this)}.bind(yesOrNo) , true );
   }
 
 
@@ -280,7 +282,7 @@ constructor( aParent , params )
       console.log('forEachNode() entryPoint:null ; recursive:'+recursive);
       for (var i=0; i<this.rootNodes.length; i++)
       { 
-        callback(this.rootNodes[i]);    
+        callback(this.rootNodes[i])    
         if(recursive) this.forEachNode( this.rootNodes[i] , callback , true);
       }  
     }
@@ -289,10 +291,18 @@ constructor( aParent , params )
        console.log('forEachNode() entryPoint:'+entryPoint.caption+' recursive:' + recursive);
        for(var i=0; i<entryPoint.items.length;i++)
        {
-         callback(entryPoint.items[i]); 
+         callback(entryPoint.items[i])
          if(recursive) this.forEachNode( entryPoint.items[i] , callback , true);
        }  
     }
-  }  
+  } 
+  
+  
+  destroy()
+  {
+    this.rootNodes = [];
+    this.items     = [];
+    this.treeViewPanel.DOMelement.innerHTML = '';
+  } 
 
 }

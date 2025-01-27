@@ -488,35 +488,46 @@ export function createChart(aParent, chartType, caption, jsonData, onChartClick,
 
 
 export function createTreeView(aParent , tree , params )
+// Wenn das TreeVie vorbefüllt werden soll, kann eine Baumstruktur in tree übergeben werden.
+// Diese muss folgenden Kriterien gehorchen: Array von Objekten der Form: {caption:"xyz", dataContainer:{...}, childNodes:[{...},...]}
+// Das Ganze kann beliebig tief verschachtelt sein.
+
 {
   var t = new TFTreeView( aParent , params );
   // tree rekursiv durchlaufen und Knoten hinzufügen
 
   var __scanNodes = function( treeNode , subTree )
   {
-   for (var key in subTree) 
+   for (var i=0; i<subTree.length; i++) 
    { 
-     var n = t.addSubNode(treeNode , key, {} );
-     var v = subTree[key];
-     if (typeof v === 'object' && v !== null) __scanNodes(n, v);
+     var s = subTree[i];
+     var n = t.addSubNode(treeNode , s.caption, s.dataContainer );
+     
+     //workaround: wenn childNodes kein Array sondern ein Objekt ist, dann wird es als Array interpretiert
+     var childNodesArray = Array.from(s.childNodes || []);
+    
+      if(s.childNodes.length>0) __scanNodes(n, childNodesArray);
    }
- }
+  }
   
-
   if (typeof tree === 'object' && tree !== null) 
   {
-     for (var key in tree) 
+     for (var i=0; i<tree.length; i++) 
       {
-        var value = tree[key];
+        var element = tree[i];
         // Erstelle einen root-Knoten für den aktuellen Schlüssel
-        var n=t.addNode( key, {value:value} );
+        var n=t.addNode( element.caption , element.dataContainer );
 
-        // Rekursiv fortfahren, falls der Wert ein Objekt oder Array ist
-            if (typeof value === 'object' && value !== null) __scanNodes(n, value);
+        //workaround: wenn childNodes kein Array sondern ein Objekt ist, dann wird es als Array interpretiert
+        var childNodesArray = Array.from(element.childNodes || []);
+        
+          // Rekursiv fortfahren, falls es child-Elemente gibt 
+        if (element.childNodes.length > 0) __scanNodes(n, childNodesArray );
      }
   }
 
-  t.buildNodeList();
+  t.buildNodeList(); 
+  t.collabseAll(false);
 
 
   return t;

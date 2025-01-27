@@ -19,6 +19,7 @@ export class TFWindow extends TFObject
     var W=1;
     var H=1;
 
+    position = position.toUpperCase();
     aWidth   = aWidth.toString();
     aHeight  = aHeight.toString();
 

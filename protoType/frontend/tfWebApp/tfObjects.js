@@ -415,9 +415,18 @@ export class TFObject
 
   set width( value )
   {
-    if(this.hasGridLayout()) this.gridWidth = value;
-    else this.widthPx = value;
+    if(this.hasGridLayout())
+    {   
+      if (typeof value === 'string') 
+        {
+          if (value.includes('px') || value.includes('em')) this.widthPx = value;
+          else this.gridWidth = value;
+      }
+      else if (typeof value === 'number')  this.gridWidth = value;
+    }
+     else this.widthPx = value;
   } 
+
 
   get width()
   {
@@ -428,8 +437,16 @@ export class TFObject
 
   set height( value )
   {
-    if(this.hasGridLayout()) this.gridHeight = value;
-    else                     this.heightPx = value;
+    if(this.hasGridLayout())
+    {   
+      if (typeof value === 'string') 
+        {
+          if (value.includes('px') || value.includes('em')) this.heightPx = value;
+          else this.gridHeight = value;
+      }
+      else if (typeof value === 'number')  this.gridHeight = value;
+    }
+     else this.heightPx = value;
   } 
 
   get height()
@@ -946,7 +963,7 @@ get opacity()
 
     if (value === 0) {
         // Schatten entfernen
-        if (this.DOMelement) this.DOMelement.style.boxShadow = '';
+        if (this.DOMelement) this.DOMelement.style.boxShadow = 'none';
     } else {
         // Schatten hinzufügen
         var u = (value * 2) - 1;
@@ -1186,6 +1203,23 @@ get fontSize()
 {
   return this.paragraph.style.fontSize;
 }
+
+set color( value )  
+{
+  this.paragraph.style.color = value;
+}
+
+get color()
+{
+  return this.paragraph.style.color;
+}
+
+setTextIndent( value )
+{
+  this.paragraph.style.paddingLeft = value;
+}  
+
+
 
 }
 //---------------------------------------------------------------------------
@@ -1957,6 +1991,9 @@ export class Screen extends TFObject
 {
   constructor()
   {
+    document.body.style.margin   = 0;
+    document.body.style.padding  = 0;
+    document.body.style.overflow = 'hidden';
     super(document.body , 0 , 0 , '100%' , '100%' , {css:"cssScreen" , preventGrid:true , fixit:true } );
   }
   
@@ -1964,6 +2001,7 @@ export class Screen extends TFObject
   {
     super.render();
     this.id = 'SCREEN_' + utils.buildRandomID(1);
+    this.overflow = 'hidden';
     screen = this;
    
   } 

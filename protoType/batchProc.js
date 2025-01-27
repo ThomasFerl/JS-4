@@ -1,3 +1,5 @@
+const utils       = require('./nodeUtils');
+
 module.exports.TBatchPocess = {cmd:'', param:{}, state:'', result:{}};
 
 
@@ -41,8 +43,7 @@ count()
 async runNextProc() 
 {
     utils.log('runNextProc -> '+this.queue);
-    console.log('runNextProc -> '+this.queue.length);
-    
+      
     if( this.count()==0 ) {  utils.log('keine BatchProc`s in der Queue'); return null; }
     if( this.isRunning  ) {  utils.log('Ein Prozess ist bereist in Bearbeitung.');  return null; }
   
