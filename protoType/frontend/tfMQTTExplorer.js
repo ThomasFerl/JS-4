@@ -29,12 +29,26 @@ export class TFMQTTExplorer
   { 
     this.wnd                  = new TFWindow( aParent , 'MQTT-Browser', width , height ,'center');
     this.treeView             = null;
+    this.dataSheet            = null;
+    this.mqttDistributor      = mqttDistributor;
   
     var l                     = dialogs.setLayout( this.wnd.hWnd , {gridCount:35,left:14} )
         this.treeContainer    = l.left;
         this.dashBoard        = l.dashBoard;
         this.dashBoard.shadow = 0;
 
+        this.dashBoard.buildGridLayout_templateRows('1fr 1fr 1fr');
+        this.dashBoard.buildGridLayout_templateColumns('1fr');
+
+        this.payloadContainer = dialogs.addPanel( this.dashBoard , 'cssContainerPanel' , 1,1,1,1, {} );
+
+        this.MQTTContainer    = dialogs.addPanel( this.dashBoard , 'cssContainerPanel' , 1,2,1,1, {} );
+        this.MQTTContainer.buildGridLayout_templateColumns('10em 1fr');
+        this.MQTTContainer.buildGridLayout_templateRows('1fr');
+
+        this.archiveContainer = dialogs.addPanel( this.dashBoard , 'cssContainerPanel' , 1,3,1,1, {} );
+
+        
         this.treeContainer.padding = '0em';
         this.treeContainer.borderRadius = 0;
         this.treeContainer.backgroundColor = 'rgb(247, 247, 250)'; 
@@ -42,12 +56,13 @@ export class TFMQTTExplorer
         this.treeContainer.buildGridLayout_templateRows('2em 1fr');
         this.treeContainer.buildGridLayout_templateColumns('1fr');
         
+        // Caption des TreeViews...
     var helpContainer = dialogs.addPanel( this.treeContainer , 'cssContainerPanel' , 1,1,1,1, {} );
         helpContainer.margin = 0;
         helpContainer.padding = 0;
         helpContainer.overflow = 'hidden';
         helpContainer.buildGridLayout_templateRows('1fr');
-        helpContainer.buildGridLayout_templateColumns('1fr 2em 2px');
+        helpContainer.buildGridLayout_templateColumns('1fr 2em 2em 1px');
 
         this.treeViewCaption = dialogs.addLabel(helpContainer , '', 1,1,1,1, 'MQTT-Topics' );
         this.treeViewCaption.marginLeft = '0em'
@@ -58,57 +73,129 @@ export class TFMQTTExplorer
         this.treeViewCaption.textAlign = 'left';
         this.treeViewCaption.setTextIndent('0.7em');
 
-        var btn = new TFButton( helpContainer , 2,1,1,1, {caption:'...'} );
+        var btn = new TFButton( helpContainer , 2,1,1,1, {caption:'.'} );
             btn.backgroundColor = 'gray';
             btn.margin = '4px';
             btn.height = '1.5em';
-            btn.callBack_onClick = ()=> { this.buildTreeView() }
+            btn.callBack_onClick = ()=> { this.treeView.toggleCollapse() }
+
+
+        var btn = new TFButton( helpContainer , 3,1,1,1, {caption:'...'} );
+            btn.backgroundColor = 'gray';
+            btn.margin = '4px';
+            btn.height = '1.5em';
+            btn.callBack_onClick = ()=> { this.buildTreeView() }    
 
         this.treeContainer = dialogs.addPanel( this.treeContainer , 'cssContainerPanel' , 1,2,1,1, {} );
-   }          
+        this.buildTreeView();
+}          
 
 
 buildTreeView()
 {
    if(this.treeView!=null) {this.treeView.destroy(); this.treeContainer.innerHTML = '';} 
 
-   var topics = mqttArchive.lsTopics( start_ab_Ebene ); debugger;
+   var topics = mqttArchive.lsTopics( start_ab_Ebene ); 
        console.log(topics.result);
 
        if (topics.error) this.treeContainer.innerHTML = 'Fehler beim Abruf der Topics';
-       else this.treeView = dialogs.createTreeView( this.treeContainer , topics.result , {} ); 
+       else {
+             this.treeView = dialogs.createTreeView( this.treeContainer , topics.result , {} ); 
+             // dafür sorgen, dass nur mit nodeID behaftete Nodes farbig hervorgehoben werden...
+             this.treeView.forEachNode( null, (node) => {  
+                                                         if(node.content.ID_topic) 
+                                                         {
+                                                           node.backgroundColor='rgba(0, 255, 0, 0.01)'; 
+                                                           node.backgroundColor='rgba(0, 255, 0, 0.07)'
+                                                         }});
+
+             this.treeView.callBack_onClick = (node) => {if(node.content.ID_topic) 
+                                                            {
+                                                                debugger;
+                                                               this.showLastPayloads( node.content.ID_topic )
+                                                               this.showMQTTValue( node.content.ID_topic , node.content.topic );
+                                                               this.showMQTchart( node.content.ID_topic , node.content.topic );
+                                                               this.showArchive( node.content.ID_topic , node.content.topic );
+                                                            };
+                                                        }   
+       } 
+}
+
+
+showLastPayloads( ID_topic , topic)
+{ 
+    this.payloadContainer.innerHTML = '';
+
+    var response = mqttArchive.payloads( ID_topic , 21 );
+    if(response.error)
+    {
+        this.payloadContainer.innerHTML = 'Fehler beim Abruf der Payloads';
+        return;
+    } 
+    
+    // in den payloads ist die Zeit als Excel-Zeit gespeichert, die wir in ein Datum umwandeln...
+    for(var i=0; i<response.result.length; i++) response.result[i].exceltime = new TFDateTime(response.result[i].exceltime ).formatDateTime();
+
+    this.dataSheet = dialogs.createTable( this.payloadContainer , response.result ,  ['ID_topic','timestamp'] , {'exceltime':'Datum/Uhrzeit'} );
+    
+}
+
+
+showMQTTValue( ID_topic , topic  )
+{
+    this.MQTTValuePanel = new TFMQTTPanel( this.MQTTContainer  , 1,1,1,1, {
+        distributor            : this.mqttDistributor , 
+        topic                  : topic,
+        backgroundColor        : 'white',
+        captionBackgroundColor : 'gray',
+        valueColor             : 'green',
+        fontSize               : '1em',
+        value                  : 'value',
+        caption                : 'name',
+        appendix               : 'unit'
+        } );
 }
 
 
 
-}
-
-/*
-        
-        new TFMQTTChart( dashBoard , 1,1,'90%',200, {
-                                                  distributor            : mqttDistributor , 
-                                                  topic                  : 'ems/wago/WAGO001/PT500/Temperatur/IT-Werkstatt',
+showMQTchart( ID_topic , topic )
+{
+   new TFMQTTChart( this.MQTTContainer , 2,1,'100%','100%', {
+                                                  distributor            : this.mqttDistributor, 
+                                                  topic                  : topic,
                                                   captionBackgroundColor : 'gray',
                                                   value                  : 'value',
-                                                  caption                : '"Temperatur"'
-                                                } )
+                                                  caption                : 'name'
+                                                })
+}
+
+
+
+showArchive( ID_topic , topic )    
+{
+    this.archiveContainer.innerHTML = '';
+
+    var response = mqttArchive.getValues( ID_topic , null , null , 'avg' );
+    if(response.error)
+    {
+        this.archiveContainer.innerHTML = 'Fehler beim Abruf der Archive';
+        return;
+    } 
+
+    var chartData = [];
+    for(var i=0; i<response.result.length; i++) chartData.push({x:response.result[i].xlsTimestamp, y:response.result[i].value_avg });
+
+    this.arcChart = new TFChart( this.archiveContainer, 1 , 1 , '100%' , '100%' , {chartBackgroundColor:'white',chartType:'Spline'} );
+    this.arcSeries = this.arcChart.addSeries( topic , 'green' );                                         
+    this.arcChart.addPoint(this.arcSeries , chartData);
     
-    for(var i=0; i<40; i++)
-    var temperatur = new TFMQTTPanel( dashBoard , 1,1,200,70, {
-                                                               distributor            : mqttDistributor , 
-                                                               topic                  : 'ems/wago/WAGO001/PT500/Temperatur/IT-Werkstatt',
-                                                               backgroundColor        : 'white',
-                                                               captionBackgroundColor : 'gray',
-                                                               valueColor             : 'green',
-                                                               fontSize               : '1em',
-                                                               value                  : 'value',
-                                                               caption                : '"Temperatur"',
-                                                               appendix               : 'unit'
-                                                               } );
-
-    
-
-}    
+}
 
 
-*/
+
+
+
+
+
+
+}

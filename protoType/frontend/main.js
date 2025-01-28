@@ -11,7 +11,7 @@ var mqttDistributor =  new TFDistributor( 'mqtt://10.102.13.5:4400' );     // Ve
 export function main(capt1,capt2)
 {
     var ws  = new TFWorkSpace('mainWS' , capt1,capt2 );
-    new TFMQTTExplorer (ws.handle , mqttDistributor , '40%','70%' );
+    new TFMQTTExplorer (ws.handle , mqttDistributor , '70%','80%' );
 }
 
 

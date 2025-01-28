@@ -23,7 +23,10 @@ export class TFTreeNode
   this.callBack_onOptionClick = null;
   this.selected               = false;
   this.savedStyle             = {};
-      
+  this.backgroundColor        = 'rgba(0, 0, 0, 0.01)';  
+  this.selectedBackgroundColor= 'rgba(0, 0, 0, 0.07)';  
+  this.__toggleFlag           = false;
+  
   // falls kein Datenobjekt übergeben wurde, dummyObj mit dummyContent erzeugen ...
   if (aContent) this.content = aContent;
   else          this.content = { dummyContent:42 };
@@ -86,7 +89,7 @@ collabse(yesOrNo)
 
     console.log("onClickHandler ->"+node.caption)
 
-    node.treeView.forEachNode( null , function(aNode){ console.log('deSelect ' + aNode.caption ); aNode.selected=false ; aNode.printContent() } , true );
+    node.treeView.forEachNode( null , function(n){ n.selected=false ; n.printContent() } , true );
 
     node.selected = true;
     node.printContent();
@@ -114,8 +117,8 @@ collabse(yesOrNo)
 
     console.log('printContent ' + this.caption + ' selected:' + this.selected );
 
-    if (this.selected) this.DOMelement_text.style.backgroundColor = 'rgba(0, 0, 0, 0.07)';
-    else               this.DOMelement_text.style.backgroundColor = 'rgba(0, 0, 0, 0.01)'; // this.savedStyle.backgroundColor;
+    if (this.selected) this.DOMelement_text.style.backgroundColor = this.selectedBackgroundColor;
+    else               this.DOMelement_text.style.backgroundColor = this.backgroundColor;
 
     this.DOMelement_text.innerHTML = this.caption;
 
@@ -271,12 +274,21 @@ constructor( aParent , params )
 
   collabseAll(yesOrNo)
   {
+    this.__toggleFlag = yesOrNo;
     this.forEachNode(  this.rootNodes[0] , function (node){ if(node.parentNode!=null) node.collabse(this)}.bind(yesOrNo) , true );
+  }
+
+  toggleCollapse()
+  {
+    this.__toggleFlag = !this.__toggleFlag;
+    this.collabseAll(this.__toggleFlag);
   }
 
 
   forEachNode( entryPoint , callback ,recursive)
   {
+    if(recursive==undefined) recursive = true;
+
     if(entryPoint==null)
     {
       console.log('forEachNode() entryPoint:null ; recursive:'+recursive);
@@ -295,9 +307,20 @@ constructor( aParent , params )
          if(recursive) this.forEachNode( entryPoint.items[i] , callback , true);
        }  
     }
-  } 
+  }
   
   
+  set callBack_onClick( aCallBack )
+  {
+    this.forEachNode( null , function(node){node.callBack_onClick = aCallBack} , true );
+  }
+  
+  get callBack_onClick()
+  {
+    return this.rootNodes[0].callBack_onClick;
+  }
+  
+
   destroy()
   {
     this.rootNodes = [];

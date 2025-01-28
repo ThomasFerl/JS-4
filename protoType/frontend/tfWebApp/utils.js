@@ -203,7 +203,7 @@ export class TFDateTime
   
   constructor(input) 
   {
-    this.excelEpoch     = Date.UTC(1899, 11, 30); // Korrigiert: 31. Dezember 1899 als Basis für Excel-Zeit
+    this.excelEpoch     = Date.UTC(1899, 11, 31); // Korrigiert: 31. Dezember 1899 als Basis für Excel-Zeit
     this.msPerDay       = 1000 * 60 * 60 * 24;
     this.excelTimestamp = -1;
 

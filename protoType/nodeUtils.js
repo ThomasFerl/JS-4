@@ -124,7 +124,7 @@ class TFDateTime
   
   constructor(input) 
   {
-    this.excelEpoch     = Date.UTC(1900, 0, 1);
+    this.excelEpoch     = Date.UTC(1899, 11, 31);
     this.msPerDay       = 1000 * 60 * 60 * 24;
     this.excelTimestamp = -1;
 
