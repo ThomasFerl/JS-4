@@ -15,4 +15,3 @@ export function main(capt1,capt2)
 }
 
 
-// neue Funktion Vis
