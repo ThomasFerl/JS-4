@@ -7,7 +7,7 @@ const PORT     = 4707;
 var   maxLines = 50;
 
 // Mosquitto-Log-Datei (anpassen je nach System)
-const LOG_FILE_PATH = "C:/tempp/mosquitto.log";  
+const LOG_FILE_PATH = "C:/temp/mosquitto.log";  
 
 
 // Funktion zum Lesen der letzten X Zeilen aus der Log-Datei
