@@ -26,11 +26,12 @@ const utils       = require('./nodeUtils');
 const webAPI      = require('./nodeAPI');
 const userAPI     = require('./userAPI');
 const session     = require('./session');
+const dbUtils     = require('./dbUtils');
 const dbTables    = require('./dbTables');
 
 const nodeInfluxDB = require('./nodeInflux');
 
-
+const {TMQTTDistributor}    = require('./mqttDistributor');
 const { networkInterfaces } = require('os');
 const { Console }           = require('console');
 
@@ -83,6 +84,21 @@ mqttClient.on('message', async (topic, payload) => { mqttHandler.onMessage(topic
  
 // Fehlerbehandlung
 mqttClient.on('error', (err) => { console.error('❌ MQTT-Fehler:', err); });
+
+
+
+//-----------------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------------------
+// MQTT - Distributor starten und mqtt-Topics zum Frontend zu senden
+//-----------------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------------------
+
+// MQTT - Distributor starten
+mqttDist = new TMQTTDistributor({ mqttBroker: MQTT_BROKER_URL,
+                                  topic     : '#' 
+                                })
+
+mqttDist.start();
 
 
 //-----------------------------------------------------------------------------------------
@@ -309,3 +325,17 @@ webServer.listen( port , () => {console.log('Server listening on Port ' + port )
 
 setInterval( webAPI.run          , 60000 ); // jede Minute prüfen, ob etwas im BATCH wartet ...
 setInterval( session.ctrlSession , 1000 ); 
+
+// zum Tageswechsel um 00:00:00 Uhr alte Daten löschen:
+setInterval(() => {
+                    const today = new Date();
+                    if (today.getHours() === 0 && today.getMinutes() === 0) 
+                    { // Um Mitternacht:  lösche alles, das älter als "maxAgePayloadHistory" Tage ist 
+                      console.log('Mitternacht! Lösche alte Daten aus payload-Register...');
+                      // aktueller xlstimestamp:
+                      var thisXLStimestamp = Math.trunc(new utils.TFDateTime().dateTime());
+                      dbUtils.runSQL(dB, "DELETE FROM mqttPayloadContent WHERE ("+thisXLStimestamp+"-timestamp) > "+globals.maxAgePayloadHistory );
+                    }
+                  } , 60 * 1000); // Prüft jede Minute, ob es Mitternacht ist
+
+

@@ -1,13 +1,15 @@
 
-const dbUtils            = require('./dbUtils');
-const utils              = require('./nodeUtils');
+const dbUtils              = require('./dbUtils');
+const utils                = require('./nodeUtils');
 
-var   dB                 = null;
-var  influx              = null;
-var  influx_measurement  = null;
+var   dB                   = null;
+var  influx                = null;
+var  influx_measurement    = null;
 
 module.exports.setup = (_dB , _influx , _influx_measurement) => { dB = _dB;  influx = _influx; influx_measurement = _influx_measurement }
-    
+
+
+
 module.exports.onMessage = (topic, payload) =>
 {
     utils.log('onMessage -> Topic: '+topic+' / Payload: '+payload);
@@ -44,8 +46,6 @@ function safePayload(ID_Topic, strPayload)
 {
     utils.log('safePayload -> ID_Topic: '+ID_Topic+' / payload: '+strPayload);
 
-    utils.log('payload ist vom Typ : '+typeof strPayload);
-
     var payload = {};
 
     // ist Payload ein String ?
@@ -65,7 +65,9 @@ function safePayload(ID_Topic, strPayload)
     // ist Payload ein Objekt ?
     else if (typeof strPayload == 'object') { payload = strPayload; }
 
-     
+    var influxRecord = {value:payload.value || 0.0 };
+    var xlsTimestamp = new utils.TFDateTime( payload.timestamp || new Date() ).dateTime();
+    
     // durchlaufe alle Felder des Payloads und speichere sie in der Tabelle mqttPayloadFields
     for (var key in payload) 
     {
@@ -85,15 +87,50 @@ function safePayload(ID_Topic, strPayload)
                 }    
         } else ID_payloadField = response.result;
 
+        // das Value-Field als WERT betrachtet - der Rest wird als Tags interpretiert
+        if(key=='value') { influxRecord.idPayloadField = ID_payloadField }
+        else { influxRecord[key] = payload[key]; }
 
-        // Influx speichern
-        var ID = payload.ID || 0;
-        var DT = payload.timestamp || new Date().toISOString();
-
-
-        var record = { id:ID_Topic, timestamp:DT, ID_payloadField: ID_payloadField, wert: payload[key] };
-        influx.saveValues( influx_measurement , record);
-    }
+         // temporärer Payload-Puffer zwecks Analyse und Konfiguration
+         // die Lebensdauer eines Datensatzes beträgt per default 31 Tage ist aber konfigurierbar "maxAgePayloadHistory"
+         dbUtils.insertIntoTable(dB, 'mqttPayloadContent', { ID_PayloadField: ID_payloadField, timestamp:xlsTimestamp, content: payload[key] });
+    } 
+    
+    //falls kein Zeitstempel im payload existiert, dann nimm den aktuellen Zeitstempel des Brokers
+    influxRecord.timestamp = payload.timestamp || new utils.TFDateTime().unixDateTime();
+    
+    // Influx speichern
+    influx.saveValues( influx_measurement , influxRecord);
 }
+
+
+
+
+module.exports.loadLastPayload = (ID_topic) =>
+{
+   var response = dbUtils.fetchRecords_from_Query(dB, "Select * from mqttPayloadContent Where ID_PayloadField in (Select ID From mqttPayloadFields Where ID_Topic="+4+") order by timestamp desc limit 21" );
+
+   if(response.error) return response;
+
+   var payload = {timestamp:response.result[0].timestamp, fields:[]};
+   var ts      = Math.round(payload.timestamp*10000);
+   for(var i=0; i<response.result.length; i++)  
+   {
+     if( (Math.round(response.result[i].timestamp*10000) - ts) < 100)
+     {
+       var field = { fieldName: dbUtils.fetchValue_from_Query(dB, "select payloadFieldName From  mqttPayloadFields Where ID_Topic="+ID_topic+" AND ID="+response.result[i].ID_PayloadField).result,
+                     content  : response.result[i].content 
+                   };
+            
+        payload.fields.push(field); 
+     }  
+   } 
+
+    return {error:false, errMsg:'ok', result:payload};
+}
+
+
+
+
 
 

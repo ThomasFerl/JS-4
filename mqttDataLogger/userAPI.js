@@ -1,5 +1,6 @@
 const utils          = require('./nodeUtils.js');
 const dbUtils        = require('./dbUtils.js');
+const mqttHandler    = require('./mqttHandler.js');
 const { TFDateTime } = require('./nodeUtils.js');
 
 
@@ -57,11 +58,9 @@ if( CMD=='LSTOPICS')
   }
   
 
-  if( CMD=='PAYLOADS') 
+  if( CMD=='LASTPAYLOAD') 
     {
-      var sql= "Select * from mqttPayloads Where ID_topic="+param.ID_topic+" order by exceltime desc";
-      if (param.limit) sql += " limit "+param.limit;
-      return dbUtils.fetchRecords_from_Query( dB , sql );
+      return mqttHandler.loadLastPayload( param.ID_topic ); 
     }
     
   

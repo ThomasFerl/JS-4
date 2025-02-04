@@ -18,10 +18,6 @@ const userAPI     = require('./userAPI');
 const session     = require('./session');
 const dbTables    = require('./dbTables');
 
-const {TMQTTDistributor}    = require('./nodeMQTT');
-const { networkInterfaces } = require('os');
-const { Console }           = require('console');
-
 const sslOptions  = {
     key : fs.readFileSync('./SSL/privateKex.pem'  , 'utf8' ),     // Pfad zum privaten Schlüssel
     cert: fs.readFileSync('./SSL/certificate.pem' , 'utf8' )    // Pfad zum Zertifikat
@@ -43,13 +39,6 @@ dbTables.buildTables( dB );
 // dbTables.checkdbTableStructure();
 
 
-// MQTT - Distributor starten
-mqttDist = new TMQTTDistributor({ wsPort    : 4400 , 
-                                  mqttBroker: 'mqtt://10.102.13.5:4701',
-                                  topic     : '#' 
-                                })
-
-mqttDist.start();
 
 const webApp      = express();
   var staticPath  = path.join (__dirname, 'frontend' );

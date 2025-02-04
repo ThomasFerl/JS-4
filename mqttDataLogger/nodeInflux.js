@@ -1,4 +1,6 @@
 const { InfluxDB, Point } = require('@influxdata/influxdb-client');
+const utils               = require('./nodeUtils');
+
 
 class nodeInfluxDB 
 {
@@ -24,17 +26,18 @@ class nodeInfluxDB
   {
     if (!Array.isArray(values)) values = [values];  // Falls Einzelwert → Array machen
 
-    console.log(values)
+    utils.log(values)
 
     const points = values.map(entry => {
-                                         if (!entry.id || !entry.timestamp || entry.wert === undefined)  throw new Error('❌ Werte müssen mindestens eine ID, einen Timestamp und einen Wert enthalten!');
+                                         if (!entry.timestamp || entry.value === undefined)  throw new Error('❌ Werte müssen mindestens einen "timestamp" und eine "value" enthalten!');
+                                         var _value     = parseFloat(entry.value) || 0;
+                                         var _timestamp = this.___validateAndFormatDate(entry.timestamp) 
+                                         
                                          const point = new Point(measurement)
-                                               .tag('id', entry.id)
-                                               .floatField('wert', parseFloat(entry.wert))
-                                               .timestamp(new Date(entry.timestamp).getTime() );
-
-                                               // Falls weitere Tags vorhanden sind, hinzufügen
-                                               Object.keys(entry).forEach( (key) => {if (!['id', 'timestamp', 'wert'].includes(key)) point.tag(key, entry[key]); } );
+                                                .floatField('value', _value )
+                                                .timestamp(          _timestamp );
+                                                 // Falls weitere Tags vorhanden sind, hinzufügen
+                                                Object.keys(entry).forEach( (key) => {if (!['timestamp', 'value'].includes(key)) point.tag(key, entry[key]); } );
 
                                                return point;
                                        });
@@ -42,7 +45,7 @@ class nodeInfluxDB
     try {
            this.writeApi.writePoints(points);
            await this.writeApi.flush();
-           console.log(`✅ ${points.length} Werte gespeichert!`);
+           utils.log(`✅ ${points.length} Werte gespeichert!`);
     } catch (error) {console.error('❌ Fehler beim Speichern:', error);}
   }
 
@@ -68,7 +71,7 @@ class nodeInfluxDB
         });
 
         if (response.ok) {
-            console.log(`✅ Erfolgreich gelöscht: ${measurement} (${filter || "alle Werte"})`);
+            utils.log(`✅ Erfolgreich gelöscht: ${measurement} (${filter || "alle Werte"})`);
         } else {
             console.error("❌ Fehler beim Löschen:", await response.text());
         }
@@ -78,19 +81,13 @@ class nodeInfluxDB
 }
 
 
+___validateAndFormatDate(date) 
+{
+ //InfluxDB erwartet einen Unix-Zeitstempel in Nanosekunden (ns), Millisekunden (ms) oder als ISO 8601-String mit Millisekunden.
+ return new utils.TFDateTime(date || new Date()).unixDateTime();
+}
 
-   ___validateAndFormatDate(date) 
-   {
-    if (!date) return null; // Kein Datum gesetzt
 
-    let parsedDate = new Date(date);
-
-    if (isNaN(parsedDate.getTime())) {
-        throw new Error(`Ungültiges Datum: ${date}`);
-    }
-
-    return parsedDate.toISOString(); // Konvertiert zu "YYYY-MM-DDTHH:mm:ss.sssZ"
-   }
 
 
   /**
@@ -99,7 +96,7 @@ class nodeInfluxDB
   async ___influxQuery(fluxQuery) {
     return new Promise((resolve, reject) => {
         const rows = [];
-        console.log("📡 Sende Query an InfluxDB:", fluxQuery);
+        utils.log("📡 Sende Query an InfluxDB:", fluxQuery);
 
         try {
             this.queryApi.queryRows(fluxQuery, {
@@ -112,7 +109,7 @@ class nodeInfluxDB
                     reject(error);
                 },
                 complete: () => {
-                    console.log(`✅ Query erfolgreich! ${rows.length} Datensätze gefunden.`);
+                    utils.log(`✅ Query erfolgreich! ${rows.length} Datensätze gefunden.`);
                     resolve(rows);
                 }
             });
@@ -167,9 +164,9 @@ class nodeInfluxDB
         fluxQuery += ` |> window(every: ${groupBy})`;
     }
 
-    console.log("------------------------------");
-    console.log("Ausgeführte Query:", fluxQuery);
-    console.log("------------------------------");
+    utils.log("------------------------------");
+    utils.log("Ausgeführte Query:", fluxQuery);
+    utils.log("------------------------------");
     
 
     try {
@@ -188,7 +185,7 @@ module.exports = nodeInfluxDB;
 
 async function test_InsertFluxDB() 
 {
-  console.log('Starte Test...');
+  utils.log('Starte Test...');
 
   // InfluxDB-Client initialisieren
   var influx = new nodeInfluxDB({
@@ -206,9 +203,8 @@ async function test_InsertFluxDB()
   for (var i = 0; i < 10; i++) 
     {
       var record = {
-                     id       : i+1, // Einzigartige ID
                      timestamp: new Date(Date.now() + i).toISOString(), // Zeitstempel leicht variieren
-                     wert     : Math.round(Math.random() * 1000)/10,
+                     value    : Math.round(Math.random() * 1000)/10,
                      test     : 'test'
                    };
 
@@ -218,14 +214,14 @@ async function test_InsertFluxDB()
   }
 
    // 🔹 Daten wieder aus InfluxDB abrufen & prüfen
-  console.log('Prüfe gespeicherte Daten...');
+  utils.log('Prüfe gespeicherte Daten...');
   const result = await influx.selectValues( 'testValues' , {} );
 
-  console.log(`Abfrage abgeschlossen! Gefundene Einträge: ${result.length}`);
-  console.log(result.slice(0, 10)); // Zeige die ersten 10 Ergebnisse zur Kontrolle
+  utils.log(`Abfrage abgeschlossen! Gefundene Einträge: ${result.length}`);
+  utils.log(result.slice(0, 10)); // Zeige die ersten 10 Ergebnisse zur Kontrolle
 
-  console.log('Ende Test.');
+  utils.log('Ende Test.');
 }
 
-//test_InsertFluxDB();
+// test_InsertFluxDB();
 

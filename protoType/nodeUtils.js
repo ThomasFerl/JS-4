@@ -187,9 +187,50 @@ class TFDateTime
     } else if (typeof input === 'string') 
            {
               // UTC Variante 1: 2024-07-23T13:16:12.545Z
-             if (input.includes('-') || input.includes('T'))   this.excelTimestamp = this.#__unixToExcel(Date.parse(input));
+             if (input.includes('-') &&  input.includes('T'))   this.excelTimestamp = this.#__unixToExcel(Date.parse(input));
+             if (input.includes('-') && !input.includes('T')) 
+             {
+                var dParts    = input.split('-');
+                
+                if(dParts[0].length==4)  // beginnend mit Jahr (4stellig)
+                {
+                  var year     = parseInt(dParts[0], 10);
+                  var month    = parseInt(dParts[1], 10);
+                  var day      = parseInt(dParts[2], 10);
+                  var time     =          dParts[3] || '00:00:00';  
+                }
+                else 
+                {
+                  var day      = parseInt(dParts[0], 10);
+                  var month    = parseInt(dParts[1], 10);
+                  var year     = parseInt(dParts[2], 10);
+                  var time     =          dParts[3] || '00:00:00';
+                } 
+
+                var tParts = time.split(':');
+                if(tParts.length>=3)
+                {
+                  var hour     = parseInt(tParts[0], 10);
+                  var minute   = parseInt(tParts[1], 10);
+                  var second   = parseInt(tParts[2], 10);
+                }
+                else
+                {
+                  var hour     = 0;
+                  var minute   = 0;
+                  var second   = 0;
+                }
+
+                var date       = new Date(year, month - 1, day , hour, minute, second );
+                
+                this.excelTimestamp = this.#__unixToExcel(date.getTime());
+                
+              }
+
+
                // Falls der Input ein Datum im Format "dd.mm.yyyy hh:mn:ss" ist
-             else {
+               if (input.includes('.') && input.includes(':')) 
+               {
                     let parts    = input.split(/[. :]/);
                     if(parts.length>=3)
                     {  

@@ -20,7 +20,18 @@ tables.push(
                           {fieldName:"payloadFieldName" , fieldType:"TEXT" } , 
                        ]});
 
-// USW
+
+tables.push( 
+            {tableName:"mqttPayloadContent",
+             tableFields:[
+                          {fieldName:"ID_PayloadField"  , fieldType:"INTEGER" } ,
+                          {fieldName:"timestamp" , fieldType:"REAL" } ,
+                          {fieldName:"content" , fieldType:"TEXT" } , 
+                       ]});
+
+
+
+                       // USW
 
 
 
