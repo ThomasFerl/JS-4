@@ -1,28 +1,29 @@
 const { InfluxDB, Point } = require('@influxdata/influxdb-client');
 const utils               = require('./nodeUtils');
+const { error } = require('console');
 
 
 class nodeInfluxDB 
 {
   constructor(params) 
   {
-    if (!params.url || !params.token || !params.org || !params.bucket) 
+    if ( !params.url || !params.token || !params.org || !params.bucket || !params.measurement ) 
     {
-      throw new Error('❌ Fehlende InfluxDB-Verbindungsdaten!');
+      throw new Error('❌ Fehlende InfluxDB-Verbindungsdaten! Das sind die Parameter: ' + JSON.stringify(params));
     }
-
-        this.client   = new InfluxDB({ url: params.url, token: params.token });
-        this.writeApi = this.client.getWriteApi(params.org, params.bucket, 'ms');
-        this.queryApi = this.client.getQueryApi(params.org);
-        this.bucket   = params.bucket;
-        this.org      = params.org;
-        this.orgID    = params.org;
-        this.token    = params.token;
-        this.url      = params.url;
+        this.client      = new InfluxDB({ url: params.url, token: params.token });
+        this.writeApi    = this.client.getWriteApi(params.org, params.bucket, 'ms');
+        this.queryApi    = this.client.getQueryApi(params.org);
+        this.bucket      = params.bucket;
+        this.org         = params.org;
+        this.orgID       = params.org;
+        this.token       = params.token;
+        this.url         = params.url;
+        this.measurement = params.measurement;
   }
 
 
-  async saveValues( measurement , values) 
+  async saveValues(values) 
   {
     if (!Array.isArray(values)) values = [values];  // Falls Einzelwert → Array machen
 
@@ -33,7 +34,7 @@ class nodeInfluxDB
                                          var _value     = parseFloat(entry.value) || 0;
                                          var _timestamp = this.___validateAndFormatDate(entry.timestamp) 
                                          
-                                         const point = new Point(measurement)
+                                         const point = new Point(this.measurement)
                                                 .floatField('value', _value )
                                                 .timestamp(          _timestamp );
                                                  // Falls weitere Tags vorhanden sind, hinzufügen
@@ -50,13 +51,13 @@ class nodeInfluxDB
   }
 
 
-  async deleteValues(measurement, filter = "") {
+  async deleteValues( filter = "") {
     const deleteUrl = `${this.url}/api/v2/delete?org=${encodeURIComponent(this.org)}&bucket=${encodeURIComponent(this.bucket)}`; // 🟢 ORG & BUCKET in URL
 
     const body = JSON.stringify({
         start: "1970-01-01T00:00:00Z",
         stop: new Date().toISOString(),
-        predicate: filter ? `_measurement="${measurement}" AND ${filter}` : `_measurement="${measurement}"`
+        predicate: filter ? `_measurement="${this.measurement}" AND ${filter}` : `_measurement="${this.measurement}"`
     });
 
     try {
@@ -71,7 +72,7 @@ class nodeInfluxDB
         });
 
         if (response.ok) {
-            utils.log(`✅ Erfolgreich gelöscht: ${measurement} (${filter || "alle Werte"})`);
+            utils.log(`✅ Erfolgreich gelöscht: ${this.measurement} (${filter || "alle Werte"})`);
         } else {
             console.error("❌ Fehler beim Löschen:", await response.text());
         }
@@ -93,7 +94,8 @@ ___validateAndFormatDate(date)
   /**
    * Führt eine Flux-Query in InfluxDB aus
    */
-  async ___influxQuery(fluxQuery) {
+  async ___influxQuery(fluxQuery)
+   {
     return new Promise((resolve, reject) => {
         const rows = [];
         utils.log("📡 Sende Query an InfluxDB:", fluxQuery);
@@ -125,17 +127,13 @@ ___validateAndFormatDate(date)
    * Fragt Werte mit Filtern und Aggregationen ab
    * JSON mit {tags, groupBy, aggregate}
    */
-  async selectValues( fromMeasurement , params = {}) 
+  async selectValues( params = {}) 
   {
     const { filters = {}, groupBy, aggregate, dtFrom, dtTo } = params;
 
-    if (!fromMeasurement) {
-        throw new Error("Parameter 'measurement' ist erforderlich.");
-    }
-
     // Prüfe und konvertiere Datumswerte
     const validFrom = this.___validateAndFormatDate(dtFrom);
-    const validTo = this.___validateAndFormatDate(dtTo);
+    const validTo   = this.___validateAndFormatDate(dtTo);
 
     // Standard: Falls keine Zeitwerte gesetzt sind, nehme "alles" mit Limit
     let rangeClause = validFrom && validTo 
@@ -145,7 +143,7 @@ ___validateAndFormatDate(date)
     // Basis-Query
     let fluxQuery = `from(bucket: "${this.bucket}") 
                      ${rangeClause} 
-                     |> filter(fn: (r) => r._measurement == "${fromMeasurement}")`;
+                     |> filter(fn: (r) => r._measurement == "${this.measurement}")`;
 
     // Falls Filter (Tags) angegeben sind
     if (Object.keys(filters).length > 0) {
@@ -189,14 +187,15 @@ async function test_InsertFluxDB()
 
   // InfluxDB-Client initialisieren
   var influx = new nodeInfluxDB({
-      url   : 'http://localhost:8086',
-      token : 'bqc9XmF2V8q2Di8ySTLZBrIJKdw33dMA2KfYP8QP1OT70WQkfGqo4kkhXCF8lHtzWkMBSBJVxgTPi3X_kMVQWQ==',
-      org   : 'Energie Mittelsachsen',
-      bucket: 'testBucket'
+      url        : 'http://10.102.13.99:4400',
+      token      : 'SGcPDZ2JY6IYzaPFhnLGIiEHeUXtyrjjzLHzkFutvBmlCkrfwvxEk8NnR3z7Wl4YDJFcJj2f5yTJt45vn0bzHw==',
+      org        : 'Energie Mittelsachsen',
+      bucket     : 'testBucket',
+      measurement: 'testValues'
   });
 
   //alles löschen
-  await influx.deleteValues('testValues');
+ // await influx.deleteValues();
 
   // 🔹 Testdaten erzeugen (100.000 Einträge mit einzigartigen IDs & Timestamps)
   var values = [];
@@ -210,12 +209,12 @@ async function test_InsertFluxDB()
 
        // 🔹 Daten in InfluxDB einzeln speichern             
        // alternativ ein Array befüllen und dann speichern
-      await influx.saveValues('testValues' , record);             
+      await influx.saveValues( record);             
   }
 
    // 🔹 Daten wieder aus InfluxDB abrufen & prüfen
   utils.log('Prüfe gespeicherte Daten...');
-  const result = await influx.selectValues( 'testValues' , {} );
+  const result = await influx.selectValues( {} );
 
   utils.log(`Abfrage abgeschlossen! Gefundene Einträge: ${result.length}`);
   utils.log(result.slice(0, 10)); // Zeige die ersten 10 Ergebnisse zur Kontrolle

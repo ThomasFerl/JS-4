@@ -71,3 +71,10 @@ export function lastpayload( ID_topic  )
 {
   return utils.webApiRequest('LASTPAYLOAD' , { ID_topic:ID_topic}); 
 }
+
+export function count( ID_topic , fieldName )
+{
+  var params = {ID_topic:ID_topic, fieldName:fieldName};
+   
+  return utils.webApiRequest('COUNT' , params); 
+}

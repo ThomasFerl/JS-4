@@ -188,6 +188,11 @@ showArchive( ID_topic , topic )
 {
     this.archiveContainer.innerHTML = '';
 
+    var response = mqttArchive.count( ID_topic , 'value' ,  null , null );
+  
+
+
+   /* 
     var response = mqttArchive.getValues( ID_topic , null , null , 'avg' );
     if(response.error)
     {
@@ -201,7 +206,7 @@ showArchive( ID_topic , topic )
     this.arcChart = new TFChart( this.archiveContainer, 1 , 1 , '100%' , '100%' , {chartBackgroundColor:'white',chartType:'Spline'} );
     this.arcSeries = this.arcChart.addSeries( topic , 'green' );                                         
     this.arcChart.addPoint(this.arcSeries , chartData);
-    
+    */
 }
 
 

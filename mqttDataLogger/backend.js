@@ -55,10 +55,11 @@ dbTables.buildTables( dB );
 
 //InfluxDB-Client initialisieren
 var influx = new nodeInfluxDB({
-                                 url   : _fluxDB_URL_,
-                                 token : _fluxDB_Token,
-                                 org   : _fluxDB_Org,
-                                 bucket: _fluxDB_Bucket                                
+                                 url         : _fluxDB_URL_,
+                                 token       : _fluxDB_Token,
+                                 org         : _fluxDB_Org,
+                                 bucket      : _fluxDB_Bucket,
+                                 measurement : _fluxDB_measurement                               
                               });
 
 
@@ -67,7 +68,7 @@ var influx = new nodeInfluxDB({
 // MQTT - Client starten und zum Mosquitto-Server Verbindung aufnehmen
 //-----------------------------------------------------------------------------------------
 //-----------------------------------------------------------------------------------------
-mqttHandler.setup( dB , influx , _fluxDB_measurement);
+mqttHandler.setup( dB , influx );
 
 const mqttClient = mqtt.connect(MQTT_BROKER_URL);
 

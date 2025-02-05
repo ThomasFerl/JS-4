@@ -4,9 +4,9 @@ const utils                = require('./nodeUtils');
 
 var   dB                   = null;
 var  influx                = null;
-var  influx_measurement    = null;
 
-module.exports.setup = (_dB , _influx , _influx_measurement) => { dB = _dB;  influx = _influx; influx_measurement = _influx_measurement }
+
+module.exports.setup = (_dB , _influx ) => { dB = _dB;  influx = _influx }
 
 
 
@@ -100,7 +100,7 @@ function safePayload(ID_Topic, strPayload)
     influxRecord.timestamp = payload.timestamp || new utils.TFDateTime().unixDateTime();
     
     // Influx speichern
-    influx.saveValues( influx_measurement , influxRecord);
+    influx.saveValues(  influxRecord);
 }
 
 
@@ -130,7 +130,69 @@ module.exports.loadLastPayload = (ID_topic) =>
 }
 
 
+module.exports.count = async function (params) 
+{
+    var rangeClause = `|> range(start: -inf) |> limit(n: 250000)`;
 
+    if (params.hasOwnProperty('range')) 
+      {
+        // Ist params.range vom Typ String?
+        if (typeof params.range === 'string') rangeClause = `|> range(${params.range})`;
+        
+        // Ist params.range vom Typ Object?
+        if (typeof params.range === 'object') 
+        {
+            // Prüfe und konvertiere Datumswerte
+            const validStart = influx.___validateAndFormatDate(params.range.start);
+            const validStop  = influx.___validateAndFormatDate(params.range.stop);
+            rangeClause = `|> range(start: ${validStart}, stop: ${validStop})`;
+        }
+    }
+
+    // Durchlaufe alle Filter und füge sie der Query hinzu
+    var filterClause = '';
+    if (params.hasOwnProperty('filters')) 
+       {
+         Object.entries(params.filters).forEach(([key, value]) => {
+            if (typeof value === "string") {
+                filterClause += ` |> filter(fn: (r) => r.${key} == "${value}")`;
+            } else {
+                filterClause += ` |> filter(fn: (r) => r.${key} == "${value}")`;
+            }
+        });
+    }
+
+    var query = `from(bucket: "${influx.bucket}")`
+              + rangeClause
+              + filterClause
+              + ' |> group()'
+              + ' |> count()';
+
+    utils.log("------------------------------");
+    utils.log("Ausgeführte Query:" + query); // ⚠️ FIXED: fluxQuery → query
+    utils.log("------------------------------");
+
+    try {
+        const result = await influx.___influxQuery(query); // ⚠️ FIXED: fluxQuery → query
+        return { error: false, errMsg: "OK", result: result };
+    } catch (error) {
+        return { error: true, errMsg: error.message, result: {} };
+    }
+};
+
+
+
+
+
+
+module.exports.getValues = (ID_topic, from, to, aggr) =>
+{
+   // Imflux-Abfrage vorbereiten
+    var filters = {ID_Topic: ID_topic};
+    var aggregate = aggr || 'mean';
+    var groupBy = '1h';
+
+}
 
 
 

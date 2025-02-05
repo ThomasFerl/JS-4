@@ -62,6 +62,21 @@ if( CMD=='LSTOPICS')
     {
       return mqttHandler.loadLastPayload( param.ID_topic ); 
     }
+
+  if( CMD=='COUNT') 
+    {
+      var fn       = (param.fieldName || 'value');
+      var response = dbUtils.fetchValue_from_Query( dB , "Select ID from mqttPayloadFields Where ID_Topic="+param.ID_topic+" AND payloadFieldName='"+fn+"'" );
+      
+      if(response.error) return response;
+      if(response.result=='') return {error:true,errMsg:'Für dieses Topic existiert kein Feldname mit dem Namen "'+fn+'" !',result:{}};
+
+      var countParam = {filters:{idPayloadField :response.result}};
+
+
+
+      return mqttHandler.count( countParam); 
+    }
     
   
 
