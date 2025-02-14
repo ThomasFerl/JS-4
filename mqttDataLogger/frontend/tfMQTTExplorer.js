@@ -165,7 +165,8 @@ showMQTTValue( ID_topic , topic  )
         fontSize               : '1em',
         value                  : 'value',
         caption                : 'name',
-        appendix               : 'unit'
+        appendix               : 'unit',
+        notifyer               : function ( ID_topic , topic ) {console.log(this.showLastPayloads(ID_topic , topic)) }.bind(this)
         } );
 }
 
@@ -173,12 +174,19 @@ showMQTTValue( ID_topic , topic  )
 
 showMQTchart( ID_topic , topic )
 {
-   new TFMQTTChart( this.MQTTContainer , 2,1,'100%','100%', {
+  // last 50 values
+  var response = mqttArchive.getLastValues( {ID_topic:ID_topic , fieldName:'value', limit:50} );
+  var chartData = [];
+  for(var i=response.result.timeSeries.length-1; i>-1; i--) 
+    chartData.push({x:response.result.timeSeries[i].time, y:response.result.timeSeries[i].value });
+  
+  new TFMQTTChart( this.MQTTContainer , 2,1,'100%','100%', {
                                                   distributor            : this.mqttDistributor, 
                                                   topic                  : topic,
                                                   captionBackgroundColor : 'gray',
                                                   value                  : 'value',
-                                                  caption                : 'name'
+                                                  caption                : 'name',
+                                                  prefilledData          : chartData
                                                 })
 }
 
@@ -188,25 +196,21 @@ showArchive( ID_topic , topic )
 {
     this.archiveContainer.innerHTML = '';
 
-    var response = mqttArchive.count( ID_topic , 'value' ,  null , null );
-  
+    var response = mqttArchive.getValues( {ID_topic:ID_topic , fieldName:'value', group:{interval:'1m', aggregate:'mean'}} );
 
-
-   /* 
-    var response = mqttArchive.getValues( ID_topic , null , null , 'avg' );
     if(response.error)
     {
-        this.archiveContainer.innerHTML = 'Fehler beim Abruf der Archive';
+        this.archiveContainer.innerHTML = 'Fehler beim Abruf der Archive: ' + response.errMsg;
         return;
     } 
 
     var chartData = [];
-    for(var i=0; i<response.result.length; i++) chartData.push({x:response.result[i].xlsTimestamp, y:response.result[i].value_avg });
+    for(var i=0; i<response.result.timeSeries.length; i++) chartData.push({x:response.result.timeSeries[i].time, y:response.result.timeSeries[i].value });
 
     this.arcChart = new TFChart( this.archiveContainer, 1 , 1 , '100%' , '100%' , {chartBackgroundColor:'white',chartType:'Spline'} );
     this.arcSeries = this.arcChart.addSeries( topic , 'green' );                                         
     this.arcChart.addPoint(this.arcSeries , chartData);
-    */
+    
 }
 
 

@@ -41,7 +41,6 @@ module.exports.onMessage = (topic, payload) =>
 }   
     
 
-
 function safePayload(ID_Topic, strPayload)
 {
     utils.log('safePayload -> ID_Topic: '+ID_Topic+' / payload: '+strPayload);
@@ -104,19 +103,18 @@ function safePayload(ID_Topic, strPayload)
 }
 
 
-
-
 module.exports.loadLastPayload = (ID_topic) =>
 {
-   var response = dbUtils.fetchRecords_from_Query(dB, "Select * from mqttPayloadContent Where ID_PayloadField in (Select ID From mqttPayloadFields Where ID_Topic="+4+") order by timestamp desc limit 21" );
+   var response = dbUtils.fetchRecords_from_Query(dB, "Select * from mqttPayloadContent Where ID_PayloadField in (Select ID From mqttPayloadFields Where ID_Topic="+ID_topic+") order by timestamp desc limit 21" );
 
    if(response.error) return response;
+   if(response.result.length==0) return {error:true, errMsg:'Not payloads for ID_Topic:"'+ID_topic+'" yet', result:{}};
 
    var payload = {timestamp:response.result[0].timestamp, fields:[]};
    var ts      = Math.round(payload.timestamp*10000);
    for(var i=0; i<response.result.length; i++)  
    {
-     if( (Math.round(response.result[i].timestamp*10000) - ts) < 100)
+     if( (Math.round(response.result[i].timestamp*1000) - ts) < 10)
      {
        var field = { fieldName: dbUtils.fetchValue_from_Query(dB, "select payloadFieldName From  mqttPayloadFields Where ID_Topic="+ID_topic+" AND ID="+response.result[i].ID_PayloadField).result,
                      content  : response.result[i].content 
@@ -130,69 +128,37 @@ module.exports.loadLastPayload = (ID_topic) =>
 }
 
 
-module.exports.count = async function (params) 
-{
-    var rangeClause = `|> range(start: -inf) |> limit(n: 250000)`;
-
-    if (params.hasOwnProperty('range')) 
-      {
-        // Ist params.range vom Typ String?
-        if (typeof params.range === 'string') rangeClause = `|> range(${params.range})`;
-        
-        // Ist params.range vom Typ Object?
-        if (typeof params.range === 'object') 
-        {
-            // Prüfe und konvertiere Datumswerte
-            const validStart = influx.___validateAndFormatDate(params.range.start);
-            const validStop  = influx.___validateAndFormatDate(params.range.stop);
-            rangeClause = `|> range(start: ${validStart}, stop: ${validStop})`;
-        }
-    }
-
-    // Durchlaufe alle Filter und füge sie der Query hinzu
-    var filterClause = '';
-    if (params.hasOwnProperty('filters')) 
-       {
-         Object.entries(params.filters).forEach(([key, value]) => {
-            if (typeof value === "string") {
-                filterClause += ` |> filter(fn: (r) => r.${key} == "${value}")`;
-            } else {
-                filterClause += ` |> filter(fn: (r) => r.${key} == "${value}")`;
-            }
-        });
-    }
-
-    var query = `from(bucket: "${influx.bucket}")`
-              + rangeClause
-              + filterClause
-              + ' |> group()'
-              + ' |> count()';
-
-    utils.log("------------------------------");
-    utils.log("Ausgeführte Query:" + query); // ⚠️ FIXED: fluxQuery → query
-    utils.log("------------------------------");
-
-    try {
-        const result = await influx.___influxQuery(query); // ⚠️ FIXED: fluxQuery → query
-        return { error: false, errMsg: "OK", result: result };
+module.exports.count = async (params) =>
+{    
+ try {
+        const response = await influx.count(params); 
+        return response
     } catch (error) {
         return { error: true, errMsg: error.message, result: {} };
     }
 };
 
 
-
-
-
-
-module.exports.getValues = (ID_topic, from, to, aggr) =>
+module.exports.selectValues = async (params) =>
 {
-   // Imflux-Abfrage vorbereiten
-    var filters = {ID_Topic: ID_topic};
-    var aggregate = aggr || 'mean';
-    var groupBy = '1h';
+    try {
+        const response = await influx.selectValues(params); 
+        return response
+    } catch (error) {
+        return { error: true, errMsg: error.message, result: {} };
+    }
 
 }
 
 
-
+module.exports.selectLastValues = async (params) =>
+    {
+        try {
+            const response = await influx.selectLastValues(params); 
+            return response
+        } catch (error) {
+            return { error: true, errMsg: error.message, result: {} };
+        }
+    
+    }
+    

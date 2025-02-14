@@ -53,17 +53,15 @@ export function lsTopics( startAtLevel )
 
 
 
-export function getValues( topic , from , to , aggr )
+export function getValues( params )
 {
-  var params = {};
-    params.ID_topic = topic;
-    if(from) params.from = from;
-    if(to)   params.to   = to;
-    if(aggr) params.aggr = aggr;
+   return utils.webApiRequest('GETVALUES' , params );
+}
 
-  
-  
-    return utils.webApiRequest('GETVALUES' , params );
+
+export function getLastValues( params )
+{
+   return utils.webApiRequest('GETLASTVALUES' , params );
 }
 
 
@@ -71,6 +69,7 @@ export function lastpayload( ID_topic  )
 {
   return utils.webApiRequest('LASTPAYLOAD' , { ID_topic:ID_topic}); 
 }
+
 
 export function count( ID_topic , fieldName )
 {

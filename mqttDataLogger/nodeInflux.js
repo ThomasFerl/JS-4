@@ -88,15 +88,16 @@ ___validateAndFormatDate(date)
  return new utils.TFDateTime(date || new Date()).unixDateTime();
 }
 
-
-
-
   /**
    * Führt eine Flux-Query in InfluxDB aus
    */
   async ___influxQuery(fluxQuery)
    {
-    return new Promise((resolve, reject) => {
+    utils.log("------------------------------");
+    utils.log("   inFlux Query:" + fluxQuery);     // 
+    utils.log("------------------------------");
+
+     return new Promise((resolve, reject) => {
         const rows = [];
         utils.log("📡 Sende Query an InfluxDB:", fluxQuery);
 
@@ -123,57 +124,152 @@ ___validateAndFormatDate(date)
 }
 
 
-  /**
-   * Fragt Werte mit Filtern und Aggregationen ab
-   * JSON mit {tags, groupBy, aggregate}
-   */
-  async selectValues( params = {}) 
+buildQuery( params )
+/*
+Beispiel:
+params.filter   = {idPayloadField="123" , weiteresFeld:"wert" ...}   ... Suchbedingung(en)
+params.typeCast = {idPayloadField:"int" , weiteresFeld:"string" ...}  [optional - Im Normalfall wird immer von String ausgegangen]
+params.range    = {start:"2021-01-01T00:00:00Z" , stop:"2021-01-02T00:00:00Z" ...} [optional - Im Normalfall wird start:-inf gesetzt]
+
+   ID_topic: 8,
+  fieldName: 'value',
+  group: { interval: '1m', aggregate: 'mean' },
+  filter: { idPayloadField: 171 },
+  typeCast: { idPayloadField: 'int' }
+
+
+
+
+
+*/
+{
+  var rangeClause = `|> range(start: -inf)`;
+
+  if (params.hasOwnProperty('range')) 
   {
-    const { filters = {}, groupBy, aggregate, dtFrom, dtTo } = params;
-
-    // Prüfe und konvertiere Datumswerte
-    const validFrom = this.___validateAndFormatDate(dtFrom);
-    const validTo   = this.___validateAndFormatDate(dtTo);
-
-    // Standard: Falls keine Zeitwerte gesetzt sind, nehme "alles" mit Limit
-    let rangeClause = validFrom && validTo 
-        ? `|> range(start: ${validFrom}, stop: ${validTo})` 
-        : `|> range(start: -inf) |> limit(n: 250000)`;
-
-    // Basis-Query
-    let fluxQuery = `from(bucket: "${this.bucket}") 
-                     ${rangeClause} 
-                     |> filter(fn: (r) => r._measurement == "${this.measurement}")`;
-
-    // Falls Filter (Tags) angegeben sind
-    if (Object.keys(filters).length > 0) {
-        Object.entries(filters).forEach(([key, value]) => {
-            fluxQuery += ` |> filter(fn: (r) => r.${key} == "${value}")`;
-        });
-    }
-
-    // Falls Aggregation und Gruppierung angegeben sind
-    if (aggregate) {
-        if (!groupBy) {
-            throw new Error("Ein 'groupBy'-Wert ist erforderlich, wenn eine Aggregation verwendet wird.");
-        }
-        fluxQuery += ` |> aggregateWindow(every: ${groupBy}, fn: ${aggregate}, createEmpty: false)`;
-    } else if (groupBy) {
-        fluxQuery += ` |> window(every: ${groupBy})`;
-    }
-
-    utils.log("------------------------------");
-    utils.log("Ausgeführte Query:", fluxQuery);
-    utils.log("------------------------------");
+    // Ist params.range vom Typ String?
+    if (typeof params.range === 'string') rangeClause = `|> range(start:${params.range})`;
     
+    // Ist params.range vom Typ Object?
+    if (typeof params.range === 'object') 
+    {
+        // Prüfe und konvertiere Datumswerte
+        const validStart = this.___validateAndFormatDate(params.range.start);
+        const validStop  = this.___validateAndFormatDate(params.range.stop);
+        rangeClause = `|> range(start: ${validStart}, stop: ${validStop})`;
+    }
+  }
+
+  var mapClause = '';
+  if (params.hasOwnProperty('typeCast')) 
+  {
+    Object.entries(params.typeCast).forEach(([key, value]) => 
+        {
+          mapClause += `|> map(fn: (r) => ({ r with ${key}: ${value}(v: r.${key}) }))`;
+        });  
+  } 
+
+   // Durchlaufe alle Filter und füge sie der Query hinzu
+   var filterClause = '';
+
+   if (params.hasOwnProperty('filter')) 
+   {
+        Object.entries(params.filter).forEach(([key, value]) => 
+        {
+          // ist dieses Feld in den TypCasts enthalten ?
+          console.log("Filter => Key: "+key+" Value: "+value);
+          var type='string';
+          if (params.typeCast.hasOwnProperty(key)) type = params.typeCast[key];
+
+        if (type == "int") filterClause += ` |> filter(fn: (r) => r.${key} == ${value})`;
+        else               filterClause += ` |> filter(fn: (r) => r.${key} == "${value}")`;
+        });
+   }
+
+
+   if (params.hasOwnProperty('limit')) filterClause += ` |> limit(n: ${params.limit})`;
+   
+
+   var query = `from(bucket: "${this.bucket}")`
+          + rangeClause
+          + '|> filter(fn: (r) => r._measurement == "'+this.measurement+'")'
+          + mapClause
+          + filterClause
+      
+    return query;
+};
+
+
+async count (params)
+{
+   var q = this.buildQuery(params);
+
+        q = q + ' |> group()'
+        q = q + ' |> count()';
+    
+    try {
+        const response = await this.___influxQuery(q); 
+      
+        return { error: false, errMsg: "OK", result: response[0]._value };
+        } 
+        catch (error) { return { error: true, errMsg: error.message, result: {} }; }
+};
+
+
+ async selectValues( params = {}) 
+  {
+    
+    console.log("--------------selectValues-----------------");
+    console.log(params);
+    console.log("-------------------------------------------");
+    
+    var q = this.buildQuery(params);
+
+   
+    // Falls Aggregation und Gruppierung angegeben sind
+    /*
+       params.group = {interval:'24h,1d,1month....' , aggregate:'mean, sum, count, min, max, median, mode, stddev, first, last, diff, integral'}
+    */
+    if (params.hasOwnProperty('group'))  q += ` |> aggregateWindow(every: ${params.group.interval}, fn: ${params.group.aggregate}, createEmpty: false)`;
 
     try {
-        const result = await this.___influxQuery(fluxQuery);
-        return result;
-    } catch (error) {
-        throw new Error(`Fehler bei der Abfrage: ${error.message}`);
-    }
+        var rows = await this.___influxQuery(q); 
+
+        var r = rows[0];
+            r.timeSeries = [];
+            rows.forEach( (row) => { r.timeSeries.push({time: row._time, value: row._value}); });
+            
+        return { error: false, errMsg: "OK", result: r};
+        } 
+        catch (error) { return { error: true, errMsg: error.message, result: {} }; }
 }
+
+
+ async selectLastValues( params = {})
+ {
+ 
+    console.log("--------------selectLastValues-----------------");
+    console.log(params);
+    console.log("-------------------------------------------");
+    
+ 
+ 
+    var q = this.buildQuery(params);
+      q = q + '|> sort(columns: ["_time"], desc: true)';  // Neueste zuerst
+    
+  try {
+      var rows = await this.___influxQuery(q); 
+
+      var r = rows[0];
+          r.timeSeries = [];
+          rows.forEach( (row) => { r.timeSeries.push({time: row._time, value: row._value}); });
+          
+      return { error: false, errMsg: "OK", result: r};
+      } 
+      catch (error) { return { error: true, errMsg: error.message, result: {} }; }
+ }
+
+
 
 }
 

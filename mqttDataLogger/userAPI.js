@@ -31,6 +31,16 @@ module.exports.run = function()
 }
 
 
+// hilfsfunktion:
+// ermittelt zu einem Topic und dem Feldnamen des entsprechenden Payloads die ID des Payload-Feldes
+function getID_payloadField(param)
+{
+  var fn       = (param.fieldName || 'value');
+  var response = dbUtils.fetchValue_from_Query( dB , "Select ID from mqttPayloadFields Where ID_Topic="+param.ID_topic+" AND payloadFieldName='"+fn+"'" );
+  response.fn  = fn;
+  utils.log("getID_payloadField -> "+JSON.stringify(response));
+  return response;
+}  
 
 
 module.exports.handleCommand = async function( sessionID , cmd , param , webRequest ,  webResponse , fs , path )
@@ -65,15 +75,15 @@ if( CMD=='LSTOPICS')
 
   if( CMD=='COUNT') 
     {
-      var fn       = (param.fieldName || 'value');
-      var response = dbUtils.fetchValue_from_Query( dB , "Select ID from mqttPayloadFields Where ID_Topic="+param.ID_topic+" AND payloadFieldName='"+fn+"'" );
+      var response = getID_payloadField(param);
       
       if(response.error) return response;
-      if(response.result=='') return {error:true,errMsg:'Für dieses Topic existiert kein Feldname mit dem Namen "'+fn+'" !',result:{}};
-
-      var countParam = {filters:{idPayloadField :response.result}};
-
-
+      if(response.result=='') return {error:true,errMsg:'Für dieses Topic existiert kein Feldname mit dem Namen "'+response.fn+'" !',result:{}};
+      
+      var ID_PayloadField     = response.result;
+      var countParam          = param;
+          countParam.filter   = {idPayloadField :ID_PayloadField};
+          countParam.typeCast = {idPayloadField : "int"};
 
       return mqttHandler.count( countParam); 
     }
@@ -84,13 +94,34 @@ if( CMD=='LSTOPICS')
 
 if( CMD=='GETVALUES' )
   {
-     var ID_topic = param.ID_topic || '0';
-     var from     = new TFDateTime(param.from || '01.01.2000').dateTime();
-     var to       = new TFDateTime(param.to   || '31.12.3000').dateTime();
-     var field    = 'value_' + (param.aggr  || 'avg');
-     return dbUtils.fetchRecords_from_Query( dB , "Select ID,name,exceltime as xlsTimestamp , day , month, year , hour , cnt , "+field+"  from archiv_hour  Where ID_topic="+ID_topic+" AND exceltime>="+from+" AND exceltime<="+to+" order by xlsTimestamp" );
+    var response = getID_payloadField(param);
+      
+    if(response.error) return response;
+    if(response.result=='') return {error:true,errMsg:'Für dieses Topic existiert kein Feldname mit dem Namen "'+response.fn+'" !',result:{}};
+    
+    var ID_PayloadField      = response.result;
+    var selectParam          = param;
+        selectParam.filter   = {idPayloadField :ID_PayloadField};
+        selectParam.typeCast = {idPayloadField : "int"};
+
+    return mqttHandler.selectValues( selectParam ); 
   }
 
+
+  if( CMD=='GETLASTVALUES' )
+    {
+      var response = getID_payloadField(param);
+        
+      if(response.error) return response;
+      if(response.result=='') return {error:true,errMsg:'Für dieses Topic existiert kein Feldname mit dem Namen "'+response.fn+'" !',result:{}};
+      
+      var ID_PayloadField      = response.result;
+      var selectParam          = param;
+          selectParam.filter   = {idPayloadField :ID_PayloadField};
+          selectParam.typeCast = {idPayloadField : "int"};
+  
+      return mqttHandler.selectLastValues( selectParam ); 
+    }
 
 
 

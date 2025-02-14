@@ -67,6 +67,7 @@ export class TFMQTTPanelBase extends TFPanel
     this.caption     = this.params.caption || '';
     this.appendix    = this.params.appendix || '';
     this.lastMessage = null;
+    this.notifyer    = this.params.notifyer || function(){};
 
     this.distributor.addSubscriber( this.topic , this.update.bind(this) );
   }   
@@ -132,6 +133,7 @@ export class TFMQTTPanelBase extends TFPanel
                    this.lastMessage = null;
                    return;
                  }  
+       this.notifyer( this.topic , this.lastMessage );          
     }   
 
        
@@ -274,6 +276,10 @@ export class TFMQTTChart extends TFMQTTPanelBase
 
      this.chart = new TFChart( this , 1 , 2 , 1 , 1 , {chartBackgroundColor:'white',chartType:'Spline',maxPoints:50} );
      this.series = this.chart.addSeries('x','green');
+    
+     // gibts schon etwas zum Anzeigen ?
+     if(this.params.prefilledData)  this.chart.addPoint(this.series , this.params.prefilledData )
+     
 } 
                                              
 
