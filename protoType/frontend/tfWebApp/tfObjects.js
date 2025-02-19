@@ -2867,6 +2867,509 @@ clear(aSeries)
 
 }  // TFChart
 
+//---------------------------------------------------------------------------
+
+export class TForm
+{
+  constructor( aParent , aData , aLabels , aAppendix , aExclude , aInpType , URLForm )
+  // aParent:  TFObject
+  // aData:    JSON-Objekt mit den Daten
+  // aLabels:  JSON-Objekt mit den Labels
+  // aAppendix:JSON-Objekt mit den Appendix
+  // aExclude: Array mit den auszuschließenden Feldern
+  // URLForm:  URL zur Form-Definition (optional) Falls dieses nicht definiert wird buildFormGeneric() aufgerufen
+  {
+    this.objName            = this.constructor.name;
+    this.isTFObject         = false;
+    this.parent             = aParent;
+    this.data               = aData;
+    this.htmlForm           = "";  // String Representanz eines ggf. übergebenen HTML-Formulars
+    this.error              = false;
+    this.errMsg             = '';
+    
+    this.objName            = this.constructor.name;
+    this.controls           = [];
+
+    this.callBack_onOKBtn   = null;
+    this.callBack_onESCBtn  = null;
+  
+    console.log("TForm.constructor(...) URLForm: " + URLForm );
+
+    if(URLForm)  // falls URL für ein Formular übergeben wurde, dieses laden
+    {
+      var response  = utils.loadContent(URLForm);
+
+      if(response.error)
+      {
+        dialogs.showMessage('Fehler beim Versuch, eine Ressource zu laden in:  TForm.constructor("'+URLForm+'")   => ' + response.errMsg);
+        this.error = true;
+        return false;
+      }
+      this.htmlForm = response.body; 
+    }  
+    
+    else 
+    {
+      if(!aExclude) aExclude  = [];
+
+      for(var key in this.data)
+      {
+       if(utils.indexOfIgnoreCase(aExclude , key) < 0)   // nicht in exclude - List  ...
+       {
+        var lbl  = key;
+        var apx  = '';
+        var type = '';
+
+        if(aLabels)  // existieren Labels zur besseren Lesbarkeit ?                
+        {
+         // Variante1: [{var1:"1"} , {var2:"2"} , {var3:"3"} , .... , {varn:"n"}]
+         if (Array.isArray(aLabels)) 
+         { 
+           var jsnHelp = utils.findEntryByKey(aLabels,key);
+           if(jsnHelp) lbl = jsnHelp[key];
+         }
+         else // Variante2: {var1:"1" , var2:"2" , var3:"3" , .... , varn:"n"}
+         {
+            if(aLabels.hasOwnProperty(key)) lbl = aLabels[key];
+         }
+        }
+        
+        if(aAppendix)
+        var jsnHelp     = utils.findEntryByKey( aAppendix ,key);
+        if(jsnHelp) apx = jsnHelp[key];
+
+        if(aInpType)
+          var jsnHelp      = utils.findEntryByKey( aInpType ,key);
+          if(jsnHelp) type = jsnHelp[key];
+
+        this.controls.push({fieldName:key, value:this.data[key], label:lbl, appendix:apx, type: type || "TEXT", enabled:true,  visible:true, editControl:null })
+
+      } else  this.controls.push({fieldName:key, value:this.data[key], label:"" , appendix:"" , type:"TEXT", enabled:false, visible:false})
+    }
+  }   // else  
+
+}
+  
+  getControlByName( key )
+  {
+    for(var i=0; i<this.controls.length; i++)
+      {
+        var ctrl = this.controls[i];
+        if (ctrl.fieldName.toUpperCase()==key.toUpperCase()) return ctrl;
+      }
+    return null;  
+  }
+
+
+  
+  disable( key )
+  {
+    var ctrl = this.getControlByName(key);
+    if (ctrl!=null)
+       if(ctrl.editControl) ctrl.editControl.enabled=false;
+  }
+
+
+  enable( key )
+  {
+    var ctrl = this.getControlByName(key);
+    if (ctrl!=null)
+       if(ctrl.editControl) ctrl.editControl.enabled=true;
+  }
+
+  
+  setLabel(key , aLabel)
+  {
+      var ctrl = this.getControlByName(key);
+      if (ctrl!=null)
+         if(ctrl.editControl) ctrl.editControl.caption.text=aLabel;
+  
+  }
+
+
+  setValue(key , aValue)
+  {
+    var ctrl = this.getControlByName(key);
+    if (ctrl!=null)
+      if(ctrl.editControl) ctrl.editControl.value = aValue;
+  }
+
+
+  setInputType(key , type , items )
+  {
+    for(var i=0; i<this.controls.length; i++)
+    {
+      var ctrl = this.controls[i];
+      if (ctrl.fieldName.toUpperCase()==key.toUpperCase()) 
+      {
+        ctrl.type = type;
+        if(items) ctrl.items = items;
+        if(ctrl.editControl) ctrl.editControl.type = type;
+
+        if(type.toUpperCase()=='RANGE')
+           if(ctrl.editControl) 
+           {
+            ctrl.editControl.min     = 0;
+            ctrl.editControl.max     = 11
+            ctrl.editControl.oninput = function(){if (this.apxControl) this.apxControl.caption = this.editControl.value;}.bind(ctrl)
+
+          }
+      }  
+    }
+  } 
+
+
+  setInputLength(key , length)
+  {
+    for(var i=0; i<this.controls.length; i++)
+    {
+      var ctrl = this.controls[i];
+      if (ctrl.fieldName.toUpperCase()==key.toUpperCase()) 
+      {
+        if(ctrl.editControl) ctrl.editControl.style.width = length;
+      }  
+    }
+  }
+
+
+
+  setAppendex(key , aAppendix)
+  {
+    for(var i=0; i<this.controls.length; i++)
+    {
+      var ctrl = this.controls[i];
+      if (ctrl.fieldName.toUpperCase()==key.toUpperCase()) 
+      {
+        ctrl.appendix = aAppendix;
+        if (ctrl.apxControl) ctrl.apxControl.caption = aAppendix;
+      }  
+    }
+  }
+
+  render( withCtrlButton )
+  {
+    if(this.htmlForm == '' ) this.renderGeneric( withCtrlButton );
+    else                     this.renderForm();
+  }
+
+
+  renderForm()  
+  {
+    this.parent.HTML( this.htmlForm );
+
+    // nun die HTML-Elemente mit den Daten verbinden ...
+    // dazu werden die Daten durchlaufen und vie key das passende Element gesucht. Falls erfolgreich, wird das HTML-Element. value gesetzt...
+    this.controls = [];
+
+    for(var key in this.data)
+    {
+      var el = this.parent.getElementById( key );
+      if (el) 
+      {
+        this.controls.push( {fieldName:key, value:this.data[key], label:null, appendix:null, type:"null", enabled:true,  visible:true, lblControl:null, editControl:el, apxControl:null})
+       
+        if (el.tagName === 'INPUT' && el.type === 'text') el.value     = this.data[key];
+        if (el.tagName === 'LABEL')                       el.innerHTML = this.data[key];
+        if (el.tagName === 'SELECT') 
+        { 
+          for (var i = 0; i < el.options.length; i++) 
+          if (el.options[i].value === this.data[key]) el.selectedIndex = i; 
+        }
+      }
+    }  
+    
+  }  
+
+
+
+  renderGeneric( withCtrlButton )
+  {
+    // maximale label-länge finden, um rechtsbündige Eingabezellen zu haben....
+    var maxLabel = 0;
+    for(var i=0; i<this.controls.length; i++) if(this.controls[i].visible && (this.controls[i].label.length>maxLabel)) maxLabel = this.controls[i].label.length;
+
+    // maximale label-länge des ggf. vorh. Appendix finden ....
+    var maxAppendix = 2;
+    for(var i=0; i<this.controls.length; i++) if(this.controls[i].visible && (this.controls[i].appendix.length>maxAppendix)) maxAppendix = this.controls[i].appendix.length;
+
+    //build.....
+    utils.buildGridLayout_templateColumns( this.parent , '1fr' );
+
+          if(withCtrlButton) utils.buildGridLayout_templateRows   ( this.parent , '1fr 4em 1px')
+          else               utils.buildGridLayout_templateRows   ( this.parent , '1fr')
+          if(withCtrlButton) utils.buildGridLayout_templateRows   ( this.parent , '1fr 4em 1px')
+          else               utils.buildGridLayout_templateRows   ( this.parent , '1fr')
+
+          this.Container                          = document.createElement("DIV");
+          this.Container.className                = 'cssHidePanel';
+          this.Container.style.gridColumnStart    = 1;
+          this.Container.style.gridColumnEnd      = 2;
+          this.Container.style.gridRowStart       = 1;
+          this.Container.style.gridRowEnd         = 2;
+    
+         this.parent.appendChild( this.Container );
+          this.Container                          = document.createElement("DIV");
+          this.Container.className                = 'cssHidePanel';
+          this.Container.style.gridColumnStart    = 1;
+          this.Container.style.gridColumnEnd      = 2;
+          this.Container.style.gridRowStart       = 1;
+          this.Container.style.gridRowEnd         = 2;
+    
+         this.parent.appendChild( this.Container );
+
+         this.Container.style.flexDirection = 'column';
+         this.Container.style.alignItems     = 'center'
+     }     
+         this.Container.style.flexDirection = 'column';
+         this.Container.style.alignItems     = 'center'
+     }     
+           
+    for(var i=0; i<this.controls.length; i++)
+    {
+      var ctrl = this.controls[i];
+      if (ctrl.visible)
+      {
+        var inpContainer = dialogs.addPanel( this.Container,"cssPanelForInput",0,0,'97%','3em');
+        var inpContainer = dialogs.addPanel( this.Container,"cssPanelForInput",0,0,'97%','3em');
+            inpContainer.DOMelement.style.marginLeft  = "auto";
+            inpContainer.DOMelement.style.marginRight = "auto";
+
+            utils.buildGridLayout_templateColumns(inpContainer , maxLabel+'em 1fr '+maxAppendix+'em');
+            utils.buildGridLayout_templateRows   (inpContainer , '0.5em 1fr 0.5em');
+
+            ctrl.lblControl = dialogs.addLabel(inpContainer,"cssLabelForInput",1,2,ctrl.label);
+            ctrl.lblControl.marginTop = '0.5em';
+            
+            if(ctrl.type.toUpperCase()=='RANGE') ctrl.apxControl = dialogs.addLabel(inpContainer,"",3,2,ctrl.appendix || '5' );
+            else                                 ctrl.apxControl = dialogs.addLabel(inpContainer,"",3,2,ctrl.appendix);
+            
+            if(['TEXT','DATE','TIME','EMAIL','NUMBER','RANGE','PASSWORD'].indexOf(ctrl.type.toUpperCase())>-1)  // Statt ODER ;-)
+            {
+              ctrl.editControl= document.createElement("INPUT");
+              ctrl.editControl.setAttribute('id',ctrl.fieldName);
+              ctrl.editControl.type                  = ctrl.type;
+              ctrl.editControl.value                 = ctrl.value;
+              ctrl.editControl.className             = "cssEditField";
+              ctrl.editControl.style.gridColumnStart = 2;
+              ctrl.editControl.style.gridColumnEnd   = 3;
+              ctrl.editControl.style.gridRowStart    = 2;
+              ctrl.editControl.style.gridRowEnd      = 3;
+              inpContainer.appendChild( ctrl.editControl ); 
+            }
+
+            if(ctrl.type.toUpperCase()=="SELECT")
+            {
+              ctrl.editControl= document.createElement("SELECT");
+              ctrl.editControl.setAttribute('id',ctrl.fieldName);
+              ctrl.editControl.value                 = ctrl.value;
+              ctrl.editControl.className             = "cssEditField";
+              ctrl.editControl.style.gridColumnStart = 2;
+              ctrl.editControl.style.gridColumnEnd   = 3;
+              ctrl.editControl.style.gridRowStart    = 2;
+              ctrl.editControl.style.gridRowEnd      = 3;
+             
+              if(ctrl.items)
+              if(ctrl.items.length>0)
+              for(var j=0; j<ctrl.items.length; j++)  ctrl.editControl.add( new Option( ctrl.items[j] , j ) )
+
+              inpContainer.appendChild( ctrl.editControl ); 
+            }
+
+            if(ctrl.type.toUpperCase()=='CHECKBOX')
+            {
+              var p                       = document.createElement("DIV");
+                  p.className             = "cssHidePanel";
+                  p.style.gridColumnStart = 2;
+                  p.style.gridColumnEnd   = 3;
+                  p.style.gridRowStart    = 2;
+                  p.style.gridRowEnd      = 3;
+                  inpContainer.appendChild( p );
+               
+                  ctrl.editControl= document.createElement("INPUT");
+                  ctrl.editControl.setAttribute('id',ctrl.fieldName);
+                  ctrl.editControl.type              = 'CHECKBOX';
+                  ctrl.editControl.checked           = ctrl.value;
+                  ctrl.editControl.style.width       = '1.5em';
+                  ctrl.editControl.style.height      = '1.5em';
+
+                  p.appendChild( ctrl.editControl ); 
+            }  
+
+            if(!ctrl.enabled) 
+            {
+                ctrl.editControl.readOnly = true;
+                ctrl.editControl.style.backgroundColor = 'rgb(200,200,200)';
+                ctrl.editControl.style.color           = 'rgb(70,70,70)';
+            }  
+       }
+    }
+    
+    if(withCtrlButton)
+    {
+      var btnContainer  = dialogs.addPanel(this.parent,"cssRibbon",1,2,1,1);
+          btnContainer.backgroundColor = "gray"; 
+      utils.buildGridLayout_templateColumns( btnContainer , "repeat(4,1fr)  ");
+      utils.buildGridLayout_templateRows   ( btnContainer , "0.5em 1fr 0.5em");
+  
+      this.btnOk    = dialogs.addButton( btnContainer ,""             ,2,2,1,1,"OK");
+      this.btnOk.callBack_onClick = function() {if(this.callBack_onOKBtn) { this.callBack_onOKBtn( this.getInputFormValues() )};}.bind(this);
+
+      this.btnAbort = dialogs.addButton( btnContainer ,"cssAbortBtn01",3,2,1,1,"Abbruch");
+      this.btnAbort.callBack_onClick = function(){if(this.callBack_onESCBtn) this.callBack_onESCBtn();}.bind(this);
+    }  
+  } 
+
+
+  getInpElement(id)
+  {
+   if( this.parentWnd ) return this.parentWnd.getElementById(id)
+    else
+       {
+        for(var i=0; i<this.controls.length; i++)
+        {
+            var ctrl = this.controls[i];
+            if (ctrl.fieldName.toUpperCase()==id.toUpperCase()) return ctrl;
+         }
+         return null;   
+       }
+      
+ }
+
+
+  getInputFormValues()
+  {
+    var result = [];
+
+    if( this.htmlForm != '' )
+    {
+      for(var i=0; i<this.controls.length; i++)
+      {
+        var element = this.controls[i].editControl;
+        if(element) result.push( { field:element.id, value:element.value } ) 
+      };
+    } 
+    else
+        for(var i=0; i<this.controls.length; i++) 
+        {
+          var ctrl = this.controls[i]; 
+          if(ctrl.visible) result.push({field:ctrl.fieldName, value:ctrl.editControl.value}) 
+          else             result.push({field:ctrl.fieldName, value:ctrl.value}) 
+    } 
+    
+    return result;
+  }
+
+
+
+
+
+  __getInputFormValues(searchByName)
+  {
+    var result = [];
+
+    if( this.parentWnd )
+    {
+      var childList = [];
+      if(searchByName) childList =             this.parentWnd.getChildListByName(searchByName);
+      else             childList =  Array.from(this.parentWnd.querySelectorAll('*'));
+
+      childList.forEach(function(element) 
+      {
+        console.log(element.id + ' -> ' + element.value); 
+        result.push( { field:element.id, value:element.value } ) 
+      });
+    } 
+    else
+        for(var i=0; i<this.controls.length; i++) 
+        {
+          var ctrl = this.controls[i]; 
+          if(ctrl.visible) result.push({field:ctrl.fieldName, value:ctrl.editControl.value}) 
+          else             result.push({field:ctrl.fieldName, value:ctrl.value}) 
+    } 
+    
+    return result;
+  }
+}  
+
+//---------------------------------------------------------------------------
+
+
+export class TPropertyEditor
+//  properties = [{label:"Beschriftung" , value:"Wert" , type:"text" , items:["item1" , "item2" , ... , "itemx"] } , {} , {} ]
+{
+  constructor( aParent , aProperties , aBtnSave , aCallBack_onSave )
+  {
+    this.parent           = aParent;
+    this.properties       = aProperties;
+    this.btnSave          = aBtnSave;
+    this.callBack_onSave  = aCallBack_onSave;  
+
+    this.btnSave.callBack_onClick = function() { this.save() }.bind(this);
+  }  
+
+
+  setProperties( properties )
+  {
+    this.properties = properties;
+    this.render();
+  }
+  
+  
+  render()
+  { 
+    this.parent.DOMelement.innerHTML           = '';
+    this.parent.DOMelement.style.display       = 'block';
+    this.parent.DOMelement.style.flexDirection = 'column';
+  
+   for (var i=0; i<this.properties.length; i++ )
+  {
+     var item = this.properties[i];
+
+     if(item.type.toUpperCase()=='INPUT')
+     { 
+       var p = dialogs.addPanel( this.parent , 'cssvalueListPanel' , 0 , 0 , '99%' , '2.4em' );   // Dimension sind bereits im css definiert
+           p.isGridLayout = true;  // kommt vom css
+           p.backgroundColor = (i % 2) != 0 ? "RGB(240,240,240)" : "RGB(255,255,255)"; 
+           dialogs.addLabel( p ,'cssBoldLabel',2,2, item.label);
+           item.control = dialogs.addInputGrid( p , 3 , 2 , 1  , '' , '' , item.value  );
+     }      
+     
+     if(item.type.toUpperCase()=='COMBOBOX')
+     {      
+       var p = dialogs.addPanel( this.parent , 'cssvalueListPanel' , 0 , 0 , '99%' , '2.4em' );   // Dimension sind bereits im css definiert
+           p.isGridLayout = true;  // kommt vom css
+           p.backgroundColor = (i % 2) != 0 ? "RGB(240,240,240)" : "RGB(255,255,255)"; 
+           dialogs.addLabel( p ,'cssBoldLabel',2,2, item.label );
+           item.control = dialogs.addComboboxGrid( p , 3 , 2 , 4  , '' , '' , item.value , item.items )
+      }      
+    }
+  }
+
+
+save()
+{
+  var p=[];
+
+  for (var i=0; i<this.properties.length; i++ )
+  {
+    var item = this.properties[i];
+        if (item.control) 
+           if((item.type.toUpperCase()=='INPUT') || (item.type.toUpperCase()=='COMBOBOX'))  
+           {
+             item.value = item.control.value;
+             p.push({label:item.label , value:item.value});
+             {console.log('item.label -> '+item.label+'  item.value -> ' + item.value)}
+           }   
+  }  
+  
+  if(this.callBack_onSave) this.callBack_onSave(p)
+}    
+
+}
+
+
+
+
 
 
 
