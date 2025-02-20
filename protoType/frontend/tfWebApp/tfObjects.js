@@ -1442,9 +1442,10 @@ export class TFCheckBox extends TFObject
     if(!params) params = {css:"cssPanelForInput", caption:"checkBox", checked:false , checkboxLeft:true};
     else    
          {
-          params.css          = params.css          || "cssPanelForInput";
-          params.caption      = params.caption      || "checkBox";
-          params.checked      = params.checked      || false;
+          params.css          = params.css           || "cssPanelForInput";
+          params.caption      = params.caption       || "checkBox";
+          params.captionLength= params.captionLength || params.caption.length+1;
+          params.checked      = params.checked       || false;
           if(params.checkboxLeft == undefined) params.checkboxLeft = true;
          } 
     
@@ -1456,8 +1457,8 @@ export class TFCheckBox extends TFObject
   {
     super.render();
     
-    if(this.params.checkboxLeft) utils.buildGridLayout_templateColumns(this , '2em 1fr');
-    else                    utils.buildGridLayout_templateColumns(this , '1fr 2em');
+    if(this.params.checkboxLeft) utils.buildGridLayout_templateColumns(this , '2em '+this.params.captionLength+'em 1fr');
+    else                    utils.buildGridLayout_templateColumns(this , this.params.captionLength+'em  2em 1fr');
     utils.buildGridLayout_templateRows(this ,'1fr');
    
     if(this.params.checkboxLeft) this.gridTemplateAreas    = ' "checkbox editLabel" ';
@@ -1466,11 +1467,13 @@ export class TFCheckBox extends TFObject
     this.label             = document.createElement("LABEL");
     this.label.className   = "cssLabelForInput";
     this.label.textContent = this.params.caption;
+    this.label.style.justifySelf = 'start';
     this.appendChild( this.label );  
      
     this.input             = document.createElement("INPUT");
     this.input.className   = "cssCheckBox";
     this.input.setAttribute('type' , 'checkbox');
+    this.input.style.justifySelf = 'start';
     this.appendChild(  this.input ); 
     
     if(this.callBack_onChange) this.input.onchange = this.callBack_onChange;
@@ -1668,16 +1671,17 @@ export class TFEdit extends TFObject
 {
   constructor (parent , left , top , width , height , params ) 
   {
-    if(!params)        params = {};
-        params.css            = "cssContainerPanel";
-        params.caption        = params.caption        || "";
-        params.value          = params.value          || "";
-        params.labelPosition  = params.labelPosition  || "LEFT";
-        params.appendix       = params.appendix       || "";
-        params.captionLength  = (params.captionLength  || params.caption.length)+1;
-        params.appendixLength = (params.appendixLength || params.appendix.length)+1;
-        params.editLength     = params.editLength     || 4;
-        params.type           = params.type           || 'text';
+    if(!params)        params   = {};
+        params.css              = "cssContainerPanel";
+        params.caption          = params.caption         || "";
+        params.value            = params.value           || "";
+        params.labelPosition    = params.labelPosition   || "LEFT";
+        params.appendix         = params.appendix        || "";
+        params.captionLength    = (params.captionLength  || params.caption.length)+1;
+        params.appendixLength   = (params.appendixLength || params.appendix.length)+1;
+        params.editLength       = params.editLength      || "auto";
+        params.justifyEditField = params.justifyEdit     || 'right';
+        params.type             = params.type            || 'text';
       
     
     super(parent , left , top , width , height , params );
@@ -1769,8 +1773,12 @@ if(gridTemplate.apx)
      this.input.style.margin           = '0.5px';
      if(this.params.editLength) 
       {
-       this.input.style.width       = this.params.editLength+'em'; 
-       this.input.style.justifySelf = 'end';
+        if(this.params.editLength != 'auto') this.input.style.width = this.params.editLength+'em';
+        else                                 this.input.style.width = '100%'; 
+
+        if(this.params.justifyEditField =='left') this.input.style.justifySelf = 'start';
+        else                                      this.input.style.justifySelf = 'end'; 
+
       } 
     
     this.input.addEventListener('change',  function() { 
@@ -1888,9 +1896,17 @@ export class TFComboBox extends TFEdit
     for(var i=0; i<this.items.length; i++)
     {
       var item = this.items[i];
+      var c    = ''
+      var v    = ''
+      if(typeof item == 'string') {c = item; v = item;}
+      else
+      {
+        c = item.caption || item.text;
+        v = item.value; 
+      }  
       var option = document.createElement("OPTION");
-      option.text  = item.caption || item.text;
-      option.value = item.value;
+      option.text  = c;
+      option.value = v;
       this.combobox.appendChild(option);
     }
   } 
@@ -2942,9 +2958,9 @@ export class TForm
           var jsnHelp      = utils.findEntryByKey( aInpType ,key);
           if(jsnHelp) type = jsnHelp[key];
 
-        this.controls.push({fieldName:key, value:this.data[key], label:lbl, appendix:apx, type: type || "TEXT", enabled:true,  visible:true, editControl:null })
+        this.controls.push({fieldName:key, value:this.data[key], label:lbl, appendix:apx, type: type || "TEXT", enabled:true,  visible:true, editControl:null, params:{} })
 
-      } else  this.controls.push({fieldName:key, value:this.data[key], label:"" , appendix:"" , type:"TEXT", enabled:false, visible:false})
+      } else  this.controls.push({fieldName:key, value:this.data[key], label:"" , appendix:"" , type:"TEXT", enabled:false, visible:false , params:{} })
     }
   }   // else  
 
@@ -2966,7 +2982,10 @@ export class TForm
   {
     var ctrl = this.getControlByName(key);
     if (ctrl!=null)
-       if(ctrl.editControl) ctrl.editControl.enabled=false;
+    {
+      ctrl.enabled=false;
+      if(ctrl.editControl) ctrl.editControl.enabled=false;
+    }  
   }
 
 
@@ -2974,7 +2993,10 @@ export class TForm
   {
     var ctrl = this.getControlByName(key);
     if (ctrl!=null)
-       if(ctrl.editControl) ctrl.editControl.enabled=true;
+    {  
+      ctrl.enabled=true;
+      if(ctrl.editControl) ctrl.editControl.enabled=true;
+    }  
   }
 
   
@@ -2982,8 +3004,10 @@ export class TForm
   {
       var ctrl = this.getControlByName(key);
       if (ctrl!=null)
+      {
+        ctrl.label = aLabel;
          if(ctrl.editControl) ctrl.editControl.caption.text=aLabel;
-  
+      }   
   }
 
 
@@ -2991,60 +3015,23 @@ export class TForm
   {
     var ctrl = this.getControlByName(key);
     if (ctrl!=null)
+    {
+      ctrl.value = aValue;
       if(ctrl.editControl) ctrl.editControl.value = aValue;
+    }  
   }
 
 
-  setInputType(key , type , items )
+  setInputType(key , type , params )
   {
-    for(var i=0; i<this.controls.length; i++)
+    var ctrl = this.getControlByName(key);
+    if (ctrl!=null)
     {
-      var ctrl = this.controls[i];
-      if (ctrl.fieldName.toUpperCase()==key.toUpperCase()) 
-      {
-        ctrl.type = type;
-        if(items) ctrl.items = items;
-        if(ctrl.editControl) ctrl.editControl.type = type;
-
-        if(type.toUpperCase()=='RANGE')
-           if(ctrl.editControl) 
-           {
-            ctrl.editControl.min     = 0;
-            ctrl.editControl.max     = 11
-            ctrl.editControl.oninput = function(){if (this.apxControl) this.apxControl.caption = this.editControl.value;}.bind(ctrl)
-
-          }
-      }  
-    }
-  } 
-
-
-  setInputLength(key , length)
-  {
-    for(var i=0; i<this.controls.length; i++)
-    {
-      var ctrl = this.controls[i];
-      if (ctrl.fieldName.toUpperCase()==key.toUpperCase()) 
-      {
-        if(ctrl.editControl) ctrl.editControl.style.width = length;
-      }  
-    }
+      ctrl.type = type;
+      ctrl.params = params;
+    }  
   }
 
-
-
-  setAppendex(key , aAppendix)
-  {
-    for(var i=0; i<this.controls.length; i++)
-    {
-      var ctrl = this.controls[i];
-      if (ctrl.fieldName.toUpperCase()==key.toUpperCase()) 
-      {
-        ctrl.appendix = aAppendix;
-        if (ctrl.apxControl) ctrl.apxControl.caption = aAppendix;
-      }  
-    }
-  }
 
   render( withCtrlButton )
   {
@@ -3083,131 +3070,61 @@ export class TForm
 
 
   renderGeneric( withCtrlButton )
-  {
+  {  
+    var inpContainer = null;
+    var btnContainer = null;
+
+    if(withCtrlButton)
+    {
+      this.parent.buildGridLayout_templateColumns("1fr 0.5em 1fr");
+      this.parent.buildGridLayout_templateRows("1fr 4em"); 
+      inpContainer = dialogs.addPanel(this.parent,"cssContainerPanel",1,1,1,1);
+      btnContainer = dialogs.addPanel(this.parent,"btnContainer",1,2,1,1);
+    } else inpContainer = this.parent;  
+
     // maximale label-länge finden, um rechtsbündige Eingabezellen zu haben....
     var maxLabel = 0;
     for(var i=0; i<this.controls.length; i++) if(this.controls[i].visible && (this.controls[i].label.length>maxLabel)) maxLabel = this.controls[i].label.length;
 
-    // maximale label-länge des ggf. vorh. Appendix finden ....
+    // maximale Länge des ggf. vorh. Appendix finden ....
     var maxAppendix = 2;
     for(var i=0; i<this.controls.length; i++) if(this.controls[i].visible && (this.controls[i].appendix.length>maxAppendix)) maxAppendix = this.controls[i].appendix.length;
 
     //build.....
-    utils.buildGridLayout_templateColumns( this.parent , '1fr' );
+    inpContainer.buildBlockLayout();  
 
-          if(withCtrlButton) utils.buildGridLayout_templateRows   ( this.parent , '1fr 4em 1px')
-          else               utils.buildGridLayout_templateRows   ( this.parent , '1fr')
-          if(withCtrlButton) utils.buildGridLayout_templateRows   ( this.parent , '1fr 4em 1px')
-          else               utils.buildGridLayout_templateRows   ( this.parent , '1fr')
-
-          this.Container                          = document.createElement("DIV");
-          this.Container.className                = 'cssHidePanel';
-          this.Container.style.gridColumnStart    = 1;
-          this.Container.style.gridColumnEnd      = 2;
-          this.Container.style.gridRowStart       = 1;
-          this.Container.style.gridRowEnd         = 2;
-    
-         this.parent.appendChild( this.Container );
-          this.Container                          = document.createElement("DIV");
-          this.Container.className                = 'cssHidePanel';
-          this.Container.style.gridColumnStart    = 1;
-          this.Container.style.gridColumnEnd      = 2;
-          this.Container.style.gridRowStart       = 1;
-          this.Container.style.gridRowEnd         = 2;
-    
-         this.parent.appendChild( this.Container );
-
-         this.Container.style.flexDirection = 'column';
-         this.Container.style.alignItems     = 'center'
-     }     
-         this.Container.style.flexDirection = 'column';
-         this.Container.style.alignItems     = 'center'
-     }     
-           
     for(var i=0; i<this.controls.length; i++)
     {
       var ctrl = this.controls[i];
       if (ctrl.visible)
       {
-        var inpContainer = dialogs.addPanel( this.Container,"cssPanelForInput",0,0,'97%','3em');
-        var inpContainer = dialogs.addPanel( this.Container,"cssPanelForInput",0,0,'97%','3em');
-            inpContainer.DOMelement.style.marginLeft  = "auto";
-            inpContainer.DOMelement.style.marginRight = "auto";
+        if(ctrl.type.toUpperCase()=='TEXT')
+           ctrl.editControl = new TFEdit(inpContainer,1,1,'99%','4em',{caption:ctrl.label,appendix:ctrl.appendix,value:ctrl.value,captionLength:maxLabel,appendixLength:maxAppendix,justifyEditField:"left"});  
+       
+        if(ctrl.type.toUpperCase()=='DATE')
+          ctrl.editControl = new TFEdit(inpContainer,1,1,'99%','4em',{type:"date",caption:ctrl.label,appendix:ctrl.appendix,value:ctrl.value,captionLength:maxLabel,appendixLength:maxAppendix,justifyEditField:"left"});  
+      
+        if(ctrl.type.toUpperCase()=='TIME')
+          ctrl.editControl = new TFEdit(inpContainer,1,1,'99%','4em',{type:"time",caption:ctrl.label,appendix:ctrl.appendix,value:ctrl.value,captionLength:maxLabel,appendixLength:maxAppendix,justifyEditField:"left"});  
+      
+        if(ctrl.type.toUpperCase()=='DATETIME')
+          ctrl.editControl = new TFEdit(inpContainer,1,1,'99%','4em',{type:"datetime-local",caption:ctrl.label,appendix:ctrl.appendix,value:ctrl.value,captionLength:maxLabel,appendixLength:maxAppendix,justifyEditField:"left"});  
+      
+        if(ctrl.type.toUpperCase()=='SELECT')
+         {debugger; ctrl.editControl = new TFComboBox(inpContainer,1,1,'99%','4em',{caption:ctrl.label,appendix:ctrl.appendix,value:ctrl.value, items:ctrl.items,captionLength:maxLabel,appendixLength:maxAppendix,justifyEditField:"left", items:ctrl.params.items});  }
+      
+        if(ctrl.type.toUpperCase()=='RANGE')
+          ctrl.editControl = new TFSlider(inpContainer,1,1,'99%','4em',{caption:ctrl.label,appendix:ctrl.appendix,value:ctrl.value,captionLength:maxLabel,appendixLength:maxAppendix,justifyEditField:"left"});
 
-            utils.buildGridLayout_templateColumns(inpContainer , maxLabel+'em 1fr '+maxAppendix+'em');
-            utils.buildGridLayout_templateRows   (inpContainer , '0.5em 1fr 0.5em');
 
-            ctrl.lblControl = dialogs.addLabel(inpContainer,"cssLabelForInput",1,2,ctrl.label);
-            ctrl.lblControl.marginTop = '0.5em';
-            
-            if(ctrl.type.toUpperCase()=='RANGE') ctrl.apxControl = dialogs.addLabel(inpContainer,"",3,2,ctrl.appendix || '5' );
-            else                                 ctrl.apxControl = dialogs.addLabel(inpContainer,"",3,2,ctrl.appendix);
-            
-            if(['TEXT','DATE','TIME','EMAIL','NUMBER','RANGE','PASSWORD'].indexOf(ctrl.type.toUpperCase())>-1)  // Statt ODER ;-)
-            {
-              ctrl.editControl= document.createElement("INPUT");
-              ctrl.editControl.setAttribute('id',ctrl.fieldName);
-              ctrl.editControl.type                  = ctrl.type;
-              ctrl.editControl.value                 = ctrl.value;
-              ctrl.editControl.className             = "cssEditField";
-              ctrl.editControl.style.gridColumnStart = 2;
-              ctrl.editControl.style.gridColumnEnd   = 3;
-              ctrl.editControl.style.gridRowStart    = 2;
-              ctrl.editControl.style.gridRowEnd      = 3;
-              inpContainer.appendChild( ctrl.editControl ); 
-            }
-
-            if(ctrl.type.toUpperCase()=="SELECT")
-            {
-              ctrl.editControl= document.createElement("SELECT");
-              ctrl.editControl.setAttribute('id',ctrl.fieldName);
-              ctrl.editControl.value                 = ctrl.value;
-              ctrl.editControl.className             = "cssEditField";
-              ctrl.editControl.style.gridColumnStart = 2;
-              ctrl.editControl.style.gridColumnEnd   = 3;
-              ctrl.editControl.style.gridRowStart    = 2;
-              ctrl.editControl.style.gridRowEnd      = 3;
-             
-              if(ctrl.items)
-              if(ctrl.items.length>0)
-              for(var j=0; j<ctrl.items.length; j++)  ctrl.editControl.add( new Option( ctrl.items[j] , j ) )
-
-              inpContainer.appendChild( ctrl.editControl ); 
-            }
-
-            if(ctrl.type.toUpperCase()=='CHECKBOX')
-            {
-              var p                       = document.createElement("DIV");
-                  p.className             = "cssHidePanel";
-                  p.style.gridColumnStart = 2;
-                  p.style.gridColumnEnd   = 3;
-                  p.style.gridRowStart    = 2;
-                  p.style.gridRowEnd      = 3;
-                  inpContainer.appendChild( p );
-               
-                  ctrl.editControl= document.createElement("INPUT");
-                  ctrl.editControl.setAttribute('id',ctrl.fieldName);
-                  ctrl.editControl.type              = 'CHECKBOX';
-                  ctrl.editControl.checked           = ctrl.value;
-                  ctrl.editControl.style.width       = '1.5em';
-                  ctrl.editControl.style.height      = '1.5em';
-
-                  p.appendChild( ctrl.editControl ); 
-            }  
-
-            if(!ctrl.enabled) 
-            {
-                ctrl.editControl.readOnly = true;
-                ctrl.editControl.style.backgroundColor = 'rgb(200,200,200)';
-                ctrl.editControl.style.color           = 'rgb(70,70,70)';
-            }  
-       }
-    }
+        if(ctrl.type.toUpperCase()=='CHECKBOX')
+          ctrl.editControl = new TFCheckBox(inpContainer,1,1,'99%','4em',{caption:ctrl.label,appendix:ctrl.appendix,value:ctrl.value,captionLength:maxLabel,appendixLength:maxAppendix,checkboxLeft:false,captionLength:maxLabel});
+      }
+    }  
+       
     
     if(withCtrlButton)
     {
-      var btnContainer  = dialogs.addPanel(this.parent,"cssRibbon",1,2,1,1);
-          btnContainer.backgroundColor = "gray"; 
       utils.buildGridLayout_templateColumns( btnContainer , "repeat(4,1fr)  ");
       utils.buildGridLayout_templateRows   ( btnContainer , "0.5em 1fr 0.5em");
   
@@ -3216,25 +3133,10 @@ export class TForm
 
       this.btnAbort = dialogs.addButton( btnContainer ,"cssAbortBtn01",3,2,1,1,"Abbruch");
       this.btnAbort.callBack_onClick = function(){if(this.callBack_onESCBtn) this.callBack_onESCBtn();}.bind(this);
-    }  
-  } 
+    }
 
-
-  getInpElement(id)
-  {
-   if( this.parentWnd ) return this.parentWnd.getElementById(id)
-    else
-       {
-        for(var i=0; i<this.controls.length; i++)
-        {
-            var ctrl = this.controls[i];
-            if (ctrl.fieldName.toUpperCase()==id.toUpperCase()) return ctrl;
-         }
-         return null;   
-       }
-      
- }
-
+    
+  }
 
   getInputFormValues()
   {
@@ -3261,34 +3163,6 @@ export class TForm
 
 
 
-
-
-  __getInputFormValues(searchByName)
-  {
-    var result = [];
-
-    if( this.parentWnd )
-    {
-      var childList = [];
-      if(searchByName) childList =             this.parentWnd.getChildListByName(searchByName);
-      else             childList =  Array.from(this.parentWnd.querySelectorAll('*'));
-
-      childList.forEach(function(element) 
-      {
-        console.log(element.id + ' -> ' + element.value); 
-        result.push( { field:element.id, value:element.value } ) 
-      });
-    } 
-    else
-        for(var i=0; i<this.controls.length; i++) 
-        {
-          var ctrl = this.controls[i]; 
-          if(ctrl.visible) result.push({field:ctrl.fieldName, value:ctrl.editControl.value}) 
-          else             result.push({field:ctrl.fieldName, value:ctrl.value}) 
-    } 
-    
-    return result;
-  }
 }  
 
 //---------------------------------------------------------------------------

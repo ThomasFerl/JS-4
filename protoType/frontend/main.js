@@ -6,8 +6,10 @@ import * as dialogs      from "./tfWebApp/tfDialogs.js";
 import * as graphics     from "./tfWebApp/tfGrafics.js";
 
 import { TFEdit, 
+         TForm,
          TFAnalogClock,
          TFWorkSpace }   from "./tfWebApp/tfObjects.js";
+
 import { TFWindow }      from "./tfWebApp/tfWindows.js"; 
 import { TFChart }       from "./tfWebApp/tfObjects.js";
 import { TFDateTime }    from "./tfWebApp/utils.js";
@@ -123,6 +125,33 @@ var btn6 = dialogs.addButton( menuContainer , "" , 6 , 1 , 1 , 1 , "Chart-Test" 
                                            else {treeView.destroy(); treeView = null;}
                                          }
    
+
+
+    var btn8 = dialogs.addButton( menuContainer , "" , 8 , 1 , 1 , 1 , "Formular-Test"  );
+    btn8.heightPx = 35;
+    btn8.callBack_onClick = function() { 
+                                          var formData = {Name:"Ferl",
+                                                          Vorname:"Thomas",
+                                                          gebDatum:"29.10.1966",
+                                                          PLZ:"39218",
+                                                          Ort:"Schönebeck",
+                                                          favFastfood:"Pizza",
+                                                          level:"90%",
+                                                          online:true};
+                                                               // aParent      , aData    , aLabels , aAppendix , aExclude , aInpType , URLForm )
+                                            var form = new TForm( svgContainer , formData , {}      , {}        , []       , {}       , '' );    
+                                                form.setLabel("favFastfood" , "Lieblings-Fastfood")
+                                                form.setInputType("favFastfood" , "select" , {items:["Pizza","Pommes","Döner","HotDog","Sushi"]} );
+                                                form.setInputType("gebDatum" , "date");
+                                                form.setInputType("level" , "range" , {min:1,max:100,step:5} );
+                                                form.setInputType("online" , "checkBox"  );
+
+                                                form.render();  
+                                       }
+
+
+
+
       testContainer1.buildGridLayout_templateRows('repeat(10,1fr)');
       testContainer1.buildGridLayout_templateColumns('1fr');
 
