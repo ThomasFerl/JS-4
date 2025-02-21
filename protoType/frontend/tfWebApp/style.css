@@ -550,7 +550,7 @@ html, body {
    font-weight: normal;
    margin: 0;
    padding: 0;
-   border: 1px solid #979595b2; 
+   border: none;
    background-color: #04040452;
    overflow: hidden;
    display: flex;
@@ -802,7 +802,7 @@ html, body {
   border            : 1px solid gray;
   color             : black;
   background-Color  : rgb(177, 177, 177);	
-  overflow          : auto;leftAlign
+  overflow          : auto;
   display           : flex;
   flex-Flow         : wrap;
   float             : left;
@@ -904,7 +904,7 @@ html, body {
  } 
 
 
-.cssvalueListPanel
+.cssValueListPanel
 {
    padding           : 0;
    margin            : 0;

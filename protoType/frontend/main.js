@@ -7,6 +7,7 @@ import * as graphics     from "./tfWebApp/tfGrafics.js";
 
 import { TFEdit, 
          TForm,
+         TPropertyEditor,
          TFAnalogClock,
          TFWorkSpace }   from "./tfWebApp/tfObjects.js";
 
@@ -59,7 +60,7 @@ export function main(capt1,capt2)
       svgContainer  = l.dashBoard; 
 
       menuContainer.backgroundColor = 'gray';
-      menuContainer.buildGridLayout_templateColumns('10em 10em 10em 10em 10em 10em 10em 1fr ');
+      menuContainer.buildGridLayout_templateColumns('10em 10em 10em 10em 10em 10em 10em 10em 10em 1fr ');
       menuContainer.buildGridLayout_templateRows('1fr');
 
 
@@ -130,25 +131,45 @@ var btn6 = dialogs.addButton( menuContainer , "" , 6 , 1 , 1 , 1 , "Chart-Test" 
     var btn8 = dialogs.addButton( menuContainer , "" , 8 , 1 , 1 , 1 , "Formular-Test"  );
     btn8.heightPx = 35;
     btn8.callBack_onClick = function() { 
-                                          var formData = {Name:"Ferl",
-                                                          Vorname:"Thomas",
-                                                          gebDatum:"29.10.1966",
-                                                          PLZ:"39218",
-                                                          Ort:"Schönebeck",
+                                          var formData = {Name       :"Ferl",
+                                                          Vorname    :"Thomas",
+                                                          gebDatum   :"29.10.1966",
+                                                          PLZ        :"39218",
+                                                          Ort        :"Schönebeck",
                                                           favFastfood:"Pizza",
-                                                          level:"90%",
-                                                          online:true};
+                                                          level      : 90,
+                                                          online     :true};
                                                                // aParent      , aData    , aLabels , aAppendix , aExclude , aInpType , URLForm )
                                             var form = new TForm( svgContainer , formData , {}      , {}        , []       , {}       , '' );    
                                                 form.setLabel("favFastfood" , "Lieblings-Fastfood")
                                                 form.setInputType("favFastfood" , "select" , {items:["Pizza","Pommes","Döner","HotDog","Sushi"]} );
                                                 form.setInputType("gebDatum" , "date");
-                                                form.setInputType("level" , "range" , {min:1,max:100,step:5} );
+                                                form.setInputType("level" , "range" , {sliderMin:1,sliderMax:100,sliderStep:5,sliderPosition:formData.level} );
                                                 form.setInputType("online" , "checkBox"  );
-
-                                                form.render();  
+ 
+                                                form.render( true);  
+                                                form.callBack_onOKBtn = function(values) {console.log(JSON.stringify(values))};
                                        }
 
+
+
+
+var   btn9 = dialogs.addButton( menuContainer , "" , 9 , 1 , 1 , 1 , "Property-Editor"  );
+      btn9.heightPx = 35;
+      btn9.callBack_onClick = function() {
+                                            var data = [{label:"Name",value:"Ferl",type:"text",items:[]},
+                                                        {label:"Vorname",value:"Thomas",type:"text",items:[]},
+                                                        {label:"gebDatum",value:"29.10.1966",type:"date",items:[]},
+                                                        {label:"PLZ",value:"39218",type:"text",items:[]},
+                                                        {label:"Ort",value:"Schönebeck",type:"text",items:[]},
+                                                        {label:"favFastfood",value:"Pizza",type:"text",items:["Pizza","Pommes","Döner","HotDog","Sushi"]},
+                                                        {label:"level",value:"90",type:"range",items:[]},
+                                                        {label:"online",value:"true",type:"boolean",items:[]}];
+
+                                                        var p = new TPropertyEditor( svgContainer , data , null , null )
+                                                            p.render();
+                                          
+                                         }    
 
 
 

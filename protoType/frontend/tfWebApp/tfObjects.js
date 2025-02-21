@@ -1067,35 +1067,62 @@ get opacity()
 export class TFSlider extends TFObject 
 {
   constructor (parent , left , top , width , height , params ) 
-  {
+  { 
+    params.backgroundColor = params.backgroundColor || parent.backgroundColor || "transparent";
+    params.caption         = params.caption || '';
+    params.captionLength   = params.captionLength || params.caption.length;
+    params.sliderMin       = params.sliderMin  || params.min || 0;
+    params.sliderMax       = params.sliderMax  || params.max || 100;
+    params.sliderStep      = params.sliderStep || params.step || 1;
+    params.value           = params.value || params.sliderPosition || params.position || 50;
+    
     super(parent , left , top , width , height , params );
     
     // this.render() wird von bereits von der TFObjects Basisklasse aufgerufen
     // alles was jetzt passiert passiert NACH "unserem" this.render()
-    this.onChange        = null;
-    this.display         = 'flex';
-    this.alignItems      = 'center';
-    this.justifyContent  = 'center'; 
-    this.overflow        = 'hidden';
+   
   }  
 
   render()
-  {
+  { 
     super.render();
 
-    this.slider       = document.createElement('INPUT');
-    this.slider.type  = 'range';
-    this.slider.min   = 0;
-    this.slider.max   = 100;
+    this.onChange              = null;
+    this.display               = 'flex';
+    this.alignItems            = 'center';
+    this.justifyContent        = 'center'; 
+    this.overflow              = 'hidden';
+    this.backgroundColor       = this.params.backgroundColor;
+    this.caption               = null;
+    
    
-    if(this.params.position !=null) this.value = this.params.position;
-    else                            this.value = 50;
+    var s = null;
 
-    this.slider.step  = 1;
-    this.slider.style.width = '90%';
-    this.slider.style.height = '90%';
+    if(this.params.caption)
+    {
+      this.buildGridLayout_templateColumns(this.params.captionLength+'em 1fr');
+      this.buildGridLayout_templateRows('1fr');
+      this.caption = new TFLabel(this , 1 , 1 , 1 , 1 , {caption:this.params.caption,labelPosition:'LEFT'} );
+      if(this.params.fontSize) this.caption.fontSize = this.params.fontSize;
+      this.caption.textAlign  = 'LEFT';
+      this.caption.fontWeight = 'bold';
+      this.caption.marginLeft = '0.5em';
+      
+      s = new TFPanel(this , 2 , 1 , 1 , 1 , {css:"cssContainerPanel"} );
+    } else s=this; 
+
+    s.overflow = 'hidden';
+   
+    this.slider         = document.createElement('INPUT');
+    this.slider.type    = 'range';
+    this.slider.min     = this.params.sliderMin;
+    this.slider.max     = this.params.sliderMax;
+    this.slider.step    = this.params.sliderStep1;
+    this.value          = this.params.value;
+   
+    this.slider.style.width = '100%';
+    this.slider.style.height = '100%';
     this.slider.style.backgroundColor = this.backgroundColor;
-
     
      // Eventhandler für Input
      this.slider.addEventListener("input", () => {
@@ -1107,7 +1134,7 @@ export class TFSlider extends TFObject
       }
     });
     
-    this.appendChild(this.slider);
+    s.appendChild(this.slider);
   } 
   // Getter und Setter für den Wert des Sliders
   set value( v )
@@ -1491,6 +1518,17 @@ export class TFCheckBox extends TFObject
     this.input.checked = value;
   }
 
+  get value()
+  {
+    return this.input.checked;
+  }
+
+  set value( value )  
+  {
+    this.input.checked = value;
+  }
+
+
 }
 
 //---------------------------------------------------------------------------
@@ -1865,8 +1903,9 @@ export class TFComboBox extends TFEdit
   render()
   {
     this.items = [];
-    if(this.params.items) this.items = this.params.items;
     super.render();
+    
+    if(this.params.items) this.setItems (this.params.items);
     this.combobox = this.input;  // nur aus Gründen der besseren Lesbarkeit / Anwendbarkeit
     this.__render();
     this.combobox.addEventListener('change',  function() { 
@@ -1924,9 +1963,17 @@ export class TFComboBox extends TFEdit
 
  setItems( items )
  {
-  if(items==null)this.items = [];
-  else this.items = items;
-  __render();
+   this.items = [];
+   if(items!=null) 
+   {
+     for(var i=0; i<items.length; i++)
+     {
+        var item = items[i];
+        if(typeof item == 'string') this.items.push( {caption:item , value:item} );
+        else                        this.items.push( item );
+     }     
+    }  
+    this.__render();
  } 
 
 getItems()
@@ -1962,34 +2009,30 @@ get itemIndex()
 
 set value( value )  
 {
-  // ist value in der Items-Liste ?
-  var ndx = this.items.findIndex( i => i.value == value );
-  if (ndx<0) 
-    {
-      this.addItem( value , value );
-      ndx = this.items.length-1;
-    }  
-
-  this.itemIndex = ndx;
+  this.item = value;
 }
 
 get value() 
-{
-  var ndx = this.itemIndex;
-  return this.items[ndx].value; 
+{ 
+  return this.item;
 }
 
 
 set item( item )  
 {
+  var _item = {value:'',caption:''};
+
+  if(typeof item == 'string') {_item.value = item; _item.caption = item;}
+  else                        _item = item;
+
   // ist value in der Items-Liste ?
-  var ndx = this.items.indexOf( item );
+  var ndx = this.items.findIndex( i => i.value == _item.value );
   if (ndx<0) 
     {
-      this.addItem( item.caption , item.value );
+      this.addItem( _item.caption , _item.value );
       ndx = this.items.length-1;
     }  
-
+  
   this.itemIndex = ndx;
 }
 
@@ -3076,10 +3119,11 @@ export class TForm
 
     if(withCtrlButton)
     {
-      this.parent.buildGridLayout_templateColumns("1fr 0.5em 1fr");
+      this.parent.buildGridLayout_templateColumns("1fr");
       this.parent.buildGridLayout_templateRows("1fr 4em"); 
-      inpContainer = dialogs.addPanel(this.parent,"cssContainerPanel",1,1,1,1);
-      btnContainer = dialogs.addPanel(this.parent,"btnContainer",1,2,1,1);
+      inpContainer = new TFPanel(this.parent,1,1,1,1,{css:"cssContainerPanel"});
+      btnContainer = new TFPanel(this.parent,1,2,1,1,{css:"cssGrayPanel"});
+      btnContainer.overflow = 'hidden'; 
     } else inpContainer = this.parent;  
 
     // maximale label-länge finden, um rechtsbündige Eingabezellen zu haben....
@@ -3111,7 +3155,7 @@ export class TForm
           ctrl.editControl = new TFEdit(inpContainer,1,1,'99%','4em',{type:"datetime-local",caption:ctrl.label,appendix:ctrl.appendix,value:ctrl.value,captionLength:maxLabel,appendixLength:maxAppendix,justifyEditField:"left"});  
       
         if(ctrl.type.toUpperCase()=='SELECT')
-         {debugger; ctrl.editControl = new TFComboBox(inpContainer,1,1,'99%','4em',{caption:ctrl.label,appendix:ctrl.appendix,value:ctrl.value, items:ctrl.items,captionLength:maxLabel,appendixLength:maxAppendix,justifyEditField:"left", items:ctrl.params.items});  }
+         { ctrl.editControl = new TFComboBox(inpContainer,1,1,'99%','4em',{caption:ctrl.label,appendix:ctrl.appendix,value:ctrl.value, items:ctrl.items,captionLength:maxLabel,appendixLength:maxAppendix,justifyEditField:"left", items:ctrl.params.items});  }
       
         if(ctrl.type.toUpperCase()=='RANGE')
           ctrl.editControl = new TFSlider(inpContainer,1,1,'99%','4em',{caption:ctrl.label,appendix:ctrl.appendix,value:ctrl.value,captionLength:maxLabel,appendixLength:maxAppendix,justifyEditField:"left"});
@@ -3125,13 +3169,13 @@ export class TForm
     
     if(withCtrlButton)
     {
-      utils.buildGridLayout_templateColumns( btnContainer , "repeat(4,1fr)  ");
-      utils.buildGridLayout_templateRows   ( btnContainer , "0.5em 1fr 0.5em");
+      btnContainer.buildGridLayout_templateColumns("repeat(5,1fr)  ");
+      btnContainer.buildGridLayout_templateRows   ( "0.5em 1fr 0.5em");
   
-      this.btnOk    = dialogs.addButton( btnContainer ,""             ,2,2,1,1,"OK");
+      this.btnOk    = new TFButton( btnContainer ,2,2,1,1,{caption:"OK"});
       this.btnOk.callBack_onClick = function() {if(this.callBack_onOKBtn) { this.callBack_onOKBtn( this.getInputFormValues() )};}.bind(this);
 
-      this.btnAbort = dialogs.addButton( btnContainer ,"cssAbortBtn01",3,2,1,1,"Abbruch");
+      this.btnAbort = new TFButton( btnContainer,4,2,1,1,{caption:"Abbruch"});
       this.btnAbort.callBack_onClick = function(){if(this.callBack_onESCBtn) this.callBack_onESCBtn();}.bind(this);
     }
 
@@ -3178,6 +3222,7 @@ export class TPropertyEditor
     this.btnSave          = aBtnSave;
     this.callBack_onSave  = aCallBack_onSave;  
 
+    if(this.btnSave)
     this.btnSave.callBack_onClick = function() { this.save() }.bind(this);
   }  
 
@@ -3197,27 +3242,44 @@ export class TPropertyEditor
   
    for (var i=0; i<this.properties.length; i++ )
   {
-     var item = this.properties[i];
+     var item   = this.properties[i];
+     var select = item.items || [];
 
-     if(item.type.toUpperCase()=='INPUT')
+     var p = new TFPanel( this.parent , 0 , 0 , '99%' , '2.4em' , {css:"cssValueListPanel"});   // Dimension sind bereits im css definiert
+         p.isGridLayout    = true;  // kommt vom css
+         p.backgroundColor = (i % 2) != 0 ? "RGB(240,240,240)" : "RGB(255,255,255)"; 
+     var l = new TFLabel( p , 2 , 2 , 1, 1 , {css:"cssBoldLabel" , caption:item.label} );
+         l.textAlign = 'left';
+
+     if(item.type.toUpperCase()=='TEXT')
      { 
-       var p = dialogs.addPanel( this.parent , 'cssvalueListPanel' , 0 , 0 , '99%' , '2.4em' );   // Dimension sind bereits im css definiert
-           p.isGridLayout = true;  // kommt vom css
-           p.backgroundColor = (i % 2) != 0 ? "RGB(240,240,240)" : "RGB(255,255,255)"; 
-           dialogs.addLabel( p ,'cssBoldLabel',2,2, item.label);
-           item.control = dialogs.addInputGrid( p , 3 , 2 , 1  , '' , '' , item.value  );
-     }      
-     
-     if(item.type.toUpperCase()=='COMBOBOX')
-     {      
-       var p = dialogs.addPanel( this.parent , 'cssvalueListPanel' , 0 , 0 , '99%' , '2.4em' );   // Dimension sind bereits im css definiert
-           p.isGridLayout = true;  // kommt vom css
-           p.backgroundColor = (i % 2) != 0 ? "RGB(240,240,240)" : "RGB(255,255,255)"; 
-           dialogs.addLabel( p ,'cssBoldLabel',2,2, item.label );
-           item.control = dialogs.addComboboxGrid( p , 3 , 2 , 4  , '' , '' , item.value , item.items )
-      }      
-    }
-  }
+        if(select.length > 0) item.control = new TFComboBox( p , 3 , 2 , 1 , 1 , {value:item.value , items:item.items} )
+        else                  item.control = new TFEdit    ( p , 3 , 2 , 1 , 1 , {value:item.value} );
+     }  
+
+     if(item.type.toUpperCase()=='SELECT')
+      item.control = new TFComboBox( p , 3 , 2 , 1 , 1 , {value:item.value , items:item.items} )
+   
+   if(item.type.toUpperCase()=='DATE')
+    item.control = new TFEdit(p ,3,2,1,1,{type:"date",value:item.value});  
+ 
+   if(item.type.toUpperCase()=='TIME')
+    item.control = new TFEdit(p ,3,2,1,1,{type:"time",value:item.value});  
+   
+   if(item.type.toUpperCase()=='DATETIME')
+    item.control = new TFEdit(p ,3,2,1,1,{type:"datetime-local",value:item.value});  
+   
+   
+   if(item.type.toUpperCase()=='RANGE')
+    item.control = new TFSlider(p ,3,2,1,1,{value:item.value});
+
+
+   if((item.type.toUpperCase()=='CHECKBOX') || (item.type.toUpperCase()=='BOOLEAN'))
+    item.editControl = new TFCheckBox(p,3,2,1,1,{value:item.value});
+ }
+
+
+ }
 
 
 save()
@@ -3228,18 +3290,15 @@ save()
   {
     var item = this.properties[i];
         if (item.control) 
-           if((item.type.toUpperCase()=='INPUT') || (item.type.toUpperCase()=='COMBOBOX'))  
-           {
-             item.value = item.control.value;
-             p.push({label:item.label , value:item.value});
-             {console.log('item.label -> '+item.label+'  item.value -> ' + item.value)}
-           }   
+        {
+           item.value = item.control.value;
+           p.push({label:item.label , value:item.value});
+        }   
   }  
-  
-  if(this.callBack_onSave) this.callBack_onSave(p)
+    if(this.callBack_onSave) this.callBack_onSave(p)
 }    
 
-}
+}  // end of class TPropertyEditor
 
 
 
