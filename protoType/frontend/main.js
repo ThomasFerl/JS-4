@@ -60,7 +60,7 @@ export function main(capt1,capt2)
       svgContainer  = l.dashBoard; 
 
       menuContainer.backgroundColor = 'gray';
-      menuContainer.buildGridLayout_templateColumns('10em 10em 10em 10em 10em 10em 10em 10em 10em 1fr ');
+      menuContainer.buildGridLayout_templateColumns('10em 10em 10em 10em 10em 10em 10em 10em 10em 10em 10em 1fr ');
       menuContainer.buildGridLayout_templateRows('1fr');
 
 
@@ -117,7 +117,15 @@ var btn6 = dialogs.addButton( menuContainer , "" , 6 , 1 , 1 , 1 , "Chart-Test" 
     btn6.heightPx = 35;
 
 
-    treeData ={A:1,B:2,C:{CC:30},D:4,E:5,F:6,G:7}
+    treeData =[{caption:"A", dataContainer:"111"},
+               {caption:"b", dataContainer:"110"},
+               {caption:"C", dataContainer:"101"},
+               {caption:"S", dataContainer:"102" ,  childNodes:[{caption:"T" ,dataContainer:"1021"},
+                                                                {caption:"TT",dataContainer:"1022"},
+                                                                {caption:"TZ",dataContainer:"1023"}]
+                                                },
+               {caption:"D", dataContainer:"011"},
+               {caption:"E", dataContainer:"000"}]
 
     var btn7 = dialogs.addButton( menuContainer , "" , 7 , 1 , 1 , 1 , "TreeView-Test"  );
     btn7.heightPx = 35;
@@ -172,6 +180,14 @@ var   btn9 = dialogs.addButton( menuContainer , "" , 9 , 1 , 1 , 1 , "Property-E
                                          }    
 
 
+
+
+var   btn10 = dialogs.addButton( menuContainer , "" , 10 , 1 , 1 , 1 , "ask me"  );
+      btn10.heightPx = 35;
+      btn10.callBack_onClick = function() 
+      {
+        dialogs.ask( "Frage" , "Wollen Sie das wirklich ?" , ()=>{dialogs.showMessage( "JA" , null , null )} , ()=>{dialogs.showMessage( "NEIN" , null , null )} );
+      }
 
       testContainer1.buildGridLayout_templateRows('repeat(10,1fr)');
       testContainer1.buildGridLayout_templateColumns('1fr');

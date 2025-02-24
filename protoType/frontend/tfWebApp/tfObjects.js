@@ -2090,6 +2090,7 @@ export class TFWorkSpace extends TFObject
     
     super(screen , 1 , 1 , '100%' , '100%' , {css:"cssWorkSpaceJ4" , preventGrid:true , fixit:true, ID:ID, caption1:caption1, caption2:caption2 } );
     this.self = null;
+    if(!globals.webApp.activeWorkspace) globals.webApp.activeWorkspace = this;
   }
   
   render()
@@ -2161,14 +2162,12 @@ export class TFWorkSpace extends TFObject
    
   select()
   {
-    /* 
-    utils.log("switch Workspace from "+globals.webApp.activeWorkspace.container.id+" to "+this.container.id+")");
+      utils.log("switch Workspace from "+globals.webApp.activeWorkspace.container.id+" to "+this.container.id+")");
       utils.log("Workspace.select( this="+this.container.id+")");
       globals.webApp.activeWorkspace.hide();
       globals.webApp.activeWorkspace = this;
       utils.log("selectWorkspace ... aktivieren von "+this.container.id);
-      globals.webApp.activeWorkspace.show()  
-   */   
+      globals.webApp.activeWorkspace.show()     
   }
 
 

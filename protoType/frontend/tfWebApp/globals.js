@@ -1,7 +1,7 @@
 const useHTTPS                = false;
 
 export var debug              = false;
-export var webApp             = {};
+export var webApp             = {activeWorkspace:null};
 
 
 export var backgroundImage    = null;   // wen null dann delault lt. stylesheet
