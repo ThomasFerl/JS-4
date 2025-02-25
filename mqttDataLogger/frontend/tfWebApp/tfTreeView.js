@@ -256,6 +256,15 @@ constructor( aParent , params )
   }
 
 
+
+
+  clearItems()
+  {
+    for(var i=0; i<this.rootNodes.length; i++) this.rootNodes[i] = [];
+    this.rootNodes = [];
+  }
+
+
   debugLog()
   {
     console.log("");

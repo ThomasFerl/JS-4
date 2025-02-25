@@ -30,6 +30,32 @@ tables.push(
                        ]});
 
 
+tables.push( 
+            {tableName:"devices",
+             tableFields:[
+                          {fieldName:"BEZEICHNUNG" , fieldType:"Text"} ,
+                          {fieldName:"TYP" , fieldType:"Text"} ,
+                          {fieldName:"SERIENNUMMER" , fieldType:"Text"} ,
+                          {fieldName:"MAC" , fieldType:"Text"} ,
+                          {fieldName:"IP" , fieldType:"Text"} ,
+                          {fieldName:"STANDORT" , fieldType:"Text"} ,
+                          {fieldName:"PLZ" , fieldType:"Text"} ,
+                          {fieldName:"Ort" , fieldType:"Text"} ,
+                          {fieldName:"Strasse" , fieldType:"Text"} ,
+                          {fieldName:"HNr" , fieldType:"Text"} ,
+                          {fieldName:"BEMERKUNGEN" , fieldType:"Text"} ,
+                          {fieldName:"Pix1" , fieldType:"Text"} ,
+                          {fieldName:"Pix2" , fieldType:"Text"} ,
+                          {fieldName:"Pix3" , fieldType:"Text"} ,
+                          {fieldName:"EMF" , fieldType:"Text"} ,
+                          {fieldName:"GPS" , fieldType:"Text"} 
+                       ]});
+                       
+                    
+                       
+
+
+
 
                        // USW
 

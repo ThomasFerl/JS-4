@@ -19,8 +19,6 @@ export class TFWindow extends TFObject
     var W=1;
     var H=1;
 
-    if(aParent==undefined) aParent = globals.webApp.activeWorkspace;
-
     position = position.toUpperCase();
     aWidth   = aWidth.toString();
     aHeight  = aHeight.toString();
