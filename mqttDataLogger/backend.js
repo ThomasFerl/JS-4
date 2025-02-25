@@ -73,7 +73,7 @@ mqttHandler.setup( dB , influx );
 const mqttClient = mqtt.connect(MQTT_BROKER_URL);
 
 mqttClient.on('connect', () => {
-                                  console.log('✅ Verbunden mit Mosquitto-Broker');
+                                  console.log('Verbunden mit Mosquitto-Broker:', MQTT_BROKER_URL);
                                   mqttClient.subscribe('#', (err) => {
                                                                        if (err) console.error('❌ Fehler beim Abonnieren aller Topics:', err);
                                                                        else     console.log('📡 Abonniert: ALLE Topics (#)');

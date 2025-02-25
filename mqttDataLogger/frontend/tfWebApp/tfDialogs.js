@@ -495,7 +495,6 @@ export function createTreeView(aParent , tree , params )
 {
   var t = new TFTreeView( aParent , params );
   // tree rekursiv durchlaufen und Knoten hinzufügen
-
   var __scanNodes = function( treeNode , subTree )
   {
    for (var i=0; i<subTree.length; i++) 
@@ -506,10 +505,10 @@ export function createTreeView(aParent , tree , params )
      //workaround: wenn childNodes kein Array sondern ein Objekt ist, dann wird es als Array interpretiert
      var childNodesArray = Array.from(s.childNodes || []);
     
-      if(s.childNodes.length>0) __scanNodes(n, childNodesArray);
+      if( childNodesArray.length>0) __scanNodes(n, childNodesArray);
    }
   }
-  
+
   if (typeof tree === 'object' && tree !== null) 
   {
      for (var i=0; i<tree.length; i++) 
@@ -522,7 +521,7 @@ export function createTreeView(aParent , tree , params )
         var childNodesArray = Array.from(element.childNodes || []);
         
           // Rekursiv fortfahren, falls es child-Elemente gibt 
-        if (element.childNodes.length > 0) __scanNodes(n, childNodesArray );
+        if (childNodesArray.length > 0) __scanNodes(n, childNodesArray );
      }
   }
 
@@ -535,190 +534,11 @@ export function createTreeView(aParent , tree , params )
 
 
 
-
-
-/*
-export function buildInputForm( parent , data , idField , caption , appendix , exclude , types )
-{
- var form = new TForm( parent , data , caption , appendix , exclude );
-     if(types)
-     for (let key in types) { form.setInputType( key , types[key] ) }
-     
-     form.render( true );  // true = with control Button (ok abort)
-     return {id:data[idField],form:form,btnOk:form.btnOk,btnAbort:form.btnAbort}; 
-}
-  
-
-export function getInputFormValues( inputForm )
-{
-   return inputForm.getInputFormValues();
-}
-
-
-export function _buildInputForm( parent , data , idField , caption , appendix , exclude , types )
-{
-  console.log('buildInputForm:');
-
-  utils.buildGridLayout_templateColumns(parent , "1fr");
-  utils.buildGridLayout_templateRows   (parent , "1em 1fr 1em 5em");
-
-  var result  = [];
-  var jsnHelp = {}
-  var table   = document.createElement('table');
-
-  table.style.gridColumnStart = 1;
-  table.style.gridColumnEnd   = 1;
-  table.style.gridRowStart    = 2;
-  table.style.gridRowEnd      = 3;
-  
-  var capt    = '';
-  var val     = '';
-  var apx     = '';
-  var inpType = '';
-
-  if(!exclude) exclude = [];
-
-  for(var key in data)
-  {
-    console.log('Datenfeld: '+key);
-    
-    var excl = exclude.indexOf(key)>=0;
-    if(!excl)
-    {
-       // Variante1: [{var1:"1"} , {var2:"2"} , {var3:"3"} , .... , {varn:"n"}]
-       if (Array.isArray(caption)) 
-       { 
-         var jsnHelp = utils.findEntryByKey(caption,key);
-         if(!jsnHelp) capt = key;
-         else         capt = jsnHelp[key];
-       }
-       else // Variante2: {var1:"1" , var2:"2" , var3:"3" , .... , varn:"n"}
-       {
-          if(!caption[key]) capt = key;
-          else              capt = caption[key];
-       }
-      
-       var jsnHelp = utils.findEntryByKey( appendix ,key);
-       if(!jsnHelp) apx = "";
-       else         apx = jsnHelp[key];
-
-
-       var jsnHelp = utils.findEntryByKey( types ,key);
-       if(!jsnHelp) inpType = "";
-       else         inpType = jsnHelp[key];
-
-       var val = data[key];
-
-       if (utils.isJSON(val))  console.log('Value (JSON-Obj): '+utils.JSONstringify(val) );
-       else                    console.log('Value: ' + val );
-
-       var row   = document.createElement('tr'); 
-           table.appendChild( row ); 
-
-       var cell1 = document.createElement('td'); 
-           //cell1.style.border = "1px solid black";
-           row.appendChild(cell1);
-
-       var cell2 = document.createElement('td');  
-           //cell2.style.border = "1px solid black";  
-           cell2.style.paddingLeft = '1em'; 
-           cell2.style.paddingTop  = '0.5em'; 
-           cell2.style.paddingBottom  = '0.5em'; 
-           row.appendChild(cell2);
-
-       var cell3 = document.createElement('td');     
-           //cell3.style.border = "1px solid black";
-           row.appendChild(cell3);
-           
-       var label           = document.createElement("LABEL");
-           label.className = "cssLabelForInput";
-           label.innerHTML = capt; 
-           cell1.appendChild( label );  
-        
-       var input             = document.createElement("INPUT");
-           input.setAttribute('id',key);
-           if(idField=="NEW")  input.value = ""; 
-           else                input.value = val;
-           input.className   = "cssEditField";
-           
-           if(inpType!='') input.type = inpType;
-     
-           cell2.appendChild( input ); 
-   
-       var appendx = document.createElement("LABEL");
-           appendx.className = "cssLabelForInput";
-           appendx.innerHTML = apx;
-           cell3.appendChild( appendx ); 
-       
-       result.push({field:key,control:input});
-    } 
-    else console.log('Datenfeld in ignore-list'); 
-  }
-  parent.appendChild(table);
-
-  var ribbon =  addPanel( parent , "cssRibbon" , 1 , 4 , 1 , 1 );
-      ribbon.buildGridLayout_templateColumns("repeat(4,1fr)");
-      ribbon.buildGridLayout_templateRows("0.7em 1fr 0.7em");
-    
-  var _btnOk    = addButton( ribbon ,""             ,2,2,1,1,"OK");
-  var _btnAbort = addButton( ribbon ,"cssAbortBtn01",3,2,1,1,"Abbruch");
-  
-  return {id:data[idField],form:result,btnOk:_btnOk,btnAbort:_btnAbort}; 
-}
-
-
-export function _getInputFormValues( inputForm )
-{
-  var fields = [];
-  for(var i=0; i<inputForm.form.length; i++)
-  fields.push({field:inputForm.form[i].field, value:inputForm.form[i].control.value});
-  return fields;
-}
-
-
-// Erstelle das Popup-Menü
-export function popUpMenu( x , y , items )
-{
-  if (!items) items = globals.sysMenu;
-
-  console.log('popupMenu(X:'+x+" , Y:"+y+" , items:"+JSON.stringify(items));
-
-  if((x+200)>globals.Screen.width) x = globals.Screen.width - 200;
-
-  var popupMenu = document.createElement('div');
-      popupMenu.className    = 'cssPopup-menu';
-      popupMenu.style.left   = x+'px';
-      popupMenu.style.top    = y+'px';
-      popupMenu.style.width  = '200px';
-
-      globals.webApp.activeWorkspace.DOMelement.appendChild(popupMenu);
-
-// Füge Menüpunkte hinzu
-for (var i=0; i<items.length; i++)
-{
- var item     = items[i];
- console.log(i+'.Item: ' + JSON.stringify(item) );
-
- var menuItem = document.createElement('div');
-     menuItem.textContent = item.text;
-     menuItem.className   = 'cssMenu-item';
-     popupMenu.appendChild(menuItem);
-     menuItem.onclick    = function()
-                                      {
-                                        console.log('PopUpmenu click on '+this.item.text)
-                                        //console.log('PopUpmenu callback '+this.item.callBack)
-                                        if(this.item.callBack) this.item.callBack();
-                                        this.menu.remove();
-                                      }.bind( {menu:popupMenu , item:item } )  
-}
-
-}
-
-
 export function ask( title , msg , callBackIfYes , callBackIfNo )
 {
-  var w = createWindow( null , "Rückfrage" , "50%" , "40%" , "CENTER" );
-   
+  var w = createWindow( null , "Rückfrage" , "50%" , "40%" , "CENTER" ).hWnd;
+      w.overflow = 'hidden';
+  
    utils.buildGridLayout_templateColumns( w , '1fr');
    utils.buildGridLayout_templateRows   ( w , '4em 1fr 1em 4em');
  
@@ -748,11 +568,11 @@ export function ask( title , msg , callBackIfYes , callBackIfNo )
        
    var btnAddd  = addButton(btnDiv,"",2,2,1,1,"Ja");
        btnAddd.height = '2em'; 
-       btnAddd.callBack_onClick = function(){ this.wnd.closeWindow() ; if (this.yes) this.yes() }.bind({wnd:w, yes:callBackIfYes})
+       btnAddd.callBack_onClick = function(){ this.wnd.destroy() ; if (this.yes) this.yes() }.bind({wnd:w.parent, yes:callBackIfYes})
  
    var btnEdit  = addButton(btnDiv,"",4,2,1,1,"Nein");
         btnEdit.height = '2em';
-       btnEdit.callBack_onClick = function(){ this.wnd.closeWindow() ; if (this.no) this.no() }.bind({wnd:w, no:callBackIfNo})
+       btnEdit.callBack_onClick = function(){ this.wnd.destroy() ; if (this.no) this.no() }.bind({wnd:w.parent, no:callBackIfNo})
 }
 
 
@@ -768,7 +588,8 @@ export function showMessage( msg , options , callBack )
 
   if(button.length==0) button.push('OK');
 
-  var w = createWindow( null , "Benachrichtigung" , "50%" , "35%" , "CENTER" );
+  var w = createWindow( null , "Benachrichtigung" , "50%" , "35%" , "CENTER" ).hWnd;
+      w.overflow = 'hidden';
    
   utils.buildGridLayout_templateColumns( w , '1em 1fr 1em');
   utils.buildGridLayout_templateRows   ( w , '0.7em 1fr 0.7em 4em 0.7em');
@@ -799,7 +620,7 @@ export function showMessage( msg , options , callBack )
           var b=addButton(btnDiv,"",1,1,77,35,button[i]);
               b.backgroundColor  = "gray";
               b.attachment       = i;
-              b.callBack_onClick = function() { this.wnd.closeWindow();  if(callBack) callBack(this.btn.attachment) }.bind({wnd:w,btn:b});
+              b.callBack_onClick = function() { this.wnd.destroy();  if(callBack) callBack(this.btn.attachment) }.bind({wnd:w.parent,btn:b});
   }      
 
 }
