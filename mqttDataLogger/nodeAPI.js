@@ -169,7 +169,9 @@ if( CMD=='STRUCTURE')
   }
 }
 
-  
+
+if( CMD=='SCHEMA')          return dbUtils.schema( dB , param.tableName )
+    
 if( CMD=='AST' )            return dbUtils.extractTableNames( param.sql );
 
 if( CMD=='LSUSER')          return dbUtils.fetchRecords_from_Query( etc , 'Select * from user' );
