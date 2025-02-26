@@ -2,6 +2,9 @@ import * as globals  from "./globals.js";
 import * as utils    from "./utils.js";
 import * as graphics from "./tfGrafics.js";
 import * as chartJS  from "./chart.js";
+import { TFWindow }  from "./tfWindows.js"; 
+import { TFTreeView }from "./tfTreeView.js"; 
+import { THTMLTable } from "./tfGrid.js";
 
 
 var screen = null;
@@ -3297,6 +3300,125 @@ save()
 }    
 
 }  // end of class TPropertyEditor
+
+
+
+
+export class TFileDialog
+{
+  constructor( params )
+  {
+    this.mask             = params.mask || '*.*';
+    this.multiple         = params.multiple || false;
+    this.callBackOnSelect = params.callBackOnSelect || null;
+    this.width            = params.width || '50%';
+    this.height           = params.height || '70%';
+    this.caption          = params.caption || 'Dateiauswahl';
+    this.root             = params.root || './';
+
+    this.dir              = '';
+    this.file             = '';
+    this.node             = null;
+    this.files            = [];
+    this.fileGrid         = null;
+    this.wnd              = new TFWindow( null , this.caption , this.width , this.height , 'CENTER' );
+    this.wnd.buildGridLayout_templateColumns('1fr');
+    this.wnd.buildGridLayout_templateRows('3em 1fr 4em');
+
+    this.editFilePath     = new TFEdit( this.wnd.hWnd , 1 , 1  , 1 , 1 , {caption:"Filename",appendix:" "} );
+    
+
+    var btbPanel = new TFPanel( this.wnd.hWnd , 1 , 3 , 1 , 1 , {} );
+        btbPanel.backgroundColor = "gray";
+        btbPanel.buildGridLayout_templateColumns('1fr 1fr 1fr 1fr 1fr');
+        btbPanel.buildGridLayout_templateRows('1fr');
+
+    var btnOk = new TFButton( btbPanel , 2 , 1 , 1 , 1 , {caption:'OK'} );
+        btnOk.height = 27;
+        btnOk.callBack_onClick = function() { this.callBackOnSelect( this.dir , this.file , this.files ) }.bind(this);
+
+    var btnCancel = new TFButton( btbPanel , 4 , 1 , 1 , 1 , {caption:'Abbruch'} );
+        btnCancel.height = 27;
+        btnCancel.callBack_onClick = function() { this.wnd.destroy() }.bind(this);      
+
+
+    var p = new TFPanel( this.wnd.hWnd , 1 , 2 , 1 , 1 , {css:'cssContainerPanel'} );
+        p.buildGridLayout_templateColumns('1fr 1fr');
+        p.buildGridLayout_templateRows('1fr');
+
+    this.panelPath       = new TFPanel( p , 1 , 1 , 1 , 1 );
+    this.panelFiles      = new TFPanel( p , 2 , 1 , 1 , 1 );
+
+    this.pathTree        = new TFTreeView( this.panelPath , {} );
+
+    this.scanDir( null , this.root );
+  } 
+
+
+  scanDir( node , dir )
+  {
+    this.files =[];
+    this.node  = node;
+
+    var response=utils.webApiRequest('scanDir', {dir:dir} );
+    if(response.error) return false;
+    
+    for(var i=0; i<response.result.length; i++)
+    {
+      var f = response.result[i];
+      if(f.isDir) 
+      {
+        if(node) var n = this.pathTree.addSubNode( node , f.name , f );
+        else     var n = this.pathTree.addNode( f.name , f );
+        n.callBack_onClick = function(selectedNode) 
+                             { 
+                              var newPath = utils.pathJoin( this.dir , selectedNode.content.name );
+                              this.scanDir( selectedNode , newPath ) }.bind(this);
+      }  
+      if(f.isFile) this.files.push(f);
+    } 
+    this.dir = dir;
+    this.pathTree.render(); 
+    this.renderFiles();
+    
+  }
+
+
+  
+
+
+  renderFiles()
+  {
+    this.fileGrid = null;
+
+    var f=[];
+
+    for (var i=0; i<this.files.length; i++) 
+        f.push({name:this.files[i].name, ext:this.files[i].ext, size:this.files[i].size, path:this.dir})
+         
+    if( this.files.length==0) f.push({name:'empty'});
+
+    this.fileGrid  = new THTMLTable( f , '' );
+    this.fileGrid.fieldByName('name').caption = 'Dateiname';
+    this.fileGrid.onRowClick = function(row , i , jsn )
+                               {
+                                this.handleFileSelection( jsn )
+                              }.bind(this);
+
+    this.fileGrid.build( this.panelFiles  );
+  
+ }
+
+
+ handleFileSelection( file )
+ {
+   this.editFilePath.value = file.path + '/' + file.name;
+ }
+
+
+
+     
+}
 
 
 

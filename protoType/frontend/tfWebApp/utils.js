@@ -962,12 +962,13 @@ export function formatTime( _dt )
 
 export function pathJoin(d,f,e)
 {
-  if (d=='/') d = '';
+  var p='';
+  if (d=='/') p = '/'+f;
+  else        p = d+'/'+f;
   
-  var p='.';
-  if(e=='') p='';
+  if(e) p=p+'.'+e;
  
-  return d+'/'+f+p+e;
+  return p
 }
 
 

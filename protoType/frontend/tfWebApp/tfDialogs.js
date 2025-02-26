@@ -41,8 +41,9 @@ import { TFCheckBox,
          TFEdit,
          TFComboBox,
          TFButton,
-         //  TForm,
-         // TPropertyEditor,
+         TForm,
+         TPropertyEditor,
+         TFileDialog,
          TFListCheckbox } from "./tfObjects.js";
 
 var   splash  = {panel:null, imgPanel:null, msgPanel:null, msg:'...' , activ:false};
@@ -824,30 +825,10 @@ export function setProperties( obj , properties )
   }  
 }
 
-
-
-
- /*
- ehemals addButton()
- var parent = aParent;
- if (!parent) parent = this.body;
-
- consoleLog("aParent:" + parent);
- consoleLog("onClickCallback:" + onClickCallback);
- 
-  var btn = document.createElement("BUTTON");
-  btn.className   = className ;  
-  btn.innerHTML   = text;
-  btn.onclick     = function()
-                              {
-                               consoleLog('Cklick'); 
-                               var callBack = new Function(onClickCallback);
-                               callBack();
-                             }
-  parent.appendChild( btn ); 
-  return btn;
+export function fileDialog( mask , multiple , callBackOnSelect )
+{
+  return new TFileDialog( {mask:mask , root:"/" , multiple:multiple , callBackOnSelect:callBackOnSelect} );
 }
- */ 
 
 
 

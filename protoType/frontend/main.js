@@ -216,7 +216,8 @@ var   btn10 = dialogs.addButton( menuContainer , "" , 10 , 1 , 1 , 1 , "ask me" 
       } 
 
 
-      dialogs.addLabel( panels[0] , '' , 1 , 1 , 1 , 1 , 'Label' );
+      var l=dialogs.addLabel( panels[0] , '' , 1 , 1 , 1 , 1 , 'Label' );
+      l.callBack_onClick=()=>{dialogs.fileDialog( "*.*" , true , (d,f,ff)=>{editPath.value=d+'/'} )};
 
       editPath = dialogs.addInput( panels[1] , 1 , 1 , 10 , 'path' , '' , '' , {} );
 

@@ -236,6 +236,10 @@ constructor( aParent , params )
     }
   }
 
+  render()
+  {
+    this.buildNodeList();
+  }
 
   buildNodeList()
   {
