@@ -1,7 +1,7 @@
 const useHTTPS                = false;
 
 export var debug              = false;
-export var webApp             = {};
+export var webApp             = {activeWorkspace:null};
 
 
 export var backgroundImage    = null;   // wen null dann delault lt. stylesheet
@@ -18,7 +18,6 @@ export var isALTpressed       = false;
 
 var __Server                  = window.location.hostname;
 var __Port                    = window.location.port;
-var __Port_webSocket          =  4444;
 
 var __debugTimeStamp          = Date.now()
 
@@ -37,9 +36,9 @@ export function getServer()
    else          {console.log("use HTTP Server");  return 'http://' + __Server + ':' + __Port; } 
 }
 
-export function getWebSocketServerURL()   
+export function getWebSocketServerURL(port)   
 { 
-   return 'ws://' + __Server + ':' + __Port_webSocket;  
+   return 'ws://' + __Server + ':' + port;  
 }
 
 

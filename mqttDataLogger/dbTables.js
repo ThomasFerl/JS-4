@@ -9,7 +9,9 @@ var content = [];
 tables.push( 
             {tableName:"mqttTopics",
              tableFields:[
-                {fieldName:"topic" , fieldType:"Text" }
+                {fieldName:"ID_Device", fieldType:"INTEGER" },
+                {fieldName:"topic"    , fieldType:"Text" },
+                {fieldName:"descr"    , fieldType:"Text" },
              ]});
 
 
@@ -48,7 +50,8 @@ tables.push(
                           {fieldName:"Pix2" , fieldType:"Text"} ,
                           {fieldName:"Pix3" , fieldType:"Text"} ,
                           {fieldName:"EMF" , fieldType:"Text"} ,
-                          {fieldName:"GPS" , fieldType:"Text"} 
+                          {fieldName:"GPS" , fieldType:"Text"} ,
+                          {fieldName:"TOPIC" , fieldType:"Text"} 
                        ]});
                        
                     

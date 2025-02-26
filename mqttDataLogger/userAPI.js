@@ -61,6 +61,24 @@ if( CMD=='TEST')
 }
 
 
+if( CMD=='LOADDEVICES' )
+  {
+    return dbUtils.fetchRecords_from_Query(dB,"Select * from Devices order by ID desc ");
+  }
+
+  if( CMD == 'AVAILEABLETOPICS')
+    {
+      return dbUtils.fetchRecords_from_Query(dB,"Select descr from mqttTopics Where ID_Device=0 order by ID desc");
+    }
+
+
+
+if( CMD=='NEWDEVICE' )
+  {
+    return dbUtils.insertIntoTable_if_not_exist(dB,"devices",param.fields,"IP") ;
+  }
+
+
 
 if( CMD=='LSTOPICS') 
   {

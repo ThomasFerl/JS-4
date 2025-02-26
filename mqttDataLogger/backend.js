@@ -68,15 +68,18 @@ var influx = new nodeInfluxDB({
 // MQTT - Client starten und zum Mosquitto-Server Verbindung aufnehmen
 //-----------------------------------------------------------------------------------------
 //-----------------------------------------------------------------------------------------
+
+const defaultTopic = 'ems/test/#';
+
 mqttHandler.setup( dB , influx );
 
 const mqttClient = mqtt.connect(MQTT_BROKER_URL);
 
 mqttClient.on('connect', () => {
                                   console.log('✅ Verbunden mit Mosquitto-Broker');
-                                  mqttClient.subscribe('#', (err) => {
-                                                                       if (err) console.error('❌ Fehler beim Abonnieren aller Topics:', err);
-                                                                       else     console.log('📡 Abonniert: ALLE Topics (#)');
+                                  mqttClient.subscribe( defaultTopic , (err) => {
+                                                                       if (err) console.error('❌ Fehler beim Abonnieren des Topics: ' + defaultTopic , err);
+                                                                       else     console.log('📡 Abonniert: ' + defaultTopic );
                                                                      });
                                 });                                      
 
@@ -96,7 +99,7 @@ mqttClient.on('error', (err) => { console.error('❌ MQTT-Fehler:', err); });
 
 // MQTT - Distributor starten
 mqttDist = new TMQTTDistributor({ mqttBroker: MQTT_BROKER_URL,
-                                  topic     : '#' 
+                                  topic     : defaultTopic 
                                 })
 
 mqttDist.start();

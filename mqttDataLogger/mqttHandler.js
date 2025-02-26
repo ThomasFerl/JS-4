@@ -17,6 +17,19 @@ module.exports.onMessage = (topic, payload) =>
     // 0. Prüfen, ob das Topic mit "$SYS" beginnt, da es sich dabei um interne Systemnachrichten handelt
     if (topic.startsWith('$SYS')) { return; }
 
+    // die ersten drei Teile des Topics sind per Definition "Geräte-Identifikation"
+    var parts=topic.split('/');
+    var descr=''; 
+    if (parts.length>3) descr=parts[0]+'/'+parts[1]+'/'+parts[2]
+
+    // suche nach Gerät mit diesem Deskriptor
+    var ID_Device = null;
+    var response = dbUtils.fetchValue_from_Query(dB, "SELECT ID FROM devices WHERE TOPIC = '"+descr+"'" );
+    if (response.error) { console.error('Fehler beim Prüfen des Topics:', response.errMsg); return; }
+
+    // ggf leer
+    ID_Device = response.result || "0";
+
     var ID_Topic = null;
 
     console.log('Datenbank (dB) -> '+dB);
@@ -27,7 +40,7 @@ module.exports.onMessage = (topic, payload) =>
 
     if (response.result=='')
     {
-       response = dbUtils.insertIntoTable(dB, 'mqttTopics', {topic:topic});
+       response = dbUtils.insertIntoTable(dB, 'mqttTopics', {topic:topic,descr:descr,ID_Device:ID_Device});
        if (response.error) { console.error('Fehler beim Regisstrieren des Topics:', response.errMsg); return; }
        else {
              console.log('Insert-response -> '+JSON.stringify(response));
@@ -37,11 +50,11 @@ module.exports.onMessage = (topic, payload) =>
             
     } else ID_Topic = response.result;
 
-    safePayload( ID_Topic , payload.toString());    
+    safePayload( ID_Topic , ID_Device , payload.toString());    
 }   
     
 
-function safePayload(ID_Topic, strPayload)
+function safePayload(ID_Topic, ID_Device , strPayload)
 {
     utils.log('safePayload -> ID_Topic: '+ID_Topic+' / payload: '+strPayload);
 
