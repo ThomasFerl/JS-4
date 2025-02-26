@@ -3142,26 +3142,25 @@ export class TForm
       if (ctrl.visible)
       {
         if(ctrl.type.toUpperCase()=='TEXT')
-           ctrl.editControl = new TFEdit(inpContainer,1,1,'99%','4em',{caption:ctrl.label,appendix:ctrl.appendix,value:ctrl.value,captionLength:maxLabel,appendixLength:maxAppendix,justifyEditField:"left"});  
+           ctrl.editControl = new TFEdit(inpContainer,1,1,'99%','3em',{caption:ctrl.label,appendix:ctrl.appendix,value:ctrl.value,captionLength:maxLabel,appendixLength:maxAppendix,justifyEditField:"left"});  
        
         if(ctrl.type.toUpperCase()=='DATE')
-          ctrl.editControl = new TFEdit(inpContainer,1,1,'99%','4em',{type:"date",caption:ctrl.label,appendix:ctrl.appendix,value:ctrl.value,captionLength:maxLabel,appendixLength:maxAppendix,justifyEditField:"left"});  
+          ctrl.editControl = new TFEdit(inpContainer,1,1,'99%','3em',{type:"date",caption:ctrl.label,appendix:ctrl.appendix,value:ctrl.value,captionLength:maxLabel,appendixLength:maxAppendix,justifyEditField:"left"});  
       
         if(ctrl.type.toUpperCase()=='TIME')
-          ctrl.editControl = new TFEdit(inpContainer,1,1,'99%','4em',{type:"time",caption:ctrl.label,appendix:ctrl.appendix,value:ctrl.value,captionLength:maxLabel,appendixLength:maxAppendix,justifyEditField:"left"});  
+          ctrl.editControl = new TFEdit(inpContainer,1,1,'99%','3em',{type:"time",caption:ctrl.label,appendix:ctrl.appendix,value:ctrl.value,captionLength:maxLabel,appendixLength:maxAppendix,justifyEditField:"left"});  
       
         if(ctrl.type.toUpperCase()=='DATETIME')
-          ctrl.editControl = new TFEdit(inpContainer,1,1,'99%','4em',{type:"datetime-local",caption:ctrl.label,appendix:ctrl.appendix,value:ctrl.value,captionLength:maxLabel,appendixLength:maxAppendix,justifyEditField:"left"});  
+          ctrl.editControl = new TFEdit(inpContainer,1,1,'99%','3em',{type:"datetime-local",caption:ctrl.label,appendix:ctrl.appendix,value:ctrl.value,captionLength:maxLabel,appendixLength:maxAppendix,justifyEditField:"left"});  
       
         if(ctrl.type.toUpperCase()=='SELECT')
-         { ctrl.editControl = new TFComboBox(inpContainer,1,1,'99%','4em',{caption:ctrl.label,appendix:ctrl.appendix,value:ctrl.value, items:ctrl.items,captionLength:maxLabel,appendixLength:maxAppendix,justifyEditField:"left", items:ctrl.params.items});  }
+         { ctrl.editControl = new TFComboBox(inpContainer,1,1,'99%','3em',{caption:ctrl.label,appendix:ctrl.appendix,value:ctrl.value, items:ctrl.items,captionLength:maxLabel,appendixLength:maxAppendix,justifyEditField:"left", items:ctrl.params.items});  }
       
         if(ctrl.type.toUpperCase()=='RANGE')
-          ctrl.editControl = new TFSlider(inpContainer,1,1,'99%','4em',{caption:ctrl.label,appendix:ctrl.appendix,value:ctrl.value,captionLength:maxLabel,appendixLength:maxAppendix,justifyEditField:"left"});
-
+          ctrl.editControl = new TFSlider(inpContainer,1,1,'99%','3em',{caption:ctrl.label,appendix:ctrl.appendix,value:ctrl.value,captionLength:maxLabel,appendixLength:maxAppendix,justifyEditField:"left"});
 
         if(ctrl.type.toUpperCase()=='CHECKBOX')
-          ctrl.editControl = new TFCheckBox(inpContainer,1,1,'99%','4em',{caption:ctrl.label,appendix:ctrl.appendix,value:ctrl.value,captionLength:maxLabel,appendixLength:maxAppendix,checkboxLeft:false,captionLength:maxLabel});
+          ctrl.editControl = new TFCheckBox(inpContainer,1,1,'99%','3em',{caption:ctrl.label,appendix:ctrl.appendix,value:ctrl.value,captionLength:maxLabel,appendixLength:maxAppendix,checkboxLeft:false,captionLength:maxLabel});
       }
     }  
        
