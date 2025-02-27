@@ -51,7 +51,7 @@ export class TdeviceDlg
         for(var i=0; i<r.result.length; i++) availeableTopics.push(r.result[i].descr)
       }      
       
-      var cpt = this.newDevice?"neues Gerät hinzufügen":"Gerät bearbeiten";
+      var cpt = this.newDevice ? "neues Gerät hinzufügen" : "Gerät bearbeiten";
           
       this.dlgWnd = dialogs.createWindow( null , cpt , "50%" , "77%" , "CENTER" );
       this.dlgWnd.buildGridLayout_templateRows("2em,1fr");
@@ -83,6 +83,9 @@ export class TdeviceDlg
       this.form.callBack_onESCBtn = function () {this.dlgWnd.destroy() ; if(this.callBack_onDialogAbort!=null) this.callBack_onDialogAbort() }.bind(this);
   }
 
+
+
+
   saveDevice( deviceData )
   {
     /* daten kommen in der Form: [{"field":"ID","value":""},
@@ -91,15 +94,14 @@ export class TdeviceDlg
 
        Daten in this.device speichern ...                           
     */
-
     for(var i=0; i<deviceData.length; i++)
     if(this.device.hasOwnProperty(deviceData[i].field)) this.device[deviceData[i].field] = deviceData[i].value;
     this.dlgWnd.destroy();
 
     if(this.newDevice) var response = utils.webApiRequest("NEWDEVICE",{fields:this.device})
-    else               var response = utils.webApiRequest("UPDATEDEVICE",{fields:this.device,idField:"ID"})    
+    else               var response = utils.webApiRequest("UPDATEDEVICE",{fields:this.device,idField:"ID",idValue:this.device.ID})     
 
-console.log(JSON.stringify(response));
+    console.log(JSON.stringify(response));
 
     if(response.err) 
     {

@@ -72,11 +72,26 @@ if( CMD=='LOADDEVICES' )
     }
 
 
-
 if( CMD=='NEWDEVICE' )
   {
     return dbUtils.insertIntoTable_if_not_exist(dB,"devices",param.fields,"IP") ;
   }
+  
+
+ if( CMD=='UPDATEDEVICE' )
+    {
+      var response = dbUtils.updateTable(dB,"devices" , param.idField , param.idValue , param.fields) ;
+
+      if(response.error) return response;
+
+      // sofern das Device eine Topic-Zuordnung besitzt, diese in mqttTopics aktualisieren....
+      var idDevice = param.fields.ID;
+      var descr    = param.fields.TOPIC;
+      if(descr!="") dbUtils.runSQL(dB,"update mqttTopics set ID_Device="+idDevice+" Where descr='"+descr+"'");
+
+      return response;
+
+    }
 
 
 

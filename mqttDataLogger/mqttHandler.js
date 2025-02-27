@@ -1,4 +1,4 @@
-
+const globals              = require('./backendGlobals');
 const dbUtils              = require('./dbUtils');
 const utils                = require('./nodeUtils');
 
@@ -50,11 +50,11 @@ module.exports.onMessage = (topic, payload) =>
             
     } else ID_Topic = response.result;
 
-    safePayload( ID_Topic , ID_Device , payload.toString());    
+    safePayload( ID_Topic , payload.toString());    
 }   
     
 
-function safePayload(ID_Topic, ID_Device , strPayload)
+function safePayload(ID_Topic, strPayload)
 {
     utils.log('safePayload -> ID_Topic: '+ID_Topic+' / payload: '+strPayload);
 
@@ -64,7 +64,7 @@ function safePayload(ID_Topic, ID_Device , strPayload)
     if (typeof strPayload == 'string')    
     {
         try {
-            utils.log('Payload wurde als String erkannt und wird geparrtst:');
+            utils.log('Payload wurde als String erkannt und wird geparst:');
             payload = JSON.parse(strPayload);
             utils.log(payload);
         }
@@ -112,7 +112,8 @@ function safePayload(ID_Topic, ID_Device , strPayload)
     influxRecord.timestamp = payload.timestamp || new utils.TFDateTime().unixDateTime();
     
     // Influx speichern
-    influx.saveValues(  influxRecord);
+    if (globals.influxDataStorage) influx.saveValues(  influxRecord);
+
 }
 
 

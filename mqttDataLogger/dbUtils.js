@@ -320,7 +320,14 @@ function _updateTable(db , tableName , ID_field , ID_value , fields )
   var fieldNames  = [];
   var fieldValues = []
   
-  for(var fieldName in fields ) {fieldNames.push(fieldName) , fieldValues.push(fields[fieldName]) };
+  for(var fieldName in fields ) 
+    {
+      if(fieldName!=ID_field) 
+        {
+          fieldNames.push(fieldName) , 
+          fieldValues.push(fields[fieldName]) 
+        };
+  }    
 
   var sql = "update "+tableName+" set "+fieldNames[0]+" = '"+fieldValues[0]+"'";
   for( var i=1; i<fieldNames.length; i++ )  sql=sql+ " , " +fieldNames[i]+"='"+fieldValues[i]+"'" ;

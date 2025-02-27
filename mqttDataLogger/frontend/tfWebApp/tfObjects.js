@@ -1907,7 +1907,9 @@ export class TFComboBox extends TFEdit
     
     if(this.params.items) this.setItems (this.params.items);
     this.combobox = this.input;  // nur aus Gründen der besseren Lesbarkeit / Anwendbarkeit
-    this.__render();
+    this.__render(); 
+    this.item = this.params.value;
+
     this.combobox.addEventListener('change',  function() { 
       if(this.callBack_onChange)
       {
@@ -3152,14 +3154,14 @@ export class TForm
       
         if(ctrl.type.toUpperCase()=='DATETIME')
           ctrl.editControl = new TFEdit(inpContainer,1,1,'99%','3em',{type:"datetime-local",caption:ctrl.label,appendix:ctrl.appendix,value:ctrl.value,captionLength:maxLabel,appendixLength:maxAppendix,justifyEditField:"left"});  
-      
-        if(ctrl.type.toUpperCase()=='SELECT')
-         { ctrl.editControl = new TFComboBox(inpContainer,1,1,'99%','3em',{caption:ctrl.label,appendix:ctrl.appendix,value:ctrl.value, items:ctrl.items,captionLength:maxLabel,appendixLength:maxAppendix,justifyEditField:"left", items:ctrl.params.items});  }
+
+          if(ctrl.type.toUpperCase()=='SELECT')
+         {ctrl.editControl = new TFComboBox(inpContainer,1,1,'99%','3em',{caption:ctrl.label,appendix:ctrl.appendix,value:ctrl.value, items:ctrl.items,captionLength:maxLabel,appendixLength:maxAppendix,justifyEditField:"left", items:ctrl.params.items});  }
       
         if(ctrl.type.toUpperCase()=='RANGE')
           ctrl.editControl = new TFSlider(inpContainer,1,1,'99%','3em',{caption:ctrl.label,appendix:ctrl.appendix,value:ctrl.value,captionLength:maxLabel,appendixLength:maxAppendix,justifyEditField:"left"});
 
-        if(ctrl.type.toUpperCase()=='CHECKBOX')
+        if(ctrl.type.toUpperCase()=='CHECKBOX')  
           ctrl.editControl = new TFCheckBox(inpContainer,1,1,'99%','3em',{caption:ctrl.label,appendix:ctrl.appendix,value:ctrl.value,captionLength:maxLabel,appendixLength:maxAppendix,checkboxLeft:false,captionLength:maxLabel});
       }
     }  
