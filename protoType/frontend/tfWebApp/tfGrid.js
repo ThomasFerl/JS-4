@@ -7,8 +7,8 @@ class TFieldDef
 {
  constructor( aFieldName , aCaption , testValue)
  {
-    this.columnWidth             = -1;
-    this.columnHeight            = -1;
+    this.columnWidth             = '';
+    this.columnHeight            = '';
     this.fieldName               = aFieldName;
     this.caption                 = aCaption;
     this.fieldType               = "";
@@ -181,6 +181,7 @@ getSelectedRows()
     }
     cell.className    = "tftd"; 
     cell.style.height = '2em';
+    if(this.fields[j].columnWidth!='') cell.style.width = this.fields[j].columnWidth;
     cell.innerHTML    = content[fieldname];
   }
 
@@ -233,6 +234,7 @@ getSelectedRows()
       var th           = document.createElement("th");
           th.className = "tfth";
           th.innerHTML = this.fields[i].caption;
+          if (this.fields[i].columnWidth!='') th.style.width = this.fields[i].columnWidth;
           headerRow.appendChild(th);
     }
     thead.appendChild(headerRow);

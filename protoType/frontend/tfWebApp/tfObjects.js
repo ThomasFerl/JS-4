@@ -3311,11 +3311,12 @@ export class TFileDialog
     this.mask             = params.mask || '*.*';
     this.multiple         = params.multiple || false;
     this.callBackOnSelect = params.callBackOnSelect || null;
+    this.onSelectionChanged = params.onSelectionChanged || null;
     this.width            = params.width || '50%';
     this.height           = params.height || '70%';
     this.caption          = params.caption || 'Dateiauswahl';
     this.root             = params.root || './';
-
+    this.fullPath         = '';
     this.dir              = '';
     this.file             = '';
     this.node             = null;
@@ -3351,16 +3352,35 @@ export class TFileDialog
 
     this.pathTree        = new TFTreeView( this.panelPath , {} );
 
-    this.scanDir( null , this.root );
+    this.scanDir( this.root );
   } 
 
 
-  scanDir( node , dir )
+  scanDir( node_or_dir )
   {
-    this.files =[];
-    this.node  = node;
+    
+    this.files = [];
 
-    var response=utils.webApiRequest('scanDir', {dir:dir} );
+    // String ?
+    if( typeof node_or_dir === 'string') {this.node=null; this.dir=node_or_dir}
+    else
+        {
+          if (node_or_dir.constructor.name=="TFTreeNode") 
+            {
+              var s =[];
+              this.node  = node_or_dir;
+              var p=this.node.getNodePath();
+              p.forEach((aNode,i)=>{s.push(aNode.content.name)});
+              this.dir = utils.pathJoin(this.root , s.join('/') );
+              console.log('scanDir: ' + this.dir);
+            }
+      }    
+  
+    var response=utils.webApiRequest('scanDir', {dir:this.dir} );
+
+    console.log('scanDir: ' + this.dir);
+    console.log('scanDir: ' + JSON.stringify(response));
+
     if(response.error) return false;
     
     for(var i=0; i<response.result.length; i++)
@@ -3368,16 +3388,13 @@ export class TFileDialog
       var f = response.result[i];
       if(f.isDir) 
       {
-        if(node) var n = this.pathTree.addSubNode( node , f.name , f );
-        else     var n = this.pathTree.addNode( f.name , f );
-        n.callBack_onClick = function(selectedNode) 
-                             { 
-                              var newPath = utils.pathJoin( this.dir , selectedNode.content.name );
-                              this.scanDir( selectedNode , newPath ) }.bind(this);
+        if(this.node) var n = this.pathTree.addSubNode( this.node , f.name , f );
+        else          var n = this.pathTree.addNode( f.name , f );
+        n.callBack_onClick = function(selectedNode){ this.scanDir( selectedNode ) }.bind(this);
       }  
       if(f.isFile) this.files.push(f);
     } 
-    this.dir = dir;
+  
     this.pathTree.render(); 
     this.renderFiles();
     
@@ -3387,19 +3404,22 @@ export class TFileDialog
   
 
 
+
   renderFiles()
   {
-    this.fileGrid = null;
+    this.panelFiles.innerHTML = '';
+    this.fileGrid             = null;
 
     var f=[];
-
     for (var i=0; i<this.files.length; i++) 
-        f.push({name:this.files[i].name, ext:this.files[i].ext, size:this.files[i].size, path:this.dir})
+        f.push({name:this.files[i].name+this.files[i].ext, ext:this.files[i].ext, formatedSize:utils.formatFileSize(this.files[i].size)  ,size:this.files[i].size, path:this.dir})
          
-    if( this.files.length==0) f.push({name:'empty'});
+    if( this.files.length==0) f.push({name:'empty', ext:'', formatedSize:'', size:0 , path:''});
 
-    this.fileGrid  = new THTMLTable( f , '' );
+    this.fileGrid  = new THTMLTable( f , ['path','ext','size'] );
     this.fileGrid.fieldByName('name').caption = 'Dateiname';
+    this.fileGrid.fieldByName('formatedSize').caption = 'Größe';
+    this.fileGrid.fieldByName('formatedSize').columnWidth = '7em';
     this.fileGrid.onRowClick = function(row , i , jsn )
                                {
                                 this.handleFileSelection( jsn )
@@ -3412,9 +3432,9 @@ export class TFileDialog
 
  handleFileSelection( file )
  {
-   this.editFilePath.value = file.path + '/' + file.name;
+   this.editFilePath.value = utils.pathJoin(file.path , file.name , file.ext);
+   if(this.onSelectionChanged) this.onSelectionChanged( file );
  }
-
 
 
      
