@@ -960,6 +960,13 @@ export function formatTime( _dt )
 }
 
 
+export function formatFileSize( sizeInBytes )
+{
+  if(sizeInBytes == 0) return '0 Byte';
+  var i = Math.floor( Math.log(sizeInBytes) / Math.log(1024) );
+  return ( sizeInBytes / Math.pow(1024, i) ).toFixed(2) * 1 + ' ' + ['Byte', 'KB', 'MB', 'GB', 'TB'][i];
+}
+
 export function pathJoin(d,f,e)
 {
   var p='';
