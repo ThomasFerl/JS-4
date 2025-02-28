@@ -7,6 +7,7 @@ import * as graphics     from "./tfWebApp/tfGrafics.js";
 
 import { TFEdit, 
          TForm,
+         TFPopUpMenu,
          TPropertyEditor,
          TFAnalogClock,
          TFWorkSpace }   from "./tfWebApp/tfObjects.js";
@@ -37,6 +38,22 @@ var chart          = null;
 var osziX          = 0;   
 var treeView       = null;
 var treeData       = {};
+
+var mediaViewer    = null;
+
+
+function viewMedia(fn)
+{
+    if(mediaViewer==null) 
+    {   
+      mediaViewer = new TFWindow( svgContainer , fn , '80%' , '90%' , 'CENTER' );
+      var img     = dialogs.addImage( mediaViewer.hWnd , '' , 1 , 1 , '100%' , '100%' );
+      mediaViewer.img = img;
+    }
+   
+    mediaViewer.img.imgURL = utils.buildURL('GETIMAGEFILE',{fileName:fn} );
+}
+
 
 
 
@@ -218,7 +235,7 @@ var   btn10 = dialogs.addButton( menuContainer , "" , 10 , 1 , 1 , 1 , "ask me" 
 
       var l=dialogs.addLabel( panels[0] , '' , 1 , 1 , 1 , 1 , 'Label' );
       l.callBack_onClick=()=>{dialogs.fileDialog( "*.*" , true , (d,f,ff)=>{editPath.value=d+'/'} ,
-                                                                 (d)=>{editPath.value=d.Name+'/'} )};
+                                                                 (fn)=>{viewMedia(fn)} )};
     
 
 
@@ -395,9 +412,12 @@ async function showSVGs(type)
                                                     wnd.callBack_onClick = (e)=>{
                                                                                   if(e.button==0) nextImage(img);
                                                                                   if(e.button==2) prevImage(img);
-                                                                                  if(e.altKey)    diaShow(img);
-                                                                                  
-                                                                                } 
+                                                                                 } 
+
+                                                    var popup = new TFPopUpMenu([{caption:'Diashow',value:1} , {caption:'aabrechen',value:2 }]);
+                                                        popup.onClick = function (sender , item ){ if(item.value==1) diaShow(this);}.bind(img);
+                            
+                                                    img.addPopupMenu(popup); 
                                                  };
     }
 
@@ -422,5 +442,5 @@ async function showSVGs(type)
 
  function diaShow(img)
  {
-   setInterval( () => { nextImage(img); }, 4000 ); 
+  setInterval( () => { nextImage(img); }, 4000 ); 
  }

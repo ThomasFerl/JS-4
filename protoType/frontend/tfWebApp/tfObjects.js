@@ -346,15 +346,7 @@ export class TFObject
           this.DOMelement.addEventListener('mousemove'  , (e)=>{if( this.callBack_onMouseMove)   this.callBack_onMouseMove  (e,this.dataBinding) });
           this.DOMelement.addEventListener('mouseleave' , (e)=>{if( this.callBack_onMouseOut )   this.callBack_onMouseOut   (e,this.dataBinding) });
           
-          if(this.popupMenu)
-           {  
-            this.DOMelement.addEventListener('contextmenu', (e)=>{ if(this.popupMenu) 
-                                                                   {
-                                                                     e.preventDefault();
-                                                                     this.popupMenu.show(this,e.pageX, e.pageY);
-                                                                   }
-                                                                  });   
-          } 
+          if(this.popupMenu) this.addPopupMenu(this.popupMenu)
           else this.DOMelement.addEventListener('contextmenu', (e)=>{e.preventDefault();
                                                                      if( this.callBack_onClick) this.callBack_onClick (e,this.dataBinding) 
                                                                     });   
@@ -367,6 +359,18 @@ export class TFObject
           this.DOMelement.addEventListener('keyup'      , (e)=>{if( this.callBack_onKeyUp)       this.callBack_onKeyUp      (e,this.dataBinding) });
 
   } 
+
+  addPopupMenu(p)
+  {  
+    this.popupMenu = p;
+    this.DOMelement.addEventListener('contextmenu', (e)=>{ if(this.popupMenu) 
+                                                           {
+                                                             e.preventDefault();
+                                                             this.popupMenu.show(this,e.pageX, e.pageY);
+                                                           }
+                                                          });   
+  } 
+
 
   set id(value)
   {
@@ -3412,7 +3416,7 @@ export class TFileDialog
 
     var f=[];
     for (var i=0; i<this.files.length; i++) 
-        f.push({name:this.files[i].name+this.files[i].ext, ext:this.files[i].ext, formatedSize:utils.formatFileSize(this.files[i].size)  ,size:this.files[i].size, path:this.dir})
+        f.push({name:this.files[i].name, ext:this.files[i].ext, formatedSize:utils.formatFileSize(this.files[i].size)  ,size:this.files[i].size, path:this.dir})
          
     if( this.files.length==0) f.push({name:'empty', ext:'', formatedSize:'', size:0 , path:''});
 
@@ -3432,8 +3436,9 @@ export class TFileDialog
 
  handleFileSelection( file )
  {
-   this.editFilePath.value = utils.pathJoin(file.path , file.name , file.ext);
-   if(this.onSelectionChanged) this.onSelectionChanged( file );
+  var f = utils.pathJoin(file.path , file.name );
+  this.editFilePath.value = f;
+   if(this.onSelectionChanged) this.onSelectionChanged(f);
  }
 
 
