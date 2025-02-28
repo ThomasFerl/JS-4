@@ -14,6 +14,7 @@ import { TFEdit,
 import { TFWindow }      from "./tfWebApp/tfWindows.js"; 
 import { TFChart }       from "./tfWebApp/tfObjects.js";
 import { TFDateTime }    from "./tfWebApp/utils.js";
+import {TChaneDlg}       from "./chanelDlg.js";
 
 
 
@@ -58,7 +59,12 @@ export class TdeviceDlg
       this.dlgWnd.buildGridLayout_templateColumns("1fr");
       
       var head = dialogs.addPanel(this.dlgWnd.hWnd,"cssContainerPanel",1,1,1,1);
-                 dialogs.addLabel(head,"",1,1,"100%","100%","Bitte die Parameter der Mess-Station eingeben !")
+          head.buildGridLayout_templateRows("1fr");
+          head.buildGridLayout_templateColumns("1fr 10em");
+          dialogs.addLabel(head,"",1,1,1,1,"Bitte die Parameter der Mess-Station eingeben !")
+      var chanBtn = dialogs.addButton(head,'',2,1,1,1,'Kanäle...') ;  
+          chanBtn.callBack_onClick = ()=>{ var chnDlg = new TChaneDlg()}
+
       var body = dialogs.addPanel(this.dlgWnd.hWnd,"cssContainerPanel",1,2,1,1); 
 
 
