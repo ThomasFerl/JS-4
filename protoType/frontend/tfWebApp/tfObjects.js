@@ -1509,10 +1509,12 @@ export class TFCheckBox extends TFObject
     this.input.setAttribute('type' , 'checkbox');
     this.input.style.justifySelf = 'start';
     this.appendChild(  this.input ); 
-    
-    if(this.callBack_onChange) this.input.onchange = this.callBack_onChange;
-    if(this.callBack_onClick)  this.input.onclick  = this.callBack_onClick;
-    
+
+    this.input.addEventListener('change', function(event) 
+    {
+      if(this.callBack_onChange) this.callBack_onChange(this.checked);
+    }.bind(this) );
+
   } 
 
   get checked()
@@ -3313,6 +3315,7 @@ export class TFileDialog
   constructor( params )
   {
     this.mask             = params.mask || '*.*';
+    this.showHiddenFiles  = params.showHiddenFiles || false;  
     this.multiple         = params.multiple || false;
     this.callBackOnSelect = params.callBackOnSelect || null;
     this.onSelectionChanged = params.onSelectionChanged || null;
@@ -3337,6 +3340,8 @@ export class TFileDialog
         btbPanel.backgroundColor = "gray";
         btbPanel.buildGridLayout_templateColumns('1fr 1fr 1fr 1fr 1fr');
         btbPanel.buildGridLayout_templateRows('1fr');
+    var cbHiddenFiles = new TFCheckBox( btbPanel , 1 , 1 , 1 , 1 , {caption:'hidden'} );
+        cbHiddenFiles.callBack_onChange = function(checked) { this.showHiddenFiles = checked; this.scanDir( this.dir ) }.bind(this);
 
     var btnOk = new TFButton( btbPanel , 2 , 1 , 1 , 1 , {caption:'OK'} );
         btnOk.height = 27;
@@ -3390,6 +3395,7 @@ export class TFileDialog
     for(var i=0; i<response.result.length; i++)
     {
       var f = response.result[i];
+      if(f.name.startsWith('.') && !this.showHiddenFiles) continue;
       if(f.isDir) 
       {
         if(this.node) var n = this.pathTree.addSubNode( this.node , f.name , f );
