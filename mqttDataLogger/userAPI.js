@@ -94,6 +94,30 @@ if( CMD=='NEWDEVICE' )
     }
 
 
+    if( CMD=='LOADCHANELS' )
+      {
+        return dbUtils.fetchRecords_from_Query(dB,"Select * from chanels Where ID_Device="+param.ID_Device+" order by ID desc ");
+      }
+    
+         
+    if( CMD=='NEWCHANEL' )
+      {
+        return dbUtils.insertIntoTable_if_not_exist(dB,"chanels",param.fields,"identifyer") ;
+      }
+      
+    
+     if( CMD=='UPDATECHANEL' )
+        {
+          var response = dbUtils.updateTable(dB,"chanels" , param.idField , param.idValue , param.fields) ;
+       
+          return response;
+        }
+    
+
+
+
+
+
 
 if( CMD=='LSTOPICS') 
   {

@@ -37,6 +37,7 @@ tables.push(
              tableFields:[
                           {fieldName:"BEZEICHNUNG" , fieldType:"Text"} ,
                           {fieldName:"TYP" , fieldType:"Text"} ,
+                          {fieldName:"AnlagenSchluessel", fieldType:"Text"} ,
                           {fieldName:"SERIENNUMMER" , fieldType:"Text"} ,
                           {fieldName:"MAC" , fieldType:"Text"} ,
                           {fieldName:"IP" , fieldType:"Text"} ,
