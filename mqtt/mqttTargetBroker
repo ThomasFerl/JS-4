@@ -1,0 +1,299 @@
+const aedes       = require('aedes')(); // MQTT-Broker-Instanz
+const server      = require('net').createServer(aedes.handle);
+const sqlite3     = require('sqlite3').verbose();
+
+const TARGET_PORT = 4701; // Port für den Target-Broker
+const TARGET_DB   = './mqtt_RawValues.db'; // SQLite-Datenbank für die Rohdaten 
+
+
+//-----------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------------
+
+
+const db = new sqlite3.Database( TARGET_DB , (err) => {
+    if (err) console.error('Fehler beim Verbinden mit der Datenbank:', err.message);
+    else     console.log('Verbunden mit der SQLite-Datenbank "'+TARGET_DB+'"');
+});
+
+// Prüft, ob die Tabellen existieren, und erstellt sie bei Bedarf.
+setupDatabase();
+
+
+//-----------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------------
+
+
+
+// Starte den MQTT-Broker
+server.listen(TARGET_PORT, () => { console.log(`Target-Broker läuft auf Port ${TARGET_PORT}`); });
+
+// Ereignis: Client verbindet sich
+aedes.on('client', (client) => {console.log(`Client verbunden: ${client.id}`);});
+
+// Ereignis: Client trennt sich
+aedes.on('clientDisconnect', (client) => {console.log(`Client getrennt: ${client.id}`);});
+
+// Ereignis: Nachricht empfangen
+aedes.on('publish', (packet, client) => { 
+                                          console.log(`Nachricht empfangen: ${packet.topic} -> ${packet.payload.toString()}`); 
+                                          handleTopic(packet.topic, packet.payload.toString()); 
+                                        });
+
+//-----------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------------
+
+function handleTopic( topic, payload)
+ {
+    // 0. Prüfen, ob das Topic mit "$SYS" beginnt, da es sich dabei um interne Systemnachrichten handelt
+    if (topic.startsWith('$SYS')) { return; }
+    
+    // 1. Prüfen, ob das Topic existiert
+    db.get('SELECT ID FROM mqttTopics WHERE topic = ?', [topic], (err, row) => 
+                                              {
+                                                  if (err) { console.error('Fehler beim Prüfen des Topics:', err.message); return; }
+                                                 
+                                                  if (row) { safePayload(row.ID, payload); }
+                                                  else {
+                                                          // Topic ist neu -> füge es hinzu und gib die neue ID zurück
+                                                          db.run('INSERT INTO mqttTopics (topic) VALUES (?)', [topic], function (err) {
+                                                             if (err) { console.error('Fehler beim Prüfen des Topics:', err.message); return; }
+                                                             safePayload(this.lastID, payload);  
+                                                          });
+                                                       }
+                                              });
+}
+
+
+
+// payload-example:
+//  {"source":"analog","id":2,"type":"float","name":"PT500_IT-Werkstatt","timestamp":"2025-01-21-16:12:17","value":21.1,"unit":"°C"}
+
+// Reperatur des Zeitstempels von yyyy-mm-dd-hh:mn:ss zu yyyy-mm-ddThh:mn:ss
+function repairTimestamp( timestamp)
+{
+    var parts = timestamp.split("-");
+    if (parts.length > 3) {
+        parts[2] += "T" + parts[3];
+        parts.splice(3, 1); // Entfernt den vierten Teil (jetzt überflüssig)
+        return parts.join("-");
+    }
+    return timestamp;
+}   
+
+
+// Datumswandung von yyyy-mm-dd-hh:mn:ss in Excel-Zeit
+function toExcelDate(dateString) 
+{
+    // Wandelt das Datum in einen Unix-Timestamp um (ms seit 1970)
+    const date = new Date(repairTimestamp(dateString));
+    const unixTimestamp = date.getTime() / 1000; // in Sekunden
+
+    // Unix-Timestamp in Excel-Datum umrechnen
+    const daysSinceUnixEpoch = unixTimestamp / 86400; // Sekunden in Tage
+    var excelDate = daysSinceUnixEpoch + 25569; // Differenz zu Excel-Datum
+        excelDate = excelDate + (1/24); // Zeitzone: 1 Stunde
+
+    return (Math.round(excelDate*1000)/1000);
+}
+
+function safePayload( ID_topic, payload)
+{
+    try { var p = JSON.parse(payload); }
+    catch (e) { console.error('Fehler beim Parsen der Payload:', e.message); return; }
+
+    // 2. Speichere die Payload in der Tabelle mqttRawValues   
+    //                                    1       2         3        4        5           6                          7          8             1  2  3  4  5  6  7  8
+    db.run('INSERT INTO mqttPayloads (ID_topic, source  , mqttid , name   , timestamp  , exceltime                , value   , unit ) VALUES ( ?, ?, ?, ?, ?, ?, ?, ? )', 
+                                     [ID_topic, p.source, p.id   , p.name , p.timestamp, toExcelDate(p.timestamp) , p.value , p.unit ] , 
+                                     (err)=>{
+                                             if (err) { console.error('Fehler beim Speichern der Payload:', err.message); return; }
+                                                 console.log(`Payload gespeichert  => ID: ${this.lastID}`);
+                                            });
+}
+
+
+//-----------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------------
+
+
+
+//Prüft, ob die Tabellen existieren, und erstellt sie bei Bedarf...
+function setupDatabase() 
+{
+    // Tabelle mqttTopics erstellen, falls sie nicht existiert
+    const createTopicsTable = `
+        CREATE TABLE IF NOT EXISTS mqttTopics (
+            ID INTEGER PRIMARY KEY AUTOINCREMENT,
+            topic TEXT UNIQUE NOT NULL
+        )
+    `;
+    db.run(createTopicsTable, (err) => {
+        if (err) {
+            console.error('Fehler beim Erstellen der Tabelle mqttTopics:', err.message);
+        } else {
+            console.log('Tabelle mqttTopics überprüft/erstellt.');
+        }
+    });
+
+    // Tabelle mqttMessages erstellen, falls sie nicht existiert
+    const createMessagesTable = `
+        CREATE TABLE IF NOT EXISTS mqttPayloads (
+            ID INTEGER PRIMARY KEY AUTOINCREMENT,
+            ID_topic INTEGER NOT NULL,
+            source TEXT ,
+            mqttid INTEGER ,
+            name TEXT ,
+            timestamp TEXT ,
+            exceltime REAL ,
+            value REAL,
+            unit TEXT 
+        )
+    `;
+    db.run(createMessagesTable, (err) => {
+        if (err) {
+            console.error('Fehler beim Erstellen der Tabelle mqttMessages:', err.message);
+        } else {
+            console.log('Tabelle mqttMessages überprüft/erstellt.');
+        }
+    });
+
+    // Tabelle mqttMessages erstellen, falls sie nicht existiert
+    const archiv_hour = `
+        CREATE TABLE IF NOT EXISTS archiv_hour (
+            ID INTEGER PRIMARY KEY AUTOINCREMENT,
+            ID_topic INTEGER NOT NULL,
+            source TEXT ,
+            mqttid INTEGER ,
+            name TEXT ,
+            timestamp TEXT ,
+            exceltime REAL ,
+            day REAL,
+            month REAL,
+            year REAL,
+            hour REAL,
+            cnt INTEGER,
+            value_avg REAL,
+            value_sum REAL,
+            value_min REAL,
+            value_max REAL,
+            unit TEXT 
+        )
+    `;
+    db.run(archiv_hour, (err) => {
+        if (err) {
+            console.error('Fehler beim Erstellen der Tabelle archiv_hour:', err.message);
+        } else {
+            console.log('Tabelle archiv_hour überprüft/erstellt.');
+        }
+    });
+
+ 
+
+    // Tabelle mqttMessages erstellen, falls sie nicht existiert
+    const archiv_day = `  
+        CREATE TABLE IF NOT EXISTS archiv_day (
+        ID INTEGER PRIMARY KEY AUTOINCREMENT,
+        ID_topic INTEGER NOT NULL,
+        source TEXT ,
+        mqttid INTEGER ,
+        name TEXT ,
+        timestamp TEXT ,
+        exceltime REAL ,
+        day REAL,
+        month REAL,
+        year REAL,
+        cnt INTEGER,
+        value_avg REAL,
+        value_sum REAL,
+        value_min REAL,
+        value_max REAL,
+        unit TEXT 
+    )
+   `;
+    db.run(archiv_day, (err) => {
+    if (err) {
+        console.error('Fehler beim Erstellen der Tabelle archiv_day:', err.message);
+    } else {
+    console.log('Tabelle archiv_day überprüft/erstellt.'); 
+   }
+  });
+}  
+
+
+//------------------------------------------------------------------------------------
+//---------------------ARCHIVIERUNG---------------------------------------------------
+//------------------------------------------------------------------------------------
+
+// Die Archivierung als stündlicher Job
+function doArchive_hour() 
+{
+    console.log("Starte Archivierungsroutine...");
+
+    db.serialize(() => {
+        db.run("BEGIN TRANSACTION");
+
+        // Aggregation und Einfügen in die Archiv-Tabelle
+        db.run(`
+                INSERT INTO archiv_hour (ID_Topic,source,mqttid,name,exceltime,year,month,day,hour,value_avg,value_sum,value_min,value_max,cnt,unit)
+                SELECT 
+                      ID_Topic, 
+                      source, 
+                      mqttid, 
+                      name,
+                      CAST(exceltime * 24 AS INTEGER) / 24.0 as exceltime, 
+                      strftime('%Y', datetime((exceltime - 25569) * 86400, 'unixepoch')) as year,
+	                  strftime('%m', datetime((exceltime - 25569) * 86400, 'unixepoch')) as month,
+	                  strftime('%d', datetime((exceltime - 25569) * 86400, 'unixepoch')) as day,
+	                  strftime('%H', datetime((exceltime - 25569) * 86400, 'unixepoch')) as hour,
+                      AVG(value) as value_avg,
+	                  SUM(value) as value_sum,
+	                  MIN(value) as value_min,
+	                  MAX(value) as value_max,
+	                  count(*)   as cnt,
+                      unit
+                FROM mqttPayloads 
+                Where  CAST(((julianday('now') - (exceltime + 2415018.5)) * 24 ) as INTEGER) > 1
+                GROUP BY ID_Topic, 
+                         source, 
+                         mqttid, 
+                         name,
+                         CAST(exceltime * 24 AS INTEGER) / 24.0 , 
+		                 unit
+
+
+        `, function (err) {
+            if (err) {
+                console.error("Fehler beim Einfügen in die Archiv-Tabelle:", err.message);
+                return db.run("ROLLBACK");
+            }
+        });
+
+        // Löschen der verarbeiteten Daten
+        db.run(`
+            DELETE FROM mqttPayloads
+            WHERE CAST(((julianday('now') - (exceltime + 2415018.5)) * 24 ) as INTEGER) > 1
+        `, function (err) {
+            if (err) {
+                console.error("Fehler beim Löschen aus mqttPayloads:", err.message);
+                return db.run("ROLLBACK");
+            }
+        });
+
+        db.run("COMMIT", (err) => {
+            if (!err) {
+                console.log("Archivierungsroutine erfolgreich abgeschlossen.");
+            }
+        });
+    });
+}
+
+
+
+// Routine alle 60 Minuten ausführen
+setInterval(doArchive_hour, 60 * 60 * 1000);
+
+

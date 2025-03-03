@@ -6,8 +6,12 @@ import * as dialogs      from "./tfWebApp/tfDialogs.js";
 import * as graphics     from "./tfWebApp/tfGrafics.js";
 
 import { TFEdit, 
+         TForm,
+         TFPopUpMenu,
+         TPropertyEditor,
          TFAnalogClock,
          TFWorkSpace }   from "./tfWebApp/tfObjects.js";
+
 import { TFWindow }      from "./tfWebApp/tfWindows.js"; 
 import { TFChart }       from "./tfWebApp/tfObjects.js";
 import { TFDateTime }    from "./tfWebApp/utils.js";
@@ -35,6 +39,22 @@ var osziX          = 0;
 var treeView       = null;
 var treeData       = {};
 
+var mediaViewer    = null;
+
+
+function viewMedia(fn)
+{
+    if(mediaViewer==null) 
+    {   
+      mediaViewer = new TFWindow( svgContainer , fn , '80%' , '90%' , 'CENTER' );
+      var img     = dialogs.addImage( mediaViewer.hWnd , '' , 1 , 1 , '100%' , '100%' );
+      mediaViewer.img = img;
+    }
+   
+    mediaViewer.img.imgURL = utils.buildURL('GETIMAGEFILE',{fileName:fn} );
+}
+
+
 
 
 
@@ -57,7 +77,7 @@ export function main(capt1,capt2)
       svgContainer  = l.dashBoard; 
 
       menuContainer.backgroundColor = 'gray';
-      menuContainer.buildGridLayout_templateColumns('10em 10em 10em 10em 10em 10em 10em 1fr ');
+      menuContainer.buildGridLayout_templateColumns('10em 10em 10em 10em 10em 10em 10em 10em 10em 10em 10em 1fr ');
       menuContainer.buildGridLayout_templateRows('1fr');
 
 
@@ -114,7 +134,15 @@ var btn6 = dialogs.addButton( menuContainer , "" , 6 , 1 , 1 , 1 , "Chart-Test" 
     btn6.heightPx = 35;
 
 
-    treeData ={A:1,B:2,C:{CC:30},D:4,E:5,F:6,G:7}
+    treeData =[{caption:"A", dataContainer:"111"},
+               {caption:"b", dataContainer:"110"},
+               {caption:"C", dataContainer:"101"},
+               {caption:"S", dataContainer:"102" ,  childNodes:[{caption:"T" ,dataContainer:"1021"},
+                                                                {caption:"TT",dataContainer:"1022"},
+                                                                {caption:"TZ",dataContainer:"1023"}]
+                                                },
+               {caption:"D", dataContainer:"011"},
+               {caption:"E", dataContainer:"000"}]
 
     var btn7 = dialogs.addButton( menuContainer , "" , 7 , 1 , 1 , 1 , "TreeView-Test"  );
     btn7.heightPx = 35;
@@ -123,6 +151,61 @@ var btn6 = dialogs.addButton( menuContainer , "" , 6 , 1 , 1 , 1 , "Chart-Test" 
                                            else {treeView.destroy(); treeView = null;}
                                          }
    
+
+
+    var btn8 = dialogs.addButton( menuContainer , "" , 8 , 1 , 1 , 1 , "Formular-Test"  );
+    btn8.heightPx = 35;
+    btn8.callBack_onClick = function() { 
+                                          var formData = {Name       :"Ferl",
+                                                          Vorname    :"Thomas",
+                                                          gebDatum   :"29.10.1966",
+                                                          PLZ        :"39218",
+                                                          Ort        :"Schönebeck",
+                                                          favFastfood:"Pizza",
+                                                          level      : 90,
+                                                          online     :true};
+                                                               // aParent      , aData    , aLabels , aAppendix , aExclude , aInpType , URLForm )
+                                            var form = new TForm( svgContainer , formData , {}      , {}        , []       , {}       , '' );    
+                                                form.setLabel("favFastfood" , "Lieblings-Fastfood")
+                                                form.setInputType("favFastfood" , "select" , {items:["Pizza","Pommes","Döner","HotDog","Sushi"]} );
+                                                form.setInputType("gebDatum" , "date");
+                                                form.setInputType("level" , "range" , {sliderMin:1,sliderMax:100,sliderStep:5,sliderPosition:formData.level} );
+                                                form.setInputType("online" , "checkBox"  );
+ 
+                                                form.render( true);  
+                                                form.callBack_onOKBtn = function(values) {console.log(JSON.stringify(values))};
+                                       }
+
+
+
+
+var   btn9 = dialogs.addButton( menuContainer , "" , 9 , 1 , 1 , 1 , "Property-Editor"  );
+      btn9.heightPx = 35;
+      btn9.callBack_onClick = function() {
+                                            var data = [{label:"Name",value:"Ferl",type:"text",items:[]},
+                                                        {label:"Vorname",value:"Thomas",type:"text",items:[]},
+                                                        {label:"gebDatum",value:"29.10.1966",type:"date",items:[]},
+                                                        {label:"PLZ",value:"39218",type:"text",items:[]},
+                                                        {label:"Ort",value:"Schönebeck",type:"text",items:[]},
+                                                        {label:"favFastfood",value:"Pizza",type:"text",items:["Pizza","Pommes","Döner","HotDog","Sushi"]},
+                                                        {label:"level",value:"90",type:"range",items:[]},
+                                                        {label:"online",value:"true",type:"boolean",items:[]}];
+
+                                                        var p = new TPropertyEditor( svgContainer , data , null , null )
+                                                            p.render();
+                                          
+                                         }    
+
+
+
+
+var   btn10 = dialogs.addButton( menuContainer , "" , 10 , 1 , 1 , 1 , "ask me"  );
+      btn10.heightPx = 35;
+      btn10.callBack_onClick = function() 
+      {
+        dialogs.ask( "Frage" , "Wollen Sie das wirklich ?" , ()=>{dialogs.showMessage( "JA" , null , null )} , ()=>{dialogs.showMessage( "NEIN" , null , null )} );
+      }
+
       testContainer1.buildGridLayout_templateRows('repeat(10,1fr)');
       testContainer1.buildGridLayout_templateColumns('1fr');
 
@@ -150,7 +233,11 @@ var btn6 = dialogs.addButton( menuContainer , "" , 6 , 1 , 1 , 1 , "Chart-Test" 
       } 
 
 
-      dialogs.addLabel( panels[0] , '' , 1 , 1 , 1 , 1 , 'Label' );
+      var l=dialogs.addLabel( panels[0] , '' , 1 , 1 , 1 , 1 , 'Label' );
+      l.callBack_onClick=()=>{dialogs.fileDialog( "*.*" , true , (d,f,ff)=>{editPath.value=d+'/'} ,
+                                                                 (fn)=>{viewMedia(fn)} )};
+    
+
 
       editPath = dialogs.addInput( panels[1] , 1 , 1 , 10 , 'path' , '' , '' , {} );
 
@@ -325,9 +412,12 @@ async function showSVGs(type)
                                                     wnd.callBack_onClick = (e)=>{
                                                                                   if(e.button==0) nextImage(img);
                                                                                   if(e.button==2) prevImage(img);
-                                                                                  if(e.altKey)    diaShow(img);
-                                                                                  
-                                                                                } 
+                                                                                 } 
+
+                                                    var popup = new TFPopUpMenu([{caption:'Diashow',value:1} , {caption:'aabrechen',value:2 }]);
+                                                        popup.onClick = function (sender , item ){ if(item.value==1) diaShow(this);}.bind(img);
+                            
+                                                    img.addPopupMenu(popup); 
                                                  };
     }
 
@@ -352,5 +442,5 @@ async function showSVGs(type)
 
  function diaShow(img)
  {
-   setInterval( () => { nextImage(img); }, 4000 ); 
+  setInterval( () => { nextImage(img); }, 4000 ); 
  }

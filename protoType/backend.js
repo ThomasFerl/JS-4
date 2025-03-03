@@ -18,11 +18,6 @@ const userAPI     = require('./userAPI');
 const session     = require('./session');
 const dbTables    = require('./dbTables');
 
-
-
-const { networkInterfaces } = require('os');
-const { Console }           = require('console');
-
 const sslOptions  = {
     key : fs.readFileSync('./SSL/privateKex.pem'  , 'utf8' ),     // Pfad zum privaten Schlüssel
     cert: fs.readFileSync('./SSL/certificate.pem' , 'utf8' )    // Pfad zum Zertifikat
@@ -32,7 +27,7 @@ const dBetc       = './etc.db';
 const etc         = new Database( dBetc  , { verbose: utils.log } );
       utils.log("etc-dB: "+etc.constructor.name);
 
-const dBName      = './workingBase.db';
+const dBName      = './workspace.db';
 const dB          = new Database( dBName  , { verbose: utils.log ,  readonly: false } );
       utils.log("working-dB: "+dB.constructor.name);
 

@@ -2,6 +2,9 @@ import * as globals  from "./globals.js";
 import * as utils    from "./utils.js";
 import * as graphics from "./tfGrafics.js";
 import * as chartJS  from "./chart.js";
+import { TFWindow }  from "./tfWindows.js"; 
+import { TFTreeView }from "./tfTreeView.js"; 
+import { THTMLTable } from "./tfGrid.js";
 
 
 var screen = null;
@@ -304,6 +307,37 @@ export class TFObject
     this.top    = this.params.top;
     this.width  = this.params.width;
     this.height = this.params.height;  
+
+    if(this.params.backgroundColor) this.backgroundColor = this.params.backgroundColor;
+    if(this.params.color)           this.color           = this.params.color;
+    if(this.params.fontSize)        this.fontSize        = this.params.fontSize;
+    if(this.params.fontWeight)      this.fontWeight      = this.params.fontWeight;
+    if(this.params.gap)             this.gap             = this.params.gap;
+    if(this.params.placeItems)      this.placeItems      = this.params.placeItems;
+    if(this.params.justifyContent)  this.justifyContent  = this.params.justifyContent;
+    if(this.params.alignItems)      this.alignItems      = this.params.alignItems;
+    if(this.params.flexDirection)   this.flexDirection   = this.params.flexDirection;
+    if(this.params.overflow)        this.overflow        = this.params.overflow;
+    if(this.params.display)         this.display         = this.params.display;
+    if(this.params.opacity)         this.opacity         = this.params.opacity;
+    if(this.params.shadow)          this.shadow          = this.params.shadow;
+    if(this.params.borderRadius)    this.borderRadius    = this.params.borderRadius;
+    if(this.params.borderWidth)     this.borderWidth     = this.params.borderWidth;
+    if(this.params.borderColor)     this.borderColor     = this.params.borderColor;
+    if(this.params.padding)         this.padding         = this.params.padding;
+    if(this.params.paddingTop)      this.paddingTop      = this.params.paddingTop;
+    if(this.params.paddingLeft)     this.paddingLeft     = this.params.paddingLeft;
+    if(this.params.paddingRight)    this.paddingRight    = this.params.paddingRight;
+    if(this.params.paddingBottom)   this.paddingBottom   = this.params.paddingBottom;
+    if(this.params.margin)          this.margin          = this.params.margin;
+    if(this.params.marginTop)       this.marginTop       = this.params.marginTop;
+    if(this.params.marginLeft)      this.marginLeft      = this.params.marginLeft;
+    if(this.params.marginRight)     this.marginRight     = this.params.marginRight;
+    if(this.params.marginBottom)    this.marginBottom    = this.params.marginBottom;
+    if(this.params.gridTemplateAreas) this.gridTemplateAreas = this.params.gridTemplateAreas;
+    if(this.params.blur)            this.blur            = this.params.blur;
+
+
     this.DOMelement.data =  this;   
    
           this.DOMelement.addEventListener('wheel'      , (e)=>{if( this.callBack_onWheel)       this.callBack_onWheel      (e,this.dataBinding) });
@@ -312,15 +346,7 @@ export class TFObject
           this.DOMelement.addEventListener('mousemove'  , (e)=>{if( this.callBack_onMouseMove)   this.callBack_onMouseMove  (e,this.dataBinding) });
           this.DOMelement.addEventListener('mouseleave' , (e)=>{if( this.callBack_onMouseOut )   this.callBack_onMouseOut   (e,this.dataBinding) });
           
-          if(this.popupMenu)
-           {  
-            this.DOMelement.addEventListener('contextmenu', (e)=>{ if(this.popupMenu) 
-                                                                   {
-                                                                     e.preventDefault();
-                                                                     this.popupMenu.show(this,e.pageX, e.pageY);
-                                                                   }
-                                                                  });   
-          } 
+          if(this.popupMenu) this.addPopupMenu(this.popupMenu)
           else this.DOMelement.addEventListener('contextmenu', (e)=>{e.preventDefault();
                                                                      if( this.callBack_onClick) this.callBack_onClick (e,this.dataBinding) 
                                                                     });   
@@ -333,6 +359,18 @@ export class TFObject
           this.DOMelement.addEventListener('keyup'      , (e)=>{if( this.callBack_onKeyUp)       this.callBack_onKeyUp      (e,this.dataBinding) });
 
   } 
+
+  addPopupMenu(p)
+  {  
+    this.popupMenu = p;
+    this.DOMelement.addEventListener('contextmenu', (e)=>{ if(this.popupMenu) 
+                                                           {
+                                                             e.preventDefault();
+                                                             this.popupMenu.show(this,e.pageX, e.pageY);
+                                                           }
+                                                          });   
+  } 
+
 
   set id(value)
   {
@@ -384,9 +422,18 @@ export class TFObject
 
   set width( value )
   {
-    if(this.hasGridLayout()) this.gridWidth = value;
-    else this.widthPx = value;
+    if(this.hasGridLayout())
+    {   
+      if (typeof value === 'string') 
+        {
+          if (value.includes('px') || value.includes('em')) this.widthPx = value;
+          else this.gridWidth = value;
+      }
+      else if (typeof value === 'number')  this.gridWidth = value;
+    }
+     else this.widthPx = value;
   } 
+
 
   get width()
   {
@@ -397,8 +444,16 @@ export class TFObject
 
   set height( value )
   {
-    if(this.hasGridLayout()) this.gridHeight = value;
-    else                     this.heightPx = value;
+    if(this.hasGridLayout())
+    {   
+      if (typeof value === 'string') 
+        {
+          if (value.includes('px') || value.includes('em')) this.heightPx = value;
+          else this.gridHeight = value;
+      }
+      else if (typeof value === 'number')  this.gridHeight = value;
+    }
+     else this.heightPx = value;
   } 
 
   get height()
@@ -915,7 +970,7 @@ get opacity()
 
     if (value === 0) {
         // Schatten entfernen
-        if (this.DOMelement) this.DOMelement.style.boxShadow = '';
+        if (this.DOMelement) this.DOMelement.style.boxShadow = 'none';
     } else {
         // Schatten hinzufügen
         var u = (value * 2) - 1;
@@ -1019,35 +1074,62 @@ get opacity()
 export class TFSlider extends TFObject 
 {
   constructor (parent , left , top , width , height , params ) 
-  {
+  { 
+    params.backgroundColor = params.backgroundColor || parent.backgroundColor || "transparent";
+    params.caption         = params.caption || '';
+    params.captionLength   = params.captionLength || params.caption.length;
+    params.sliderMin       = params.sliderMin  || params.min || 0;
+    params.sliderMax       = params.sliderMax  || params.max || 100;
+    params.sliderStep      = params.sliderStep || params.step || 1;
+    params.value           = params.value || params.sliderPosition || params.position || 50;
+    
     super(parent , left , top , width , height , params );
     
     // this.render() wird von bereits von der TFObjects Basisklasse aufgerufen
     // alles was jetzt passiert passiert NACH "unserem" this.render()
-    this.onChange        = null;
-    this.display         = 'flex';
-    this.alignItems      = 'center';
-    this.justifyContent  = 'center'; 
-    this.overflow        = 'hidden';
+   
   }  
 
   render()
-  {
+  { 
     super.render();
 
-    this.slider       = document.createElement('INPUT');
-    this.slider.type  = 'range';
-    this.slider.min   = 0;
-    this.slider.max   = 100;
+    this.onChange              = null;
+    this.display               = 'flex';
+    this.alignItems            = 'center';
+    this.justifyContent        = 'center'; 
+    this.overflow              = 'hidden';
+    this.backgroundColor       = this.params.backgroundColor;
+    this.caption               = null;
+    
    
-    if(this.params.position !=null) this.value = this.params.position;
-    else                            this.value = 50;
+    var s = null;
 
-    this.slider.step  = 1;
-    this.slider.style.width = '90%';
-    this.slider.style.height = '90%';
+    if(this.params.caption)
+    {
+      this.buildGridLayout_templateColumns(this.params.captionLength+'em 1fr');
+      this.buildGridLayout_templateRows('1fr');
+      this.caption = new TFLabel(this , 1 , 1 , 1 , 1 , {caption:this.params.caption,labelPosition:'LEFT'} );
+      if(this.params.fontSize) this.caption.fontSize = this.params.fontSize;
+      this.caption.textAlign  = 'LEFT';
+      this.caption.fontWeight = 'bold';
+      this.caption.marginLeft = '0.5em';
+      
+      s = new TFPanel(this , 2 , 1 , 1 , 1 , {css:"cssContainerPanel"} );
+    } else s=this; 
+
+    s.overflow = 'hidden';
+   
+    this.slider         = document.createElement('INPUT');
+    this.slider.type    = 'range';
+    this.slider.min     = this.params.sliderMin;
+    this.slider.max     = this.params.sliderMax;
+    this.slider.step    = this.params.sliderStep1;
+    this.value          = this.params.value;
+   
+    this.slider.style.width = '100%';
+    this.slider.style.height = '100%';
     this.slider.style.backgroundColor = this.backgroundColor;
-
     
      // Eventhandler für Input
      this.slider.addEventListener("input", () => {
@@ -1059,7 +1141,7 @@ export class TFSlider extends TFObject
       }
     });
     
-    this.appendChild(this.slider);
+    s.appendChild(this.slider);
   } 
   // Getter und Setter für den Wert des Sliders
   set value( v )
@@ -1081,6 +1163,7 @@ export class TFLabel extends TFObject
   
   constructor (parent , left , top , width , height , params ) 
   {
+    params     = params || {};
     params.css = params.css || "cssLabel";
     super(parent , left , top , width , height , params );
     
@@ -1145,8 +1228,34 @@ get textAlign()
   return this.__ta;
 } 
 
+set fontSize( value )
+{
+  this.paragraph.style.fontSize = value;
 }
 
+get fontSize()
+{
+  return this.paragraph.style.fontSize;
+}
+
+set color( value )  
+{
+  this.paragraph.style.color = value;
+}
+
+get color()
+{
+  return this.paragraph.style.color;
+}
+
+setTextIndent( value )
+{
+  this.paragraph.style.paddingLeft = value;
+}  
+
+
+
+}
 //---------------------------------------------------------------------------
 
 export class TFImage extends TFObject 
@@ -1367,9 +1476,10 @@ export class TFCheckBox extends TFObject
     if(!params) params = {css:"cssPanelForInput", caption:"checkBox", checked:false , checkboxLeft:true};
     else    
          {
-          params.css          = params.css          || "cssPanelForInput";
-          params.caption      = params.caption      || "checkBox";
-          params.checked      = params.checked      || false;
+          params.css          = params.css           || "cssPanelForInput";
+          params.caption      = params.caption       || "checkBox";
+          params.captionLength= params.captionLength || params.caption.length+1;
+          params.checked      = params.checked       || false;
           if(params.checkboxLeft == undefined) params.checkboxLeft = true;
          } 
     
@@ -1381,8 +1491,8 @@ export class TFCheckBox extends TFObject
   {
     super.render();
     
-    if(this.params.checkboxLeft) utils.buildGridLayout_templateColumns(this , '2em 1fr');
-    else                    utils.buildGridLayout_templateColumns(this , '1fr 2em');
+    if(this.params.checkboxLeft) utils.buildGridLayout_templateColumns(this , '2em '+this.params.captionLength+'em 1fr');
+    else                    utils.buildGridLayout_templateColumns(this , this.params.captionLength+'em  2em 1fr');
     utils.buildGridLayout_templateRows(this ,'1fr');
    
     if(this.params.checkboxLeft) this.gridTemplateAreas    = ' "checkbox editLabel" ';
@@ -1391,16 +1501,20 @@ export class TFCheckBox extends TFObject
     this.label             = document.createElement("LABEL");
     this.label.className   = "cssLabelForInput";
     this.label.textContent = this.params.caption;
+    this.label.style.justifySelf = 'start';
     this.appendChild( this.label );  
      
     this.input             = document.createElement("INPUT");
     this.input.className   = "cssCheckBox";
     this.input.setAttribute('type' , 'checkbox');
+    this.input.style.justifySelf = 'start';
     this.appendChild(  this.input ); 
-    
-    if(this.callBack_onChange) this.input.onchange = this.callBack_onChange;
-    if(this.callBack_onClick)  this.input.onclick  = this.callBack_onClick;
-    
+
+    this.input.addEventListener('change', function(event) 
+    {
+      if(this.callBack_onChange) this.callBack_onChange(this.checked);
+    }.bind(this) );
+
   } 
 
   get checked()
@@ -1412,6 +1526,17 @@ export class TFCheckBox extends TFObject
   {
     this.input.checked = value;
   }
+
+  get value()
+  {
+    return this.input.checked;
+  }
+
+  set value( value )  
+  {
+    this.input.checked = value;
+  }
+
 
 }
 
@@ -1593,16 +1718,17 @@ export class TFEdit extends TFObject
 {
   constructor (parent , left , top , width , height , params ) 
   {
-    if(!params)        params = {};
-        params.css            = "cssContainerPanel";
-        params.caption        = params.caption        || "";
-        params.value          = params.value          || "";
-        params.labelPosition  = params.labelPosition  || "LEFT";
-        params.appendix       = params.appendix       || "";
-        params.captionLength  = (params.captionLength  || params.caption.length)+1;
-        params.appendixLength = (params.appendixLength || params.appendix.length)+1;
-        params.editLength     = params.editLength     || 4;
-        params.type           = params.type           || 'text';
+    if(!params)        params   = {};
+        params.css              = "cssContainerPanel";
+        params.caption          = params.caption         || "";
+        params.value            = params.value           || "";
+        params.labelPosition    = params.labelPosition   || "LEFT";
+        params.appendix         = params.appendix        || "";
+        params.captionLength    = (params.captionLength  || params.caption.length)+1;
+        params.appendixLength   = (params.appendixLength || params.appendix.length)+1;
+        params.editLength       = params.editLength      || "auto";
+        params.justifyEditField = params.justifyEdit     || 'right';
+        params.type             = params.type            || 'text';
       
     
     super(parent , left , top , width , height , params );
@@ -1694,8 +1820,12 @@ if(gridTemplate.apx)
      this.input.style.margin           = '0.5px';
      if(this.params.editLength) 
       {
-       this.input.style.width       = this.params.editLength+'em'; 
-       this.input.style.justifySelf = 'end';
+        if(this.params.editLength != 'auto') this.input.style.width = this.params.editLength+'em';
+        else                                 this.input.style.width = '100%'; 
+
+        if(this.params.justifyEditField =='left') this.input.style.justifySelf = 'start';
+        else                                      this.input.style.justifySelf = 'end'; 
+
       } 
     
     this.input.addEventListener('change',  function() { 
@@ -1782,8 +1912,9 @@ export class TFComboBox extends TFEdit
   render()
   {
     this.items = [];
-    if(this.params.items) this.items = this.params.items;
     super.render();
+    
+    if(this.params.items) this.setItems (this.params.items);
     this.combobox = this.input;  // nur aus Gründen der besseren Lesbarkeit / Anwendbarkeit
     this.__render();
     this.combobox.addEventListener('change',  function() { 
@@ -1813,9 +1944,17 @@ export class TFComboBox extends TFEdit
     for(var i=0; i<this.items.length; i++)
     {
       var item = this.items[i];
+      var c    = ''
+      var v    = ''
+      if(typeof item == 'string') {c = item; v = item;}
+      else
+      {
+        c = item.caption || item.text;
+        v = item.value; 
+      }  
       var option = document.createElement("OPTION");
-      option.text  = item.caption || item.text;
-      option.value = item.value;
+      option.text  = c;
+      option.value = v;
       this.combobox.appendChild(option);
     }
   } 
@@ -1833,9 +1972,17 @@ export class TFComboBox extends TFEdit
 
  setItems( items )
  {
-  if(items==null)this.items = [];
-  else this.items = items;
-  __render();
+   this.items = [];
+   if(items!=null) 
+   {
+     for(var i=0; i<items.length; i++)
+     {
+        var item = items[i];
+        if(typeof item == 'string') this.items.push( {caption:item , value:item} );
+        else                        this.items.push( item );
+     }     
+    }  
+    this.__render();
  } 
 
 getItems()
@@ -1871,34 +2018,30 @@ get itemIndex()
 
 set value( value )  
 {
-  // ist value in der Items-Liste ?
-  var ndx = this.items.findIndex( i => i.value == value );
-  if (ndx<0) 
-    {
-      this.addItem( value , value );
-      ndx = this.items.length-1;
-    }  
-
-  this.itemIndex = ndx;
+  this.item = value;
 }
 
 get value() 
-{
-  var ndx = this.itemIndex;
-  return this.items[ndx].value; 
+{ 
+  return this.item;
 }
 
 
 set item( item )  
 {
+  var _item = {value:'',caption:''};
+
+  if(typeof item == 'string') {_item.value = item; _item.caption = item;}
+  else                        _item = item;
+
   // ist value in der Items-Liste ?
-  var ndx = this.items.indexOf( item );
+  var ndx = this.items.findIndex( i => i.value == _item.value );
   if (ndx<0) 
     {
-      this.addItem( item.caption , item.value );
+      this.addItem( _item.caption , _item.value );
       ndx = this.items.length-1;
     }  
-
+  
   this.itemIndex = ndx;
 }
 
@@ -1916,6 +2059,9 @@ export class Screen extends TFObject
 {
   constructor()
   {
+    document.body.style.margin   = 0;
+    document.body.style.padding  = 0;
+    document.body.style.overflow = 'hidden';
     super(document.body , 0 , 0 , '100%' , '100%' , {css:"cssScreen" , preventGrid:true , fixit:true } );
   }
   
@@ -1923,6 +2069,7 @@ export class Screen extends TFObject
   {
     super.render();
     this.id = 'SCREEN_' + utils.buildRandomID(1);
+    this.overflow = 'hidden';
     screen = this;
    
   } 
@@ -1952,6 +2099,7 @@ export class TFWorkSpace extends TFObject
     
     super(screen , 1 , 1 , '100%' , '100%' , {css:"cssWorkSpaceJ4" , preventGrid:true , fixit:true, ID:ID, caption1:caption1, caption2:caption2 } );
     this.self = null;
+    if(!globals.webApp.activeWorkspace) globals.webApp.activeWorkspace = this;
   }
   
   render()
@@ -2023,14 +2171,12 @@ export class TFWorkSpace extends TFObject
    
   select()
   {
-    /* 
-    utils.log("switch Workspace from "+globals.webApp.activeWorkspace.container.id+" to "+this.container.id+")");
+      utils.log("switch Workspace from "+globals.webApp.activeWorkspace.container.id+" to "+this.container.id+")");
       utils.log("Workspace.select( this="+this.container.id+")");
       globals.webApp.activeWorkspace.hide();
       globals.webApp.activeWorkspace = this;
       utils.log("selectWorkspace ... aktivieren von "+this.container.id);
-      globals.webApp.activeWorkspace.show()  
-   */   
+      globals.webApp.activeWorkspace.show()     
   }
 
 
@@ -2787,6 +2933,526 @@ clear(aSeries)
  }
 
 }  // TFChart
+
+//---------------------------------------------------------------------------
+
+export class TForm
+{
+  constructor( aParent , aData , aLabels , aAppendix , aExclude , aInpType , URLForm )
+  // aParent:  TFObject
+  // aData:    JSON-Objekt mit den Daten
+  // aLabels:  JSON-Objekt mit den Labels
+  // aAppendix:JSON-Objekt mit den Appendix
+  // aExclude: Array mit den auszuschließenden Feldern
+  // URLForm:  URL zur Form-Definition (optional) Falls dieses nicht definiert wird buildFormGeneric() aufgerufen
+  {
+    this.objName            = this.constructor.name;
+    this.isTFObject         = false;
+    this.parent             = aParent;
+    this.data               = aData;
+    this.htmlForm           = "";  // String Representanz eines ggf. übergebenen HTML-Formulars
+    this.error              = false;
+    this.errMsg             = '';
+    
+    this.objName            = this.constructor.name;
+    this.controls           = [];
+
+    this.callBack_onOKBtn   = null;
+    this.callBack_onESCBtn  = null;
+  
+    console.log("TForm.constructor(...) URLForm: " + URLForm );
+
+    if(URLForm)  // falls URL für ein Formular übergeben wurde, dieses laden
+    {
+      var response  = utils.loadContent(URLForm);
+
+      if(response.error)
+      {
+        dialogs.showMessage('Fehler beim Versuch, eine Ressource zu laden in:  TForm.constructor("'+URLForm+'")   => ' + response.errMsg);
+        this.error = true;
+        return false;
+      }
+      this.htmlForm = response.body; 
+    }  
+    
+    else 
+    {
+      if(!aExclude) aExclude  = [];
+
+      for(var key in this.data)
+      {
+       if(utils.indexOfIgnoreCase(aExclude , key) < 0)   // nicht in exclude - List  ...
+       {
+        var lbl  = key;
+        var apx  = '';
+        var type = '';
+
+        if(aLabels)  // existieren Labels zur besseren Lesbarkeit ?                
+        {
+         // Variante1: [{var1:"1"} , {var2:"2"} , {var3:"3"} , .... , {varn:"n"}]
+         if (Array.isArray(aLabels)) 
+         { 
+           var jsnHelp = utils.findEntryByKey(aLabels,key);
+           if(jsnHelp) lbl = jsnHelp[key];
+         }
+         else // Variante2: {var1:"1" , var2:"2" , var3:"3" , .... , varn:"n"}
+         {
+            if(aLabels.hasOwnProperty(key)) lbl = aLabels[key];
+         }
+        }
+        
+        if(aAppendix)
+        var jsnHelp     = utils.findEntryByKey( aAppendix ,key);
+        if(jsnHelp) apx = jsnHelp[key];
+
+        if(aInpType)
+          var jsnHelp      = utils.findEntryByKey( aInpType ,key);
+          if(jsnHelp) type = jsnHelp[key];
+
+        this.controls.push({fieldName:key, value:this.data[key], label:lbl, appendix:apx, type: type || "TEXT", enabled:true,  visible:true, editControl:null, params:{} })
+
+      } else  this.controls.push({fieldName:key, value:this.data[key], label:"" , appendix:"" , type:"TEXT", enabled:false, visible:false , params:{} })
+    }
+  }   // else  
+
+}
+  
+  getControlByName( key )
+  {
+    for(var i=0; i<this.controls.length; i++)
+      {
+        var ctrl = this.controls[i];
+        if (ctrl.fieldName.toUpperCase()==key.toUpperCase()) return ctrl;
+      }
+    return null;  
+  }
+
+
+  
+  disable( key )
+  {
+    var ctrl = this.getControlByName(key);
+    if (ctrl!=null)
+    {
+      ctrl.enabled=false;
+      if(ctrl.editControl) ctrl.editControl.enabled=false;
+    }  
+  }
+
+
+  enable( key )
+  {
+    var ctrl = this.getControlByName(key);
+    if (ctrl!=null)
+    {  
+      ctrl.enabled=true;
+      if(ctrl.editControl) ctrl.editControl.enabled=true;
+    }  
+  }
+
+  
+  setLabel(key , aLabel)
+  {
+      var ctrl = this.getControlByName(key);
+      if (ctrl!=null)
+      {
+        ctrl.label = aLabel;
+         if(ctrl.editControl) ctrl.editControl.caption.text=aLabel;
+      }   
+  }
+
+
+  setValue(key , aValue)
+  {
+    var ctrl = this.getControlByName(key);
+    if (ctrl!=null)
+    {
+      ctrl.value = aValue;
+      if(ctrl.editControl) ctrl.editControl.value = aValue;
+    }  
+  }
+
+
+  setInputType(key , type , params )
+  {
+    var ctrl = this.getControlByName(key);
+    if (ctrl!=null)
+    {
+      ctrl.type = type;
+      ctrl.params = params;
+    }  
+  }
+
+
+  render( withCtrlButton )
+  {
+    if(this.htmlForm == '' ) this.renderGeneric( withCtrlButton );
+    else                     this.renderForm();
+  }
+
+
+  renderForm()  
+  {
+    this.parent.HTML( this.htmlForm );
+
+    // nun die HTML-Elemente mit den Daten verbinden ...
+    // dazu werden die Daten durchlaufen und vie key das passende Element gesucht. Falls erfolgreich, wird das HTML-Element. value gesetzt...
+    this.controls = [];
+
+    for(var key in this.data)
+    {
+      var el = this.parent.getElementById( key );
+      if (el) 
+      {
+        this.controls.push( {fieldName:key, value:this.data[key], label:null, appendix:null, type:"null", enabled:true,  visible:true, lblControl:null, editControl:el, apxControl:null})
+       
+        if (el.tagName === 'INPUT' && el.type === 'text') el.value     = this.data[key];
+        if (el.tagName === 'LABEL')                       el.innerHTML = this.data[key];
+        if (el.tagName === 'SELECT') 
+        { 
+          for (var i = 0; i < el.options.length; i++) 
+          if (el.options[i].value === this.data[key]) el.selectedIndex = i; 
+        }
+      }
+    }  
+    
+  }  
+
+
+
+  renderGeneric( withCtrlButton )
+  {  
+    var inpContainer = null;
+    var btnContainer = null;
+
+    if(withCtrlButton)
+    {
+      this.parent.buildGridLayout_templateColumns("1fr");
+      this.parent.buildGridLayout_templateRows("1fr 4em"); 
+      inpContainer = new TFPanel(this.parent,1,1,1,1,{css:"cssContainerPanel"});
+      btnContainer = new TFPanel(this.parent,1,2,1,1,{css:"cssGrayPanel"});
+      btnContainer.overflow = 'hidden'; 
+    } else inpContainer = this.parent;  
+
+    // maximale label-länge finden, um rechtsbündige Eingabezellen zu haben....
+    var maxLabel = 0;
+    for(var i=0; i<this.controls.length; i++) if(this.controls[i].visible && (this.controls[i].label.length>maxLabel)) maxLabel = this.controls[i].label.length;
+
+    // maximale Länge des ggf. vorh. Appendix finden ....
+    var maxAppendix = 2;
+    for(var i=0; i<this.controls.length; i++) if(this.controls[i].visible && (this.controls[i].appendix.length>maxAppendix)) maxAppendix = this.controls[i].appendix.length;
+
+    //build.....
+    inpContainer.buildBlockLayout();  
+
+    for(var i=0; i<this.controls.length; i++)
+    {
+      var ctrl = this.controls[i];
+      if (ctrl.visible)
+      {
+        if(ctrl.type.toUpperCase()=='TEXT')
+           ctrl.editControl = new TFEdit(inpContainer,1,1,'99%','3em',{caption:ctrl.label,appendix:ctrl.appendix,value:ctrl.value,captionLength:maxLabel,appendixLength:maxAppendix,justifyEditField:"left"});  
+       
+        if(ctrl.type.toUpperCase()=='DATE')
+          ctrl.editControl = new TFEdit(inpContainer,1,1,'99%','3em',{type:"date",caption:ctrl.label,appendix:ctrl.appendix,value:ctrl.value,captionLength:maxLabel,appendixLength:maxAppendix,justifyEditField:"left"});  
+      
+        if(ctrl.type.toUpperCase()=='TIME')
+          ctrl.editControl = new TFEdit(inpContainer,1,1,'99%','3em',{type:"time",caption:ctrl.label,appendix:ctrl.appendix,value:ctrl.value,captionLength:maxLabel,appendixLength:maxAppendix,justifyEditField:"left"});  
+      
+        if(ctrl.type.toUpperCase()=='DATETIME')
+          ctrl.editControl = new TFEdit(inpContainer,1,1,'99%','3em',{type:"datetime-local",caption:ctrl.label,appendix:ctrl.appendix,value:ctrl.value,captionLength:maxLabel,appendixLength:maxAppendix,justifyEditField:"left"});  
+      
+        if(ctrl.type.toUpperCase()=='SELECT')
+         { ctrl.editControl = new TFComboBox(inpContainer,1,1,'99%','3em',{caption:ctrl.label,appendix:ctrl.appendix,value:ctrl.value, items:ctrl.items,captionLength:maxLabel,appendixLength:maxAppendix,justifyEditField:"left", items:ctrl.params.items});  }
+      
+        if(ctrl.type.toUpperCase()=='RANGE')
+          ctrl.editControl = new TFSlider(inpContainer,1,1,'99%','3em',{caption:ctrl.label,appendix:ctrl.appendix,value:ctrl.value,captionLength:maxLabel,appendixLength:maxAppendix,justifyEditField:"left"});
+
+        if(ctrl.type.toUpperCase()=='CHECKBOX')
+          ctrl.editControl = new TFCheckBox(inpContainer,1,1,'99%','3em',{caption:ctrl.label,appendix:ctrl.appendix,value:ctrl.value,captionLength:maxLabel,appendixLength:maxAppendix,checkboxLeft:false,captionLength:maxLabel});
+      }
+    }  
+       
+    
+    if(withCtrlButton)
+    {
+      btnContainer.buildGridLayout_templateColumns("repeat(5,1fr)  ");
+      btnContainer.buildGridLayout_templateRows   ( "0.5em 1fr 0.5em");
+  
+      this.btnOk    = new TFButton( btnContainer ,2,2,1,1,{caption:"OK"});
+      this.btnOk.callBack_onClick = function() {if(this.callBack_onOKBtn) { this.callBack_onOKBtn( this.getInputFormValues() )};}.bind(this);
+
+      this.btnAbort = new TFButton( btnContainer,4,2,1,1,{caption:"Abbruch"});
+      this.btnAbort.callBack_onClick = function(){if(this.callBack_onESCBtn) this.callBack_onESCBtn();}.bind(this);
+    }
+
+    
+  }
+
+  getInputFormValues()
+  {
+    var result = [];
+
+    if( this.htmlForm != '' )
+    {
+      for(var i=0; i<this.controls.length; i++)
+      {
+        var element = this.controls[i].editControl;
+        if(element) result.push( { field:element.id, value:element.value } ) 
+      };
+    } 
+    else
+        for(var i=0; i<this.controls.length; i++) 
+        {
+          var ctrl = this.controls[i]; 
+          if(ctrl.visible) result.push({field:ctrl.fieldName, value:ctrl.editControl.value}) 
+          else             result.push({field:ctrl.fieldName, value:ctrl.value}) 
+    } 
+    
+    return result;
+  }
+
+
+
+}  
+
+//---------------------------------------------------------------------------
+
+
+export class TPropertyEditor
+//  properties = [{label:"Beschriftung" , value:"Wert" , type:"text" , items:["item1" , "item2" , ... , "itemx"] } , {} , {} ]
+{
+  constructor( aParent , aProperties , aBtnSave , aCallBack_onSave )
+  {
+    this.parent           = aParent;
+    this.properties       = aProperties;
+    this.btnSave          = aBtnSave;
+    this.callBack_onSave  = aCallBack_onSave;  
+
+    if(this.btnSave)
+    this.btnSave.callBack_onClick = function() { this.save() }.bind(this);
+  }  
+
+
+  setProperties( properties )
+  {
+    this.properties = properties;
+    this.render();
+  }
+  
+  
+  render()
+  { 
+    this.parent.DOMelement.innerHTML           = '';
+    this.parent.DOMelement.style.display       = 'block';
+    this.parent.DOMelement.style.flexDirection = 'column';
+  
+   for (var i=0; i<this.properties.length; i++ )
+  {
+     var item   = this.properties[i];
+     var select = item.items || [];
+
+     var p = new TFPanel( this.parent , 0 , 0 , '99%' , '2.4em' , {css:"cssValueListPanel"});   // Dimension sind bereits im css definiert
+         p.isGridLayout    = true;  // kommt vom css
+         p.backgroundColor = (i % 2) != 0 ? "RGB(240,240,240)" : "RGB(255,255,255)"; 
+     var l = new TFLabel( p , 2 , 2 , 1, 1 , {css:"cssBoldLabel" , caption:item.label} );
+         l.textAlign = 'left';
+
+     if(item.type.toUpperCase()=='TEXT')
+     { 
+        if(select.length > 0) item.control = new TFComboBox( p , 3 , 2 , 1 , 1 , {value:item.value , items:item.items} )
+        else                  item.control = new TFEdit    ( p , 3 , 2 , 1 , 1 , {value:item.value} );
+     }  
+
+     if(item.type.toUpperCase()=='SELECT')
+      item.control = new TFComboBox( p , 3 , 2 , 1 , 1 , {value:item.value , items:item.items} )
+   
+   if(item.type.toUpperCase()=='DATE')
+    item.control = new TFEdit(p ,3,2,1,1,{type:"date",value:item.value});  
+ 
+   if(item.type.toUpperCase()=='TIME')
+    item.control = new TFEdit(p ,3,2,1,1,{type:"time",value:item.value});  
+   
+   if(item.type.toUpperCase()=='DATETIME')
+    item.control = new TFEdit(p ,3,2,1,1,{type:"datetime-local",value:item.value});  
+   
+   
+   if(item.type.toUpperCase()=='RANGE')
+    item.control = new TFSlider(p ,3,2,1,1,{value:item.value});
+
+
+   if((item.type.toUpperCase()=='CHECKBOX') || (item.type.toUpperCase()=='BOOLEAN'))
+    item.editControl = new TFCheckBox(p,3,2,1,1,{value:item.value});
+ }
+
+
+ }
+
+
+save()
+{
+  var p=[];
+
+  for (var i=0; i<this.properties.length; i++ )
+  {
+    var item = this.properties[i];
+        if (item.control) 
+        {
+           item.value = item.control.value;
+           p.push({label:item.label , value:item.value});
+        }   
+  }  
+    if(this.callBack_onSave) this.callBack_onSave(p)
+}    
+
+}  // end of class TPropertyEditor
+
+
+
+
+export class TFileDialog
+{
+  constructor( params )
+  {
+    this.mask             = params.mask || '*.*';
+    this.showHiddenFiles  = params.showHiddenFiles || false;  
+    this.multiple         = params.multiple || false;
+    this.callBackOnSelect = params.callBackOnSelect || null;
+    this.onSelectionChanged = params.onSelectionChanged || null;
+    this.width            = params.width || '50%';
+    this.height           = params.height || '70%';
+    this.caption          = params.caption || 'Dateiauswahl';
+    this.root             = params.root || './';
+    this.fullPath         = '';
+    this.dir              = '';
+    this.file             = '';
+    this.node             = null;
+    this.files            = [];
+    this.fileGrid         = null;
+    this.wnd              = new TFWindow( null , this.caption , this.width , this.height , 'CENTER' );
+    this.wnd.buildGridLayout_templateColumns('1fr');
+    this.wnd.buildGridLayout_templateRows('3em 1fr 4em');
+
+    this.editFilePath     = new TFEdit( this.wnd.hWnd , 1 , 1  , 1 , 1 , {caption:"Filename",appendix:" "} );
+    
+
+    var btbPanel = new TFPanel( this.wnd.hWnd , 1 , 3 , 1 , 1 , {} );
+        btbPanel.backgroundColor = "gray";
+        btbPanel.buildGridLayout_templateColumns('1fr 1fr 1fr 1fr 1fr');
+        btbPanel.buildGridLayout_templateRows('1fr');
+    var cbHiddenFiles = new TFCheckBox( btbPanel , 1 , 1 , 1 , 1 , {caption:'hidden'} );
+        cbHiddenFiles.callBack_onChange = function(checked) { this.showHiddenFiles = checked; this.scanDir( this.dir ) }.bind(this);
+
+    var btnOk = new TFButton( btbPanel , 2 , 1 , 1 , 1 , {caption:'OK'} );
+        btnOk.height = 27;
+        btnOk.callBack_onClick = function() { this.callBackOnSelect( this.dir , this.file , this.files ) }.bind(this);
+
+    var btnCancel = new TFButton( btbPanel , 4 , 1 , 1 , 1 , {caption:'Abbruch'} );
+        btnCancel.height = 27;
+        btnCancel.callBack_onClick = function() { this.wnd.destroy() }.bind(this);      
+
+
+    var p = new TFPanel( this.wnd.hWnd , 1 , 2 , 1 , 1 , {css:'cssContainerPanel'} );
+        p.buildGridLayout_templateColumns('1fr 1fr');
+        p.buildGridLayout_templateRows('1fr');
+
+    this.panelPath       = new TFPanel( p , 1 , 1 , 1 , 1 );
+    this.panelFiles      = new TFPanel( p , 2 , 1 , 1 , 1 );
+
+    this.pathTree        = new TFTreeView( this.panelPath , {} );
+
+    this.scanDir( this.root );
+  } 
+
+
+  scanDir( node_or_dir )
+  {
+    
+    this.files = [];
+
+    // String ?
+    if( typeof node_or_dir === 'string') {this.node=null; this.dir=node_or_dir}
+    else
+        {
+          if (node_or_dir.constructor.name=="TFTreeNode") 
+            {
+              var s =[];
+              this.node  = node_or_dir;
+              var p=this.node.getNodePath();
+              p.forEach((aNode,i)=>{s.push(aNode.content.name)});
+              this.dir = utils.pathJoin(this.root , s.join('/') );
+              console.log('scanDir: ' + this.dir);
+            }
+      }    
+  
+    var response=utils.webApiRequest('scanDir', {dir:this.dir} );
+
+    console.log('scanDir: ' + this.dir);
+    console.log('scanDir: ' + JSON.stringify(response));
+
+    if(response.error) return false;
+    
+    for(var i=0; i<response.result.length; i++)
+    {
+      var f = response.result[i];
+      if(f.name.startsWith('.') && !this.showHiddenFiles) continue;
+      if(f.isDir) 
+      {
+        if(this.node) var n = this.pathTree.addSubNode( this.node , f.name , f );
+        else          var n = this.pathTree.addNode( f.name , f );
+        n.callBack_onClick = function(selectedNode){ this.scanDir( selectedNode ) }.bind(this);
+      }  
+      if(f.isFile) this.files.push(f);
+    } 
+  
+    this.pathTree.render(); 
+    this.renderFiles();
+    
+  }
+
+
+  
+
+
+
+  renderFiles()
+  {
+    this.panelFiles.innerHTML = '';
+    this.fileGrid             = null;
+
+    var f=[];
+    for (var i=0; i<this.files.length; i++) 
+        f.push({name:this.files[i].name, ext:this.files[i].ext, formatedSize:utils.formatFileSize(this.files[i].size)  ,size:this.files[i].size, path:this.dir})
+         
+    if( this.files.length==0) f.push({name:'empty', ext:'', formatedSize:'', size:0 , path:''});
+
+    this.fileGrid  = new THTMLTable( f , ['path','ext','size'] );
+    this.fileGrid.fieldByName('name').caption = 'Dateiname';
+    this.fileGrid.fieldByName('formatedSize').caption = 'Größe';
+    this.fileGrid.fieldByName('formatedSize').columnWidth = '7em';
+    this.fileGrid.onRowClick = function(row , i , jsn )
+                               {
+                                this.handleFileSelection( jsn )
+                              }.bind(this);
+
+    this.fileGrid.build( this.panelFiles  );
+  
+ }
+
+
+ handleFileSelection( file )
+ {
+  var f = utils.pathJoin(file.path , file.name );
+  this.editFilePath.value = f;
+   if(this.onSelectionChanged) this.onSelectionChanged(f);
+ }
+
+
+     
+}
+
+
+
 
 
 

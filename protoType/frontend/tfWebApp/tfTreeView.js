@@ -23,7 +23,10 @@ export class TFTreeNode
   this.callBack_onOptionClick = null;
   this.selected               = false;
   this.savedStyle             = {};
-      
+  this.backgroundColor        = 'rgba(0, 0, 0, 0.01)';  
+  this.selectedBackgroundColor= 'rgba(0, 0, 0, 0.07)';  
+  this.__toggleFlag           = false;
+  
   // falls kein Datenobjekt übergeben wurde, dummyObj mit dummyContent erzeugen ...
   if (aContent) this.content = aContent;
   else          this.content = { dummyContent:42 };
@@ -49,7 +52,6 @@ isRootNode() { return this.parentNode==null }
 collabse(yesOrNo)
 {
     console.log('collabse '+this.caption+' -> ' + yesOrNo)
-
     this.collabsed = yesOrNo;
     this.visible   = this.collabsed;
 
@@ -87,7 +89,7 @@ collabse(yesOrNo)
 
     console.log("onClickHandler ->"+node.caption)
 
-    node.treeView.forEachNode( null , function(aNode){ console.log('deSelect ' + aNode.caption ); aNode.selected=false ; aNode.printContent() } , true );
+    node.treeView.forEachNode( null , function(n){ n.selected=false ; n.printContent() } , true );
 
     node.selected = true;
     node.printContent();
@@ -115,8 +117,8 @@ collabse(yesOrNo)
 
     console.log('printContent ' + this.caption + ' selected:' + this.selected );
 
-    if (this.selected) this.DOMelement_text.style.backgroundColor = 'rgba(0, 0, 0, 0.07)';
-    else               this.DOMelement_text.style.backgroundColor = 'rgba(0, 0, 0, 0.01)'; // this.savedStyle.backgroundColor;
+    if (this.selected) this.DOMelement_text.style.backgroundColor = this.selectedBackgroundColor;
+    else               this.DOMelement_text.style.backgroundColor = this.backgroundColor;
 
     this.DOMelement_text.innerHTML = this.caption;
 
@@ -193,7 +195,21 @@ collabse(yesOrNo)
    else                 console.log(utils.tab(this.dept*3)+this.dept+": "+this.caption+"   Content:"+JSON.stringify(this.content)+"   my parent is: NULL");
 
    this.items.forEach( function(node) {node.debugLog();} ) 
-  }         
+  } 
+  
+  
+  getNodePath()
+  {
+    var n =[this];
+    var p = this.parentNode;
+    while(p)
+    {
+      n.push(p);
+      p = p.parentNode;
+    }
+    return n.reverse();
+  }
+
 
 } 
 
@@ -234,6 +250,10 @@ constructor( aParent , params )
     }
   }
 
+  render()
+  {
+    this.buildNodeList();
+  }
 
   buildNodeList()
   {
@@ -254,17 +274,6 @@ constructor( aParent , params )
   }
 
 
-
-
-  clearItems()
-  {
-    for(var i=0; i<this.rootNodes.length; i++) this.rootNodes[i] = [];
-    this.rootNodes = [];
-  }
-
-
-
-
   debugLog()
   {
     console.log("");
@@ -272,15 +281,29 @@ constructor( aParent , params )
     this.forEachNode( null , function(rootNode) {rootNode.debugLog();} , true )
   }
 
+  collabseAll(yesOrNo)
+  {
+    this.__toggleFlag = yesOrNo;
+    this.forEachNode(  this.rootNodes[0] , function (node){ if(node.parentNode!=null) node.collabse(this)}.bind(yesOrNo) , true );
+  }
+
+  toggleCollapse()
+  {
+    this.__toggleFlag = !this.__toggleFlag;
+    this.collabseAll(this.__toggleFlag);
+  }
+
 
   forEachNode( entryPoint , callback ,recursive)
   {
+    if(recursive==undefined) recursive = true;
+
     if(entryPoint==null)
     {
       console.log('forEachNode() entryPoint:null ; recursive:'+recursive);
       for (var i=0; i<this.rootNodes.length; i++)
       { 
-        callback(this.rootNodes[i]);    
+        callback(this.rootNodes[i])    
         if(recursive) this.forEachNode( this.rootNodes[i] , callback , true);
       }  
     }
@@ -289,10 +312,29 @@ constructor( aParent , params )
        console.log('forEachNode() entryPoint:'+entryPoint.caption+' recursive:' + recursive);
        for(var i=0; i<entryPoint.items.length;i++)
        {
-         callback(entryPoint.items[i]); 
+         callback(entryPoint.items[i])
          if(recursive) this.forEachNode( entryPoint.items[i] , callback , true);
        }  
     }
-  }  
+  }
+  
+  
+  set callBack_onClick( aCallBack )
+  {
+    this.forEachNode( null , function(node){node.callBack_onClick = aCallBack} , true );
+  }
+  
+  get callBack_onClick()
+  {
+    return this.rootNodes[0].callBack_onClick;
+  }
+  
+
+  destroy()
+  {
+    this.rootNodes = [];
+    this.items     = [];
+    this.treeViewPanel.DOMelement.innerHTML = '';
+  } 
 
 }

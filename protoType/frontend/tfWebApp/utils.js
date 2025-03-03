@@ -131,6 +131,39 @@ export function strCompare(str, rule)
 }
 
 
+export function strMatches(searchStr, topic) 
+{
+  // (1) Kein WildCard -> searchStr muss identisch mit topic sein
+  if (!searchStr.includes('*')) {
+      return searchStr === topic;
+  }
+
+  // (2) searchStr ist ein '*' -> Jedes topic liefert einen Treffer
+  if (searchStr === '*') {
+      return true;
+  }
+
+  // (3) searchStr beginnt mit einem '*' -> topic muss mit dem Rest enden
+  if (searchStr.startsWith('*')) {
+      const ending = searchStr.slice(1); // Entferne das '*'
+      return topic.endsWith(ending);
+  }
+
+  // (4) searchStr endet mit einem '*' -> topic muss mit dem Rest beginnen
+  if (searchStr.endsWith('*')) {
+      const beginning = searchStr.slice(0, -1); // Entferne das '*'
+      return topic.startsWith(beginning);
+  }
+
+  // (5) searchStr enthält mitten im String einen '*' -> Anfang und Ende prüfen
+  const [start, end] = searchStr.split('*'); // Splitte am '*'
+  return topic.startsWith(start) && topic.endsWith(end);
+}
+
+
+
+
+
 export function containing( key , list )
 {
  return  list.some(element => element.toUpperCase() == key.toUpperCase());
@@ -170,7 +203,7 @@ export class TFDateTime
   
   constructor(input) 
   {
-    this.excelEpoch     = Date.UTC(1899, 11, 30); // Korrigiert: 31. Dezember 1899 als Basis für Excel-Zeit
+    this.excelEpoch     = Date.UTC(1899, 11, 31); // Korrigiert: 31. Dezember 1899 als Basis für Excel-Zeit
     this.msPerDay       = 1000 * 60 * 60 * 24;
     this.excelTimestamp = -1;
 
@@ -927,14 +960,22 @@ export function formatTime( _dt )
 }
 
 
+export function formatFileSize( sizeInBytes )
+{
+  if(sizeInBytes == 0) return '0 Byte';
+  var i = Math.floor( Math.log(sizeInBytes) / Math.log(1024) );
+  return ( sizeInBytes / Math.pow(1024, i) ).toFixed(2) * 1 + ' ' + ['Byte', 'KB', 'MB', 'GB', 'TB'][i];
+}
+
 export function pathJoin(d,f,e)
 {
-  if (d=='/') d = '';
+  var p='';
+  if (d=='/') p = '/'+f;
+  else        p = d+'/'+f;
   
-  var p='.';
-  if(e=='') p='';
+  if(e) p=p+'.'+e;
  
-  return d+'/'+f+p+e;
+  return p
 }
 
 
