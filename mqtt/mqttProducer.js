@@ -21,7 +21,7 @@ client.on('connect', () =>
         var y = Math.sin(x)*70+(Math.random() * 7); // Zufallswert zwischen 0 und 99
         client.publish(topic, JSON.stringify({ value: Math.round(y) , timestamp: Date.now() }));
         console.log(`Wert gesendet: ${Math.round(y)}`);
-      }, 4000);
+      }, 60000);
   }
 );
 
