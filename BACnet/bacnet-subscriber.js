@@ -1,50 +1,56 @@
-const bacnet = require('bacstack');
+const bacnet      = require('bacstack');
+const SERVER_IP   = '192.168.1.18';
+const SERVER_PORT = 47808;
 
-// BACnet-Client starten (Port 47808 ist Standard für BACnet/IP)
-const client = new bacnet({ port: 47808 });
+// BACnet-Client starten
+const client = new bacnet({ port: SERVER_PORT });
 
-// BACnet-Server-Adresse (UDP/IP) – hier broadcast, falls IP unbekannt
-const SERVER_IP = '192.168.1.18'; // BACnet Broadcast oder bekannte IP
-const SERVER_PORT = 47808;         // Standard-Port für BACnet/IP
 
-// Listener für alle eingehenden BACnet-Nachrichten
+
+console.log('🚀 Starte BACnet-Testprogramm...');
+
+// Debugging: Lausche auf **alle empfangenen UDP-Pakete**
 client.on('indication', (msg) => {
-  console.log('📩 Neue BACnet-Nachricht empfangen:');
-  console.log(JSON.stringify(msg, null, 2));
+  console.log('📩 Neue BACnet-Nachricht empfangen:', JSON.stringify(msg, null, 2));
 });
 
-// Broadcast-Anfrage an alle BACnet-Geräte (Who-Is)
-console.log('🚀 Sende Who-Is-Broadcast...');
-client.whoIs();
+// Debugging: Lausche auf Rohdaten (nur für UDP-Fehlersuche)
+client.transport._server.on('message', (msg, rinfo) => {
+  console.log(`📡 Rohdaten von ${rinfo.address}:${rinfo.port}:`, msg.toString('hex'));
+});
 
-// Listener für I-Am-Antworten (Geräte melden sich)
+// Debugging: Wer sendet "I-Am"?
 client.on('iAm', (device) => {
-  console.log('🆔 BACnet-Gerät gefunden:');
-  console.log(`- Geräte-ID: ${device.deviceId}`);
-  console.log(`- IP-Adresse: ${device.address}`);
-
-  // Lese Standardwerte (z. B. Objektliste) vom gefundenen Gerät
-  client.readProperty(device.address, { type: 8, instance: 4194303 }, 76, (err, value) => {
-    if (err) {
-      console.error('❌ Fehler beim Lesen der Objektliste:', err);
-    } else {
-      console.log('📊 Objektliste:', JSON.stringify(value, null, 2));
-    }
-  });
+  console.log('🆔 BACnet-Gerät gefunden:', device);
 });
 
-// Listener für COV-Benachrichtigungen
+// Wer sendet COV-Updates?
 client.on('covNotification', (data) => {
-  console.log('🔄 COV-Update (Change of Value) erhalten:');
-  console.log(JSON.stringify(data, null, 2));
+  console.log('🔄 COV-Update erhalten:', data);
 });
 
-// Ungefilterte BACnet-Daten empfangen (nur für Debugging)
+// Fehlerlistener aktivieren
 client.on('error', (err) => {
   console.error('❌ BACnet-Fehler:', err);
 });
 
-// Graceful Shutdown bei Beendigung
+// **Who-Is gezielt an Gerät senden**
+console.log('🚀 Sende gezielte Who-Is-Anfrage...');
+client.whoIs({ address: SERVER_IP });
+
+// **Zusätzlich: Geräte-ID auslesen (Falls I-Am nicht kommt)**
+setTimeout(() => {
+  console.log('📡 Versuche, die Geräte-ID direkt zu ermitteln...');
+  client.readProperty({ address: SERVER_IP }, { type: 8, instance: 4194303 }, 76, (err, value) => {
+    if (err) {
+      console.error('❌ Fehler beim Abrufen der Geräte-ID:', err);
+    } else {
+      console.log('🆔 Gefundene Geräte-ID:', value);
+    }
+  });
+}, 3000);
+
+// **Programm sicher beenden**
 process.on('SIGINT', () => {
   console.log('👋 Verbindung wird geschlossen...');
   client.close();
