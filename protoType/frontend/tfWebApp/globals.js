@@ -15,6 +15,18 @@ export var isCTRLpressed      = false;
 export var isSHIFTpressed     = false;
 export var isALTpressed       = false;
 
+export const movieFileExtensions = [
+  'mp4', 'flv', 'm3u8', 'ts', 'mov', 'avi', 
+  'wmv', 'm4v', 'webm', 'weba', 'ogm', 'ogv', 'ogg'
+];
+
+export const imageFileExtensions = [
+  'jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 
+  'tiff', 'tif', 'svg', 'ico', 'heic', 'heif', 'avif'
+];
+
+
+
 
 var __Server                  = window.location.hostname;
 var __Port                    = window.location.port;
@@ -112,6 +124,7 @@ export function print_elapsedTime( msg )
 
   return et;
 }
+
 
 
 

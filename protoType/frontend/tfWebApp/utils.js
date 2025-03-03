@@ -1828,3 +1828,22 @@ export function keys_toUpperCase(jsn)
                           return newObj;
                         });
 }
+
+
+export function isMovieFile(ext)
+{
+   for(var i=0; i<globals.movieFileExtensions.length; i++)
+   {
+     if(ext.toUpperCase()==globals.movieFileExtensions[i].toUpperCase()) return true;
+   }
+   return false;  
+}
+
+export function isImageFile(ext)
+{
+   for(var i=0; i<globals.imageFileExtensions.length; i++)
+   {
+     if(ext.toUpperCase()==globals.imageFileExtensions[i].toUpperCase()) return true;
+   }
+   return false;  
+}

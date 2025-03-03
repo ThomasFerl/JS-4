@@ -44,14 +44,24 @@ var mediaViewer    = null;
 
 function viewMedia(fn)
 {
+ // Dateiendung ermitteln...
+    var ext = fn.split('.').pop().toLowerCase();
+
     if(mediaViewer==null) 
-    {   
-      mediaViewer = new TFWindow( svgContainer , fn , '80%' , '90%' , 'CENTER' );
-      var img     = dialogs.addImage( mediaViewer.hWnd , '' , 1 , 1 , '100%' , '100%' );
-      mediaViewer.img = img;
+          mediaViewer = new TFWindow( svgContainer , fn , '77%' , '77%' , 'CENTER' );
+    else mediaViewer.innerHTML = '';     
+  
+    if(utils.isImageFile(ext))
+    {
+     var url = utils.buildURL('GETIMAGEFILE',{fileName:fn} );
+     dialogs.addImage( mediaViewer.hWnd , '' , 1 , 1 , '100%' , '100%' , url );
     }
-   
-    mediaViewer.img.imgURL = utils.buildURL('GETIMAGEFILE',{fileName:fn} );
+ 
+    if(utils.isMovieFile(ext))
+    {
+      var url = utils.buildURL('GETMOVIEFILE',{fileName:fn} );
+      dialogs.playMovieFile( mediaViewer.hWnd , url );
+    }    
 }
 
 

@@ -831,6 +831,129 @@ export function fileDialog( mask , multiple , callBackOnSelect , onSelectionChan
 }
 
 
+export function playMovieFile(container, fileName)  // fileName kann auch ein Array sein ... 
+{
+  // Falls `fileName` ein String ist, in ein Array umwandeln
+  var fileList=[];
+  if(Array.isArray(fileName)) fileList = fileName
+  else                        fileList = [fileName];
+  
+  const speeds     = [0.1,0.12,0.17,0.25,0.5,0.75,0.9,1,1.25,1.5,1.75,2]; // Verschiedene Geschwindigkeiten
+  var   speedIndex = 2;
+  var currentIndex = 0;
+  var  brightness  = 1;
+
+  // Vorherige Inhalte entfernen
+  container.innerHTML = "";
+  container.backgroundColor = "rgb(35,35,35)";
+  utils.buildGridLayout_templateColumns(container, "1fr");
+  utils.buildGridLayout_templateRows(container, "1em 1fr 3em");  
+
+  var videoContainer = addPanel(container, "cssContainerPanel", 1, 2, 1, 1);
+
+  // Video-Element erstellen
+  var video = document.createElement("video");
+  video.src = fileList[currentIndex];
+  video.controls = true; // Eigene Steuerung
+  video.autoplay = true; // Autoplay aktiviert
+  video.style.width = "100%";
+  video.style.borderRadius = "7px";
+  video.style.filter = "brightness(1)"; // Standard-Helligkeit
+  videoContainer.appendChild(video);
+
+  // Steuerungselemente erstellen
+  var controls = addPanel(container, "", 1, 3, 1, 1);
+      controls.buildGridLayout_templateColumns("1fr 1fr 1fr 1fr 1fr 1fr 1fr");
+      controls.buildGridLayout_templateRows("1fr");
+
+  var btnHeight = "2em";
+  var btnColor  = "gray";
+
+  var btn_speedUp = addButton(controls, "", 1, 1, 1, 1, "Speed -");
+      btn_speedUp.backgroundColor = btnColor;
+      btn_speedUp.height = btnHeight;
+      btn_speedUp.callBack_onClick=() => {
+                                       speedIndex = (speedIndex-1);
+                                       if(speedIndex<0) speedIndex = 0;
+                                       video.playbackRate = speeds[speedIndex];
+                                      }
+
+  var btn_speedDown = addButton(controls, "", 2, 1, 1, 1, "Speed +");
+      btn_speedDown.backgroundColor = btnColor;
+      btn_speedDown.height = btnHeight; 
+      btn_speedUp.callBack_onClick=() => {
+                                          speedIndex = (speedIndex+1);
+                                          if(speedIndex>=speeds.length) speedIndex = speeds.length;
+                                          video.playbackRate = speeds[speedIndex];
+                                         }   
+
+  var btn_brightnessUp = addButton(controls, "", 3, 1, 1, 1, "Brightness +");
+      btn_brightnessUp.backgroundColor = btnColor;
+      btn_brightnessUp.height = btnHeight;  
+      btn_brightnessUp.callBack_onClick=() => {
+                                            brightness += 0.1;
+                                            if(brightness > 2) brightness = 2;
+                                            video.style.filter = "brightness(" + brightness + ")";
+                                           }
+
+  var btn_brightnessDown = addButton(controls, "", 4, 1, 1, 1, "Brightness -");
+      btn_brightnessDown.backgroundColor = btnColor;
+      btn_brightnessDown.height = btnHeight;    
+      btn_brightnessDown.callBack_onClick=() => {
+                                              brightness -= 0.1;
+                                              if(brightness < 0) brightness = 0;
+                                              video.style.filter = "brightness(" + brightness + ")";
+                                             }
+
+
+  var btn_fullscreen = addButton(controls, "", 5 , 1, 1, 1, "Fullscreen");
+      btn_fullscreen.backgroundColor = btnColor;
+      btn_fullscreen.height = btnHeight;
+      btn_fullscreen.callBack_onClick=() => {
+                                              if (video.requestFullscreen) {
+                                                video.requestFullscreen();
+                                              } else if (video.mozRequestFullScreen) {
+                                                video.mozRequestFullScreen();
+                                              } else if (video.webkitRequestFullscreen) {
+                                                video.webkitRequestFullscreen();
+                                              } else if (video.msRequestFullscreen) {
+                                                video.msRequestFullscreen();
+                                              }
+                                            }
+
+  if(fileList.length > 1)
+  {
+    var btn_prev = addButton(controls, "", 6, 1, 1, 1, "Prev");
+        btn_prev.backgroundColor = btnColor;
+        btn_prev.height = btnHeight;  
+        btn_prev.callBack_onClick=() => {
+                                          if (currentIndex > 0) {
+                                              currentIndex--;
+                                              video.src = fileList[currentIndex];
+                                              video.play();
+                                          }
+                                        } 
+
+    var btn_next = addButton(controls, "", 7, 1, 1, 1, "Next");
+        btn_next.backgroundColor = btnColor;
+        btn_next.height = btnHeight;
+        btn_next.callBack_onClick=() => {
+                                          if (currentIndex < fileList.length - 1) {
+                                              currentIndex++;
+                                              video.src = fileList[currentIndex];
+                                              video.play();
+                                          }
+                                        }
+
+   // Automatisches Abspielen des nächsten Videos
+   video.addEventListener("ended", ()=>{btn_next.click();});
+                                 
+  }  // MEHRERE vIDEOS IN lISTE    
+  
+  }
+
+
+
 
 
 
