@@ -32,7 +32,7 @@ const server = require('net').createServer(aedes.handle);
 const sourceBroker_port     = 4700;
 
 const targetBroker_port     = 4701;
-const targetBroker_address  = 'mqtt://10.102.13.5';
+const targetBroker_address  = 'mqtt://10.102.13.99';
 const targetBroker_userName = '';
 const targetBroker_password = '';
 
