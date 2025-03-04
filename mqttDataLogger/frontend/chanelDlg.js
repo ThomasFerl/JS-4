@@ -1,19 +1,21 @@
 
 
-import * as globals      from "./tfWebApp/globals.js";
-import * as utils        from "./tfWebApp/utils.js";    
-import * as dialogs      from "./tfWebApp/tfDialogs.js";
-import * as graphics     from "./tfWebApp/tfGrafics.js";
+import * as globals        from "./tfWebApp/globals.js";
+import * as globalSettings from "./globalSettings.js";
+
+import * as utils          from "./tfWebApp/utils.js";    
+import * as dialogs        from "./tfWebApp/tfDialogs.js";
+import * as graphics       from "./tfWebApp/tfGrafics.js";
 
 import { TFEdit, 
          TForm,
          TPropertyEditor,
          TFAnalogClock,
-         TFWorkSpace }   from "./tfWebApp/tfObjects.js";
+         TFWorkSpace }     from "./tfWebApp/tfObjects.js";
 
-import { TFWindow }      from "./tfWebApp/tfWindows.js"; 
-import { TFChart }       from "./tfWebApp/tfObjects.js";
-import { TFDateTime }    from "./tfWebApp/utils.js";
+import { TFWindow }        from "./tfWebApp/tfWindows.js"; 
+import { TFChart }         from "./tfWebApp/tfObjects.js";
+import { TFDateTime }      from "./tfWebApp/utils.js";
 
 
 // Combobox-Lookup:
@@ -147,13 +149,22 @@ const __betriebsMittel =
 
 export class TChanelDlg 
 {
-  constructor( chanel ) 
+  constructor( chanel , device ) 
   { 
       this.error      = false;
       this.errMsg     = ""; 
       this.newChanel  = false;
       this.callBack_onDialogComplete = null;
       this.callBack_onDialogAbort    = null;
+      this.device                    = device; 
+      // Zur Bestimmung der laufenden BM und Signalarten brauchen wir alle Kanäle des Gerätes....
+      var response = utils.webApiRequest('LOADCHANELS' , {ID_Device:device.ID});
+      if(!response.error) this.allChanels = response.result;
+      else                this.allChanels = [];
+
+      this.infoPunktSchl_BM          = '';
+      this.infoPunktSchl_signArt     = '';
+      this.infoPunktSchl_AnlSchl     = this.device.AnlagenSchluessel;
 
       if(chanel != null) this.chanel = chanel
       else {
@@ -168,16 +179,13 @@ export class TChanelDlg
              }
              this.chanel = {};
              for(var i=0; i<response.result.length; i++) this.chanel[response.result[i].fieldName] = response.result[i].defaultValue || "";
+             this.chanel.ID_Device = this.device.ID;
       }
 
-      var availeableTopics = [];
-
-      if(this.newChanel)
-      {  
-        var r = utils.webApiRequest('availeableTopics' , {} );
-        for(var i=0; i<r.result.length; i++) availeableTopics.push(r.result[i].descr)
-      }      
-      
+        var availeableTopics = [];
+        var r = utils.webApiRequest('LSTOPICS' , {ID_Device:device.ID, excludeDescr:true} );
+        if(!r.error) availeableTopics = r.result;
+     
       var cpt = this.newChanel ? "neuen Kanal hinzufügen" : "Kanal bearbeiten";
           
       this.dlgWnd = dialogs.createWindow( null , cpt , "50%" , "77%" , "CENTER" );
@@ -208,17 +216,65 @@ export class TChanelDlg
 
       this.form.render(true);
 
-        // ItemIndex der Combobox auf aktuellen Wert setzen...
-        debugger;
-      var signArt =  this.form.getControlByName("SIGNALART").editControl;
-          signArt.itemIndex = findIndex( __signalArt , this.chanel.SIGNALART );
-          signArt.editControl.callBack_onChange = function(value){debugger; this.infoPunktSchl.value=value}.bind(this)
+      this.infoPunktSchl.value = this.chanel.InfoPktName;
 
-        this.form.getControlByName("Betriebsmittel").editControl.itemIndex = findIndex( __betriebsMittel , this.chanel.Betriebsmittel )
+        // ItemIndex der Combobox auf aktuellen Wert setzen...
+    
+      var signArt           =  this.form.getControlByName("SIGNALART").editControl;
+          signArt.itemIndex = findIndex( __signalArt , this.chanel.SIGNALART ); 
+          signArt.callBack_onChange = function(value){ this.update_infoPunkt_schluessel() }.bind(this)
+
+      var betrMit           = this.form.getControlByName("Betriebsmittel").editControl;
+          betrMit.itemIndex = findIndex( __betriebsMittel , this.chanel.Betriebsmittel );
+          betrMit.callBack_onChange = function(value){ this.update_infoPunkt_schluessel() }.bind(this)
+
              
       this.form.callBack_onOKBtn  = this.saveChanel.bind(this);
       this.form.callBack_onESCBtn = function () {this.dlgWnd.destroy() ; if(this.callBack_onDialogAbort!=null) this.callBack_onDialogAbort() }.bind(this);
      
+  }
+
+ 
+ __count(arr,field,value,len)
+ {
+   if((value=='--') || (value='')) s='1'
+   else
+       {
+         var cnt=0;
+         for(var i=0; i<arr.length; i++)
+         if(arr[i][field]==value) cnt++;
+         var s=''+(cnt+1);
+        }  
+
+    while(s.length<len) s='0'+s;
+
+    return s;
+ }
+
+
+
+  update_infoPunkt_schluessel()
+  {
+    var ndx                                = this.form.getControlByName("SIGNALART").editControl.itemIndex;
+    if (ndx>=0) this.infoPunktSchl_signArt = getItem(__signalArt , ndx).short
+    else        this.infoPunktSchl_signArt = "--";  
+
+    ndx                               = this.form.getControlByName("Betriebsmittel").editControl.itemIndex;
+    if (ndx>=0) this.infoPunktSchl_BM = getItem(__betriebsMittel , ndx).short
+    else        this.infoPunktSchl_BM = "--";  
+
+    var cntSignArt                 = this.__count(this.allChanels , 'SIGNALART'      , this.infoPunktSchl_signArt , 3);
+    var cntBetrMi                  = this.__count(this.allChanels , 'Betriebsmittel' , this.infoPunktSchl_BM      , 2);
+    var r                          = globalSettings.praefix+
+                                     this.infoPunktSchl_AnlSchl + 
+                                     globalSettings.nummernKreis +
+                                     globalSettings.trennZeichen + 
+                                     this.infoPunktSchl_BM + 
+                                     cntBetrMi + ";" + 
+                                     this.infoPunktSchl_signArt + 
+                                     cntSignArt;
+    this.infoPunktSchl.value       = r;
+    return r;                                 
   }
 
 
@@ -228,6 +284,12 @@ export class TChanelDlg
   {
       for(var i=0; i<chanelData.length; i++)
       if(this.chanel.hasOwnProperty(chanelData[i].field)) this.chanel[chanelData[i].field] = chanelData[i].value;
+      // die Combobox-Einträge in Kurzform umwandeln. 
+      // Das wird als "Nebenprodukt" bei der Info-Schl-Generierung frei ....
+      this.chanel.InfoPktName    = this.update_infoPunkt_schluessel();
+      this.chanel.SIGNALART      = this.infoPunktSchl_signArt;
+      this.chanel.Betriebsmittel = this.infoPunktSchl_BM;
+
       this.dlgWnd.destroy();
   
       if(this.newChanel) var response = utils.webApiRequest("NEWCHANEL",{fields:this.chanel})
