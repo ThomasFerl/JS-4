@@ -16,6 +16,8 @@ import { TFWindow }      from "./tfWebApp/tfWindows.js";
 import { TFChart }       from "./tfWebApp/tfObjects.js";
 import { TFDateTime }    from "./tfWebApp/utils.js";
 
+import { TFMediaCollector } from "./tfWebApp/tfMediaCollector.js";
+
 
 const svgPath = '/GIT/JS-3/tfWebApp/fontAwsome/svgs/';  // '/home/tferl/GIT/JS-3/tfWebApp/fontAwsome/svgs/';
 const imgPath = '/home/tferl/GIT/JS-3/prodia/uploads/';
@@ -243,13 +245,11 @@ var   btn10 = dialogs.addButton( menuContainer , "" , 10 , 1 , 1 , 1 , "ask me" 
       } 
 
 
-      var l=dialogs.addLabel( panels[0] , '' , 1 , 1 , 1 , 1 , 'Label' );
-      l.callBack_onClick=()=>{dialogs.fileDialog( "*.*" , true , (d,f,ff)=>{editPath.value=d+'/'} ,
-                                                                 (fn)=>{viewMedia(fn)} )};
-    
-
-
+      var l=dialogs.addLabel( panels[0] , '' , 1 , 1 , 1 , 1 , 'irgend ein Text (Label)' );
+      
       editPath = dialogs.addInput( panels[1] , 1 , 1 , 10 , 'path' , '' , '' , {} );
+      editPath.callBack_onClick=()=>{mediaViewer=null; dialogs.fileDialog( "*.*" , true , (d,f,ff)=>{editPath.value=d+'/';} , (fn)=>{viewMedia(fn)} )};
+    
 
       dialogs.addDateTimePicker( panels[2] , 1 , 1 , 'dateTime' , '01.01.2000 17:35' , null , {} );
 
@@ -266,6 +266,9 @@ var   btn10 = dialogs.addButton( menuContainer , "" , 10 , 1 , 1 , 1 , "ask me" 
                                                                                  {caption:'dddd',value:'D'} ] , {} );
              
       dialogs.addCheckBox( panels[7], 1,1,'checkBox' , true , {checkboxLeft:false} );
+
+      dialogs.addButton( panels[8] , '' , 1 , 1 , 100 , 32 , 'mediaCollector' )
+             .callBack_onClick = ()=> { new TFMediaCollector( '77%' , '77%' , {} ); };
 
 
       dialogs.addListCheckbox( panels[10] ,  [ {caption:'aaaa',value:'A'},

@@ -3345,7 +3345,7 @@ export class TFileDialog
 
     var btnOk = new TFButton( btbPanel , 2 , 1 , 1 , 1 , {caption:'OK'} );
         btnOk.height = 27;
-        btnOk.callBack_onClick = function() { this.callBackOnSelect( this.dir , this.file , this.files ) }.bind(this);
+        btnOk.callBack_onClick = function() { this.callBackOnSelect( this.dir , this.editFilePath.value , this.files ) }.bind(this);
 
     var btnCancel = new TFButton( btbPanel , 4 , 1 , 1 , 1 , {caption:'Abbruch'} );
         btnCancel.height = 27;
@@ -3381,14 +3381,10 @@ export class TFileDialog
               var p=this.node.getNodePath();
               p.forEach((aNode,i)=>{s.push(aNode.content.name)});
               this.dir = utils.pathJoin(this.root , s.join('/') );
-              console.log('scanDir: ' + this.dir);
-            }
+           }
       }    
   
     var response=utils.webApiRequest('scanDir', {dir:this.dir} );
-
-    console.log('scanDir: ' + this.dir);
-    console.log('scanDir: ' + JSON.stringify(response));
 
     if(response.error) return false;
     
