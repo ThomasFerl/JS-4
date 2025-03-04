@@ -39,7 +39,7 @@ export class TdeviceChanelsDlg
       var btn_AddChanel              = dialogs.addButton( btnPanel , "" , 1 , 1 , 1 , 1 , "neuer Kanal"  );
       btn_AddChanel.heightPx         = 35;
       btn_AddChanel.callBack_onClick = function() { 
-                                                    var dlg = new TChanelDlg();
+                                                    var dlg = new TChanelDlg( null , this.device);
                                                         dlg.callBack_onDialogComplete = (chanel)=>{ this.chanels.unshift(chanel); this.updateChanelGrid(); }
                                                  }.bind(this)
 
@@ -47,7 +47,7 @@ export class TdeviceChanelsDlg
       btn_EditChanel.heightPx         = 35;
       btn_EditChanel.callBack_onClick = function() {
                                                      if(this.selectedChanel==null){ dialogs.showMessage("Bitte zuerst einen Kanal auswählen !"); return; }
-                                                     var dlg = new TChanelDlg(this.selectedChanel);
+                                                     var dlg = new TChanelDlg(this.selectedChanel , this.device );
                                                          dlg.callBack_onDialogComplete = (chanel)=>{ this.updateChanelGrid(); }
                                                    }.bind(this)
 

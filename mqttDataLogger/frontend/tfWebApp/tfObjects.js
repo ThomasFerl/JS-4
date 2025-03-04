@@ -1912,7 +1912,7 @@ export class TFComboBox extends TFEdit
 
     this.combobox.addEventListener('change',  function() { 
       if(this.callBack_onChange)
-      {
+      {  
        var v = this.combobox.value;
        var c = this.items[v];
        this.callBack_onChange( v , c )

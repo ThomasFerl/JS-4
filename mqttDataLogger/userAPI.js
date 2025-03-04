@@ -66,10 +66,18 @@ if( CMD=='LOADDEVICES' )
     return dbUtils.fetchRecords_from_Query(dB,"Select * from Devices order by ID desc ");
   }
 
-  if( CMD == 'AVAILEABLETOPICS')
+
+if( CMD=='LOADDEVICE' )
+    {
+      return dbUtils.fetchRecord_from_Query(dB,"Select * from Devices Where ID="+param.ID_Device);
+    }
+  
+
+if( CMD == 'AVAILEABLETOPICS')
     {
       return dbUtils.fetchRecords_from_Query(dB,"Select descr from mqttTopics Where ID_Device=0 order by ID desc");
     }
+
 
 
 if( CMD=='NEWDEVICE' )
@@ -121,7 +129,20 @@ if( CMD=='NEWDEVICE' )
 
 if( CMD=='LSTOPICS') 
   {
-    return dbUtils.fetchRecords_from_Query( dB , "Select * from mqttTopics Where not topic like '$SYS%' order by ID" );
+    var sql = '';
+    if (param.ID_Device) sql =  "Select * from mqttTopics Where ID_Device="+param.ID_Device+" order by ID";
+    else                 sql =  "Select * from mqttTopics Where not topic like '$SYS%' order by ID";
+
+    var response = dbUtils.fetchRecords_from_Query( dB , sql );
+
+    if(param.excludeDescr)
+    {
+      var h=[];
+      for(var i=0; i<response.result.length; i++) h.push(response.result[i].topic.substring(response.result[i].descr.length))
+      return {error:false, errMsg:'OK', result:h}  
+    } 
+
+    return dbUtils.fetchRecords_from_Query( dB , sql );
   }
   
 
