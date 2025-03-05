@@ -59,16 +59,17 @@ tables.push(
 tables.push( 
             {tableName:"chanels",
              tableFields:[
-                          {fieldName:"ID_Device"     , fieldType:"INTEGER"} ,
-                          {fieldName:"NAME"          , fieldType:"Text"} ,
-                          {fieldName:"TYP"           , fieldType:"Text"} ,
-                          {fieldName:"UNIT"          , fieldType:"Text"} ,
-                          {fieldName:"BESCHREIBUNG"  , fieldType:"Text"} ,
-                          {fieldName:"InfoPktName"   , fieldType:"Text"} ,
-                          {fieldName:"Betriebsmittel", fieldType:"Text"} ,
-                          {fieldName:"lfdNr_BM"      , fieldType:"Text"} ,
-                          {fieldName:"SIGNALART"     , fieldType:"Text"} ,
-                          {fieldName:"TOPIC"         , fieldType:"Text"} 
+                          {fieldName:"ID_Device"      , fieldType:"INTEGER"} ,
+                          {fieldName:"ID_payloadField", fieldType:"INTEGER"} ,
+                          {fieldName:"NAME"           , fieldType:"Text"} ,
+                          {fieldName:"TYP"            , fieldType:"Text"} ,
+                          {fieldName:"UNIT"           , fieldType:"Text"} ,
+                          {fieldName:"BESCHREIBUNG"   , fieldType:"Text"} ,
+                          {fieldName:"InfoPktName"    , fieldType:"Text"} ,
+                          {fieldName:"Betriebsmittel" , fieldType:"Text"} ,
+                          {fieldName:"lfdNr_BM"       , fieldType:"Text"} ,
+                          {fieldName:"SIGNALART"      , fieldType:"Text"} ,
+                          {fieldName:"TOPIC"          , fieldType:"Text"} 
                        ]});
                        
 

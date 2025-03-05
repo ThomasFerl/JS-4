@@ -78,7 +78,13 @@ if( CMD == 'AVAILEABLETOPICS')
       return dbUtils.fetchRecords_from_Query(dB,"Select descr from mqttTopics Where ID_Device=0 order by ID desc");
     }
 
-
+if( CMD == 'GETPAYLOADFIELDS')
+      {
+        var subSQL = "(Select ID from mqttTopics Where topic='"+param.topic+"')";
+        if (param.topic.indexOf('%')>-1) subSQL = "(Select ID from mqttTopics Where topic like '"+param.topic+"')"
+        
+        return dbUtils.fetchRecords_from_Query(dB,"Select ID,payloadFieldName from mqttPayloadFields Where ID_Topic in "+subSQL+" order by ID desc");
+      }
 
 if( CMD=='NEWDEVICE' )
   {

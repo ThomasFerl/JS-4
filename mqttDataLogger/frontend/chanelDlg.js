@@ -166,7 +166,7 @@ export class TChanelDlg
       this.infoPunktSchl_signArt     = '';
       this.infoPunktSchl_AnlSchl     = this.device.AnlagenSchluessel;
 
-      if(chanel != null) this.chanel = chanel
+      if(chanel != null) {this.chanel = chanel; this.chanel.payloadField='value';}
       else {
              this.newChanel = true;
              var response   = utils.webApiRequest('schema' , {tableName:"chanels"} );
@@ -180,7 +180,16 @@ export class TChanelDlg
              this.chanel = {};
              for(var i=0; i<response.result.length; i++) this.chanel[response.result[i].fieldName] = response.result[i].defaultValue || "";
              this.chanel.ID_Device = this.device.ID;
+             this.chanel.payloadField='value';
       }
+      debugger;
+        var h=this.getPayloadFields('%'); // alle Felder  
+        if(this.device.ID_payloadField)
+            {
+              var h= utils.findEntryByField(h,'value',this.device.ID_payloadField)
+              if(h) this.device.payloadField = h.caption;
+            } 
+
 
         var availeableTopics = [];
         var r = utils.webApiRequest('LSTOPICS' , {ID_Device:device.ID, excludeDescr:true} );
@@ -204,7 +213,7 @@ export class TChanelDlg
                                this.chanel, 
                                {NAME:"Kanal-Name",TYP:"Kanal-Typ",UNIT:"Einheit",BESCHREIBUNG:"Kanal-Beschreibung",SIGNALART:"Art des Signals"} ,   // Labels
                                {} ,                             // Appendix
-                               ['ID','ID_Device','lfdNr_BM','InfoPktName'] ,  // Exclude
+                               ['ID','ID_Device','lfdNr_BM','InfoPktName','ID_payloadField'] ,  // Exclude
                                {} ,                             // InpType
                                '' );
 
@@ -228,6 +237,15 @@ export class TChanelDlg
           betrMit.itemIndex = findIndex( __betriebsMittel , this.chanel.Betriebsmittel );
           betrMit.callBack_onChange = function(value){ this.update_infoPunkt_schluessel() }.bind(this)
 
+      var topic             = this.form.getControlByName("TOPIC").editControl;
+          topic.itemIndex = findIndex( availeableTopics , this.chanel.TOPIC );
+          topic.callBack_onChange = function(value){ 
+                                                     var t=this.form.getControlByName("TOPIC").editControl;
+                                                     console.log(this.getPayloadFields(t.value))   
+                                                    }.bind(this)
+
+                 
+
              
       this.form.callBack_onOKBtn  = this.saveChanel.bind(this);
       this.form.callBack_onESCBtn = function () {this.dlgWnd.destroy() ; if(this.callBack_onDialogAbort!=null) this.callBack_onDialogAbort() }.bind(this);
@@ -250,6 +268,19 @@ export class TChanelDlg
 
     return s;
  }
+
+
+
+getPayloadFields(subTopic)
+{
+  var h=[];
+  var t=this.device.TOPIC + subTopic;
+  var r = utils.webApiRequest('getPayloadFields' , {topic:t} );  
+  if(!r.error)
+     for(var i=0; i<r.result.length;i++) h.push({caption:r.result[i].payloadFieldName,value:r.result[i].ID})
+
+  return h;
+}
 
 
 
@@ -289,6 +320,7 @@ export class TChanelDlg
       this.chanel.InfoPktName    = this.update_infoPunkt_schluessel();
       this.chanel.SIGNALART      = this.infoPunktSchl_signArt;
       this.chanel.Betriebsmittel = this.infoPunktSchl_BM;
+
 
       this.dlgWnd.destroy();
   
