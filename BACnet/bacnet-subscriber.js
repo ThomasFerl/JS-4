@@ -3,7 +3,17 @@ const SERVER_IP   = '10.102.130.13';
 const SERVER_PORT = 47808;
 
 // BACnet-Client starten
-const client = new bacnet({ port: SERVER_PORT });
+const client = new bacnet();
+
+console.log("Read Property");
+
+client.readProperty( SERVER_IP , { type: 8, instance: 1001 }, 85, (err, value) => {
+    if (err) return console.error('Fehler:', err);
+    console.log('Antwort:', value);
+});
+
+
+
 
 
 
@@ -11,7 +21,7 @@ console.log('🚀 Starte BACnet-Testprogramm...');
 
 // **Who-Is gezielt an Gerät senden**
 console.log('🚀 Sende gezielte Who-Is-Anfrage an '+SERVER_IP+' port:'+SERVER_PORT);
-client.whoIs({ address: `${SERVER_IP}:${SERVER_PORT}` });
+client.whoIs({ address:SERVER_IP});
 
 // **Listener für BACnet-Daten**
 client.on('indication', (msg) => {

@@ -2,11 +2,17 @@ const useHTTPS          = false;
 const port              = '4000';
 const MQTT_BROKER_URL   = 'mqtt://10.102.13.99:4701'; 
 
-_fluxDB_URL_            = 'http://10.102.13.99:4400';
-_fluxDB_Token           = 'SGcPDZ2JY6IYzaPFhnLGIiEHeUXtyrjjzLHzkFutvBmlCkrfwvxEk8NnR3z7Wl4YDJFcJj2f5yTJt45vn0bzHw==';
-_fluxDB_Org             = 'Energie Mittelsachsen';
-_fluxDB_Bucket          = 'mqttRawValues';
-_fluxDB_measurement     = 'mqttPayloads';
+
+const globals           = require('./backendGlobals');
+
+if(globals.influxDataStorage)
+{
+  _fluxDB_URL_            = 'http://10.102.13.99:4400';
+  _fluxDB_Token           = 'SGcPDZ2JY6IYzaPFhnLGIiEHeUXtyrjjzLHzkFutvBmlCkrfwvxEk8NnR3z7Wl4YDJFcJj2f5yTJt45vn0bzHw==';
+  _fluxDB_Org             = 'Energie Mittelsachsen';
+  _fluxDB_Bucket          = 'mqttRawValues';
+  _fluxDB_measurement     = 'mqttPayloads';
+}  
 
 const http        = require('http');
 const https       = require('https');
@@ -21,15 +27,16 @@ const path        = require('path');
 const mqtt        = require('mqtt');
 const mqttHandler = require('./mqttHandler');
 
-const globals     = require('./backendGlobals');
+
 const utils       = require('./nodeUtils');
 const webAPI      = require('./nodeAPI');
 const userAPI     = require('./userAPI');
 const session     = require('./session');
 const dbUtils     = require('./dbUtils');
 const dbTables    = require('./dbTables');
+var   nodeInfluxDB= null;
 
-const nodeInfluxDB = require('./nodeInflux');
+if(globals.influxDataStorage) nodeInfluxDB = require('./nodeInflux');
 
 const {TMQTTDistributor}    = require('./mqttDistributor');
 const { networkInterfaces } = require('os');
@@ -54,14 +61,16 @@ dbTables.buildTables( dB );
 
 
 //InfluxDB-Client initialisieren
-var influx = new nodeInfluxDB({
+if(globals.influxDataStorage)
+{    
+  var influx = new nodeInfluxDB({
                                  url         : _fluxDB_URL_,
                                  token       : _fluxDB_Token,
                                  org         : _fluxDB_Org,
                                  bucket      : _fluxDB_Bucket,
                                  measurement : _fluxDB_measurement                               
                               });
-
+} else var influx = null;
 
 //-----------------------------------------------------------------------------------------
 //-----------------------------------------------------------------------------------------

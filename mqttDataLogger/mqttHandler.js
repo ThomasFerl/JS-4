@@ -100,18 +100,22 @@ function safePayload(ID_Topic, strPayload)
         } else ID_payloadField = response.result;
 
         // das Value-Field als WERT betrachtet - der Rest wird als Tags interpretiert
-        if(key=='value') { influxRecord.idPayloadField = ID_payloadField }
-        else { influxRecord[key] = payload[key]; }
+        if(global.influxDataStorage) 
+        {    
+           if(key=='value') { influxRecord.idPayloadField = ID_payloadField }
+           else             { influxRecord[key] = payload[key]; }
+        }   
 
-         // temporärer Payload-Puffer zwecks Analyse und Konfiguration
-         // die Lebensdauer eines Datensatzes beträgt per default 31 Tage ist aber konfigurierbar "maxAgePayloadHistory"
+         // temporärer Payload-Puffer von hier werden die Daten in die eigentliche Daten-Tabelle kopiert sofern es ein Device/chanel gibt, der 
+         // einem Topic zugeordnet wurde... 
+         // wenn die Daten nach Anlage eines Gerätes/Kanals in die Messwerte-Datei kopiert wurde, werden sie aus mqttPayloadContent gelöscht...
          dbUtils.insertIntoTable(dB, 'mqttPayloadContent', { ID_PayloadField: ID_payloadField, timestamp:xlsTimestamp, content: payload[key] });
     } 
     
     //falls kein Zeitstempel im payload existiert, dann nimm den aktuellen Zeitstempel des Brokers
     influxRecord.timestamp = payload.timestamp || new utils.TFDateTime().unixDateTime();
     
-    // Influx speichern
+    // ggf in  Influx speichern ...
     if (globals.influxDataStorage) influx.saveValues(  influxRecord);
 
 }

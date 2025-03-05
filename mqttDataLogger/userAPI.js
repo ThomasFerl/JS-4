@@ -153,7 +153,12 @@ if( CMD=='LSTOPICS')
 
   if( CMD=='COUNT') 
     {
+      
       var response = getID_payloadField(param);
+
+      if(param)
+
+
       
       if(response.error) return response;
       if(response.result=='') return {error:true,errMsg:'Für dieses Topic existiert kein Feldname mit dem Namen "'+response.fn+'" !',result:{}};
