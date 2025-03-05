@@ -1,5 +1,5 @@
 const bacnet      = require('bacstack');
-const SERVER_IP   = '192.168.1.18';
+const SERVER_IP   = '10.102.130.13';
 const SERVER_PORT = 47808;
 
 // BACnet-Client starten
@@ -10,8 +10,8 @@ const client = new bacnet({ port: SERVER_PORT });
 console.log('🚀 Starte BACnet-Testprogramm...');
 
 // **Who-Is gezielt an Gerät senden**
-console.log('🚀 Sende gezielte Who-Is-Anfrage...');
-client.whoIs({ address: SERVER_IP });
+console.log('🚀 Sende gezielte Who-Is-Anfrage an '+SERVER_IP+' port:'+SERVER_PORT);
+client.whoIs({ address: `${SERVER_IP}:${SERVER_PORT}` });
 
 // **Listener für BACnet-Daten**
 client.on('indication', (msg) => {
