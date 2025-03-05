@@ -14,6 +14,21 @@ import { TFWindow }      from "./tfWindows.js";
 import { TFChart }       from "./tfObjects.js";
 import { TFDateTime }    from "./utils.js";
 
+class Tthumbnail
+{
+  constructor( parent , params )
+  {
+    this.parent = parent; 
+    this.params = params;
+    this.image  = null;
+
+    
+
+
+    this.thumbnail = new graphics.TFImage(parent , mediaFile , 0 , 0 , 100 , 100);
+  }
+}
+
 
 export class TFMediaCollector
 {
