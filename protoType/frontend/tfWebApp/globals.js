@@ -15,6 +15,8 @@ export var isCTRLpressed      = false;
 export var isSHIFTpressed     = false;
 export var isALTpressed       = false;
 
+export const isMediaCollector = true;
+
 export const movieFileExtensions = [
   'mp4', 'flv', 'm3u8', 'ts', 'mov', 'avi', 
   'wmv', 'm4v', 'webm', 'weba', 'ogm', 'ogv', 'ogg'
@@ -92,21 +94,23 @@ export function startSession( sessionID , userName , userID , grants , admin )
 export function setSysMenu( s ) { sysMenu = s}
 
 
-document.addEventListener('keydown', function(event) 
+document.addEventListener("keydown", function (event) 
 {
-  console.log("keyDown -> " + event.key );
-  isCTRLpressed  = (event.key === 'Control');
-  isSHIFTpressed = (event.key === 'Shift');
-  isALTpressed   = (event.key === 'Alt');
-      
+  console.log("keyDown -> " + event.key);
+  
+  let isCTRLpressed  = event.ctrlKey;
+  let isSHIFTpressed = event.shiftKey;
+  let isALTpressed   = event.altKey;
+
+  console.log("CTRL:", isCTRLpressed, "SHIFT:", isSHIFTpressed, "ALT:", isALTpressed);
 });
 
 document.addEventListener('keyup', function(event) 
 {
   console.log("keyUp -> " + event.key );
-  if(event.key === 'Control') isCTRLpressed  = false;
-  if(event.key === 'Shift')   isSHIFTpressed = false;
-  if(event.key === 'Alt')     isALTpressed   = false;
+  if(event.ctrlKey)    isCTRLpressed  = false;
+  if(event.shiftKey)   isSHIFTpressed = false;
+  if(event.altKey)     isALTpressed   = false;
 });
 
 

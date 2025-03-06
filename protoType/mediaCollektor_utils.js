@@ -2,15 +2,9 @@ const { response } = require('express');
 
 const utils        = require('./nodeUtils');
 const dbUtils      = require('./dbUtils');
-const pathReplace  = '/mnt/yhost';
 
 
-imgPath       = "/home/tferl/clipperWebApp/files/";
-posterPath    = "/home/tferl/clipperWebApp/poster/";
-thumbPath     = "/home/tferl/clipperWebApp/thumbs/";
-clipRoot      = "/";
-numberOfThums = 20;
-sizeOfThumbs  = '270:-1';
+
 
 
 function findActor(db , actorName)
@@ -61,7 +55,31 @@ function videoInfo ( aPath )
 }
 
 
-function createThumb(path, destPath, time, size , callback )
+function createThumb(mediaFile, destPath, time, size , callback )
+{
+   
+    var ext = path.extname(mediaFile).toLowerCase();
+    
+    //ist mediafile ein Bild ?
+    if((ext=='.png') || (ext=='.jpg') || (ext=='.jpeg') || (ext=='.gif') || (ext=='.bmp') || (ext=='.tiff') || (ext=='.tif') || (ext=='.webp'))
+       return createImageThumb(mediaFile, destPath, size , size , callback );
+  
+    //ist mediafile ein Video ?
+    if((ext=='.mp4') || (ext=='.flv') || (ext=='.m3u8') || (ext=='.ts') || (ext=='.mov') || (ext=='.avi') || (ext=='.wmv'))
+       return createMovieThumb(mediaFile, destPath, time, size , callback );    
+    
+    return {error:true, errMsg:"unknown file type", result:{}}
+}
+
+function createImageThumb(imagePath, destPath, width , height , callback )
+{
+  const cmd = `gm convert "${imagePath}" -resize ${width}x${height} "${destPath}"`
+                
+  return utils.exec( cmd , callback );
+}
+
+
+function createMovieThumb(path, destPath, time, size , callback )
 { 
   console.log("createThumb( destPath:"+destPath+" , size:" + size+")");
    
@@ -248,8 +266,6 @@ function createThumb(path, destPath, time, size , callback )
       }
 
    var response = dbUtils.fetchRecord_from_Query( dB , "Select Capture from actor where ID="+ ID );
-
-   console.log("actorImage SQL-Response: " + JSON.stringify(response))
 
    if(response.error)
    {

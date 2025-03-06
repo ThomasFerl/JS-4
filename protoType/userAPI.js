@@ -1,6 +1,7 @@
-const utils          = require('./nodeUtils.js');
-const dbUtils        = require('./dbUtils.js');
-const { TFDateTime } = require('./nodeUtils.js');
+const utils               = require('./nodeUtils.js');
+const dbUtils             = require('./dbUtils.js');
+const { TFDateTime }      = require('./nodeUtils.js');
+const { TFMediaCollektor} = require('./mediaCollektor_backend.js');
 
 
 var   dB           = {}; // lokale Kopie der Arbeits-Datenbank - wird via startBackend() initialisiert ....   
@@ -38,6 +39,13 @@ module.exports.handleCommand = async function( sessionID , cmd , param , webRequ
  var CMD = cmd.toUpperCase().trim();
  utils.log("handleUserCommand ("+CMD+")");
  utils.log("with params: "+JSON.stringify(param) );
+ 
+
+ if(global.isMediaCollector)
+ {
+   var mc = new TFMediaCollektor( dB , etc );
+       mc.handleCommand( sessionID , cmd , param , webRequest ,  webResponse , fs , path );
+ }
  
 //------------------------------------------------------------
 //-------------TEST-------------------------------------------

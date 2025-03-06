@@ -425,6 +425,7 @@ async function showSVGs(type)
                                                     wnd.callBack_onClick = (e)=>{
                                                                                   if(e.button==0) nextImage(img);
                                                                                   if(e.button==2) prevImage(img);
+                                                                                  if(globals.isALTpressed) diaShow(img);
                                                                                  } 
 
                                                     var popup = new TFPopUpMenu([{caption:'Diashow',value:1} , {caption:'aabrechen',value:2 }]);
