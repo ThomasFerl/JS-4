@@ -341,14 +341,7 @@ setInterval( session.ctrlSession , 1000 );
 
 // zum Tageswechsel um 00:00:00 Uhr alte Daten löschen:
 setInterval(() => {
-                    const today = new Date();
-                    if (today.getHours() === 0 && today.getMinutes() === 0) 
-                    { // Um Mitternacht:  lösche alles, das älter als "maxAgePayloadHistory" Tage ist 
-                      console.log('Mitternacht! Lösche alte Daten aus payload-Register...');
-                      // aktueller xlstimestamp:
-                      var thisXLStimestamp = Math.trunc(new utils.TFDateTime().dateTime());
-                      dbUtils.runSQL(dB, "DELETE FROM mqttPayloadContent WHERE ("+thisXLStimestamp+"-timestamp) > "+globals.maxAgePayloadHistory );
-                    }
+                   mqttHandler.synchronize(); 
                   } , 60 * 1000); // Prüft jede Minute, ob es Mitternacht ist
 
 

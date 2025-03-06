@@ -55,25 +55,31 @@ export function lsTopics( startAtLevel )
 
 export function getValues( params )
 {
-   return utils.webApiRequest('GETVALUES' , params );
+   return utils.webApiRequest('MQTTGETVALUES' , params );
 }
+
 
 
 export function getLastValues( params )
 {
-   return utils.webApiRequest('GETLASTVALUES' , params );
+   return utils.webApiRequest('MQTTGETLASTVALUES' , params );
 }
+
 
 
 export function lastpayload( ID_topic  )
 {
-  return utils.webApiRequest('LASTPAYLOAD' , { ID_topic:ID_topic}); 
+  return utils.webApiRequest('MQTTLASTPAYLOAD' , { ID_topic:ID_topic}); 
 }
 
 
-export function count( ID_topic , fieldName )
+
+export function count( ID_topic , fieldName , ID_Chanel)
 {
-  var params = {ID_topic:ID_topic, fieldName:fieldName};
+  var params = {};
+  if(ID_topic)  params.ID_topic  = ID_topic;
+  if(fieldName) params.fieldName = fieldName;
+  if(ID_Chanel) params.ID_Chanel = ID_Chanel;
    
-  return utils.webApiRequest('COUNT' , params); 
+  return utils.webApiRequest('MQTTCOUNT' , params); 
 }

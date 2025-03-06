@@ -1850,6 +1850,19 @@ if(gridTemplate.apx)
   }
 
 
+  set inpFieldFontWeight(f)
+  {
+    this.input.style.fontWeight = f;
+  }
+
+
+  get inpFieldFontWeight()
+  {
+    return this.input.style.fontWeight;
+  }
+
+
+
   setDateTime( dt )
   {
     var tfDT = null;  
@@ -3175,7 +3188,7 @@ export class TForm
       this.btnOk    = new TFButton( btnContainer ,2,2,1,1,{caption:"OK"});
       this.btnOk.callBack_onClick = function() {if(this.callBack_onOKBtn) { this.callBack_onOKBtn( this.getInputFormValues() )};}.bind(this);
 
-      this.btnAbort = new TFButton( btnContainer,4,2,1,1,{caption:"Abbruch"});
+      this.btnAbort = new TFButton( btnContainer,4,2,1,1,{caption:"Abbruch" , css:"cssAbortBtn01"});
       this.btnAbort.callBack_onClick = function(){if(this.callBack_onESCBtn) this.callBack_onESCBtn();}.bind(this);
     }
 

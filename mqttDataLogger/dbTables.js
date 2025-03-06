@@ -74,7 +74,7 @@ tables.push(
                        
 
 tables.push( 
-            {tableName:"MessWerte",
+            {tableName:"Measurements",
              tableFields:[
                           {fieldName:"ID_Chanel"     , fieldType:"INTEGER"} ,
                           {fieldName:"DT"            , fieldType:"REAL"} ,

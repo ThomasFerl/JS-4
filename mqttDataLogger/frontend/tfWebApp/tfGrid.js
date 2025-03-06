@@ -46,6 +46,7 @@ export class THTMLTable
    this.fields         = [];
    this.jsonData       = null;
    this.onRowClick     = null;
+   this.onRowDblClick  = null;
    this.bindDataset    = null;
    var  isDrawing      = true;
    
@@ -121,6 +122,36 @@ export class THTMLTable
  }
 
 
+ onRowDblClickEvent(event)
+ {
+  console.log('onRowDblClick');  
+  var selectedRow = event.currentTarget;
+  var selected    = selectedRow.getAttribute("selected");
+
+  if (event.ctrlKey) { selectedRow.classList.toggle('trSelected'); 
+  {
+    if  (selected=='1') selected='0'
+    else selected= '1';
+
+    selectedRow.setAttribute("selected", selected )}
+  } 
+  else 
+     {
+       // Entfernen der Markierung und des "select-Attribut" von allen anderen Zeilen
+       Array.from(this.table.querySelectorAll('.trSelected')).forEach(function(row) {row.classList.remove('trSelected'); row.setAttribute("selected",false); });
+      // angeklickte Zeile markieren....   
+      selectedRow.classList.add('trSelected');
+      selectedRow.setAttribute("selected",'1');
+
+      if(this.onRowDblClick)
+      {
+        var itemIndex = selectedRow.getAttribute("itemIndex");
+        this.onRowDblClick( selectedRow , itemIndex , this.jsonData[itemIndex] );  
+      } 
+  }
+}
+
+
 getSelectedRows()
 {
   var rows   = this.table.getElementsByTagName('tr'); 
@@ -184,7 +215,8 @@ getSelectedRows()
     cell.innerHTML    = content[fieldname];
   }
 
-  row.addEventListener("click", function(event) { this.onRowClickEvent( event , this )}.bind(this) );
+  row.addEventListener("click"   , function(event) { this.onRowClickEvent   ( event , this )}.bind(this) );
+  row.addEventListener("dblclick", function(event) { this.onRowDblClickEvent( event , this )}.bind(this) );
   
  }
 

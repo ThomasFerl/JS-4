@@ -120,6 +120,7 @@ export class TdeviceDlg
           head.buildGridLayout_templateColumns("1fr 10em");
           dialogs.addLabel(head,"",1,1,1,1,"Bitte die Parameter der Mess-Station eingeben !")
       var chanBtn = dialogs.addButton(head,'',2,1,1,1,'Kanäle...') ;  
+          chanBtn.backgroundColor = "gray";   
           chanBtn.callBack_onClick = ()=>{
                                            if(this.device != null) chnDlg = new TdeviceChanelsDlg(this.device)
                                            else dialogs.showMessage('Es muss zuerst das Gerät definiert werden !'); 

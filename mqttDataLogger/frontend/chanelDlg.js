@@ -166,7 +166,8 @@ export class TChanelDlg
       this.infoPunktSchl_signArt     = '';
       this.infoPunktSchl_AnlSchl     = this.device.AnlagenSchluessel;
 
-      if(chanel != null) {this.chanel = chanel; this.chanel.payloadField='value';}
+
+      if(chanel != null) {this.chanel = chanel;}
       else {
              this.newChanel = true;
              var response   = utils.webApiRequest('schema' , {tableName:"chanels"} );
@@ -180,17 +181,12 @@ export class TChanelDlg
              this.chanel = {};
              for(var i=0; i<response.result.length; i++) this.chanel[response.result[i].fieldName] = response.result[i].defaultValue || "";
              this.chanel.ID_Device = this.device.ID;
-             this.chanel.payloadField='value';
       }
-      debugger;
-        var h=this.getPayloadFields('%'); // alle Felder  
-        if(this.device.ID_payloadField)
-            {
-              var h= utils.findEntryByField(h,'value',this.device.ID_payloadField)
-              if(h) this.device.payloadField = h.caption;
-            } 
-
-
+      
+        // Es wird dem Formular ein zusätzliches Eingabefeld hinzugefügt, das nicht Bestandteil des Datensatzes ist.
+        // Es handelt sich um das Eingabefeld "payloadField" welches nach der Eingabe wieder entfernt wird ....
+        this.chanel.payloadField='';
+    
         var availeableTopics = [];
         var r = utils.webApiRequest('LSTOPICS' , {ID_Device:device.ID, excludeDescr:true} );
         if(!r.error) availeableTopics = r.result;
@@ -198,16 +194,18 @@ export class TChanelDlg
       var cpt = this.newChanel ? "neuen Kanal hinzufügen" : "Kanal bearbeiten";
           
       this.dlgWnd = dialogs.createWindow( null , cpt , "50%" , "77%" , "CENTER" );
-      this.dlgWnd.buildGridLayout_templateRows("4em,1fr");
+      this.dlgWnd.buildGridLayout_templateRows("1em 7em 1em 1fr");
       this.dlgWnd.buildGridLayout_templateColumns("1fr");
       
-      var head = dialogs.addPanel(this.dlgWnd.hWnd,"",1,1,1,1);
+    
+      var head = dialogs.addPanel(this.dlgWnd.hWnd,"",1,2,1,1);
+          head.margin = '1em';
           head.buildGridLayout_templateRows("1fr");
           head.buildGridLayout_templateColumns("1fr");  // falls noch ein Button platziert werden muss
-      this.infoPunktSchl = dialogs.addInput(head,1,1,21,"Informationspunkt-Schlüssel","","",{})    
-         
+      this.infoPunktSchl = dialogs.addInput(head,1,1,21,"Informationspunkt-Schlüssel","","",{});
+      this.infoPunktSchl.inpFieldFontWeight = 'bold';
       
-      var body = dialogs.addPanel(this.dlgWnd.hWnd,"cssContainerPanel",1,2,1,1); 
+      var body = dialogs.addPanel(this.dlgWnd.hWnd,"cssContainerPanel",1,4,1,1); 
 
       this.form   = new TForm( body, 
                                this.chanel, 
@@ -221,7 +219,21 @@ export class TChanelDlg
       this.form.setInputType("SIGNALART"        , "select" ,{items:getStrList(__signalArt)      } );
       this.form.setInputType("Betriebsmittel"   , "select" ,{items:getStrList(__betriebsMittel) } );
       
-      this.form.setInputType("TOPIC" , "select" , {items:availeableTopics} );
+      this.form.setInputType("TOPIC"            , "select" ,{items:availeableTopics} );
+
+      // Das Payloadfield soll sich immer dann, wenn sich das Topic ändert anpassen.
+      // Es gibt für die Initialisierung drei Fälle:
+      // 1. Neuanlage  -> weder Topic noch ein vorbelegtes Payload-Field 
+      // 2. Bearbeiten -> es gibt bereits ein Topic -> Abfrage der möglichen Payload-Felder
+      // 3. Bearbeiten -> es gibt bereits ein PayloadField -> Setzen des vorhandenen Wertes
+
+      var pl = []
+      if(this.chanel.TOPIC) pl = this.getPayloadFields(this.chanel.TOPIC);
+
+      this.form.setInputType("payloadField" , "select" ,{items:pl} );
+
+      // ggf. vorhandene Ausprägung setzen....
+      this.form.getControlByName("payloadField").value = utils.webApiRequest('GETPAYLOADFIELDNAME',{ID_payloadField:this.chanel.ID_payloadField}).result;
 
       this.form.render(true);
 
@@ -237,19 +249,21 @@ export class TChanelDlg
           betrMit.itemIndex = findIndex( __betriebsMittel , this.chanel.Betriebsmittel );
           betrMit.callBack_onChange = function(value){ this.update_infoPunkt_schluessel() }.bind(this)
 
-      var topic             = this.form.getControlByName("TOPIC").editControl;
-          topic.itemIndex = findIndex( availeableTopics , this.chanel.TOPIC );
+      var topic             = this.form.getControlByName("TOPIC").editControl; 
           topic.callBack_onChange = function(value){ 
                                                      var t=this.form.getControlByName("TOPIC").editControl;
-                                                     console.log(this.getPayloadFields(t.value))   
+                                                     var p=this.form.getControlByName("payloadField").editControl;
+                                                         p.setItems(this.getPayloadFields(t.value));
                                                     }.bind(this)
 
-                 
-
-             
-      this.form.callBack_onOKBtn  = this.saveChanel.bind(this);
-      this.form.callBack_onESCBtn = function () {this.dlgWnd.destroy() ; if(this.callBack_onDialogAbort!=null) this.callBack_onDialogAbort() }.bind(this);
      
+       var plf                   = this.form.getControlByName("payloadField").editControl;
+           plf.callBack_onChange = function(value){ this.chanel.ID_payloadField = value; }.bind(this);  
+
+                 
+           this.form.callBack_onOKBtn  = function () {this.saveChanel(this.chanel);}.bind(this);
+           this.form.callBack_onESCBtn = function () {this.dlgWnd.destroy() ; if(this.callBack_onDialogAbort!=null) this.callBack_onDialogAbort() }.bind(this);
+        
   }
 
  
@@ -320,6 +334,9 @@ getPayloadFields(subTopic)
       this.chanel.InfoPktName    = this.update_infoPunkt_schluessel();
       this.chanel.SIGNALART      = this.infoPunktSchl_signArt;
       this.chanel.Betriebsmittel = this.infoPunktSchl_BM;
+
+      //Das künstl. Feld PayloadFieldName wieder herauslösen....
+      delete this.chanel.payloadField;
 
 
       this.dlgWnd.destroy();

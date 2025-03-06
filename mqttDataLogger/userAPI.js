@@ -82,9 +82,15 @@ if( CMD == 'GETPAYLOADFIELDS')
       {
         var subSQL = "(Select ID from mqttTopics Where topic='"+param.topic+"')";
         if (param.topic.indexOf('%')>-1) subSQL = "(Select ID from mqttTopics Where topic like '"+param.topic+"')"
-        
+
         return dbUtils.fetchRecords_from_Query(dB,"Select ID,payloadFieldName from mqttPayloadFields Where ID_Topic in "+subSQL+" order by ID desc");
       }
+
+if( CMD == 'GETPAYLOADFIELDNAME')
+      {
+        return dbUtils.fetchValue_from_Query(dB,"Select payloadFieldName from mqttPayloadFields Where ID="+param.ID_payloadField);
+      }
+
 
 if( CMD=='NEWDEVICE' )
   {
@@ -110,7 +116,7 @@ if( CMD=='NEWDEVICE' )
 
     if( CMD=='LOADCHANELS' )
       {
-        return dbUtils.fetchRecords_from_Query(dB,"Select * from chanels Where ID_Device="+param.ID_Device+" order by ID desc ");
+        return dbUtils.fetchRecords_from_Query(dB,"Select * from chanels Where ID_Device="+param.ID_Device+" order by ID");
       }
     
          
@@ -181,7 +187,7 @@ if( CMD=='LSTOPICS')
 
 
 
-if( CMD=='GETVALUES' )
+if( CMD=='MQTTGETVALUES' )
   {
     var response = getID_payloadField(param);
       
@@ -195,6 +201,23 @@ if( CMD=='GETVALUES' )
 
     return mqttHandler.selectValues( selectParam ); 
   }
+
+
+  if( CMD=='GETVALUES' )
+    {
+      var sql = "";  
+      if(param.groupBy) sql = "Select DT,"+(param.aggr || "sum")+"(Wert) as Wert from Measurements Where ID_chanel="+param.ID_Chanel+" Group by "+param.groupBy+" Order by DT"
+      else {            sql = "Select DT,Wert from Measurements Where ID_chanel="+param.ID_Chanel+" Order by DT";
+                      return dbUtils.fetchValue_from_Query(dB , sql ) 
+           }      
+    }
+
+
+   if( CMD=='SYNC') 
+   {
+      mqttHandler.synchronize();
+   }
+  
 
 
   if( CMD=='GETLASTVALUES' )

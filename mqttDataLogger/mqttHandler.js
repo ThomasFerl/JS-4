@@ -147,36 +147,89 @@ module.exports.loadLastPayload = (ID_topic) =>
 
 
 module.exports.count = async (params) =>
-{    
- try {
+{  
+ if (globals.influxDataStorage)     
+ {   
+   try {
         const response = await influx.count(params); 
         return response
-    } catch (error) {
-        return { error: true, errMsg: error.message, result: {} };
-    }
+      } catch (error) {return { error: true, errMsg: error.message, result: {} }};
+ }
+ else { return dbUtils.fetchValue_from_Query(dB , "Select * from Measurements Where ID_chanel="+params.ID_Chanel) }
+        
 };
 
 
 module.exports.selectValues = async (params) =>
 {
-    try {
-        const response = await influx.selectValues(params); 
-        return response
-    } catch (error) {
-        return { error: true, errMsg: error.message, result: {} };
+    if (globals.influxDataStorage)     
+    {   
+       try {
+            const response = await influx.selectValues(params); 
+            return response
+           } catch (error) {return { error: true, errMsg: error.message, result: {} }; }
     }
-
+    else {
+           var sql = "";  
+           if(params.groupBy) sql = "Select DT,"+(params.aggr || "sum")+"(Wert) from Measurements Where ID_chanel="+params.ID_Chanel+" Group by "+params.groupBy+" Order by DT"
+           else {             sql = "Select DT,Wert from Measurements Where ID_chanel="+params.ID_Chanel+" Order by DT";
+                  return dbUtils.fetchValue_from_Query(dB , sql ) 
+           }      
+        }
 }
 
 
 module.exports.selectLastValues = async (params) =>
     {
+      if (globals.influxDataStorage)     
+      {     
         try {
             const response = await influx.selectLastValues(params); 
             return response
-        } catch (error) {
-            return { error: true, errMsg: error.message, result: {} };
-        }
-    
+        } catch (error) {return { error: true, errMsg: error.message, result: {} }; }
+      }     
+      return dbUtils.fetchValue_from_Query(dB , "Select * from Measurements Where ID_chanel="+params.ID_Chanel+" limit 50") 
     }
+
+
+
+module.exports.synchronize = () =>
+{
+   // alle Kanäle nach neuen Daten durchsuchen ....
+   var r = dbUtils.fetchRecords_from_Query(dB,"Select * from chanels Where TOPIC <> '' ");
+   if(!r.error)
+   for(var i=0; i<r.result.length; i++)
+   {
+     var c=r.result[i];
+     var t=dbUtils.fetchValue_from_Query(dB,"Select TOPIC from devices Where ID="+c.ID_Device).result+c.TOPIC;
+     console.log("TOPIC : "+t);
+     
+
+     
+
+     
+   } 
+
+
+
+
+
+}
+
+
+/*
+Code um ältere Datensätze zu löschen .....
+const today = new Date();
+                    if (today.getHours() === 0 && today.getMinutes() === 0) 
+                    { // Um Mitternacht:  lösche alles, das älter als "maxAgePayloadHistory" Tage ist 
+                      console.log('Mitternacht! Lösche alte Daten aus payload-Register...');
+                      // aktueller xlstimestamp:
+                      var thisXLStimestamp = Math.trunc(new utils.TFDateTime().dateTime());
+                      dbUtils.runSQL(dB, "DELETE FROM mqttPayloadContent WHERE ("+thisXLStimestamp+"-timestamp) > "+globals.maxAgePayloadHistory );
+                    }
+
+
+*/
+
+
     

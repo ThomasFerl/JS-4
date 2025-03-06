@@ -5,7 +5,8 @@ import { TFDistributor  }   from "./tfWebApp/tfMQTT.js";
 import { TFMQTTExplorer }   from "./tfMQTTExplorer.js";
 import * as utils           from "./tfWebApp/utils.js";    
 import * as dialogs         from "./tfWebApp/tfDialogs.js";    
-import {TdeviceDlg      }   from "./deviceDlg.js"
+import {TdeviceDlg      }   from "./deviceDlg.js";
+import {TFDataViewer    }   from "./dataViewer.js";
 
 
 var mqttDistributor =  new TFDistributor( 'mqtt://10.102.13.99:4701' );     // Verbindung zum Broker herstellen
@@ -89,7 +90,8 @@ function updateDeviceGrid( )
                                                            BEMERKUNGEN:"Bemerkungen" } // translation
                                    );
 
-    deviceGrid.onRowClick = ( selectedRow , itemIndex , deviceRecord )=>{ selectedDevice = devices[itemIndex] }                               
+    deviceGrid.onRowClick    = ( selectedRow , itemIndex , deviceRecord )=>{ selectedDevice = devices[itemIndex] }   
+    deviceGrid.onRowDblClick = ( selectedRow , itemIndex , deviceRecord )=>{ new TFDataViewer(devices[itemIndex] ) }                               
     
 }
 
