@@ -271,14 +271,10 @@ der Aufruf von run(...['value1', 'value2']) zu run('value1', 'value2') wird.
 */
 
 
-
 module.exports.insertBatchIntoTable = ( db , tableName , batch ) =>
 {
     return _insertBatchIntoTable( db , tableName , batch );
 }
-
-
-
 
 
 function _insertIntoTable_if_not_exist( db , tableName , fields , checkUpFieldName )
@@ -313,8 +309,6 @@ module.exports.insertIntoTable_if_not_exist = ( db , tableName , fields , checkU
 }
 
 
-
-
 function _updateTable(db , tableName , ID_field , ID_value , fields )
 {
   var fieldNames  = [];
@@ -343,6 +337,37 @@ module.exports.updateTable = (db , tableName , ID_field , ID_value , fields ) =>
   return _updateTable(db , tableName , ID_field , ID_value , fields )
 }
     
+
+function _updateBatchInTable(db, tableName, records, keyField) {
+  try {
+       const update = db.transaction((records) => {
+       for (const record of records) 
+       {
+         var fieldNames = Object.keys(record).filter(f => f !== keyField); // Schlüssel-Feld auslassen
+         var setClause = fieldNames.map(f => `${f} = ?`).join(', ');
+         var sql = `UPDATE ${tableName} SET ${setClause} WHERE ${keyField} = ?`;
+
+         db.prepare(sql).run(...fieldNames.map(f => record[f]), record[keyField]);
+       }
+    });
+
+    // Führt die Transaktion mit allen Datensätzen aus
+    update(records);
+
+    return { error: false, errMsg: 'OK', result: {} };
+  } catch (e) {
+    return { error: true, errMsg: e.message, result: {} };
+  }
+}
+
+module.exports.updateBatchInTable = (db, tableName, records, keyField) =>
+  {
+    return _updateBatchInTable(db, tableName, records, keyField)
+  }
+
+
+
+
 
 function _existTable( db , tableName )
 {

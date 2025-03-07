@@ -122,6 +122,8 @@ const __betriebsMittel =
       var r={short:"",long:""};
         if(ndx >jsnArray.length) return r;
 
+        if(jsnArray==__units) return {short:__units[ndx],long:__units[ndx]}
+
        var h= jsnArray[ndx];
        for(var key in h) r={short:key,long:h[key]}
        return r;
@@ -183,13 +185,9 @@ export class TChanelDlg
              this.chanel.ID_Device = this.device.ID;
       }
       
-        // Es wird dem Formular ein zusätzliches Eingabefeld hinzugefügt, das nicht Bestandteil des Datensatzes ist.
-        // Es handelt sich um das Eingabefeld "payloadField" welches nach der Eingabe wieder entfernt wird ....
-        this.chanel.payloadField='';
-    
         var availeableTopics = [];
-        var r = utils.webApiRequest('LSTOPICS' , {ID_Device:device.ID, excludeDescr:true} );
-        if(!r.error) availeableTopics = r.result;
+        var r = utils.webApiRequest('LSTOPICS' , {ID_Device:device.ID} );
+        if(!r.error) for(var i=0; i<r.result.length;i++) availeableTopics.push({caption:r.result[i].topic.substring(r.result[i].descr.length) , value:r.result[i].ID})
      
       var cpt = this.newChanel ? "neuen Kanal hinzufügen" : "Kanal bearbeiten";
           
@@ -209,17 +207,24 @@ export class TChanelDlg
 
       this.form   = new TForm( body, 
                                this.chanel, 
-                               {NAME:"Kanal-Name",TYP:"Kanal-Typ",UNIT:"Einheit",BESCHREIBUNG:"Kanal-Beschreibung",SIGNALART:"Art des Signals"} ,   // Labels
+                               {NAME            :"Kanal-Name",
+                                TYP             :"Kanal-Typ",
+                                UNIT            :"Einheit",
+                                BESCHREIBUNG    :"Kanal-Beschreibung",
+                                SIGNALART       :"Art des Signals",
+                                DESC            :"(sub)Topic",
+                                payloadField_val:"Feldname(Wert)",
+                                payloadField_dt :"Feldname(timestamp)" } ,// Labels
                                {} ,                             // Appendix
-                               ['ID','ID_Device','lfdNr_BM','InfoPktName','ID_payloadField'] ,  // Exclude
+                               ['ID','ID_Device', 'ID_Topic' , 'lfdNr_BM','InfoPktName'] ,  // Exclude
                                {} ,                             // InpType
                                '' );
 
+      // Combo-Boxen befüllen ....                         
       this.form.setInputType("UNIT"             , "select" ,{items:getStrList(__units)          } );
       this.form.setInputType("SIGNALART"        , "select" ,{items:getStrList(__signalArt)      } );
       this.form.setInputType("Betriebsmittel"   , "select" ,{items:getStrList(__betriebsMittel) } );
-      
-      this.form.setInputType("TOPIC"            , "select" ,{items:availeableTopics} );
+      this.form.setInputType("DESC"             , "select" ,{items:availeableTopics} );
 
       // Das Payloadfield soll sich immer dann, wenn sich das Topic ändert anpassen.
       // Es gibt für die Initialisierung drei Fälle:
@@ -228,12 +233,14 @@ export class TChanelDlg
       // 3. Bearbeiten -> es gibt bereits ein PayloadField -> Setzen des vorhandenen Wertes
 
       var pl = []
-      if(this.chanel.TOPIC) pl = this.getPayloadFields(this.chanel.TOPIC);
+      if(this.chanel.DESC) pl = this.getPayloadFields(this.chanel.ID_Topic);
 
-      this.form.setInputType("payloadField" , "select" ,{items:pl} );
+      this.form.setInputType("payloadField_val" , "select" ,{items:pl} );
+      this.form.setInputType("payloadField_dt"  , "select" ,{items:pl} );
 
       // ggf. vorhandene Ausprägung setzen....
-      this.form.getControlByName("payloadField").value = utils.webApiRequest('GETPAYLOADFIELDNAME',{ID_payloadField:this.chanel.ID_payloadField}).result;
+      this.form.getControlByName("payloadField_val").value = this.chanel.payloadField_val;
+      this.form.getControlByName("payloadField_dt").value  = this.chanel.payloadField_dt;
 
       this.form.render(true);
 
@@ -249,19 +256,25 @@ export class TChanelDlg
           betrMit.itemIndex = findIndex( __betriebsMittel , this.chanel.Betriebsmittel );
           betrMit.callBack_onChange = function(value){ this.update_infoPunkt_schluessel() }.bind(this)
 
-      var topic             = this.form.getControlByName("TOPIC").editControl; 
+      var topic             = this.form.getControlByName("DESC").editControl; 
           topic.callBack_onChange = function(value){ 
-                                                     var t=this.form.getControlByName("TOPIC").editControl;
-                                                     var p=this.form.getControlByName("payloadField").editControl;
-                                                         p.setItems(this.getPayloadFields(t.value));
+                                                     var t =this.form.getControlByName("DESC").editControl;
+                                                     var pl=this.getPayloadFields(t.value);
+                                                     this.chanel.ID_Topic = t.value;
+                                                     this.form.getControlByName("payloadField_val").editControl.setItems(pl);
+                                                     this.form.getControlByName("payloadField_dt").editControl.setItems(pl);
+                                                        
                                                     }.bind(this)
 
      
-       var plf                   = this.form.getControlByName("payloadField").editControl;
-           plf.callBack_onChange = function(value){ this.chanel.ID_payloadField = value; }.bind(this);  
+           this.form.callBack_onOKBtn  = function () { // im Formular ist die ID des Topic/Descriptor gespeichert
+                                                       // wir brauchen aber den Klartextnamen ....
+                                                       var t =this.form.getControlByName("DESC").editControl;  
+                                                       var r =this.form.getInputFormValues();
+                                                       utils.findEntryByField(r , 'field' , 'DESC').value = t.text;
 
-                 
-           this.form.callBack_onOKBtn  = function () {this.saveChanel(this.chanel);}.bind(this);
+                                                       this.saveChanel(r);
+                                                     }.bind(this);  
            this.form.callBack_onESCBtn = function () {this.dlgWnd.destroy() ; if(this.callBack_onDialogAbort!=null) this.callBack_onDialogAbort() }.bind(this);
         
   }
@@ -285,13 +298,12 @@ export class TChanelDlg
 
 
 
-getPayloadFields(subTopic)
-{
+getPayloadFields(idTopic)
+{   
   var h=[];
-  var t=this.device.TOPIC + subTopic;
-  var r = utils.webApiRequest('getPayloadFields' , {topic:t} );  
+  var r = utils.webApiRequest('getPayloadFields' , {ID_Topic:idTopic} );  
   if(!r.error)
-     for(var i=0; i<r.result.length;i++) h.push({caption:r.result[i].payloadFieldName,value:r.result[i].ID})
+     for(var i=0; i<r.result.length;i++) h.push({caption:r.result[i],value:r.result[i]})
 
   return h;
 }
@@ -326,7 +338,7 @@ getPayloadFields(subTopic)
 
 
   saveChanel( chanelData )
-  {
+  { 
       for(var i=0; i<chanelData.length; i++)
       if(this.chanel.hasOwnProperty(chanelData[i].field)) this.chanel[chanelData[i].field] = chanelData[i].value;
       // die Combobox-Einträge in Kurzform umwandeln. 
@@ -335,8 +347,8 @@ getPayloadFields(subTopic)
       this.chanel.SIGNALART      = this.infoPunktSchl_signArt;
       this.chanel.Betriebsmittel = this.infoPunktSchl_BM;
 
-      //Das künstl. Feld PayloadFieldName wieder herauslösen....
-      delete this.chanel.payloadField;
+      // der Descriptor soll in disem Fall nicht die ID sondern das SubTopic im Klarnamen speichern ....
+      // this.chanel.DESC = utils.findEntryByField( chanelData , '')
 
 
       this.dlgWnd.destroy();

@@ -29,7 +29,7 @@ export function main(capt1,capt2)
     head           = l.head;
     dashBoard      = l.dashBoard; 
 
-    head.buildGridLayout_templateColumns('10em 10em 10em 1fr');
+    head.buildGridLayout_templateColumns('10em 1em 10em 1em 10em 1em 10em 1fr 10em');
     head.buildGridLayout_templateRows   ('1fr 1fr');
 
     var btn_AddDevice              = dialogs.addButton( head , "" , 1 , 2 , 1 , 1 , "neues Gerät"  );
@@ -39,7 +39,7 @@ export function main(capt1,capt2)
                                                       dlg.callBack_onDialogComplete = (device)=>{ devices.unshift(device); updateDeviceGrid(); }
                                                  }
 
-    var btn_EditDevice              = dialogs.addButton( head , "" , 2 , 2 , 1 , 1 , "Gerät bearbeiten"  );
+    var btn_EditDevice              = dialogs.addButton( head , "" , 3 , 2 , 1 , 1 , "Gerät bearbeiten"  );
     btn_EditDevice.heightPx         = 35;
     btn_EditDevice.callBack_onClick = function() { 
                                                    if(selectedDevice==null){ dialogs.showMessage("Bitte zuerst einen Datensatz auswählen !"); return; }
@@ -48,12 +48,20 @@ export function main(capt1,capt2)
                                                  }
 
 
-     var btn_exploreDevice              = dialogs.addButton( head , "" , 3 , 2 , 1 , 1 , "Explorer"  );
+     var btn_exploreDevice              = dialogs.addButton( head , "" , 5 , 2 , 1 , 1 , "Explorer"  );
      btn_exploreDevice.heightPx         = 35;
      btn_exploreDevice.callBack_onClick = function() { 
                                                        if(selectedDevice==null){ dialogs.showMessage("Bitte zuerst einen Datensatz auswählen !"); return; }
                                                        new TFMQTTExplorer (ws.handle , mqttDistributor , '70%','80%' );                                            
                                                      }  
+
+
+    var btn_sync                        = dialogs.addButton( head , "" , 9 , 2 , 1 , 1 , "synchronisieren"  );
+    btn_sync.heightPx                   = 35;
+    btn_sync.backgroundColor            = "gray";
+    btn_sync.callBack_onClick           = function() { 
+                                                      utils.webApiRequest('SYNC',{})                               
+                                                     }                                                   
 
     loadDevices();
     updateDeviceGrid();

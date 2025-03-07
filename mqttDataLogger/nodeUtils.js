@@ -14,7 +14,8 @@ module.exports.logging  = new TFLogging();
 
 module.exports.log = (s) =>
 {
-  return this.logging.log(s);
+  if(this.debug) console.log(s);
+  //return this.logging.log(s);
 }
 
 

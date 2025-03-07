@@ -1,18 +1,9 @@
 const useHTTPS          = false;
 const port              = '4000';
+
 const MQTT_BROKER_URL   = 'mqtt://10.102.13.99:4701'; 
 
-
 const globals           = require('./backendGlobals');
-
-if(globals.influxDataStorage)
-{
-  _fluxDB_URL_            = 'http://10.102.13.99:4400';
-  _fluxDB_Token           = 'SGcPDZ2JY6IYzaPFhnLGIiEHeUXtyrjjzLHzkFutvBmlCkrfwvxEk8NnR3z7Wl4YDJFcJj2f5yTJt45vn0bzHw==';
-  _fluxDB_Org             = 'Energie Mittelsachsen';
-  _fluxDB_Bucket          = 'mqttRawValues';
-  _fluxDB_measurement     = 'mqttPayloads';
-}  
 
 const http        = require('http');
 const https       = require('https');
@@ -34,9 +25,7 @@ const userAPI     = require('./userAPI');
 const session     = require('./session');
 const dbUtils     = require('./dbUtils');
 const dbTables    = require('./dbTables');
-var   nodeInfluxDB= null;
 
-if(globals.influxDataStorage) nodeInfluxDB = require('./nodeInflux');
 
 const {TMQTTDistributor}    = require('./mqttDistributor');
 const { networkInterfaces } = require('os');
@@ -60,27 +49,15 @@ const dB          = new Database( dBName  , { verbose: utils.log ,  readonly: fa
 dbTables.buildTables( dB );
 
 
-//InfluxDB-Client initialisieren
-if(globals.influxDataStorage)
-{    
-  var influx = new nodeInfluxDB({
-                                 url         : _fluxDB_URL_,
-                                 token       : _fluxDB_Token,
-                                 org         : _fluxDB_Org,
-                                 bucket      : _fluxDB_Bucket,
-                                 measurement : _fluxDB_measurement                               
-                              });
-} else var influx = null;
-
 //-----------------------------------------------------------------------------------------
 //-----------------------------------------------------------------------------------------
 // MQTT - Client starten und zum Mosquitto-Server Verbindung aufnehmen
 //-----------------------------------------------------------------------------------------
 //-----------------------------------------------------------------------------------------
 
-const defaultTopic = 'ems/test/#';
+const defaultTopic = '#';
 
-mqttHandler.setup( dB , influx );
+mqttHandler.setup( dB );
 
 const mqttClient = mqtt.connect(MQTT_BROKER_URL);
 
@@ -92,7 +69,7 @@ mqttClient.on('connect', () => {
                                                                      });
                                 });                                      
 
-// Nachricht empfangen und in InfluxDB speichern
+// Nachricht empfangen und in DB speichern
 mqttClient.on('message', async (topic, payload) => { mqttHandler.onMessage(topic, payload); });
  
 // Fehlerbehandlung

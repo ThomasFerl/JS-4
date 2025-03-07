@@ -9,26 +9,17 @@ var content = [];
 tables.push( 
             {tableName:"mqttTopics",
              tableFields:[
-                {fieldName:"ID_Device", fieldType:"INTEGER" },
                 {fieldName:"topic"    , fieldType:"Text" },
                 {fieldName:"descr"    , fieldType:"Text" },
              ]});
 
 
 tables.push( 
-            {tableName:"mqttPayloadFields",
+            {tableName:"mqttPayloads",
              tableFields:[
                           {fieldName:"ID_Topic"  , fieldType:"INTEGER" } ,
-                          {fieldName:"payloadFieldName" , fieldType:"TEXT" } , 
-                       ]});
-
-
-tables.push( 
-            {tableName:"mqttPayloadContent",
-             tableFields:[
-                          {fieldName:"ID_PayloadField"  , fieldType:"INTEGER" } ,
-                          {fieldName:"timestamp" , fieldType:"REAL" } ,
-                          {fieldName:"content" , fieldType:"TEXT" } , 
+                          {fieldName:"payload"   , fieldType:"TEXT" }, 
+                          {fieldName:"sync"      , fieldType:"INTEGER" } 
                        ]});
 
 
@@ -52,24 +43,28 @@ tables.push(
                           {fieldName:"Pix3" , fieldType:"Text"} ,
                           {fieldName:"EMF" , fieldType:"Text"} ,
                           {fieldName:"GPS" , fieldType:"Text"} ,
-                          {fieldName:"TOPIC" , fieldType:"Text"} 
-                       ]});
+                          {fieldName:"TOPIC" , fieldType:"Text"}
+                          
+                         ]});
                        
                     
 tables.push( 
             {tableName:"chanels",
              tableFields:[
-                          {fieldName:"ID_Device"      , fieldType:"INTEGER"} ,
-                          {fieldName:"ID_payloadField", fieldType:"INTEGER"} ,
-                          {fieldName:"NAME"           , fieldType:"Text"} ,
-                          {fieldName:"TYP"            , fieldType:"Text"} ,
-                          {fieldName:"UNIT"           , fieldType:"Text"} ,
-                          {fieldName:"BESCHREIBUNG"   , fieldType:"Text"} ,
-                          {fieldName:"InfoPktName"    , fieldType:"Text"} ,
-                          {fieldName:"Betriebsmittel" , fieldType:"Text"} ,
-                          {fieldName:"lfdNr_BM"       , fieldType:"Text"} ,
-                          {fieldName:"SIGNALART"      , fieldType:"Text"} ,
-                          {fieldName:"TOPIC"          , fieldType:"Text"} 
+                          {fieldName:"ID_Device"         , fieldType:"INTEGER"} ,
+                          {fieldName:"ID_TOPIC"          , fieldType:"Text"} ,
+                          {fieldName:"NAME"              , fieldType:"Text"} ,
+                          {fieldName:"TYP"               , fieldType:"Text"} ,
+                          {fieldName:"UNIT"              , fieldType:"Text"} ,
+                          {fieldName:"BESCHREIBUNG"      , fieldType:"Text"} ,
+                          {fieldName:"InfoPktName"       , fieldType:"Text"} ,
+                          {fieldName:"Betriebsmittel"    , fieldType:"Text"} ,
+                          {fieldName:"lfdNr_BM"          , fieldType:"Text"} ,
+                          {fieldName:"SIGNALART"         , fieldType:"Text"} ,
+                          {fieldName:"payloadField_val"  , fieldType:"Text"} ,
+                          {fieldName:"payloadField_dt"   , fieldType:"Text"} ,
+                          {fieldName:"DESC"              , fieldType:"Text"} 
+                         
                        ]});
                        
 

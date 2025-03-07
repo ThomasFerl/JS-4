@@ -3,11 +3,8 @@ const dbUtils              = require('./dbUtils');
 const utils                = require('./nodeUtils');
 
 var   dB                   = null;
-var  influx                = null;
 
-
-module.exports.setup = (_dB , _influx ) => { dB = _dB;  influx = _influx }
-
+module.exports.setup = (_dB ) => { dB = _dB; }
 
 
 module.exports.onMessage = (topic, payload) =>
@@ -22,198 +19,114 @@ module.exports.onMessage = (topic, payload) =>
     var descr=''; 
     if (parts.length>3) descr=parts[0]+'/'+parts[1]+'/'+parts[2]
 
-    // suche nach Gerät mit diesem Deskriptor
-    var ID_Device = null;
-    var response = dbUtils.fetchValue_from_Query(dB, "SELECT ID FROM devices WHERE TOPIC = '"+descr+"'" );
-    if (response.error) { console.error('Fehler beim Prüfen des Topics:', response.errMsg); return; }
-
-    // ggf leer
-    ID_Device = response.result || "0";
-
     var ID_Topic = null;
-
-    console.log('Datenbank (dB) -> '+dB);
-    
     // prüfen, ob das ankommende Topic schon existiert....
     var response = dbUtils.fetchValue_from_Query(dB, "SELECT ID FROM mqttTopics WHERE topic = '"+topic+"'" )
     if (response.error) { console.error('Fehler beim Prüfen des Topics:', response.errMsg); return; }
 
     if (response.result=='')
     {
-       response = dbUtils.insertIntoTable(dB, 'mqttTopics', {topic:topic,descr:descr,ID_Device:ID_Device});
+       response = dbUtils.insertIntoTable(dB, 'mqttTopics', {topic:topic,descr:descr});
        if (response.error) { console.error('Fehler beim Regisstrieren des Topics:', response.errMsg); return; }
-       else {
-             console.log('Insert-response -> '+JSON.stringify(response));
-             ID_Topic = response.result.lastInsertRowid;
-             utils.log('Topic '+topic+' wurde unter dwer ID:' +ID_Topic+' registriert.');    
-            }
-            
-    } else ID_Topic = response.result;
+      
+       ID_Topic = response.result.lastInsertRowid;
+       utils.log('Topic '+topic+' wurde unter dwer ID:' +ID_Topic+' registriert.');    
+    }
+    else ID_Topic = response.result;
 
-    safePayload( ID_Topic , payload.toString());    
+    //safePayload
+    dbUtils.insertIntoTable(dB,'mqttPayloads',{ID_Topic:ID_Topic,payload:payload.toString(),sync:0});
+
 }   
     
 
-function safePayload(ID_Topic, strPayload)
-{
-    utils.log('safePayload -> ID_Topic: '+ID_Topic+' / payload: '+strPayload);
-
-    var payload = {};
-
-    // ist Payload ein String ?
-    if (typeof strPayload == 'string')    
-    {
-        try {
-            utils.log('Payload wurde als String erkannt und wird geparst:');
-            payload = JSON.parse(strPayload);
-            utils.log(payload);
-        }
-        catch (e) {
-            console.error('Fehler beim Parsen des Payloads:', e);
-            return;
-        }
-    }
-
-    // ist Payload ein Objekt ?
-    else if (typeof strPayload == 'object') { payload = strPayload; }
-
-    var influxRecord = {value:payload.value || 0.0 };
-    var xlsTimestamp = new utils.TFDateTime( payload.timestamp || new Date() ).dateTime();
-    
-    // durchlaufe alle Felder des Payloads und speichere sie in der Tabelle mqttPayloadFields
-    for (var key in payload) 
-    {
-        var response = dbUtils.fetchValue_from_Query(dB, "SELECT ID FROM mqttPayloadFields WHERE ID_Topic ="+ID_Topic+" AND payloadFieldName='"+key+"'" );
-        if (response.error) { console.error('Fehler beim Prüfen des Feldes:', response.errMsg); return; }
-        
-        var ID_payloadField = null;
-
-        if (response.result == '') 
-        {
-            response = dbUtils.insertIntoTable(dB, 'mqttPayloadFields', { ID_Topic: ID_Topic, payloadFieldName: key });
-            if (response.error) { console.error('Fehler beim Registrieren des Feldes:', response.errMsg); return; }
-            else
-                { 
-                    ID_payloadField = response.result.lastInsertRowid;
-                    utils.log('Feld ' + key + ' wurde mit der ID: '+ID_payloadField+' registriert.');
-                }    
-        } else ID_payloadField = response.result;
-
-        // das Value-Field als WERT betrachtet - der Rest wird als Tags interpretiert
-        if(global.influxDataStorage) 
-        {    
-           if(key=='value') { influxRecord.idPayloadField = ID_payloadField }
-           else             { influxRecord[key] = payload[key]; }
-        }   
-
-         // temporärer Payload-Puffer von hier werden die Daten in die eigentliche Daten-Tabelle kopiert sofern es ein Device/chanel gibt, der 
-         // einem Topic zugeordnet wurde... 
-         // wenn die Daten nach Anlage eines Gerätes/Kanals in die Messwerte-Datei kopiert wurde, werden sie aus mqttPayloadContent gelöscht...
-         dbUtils.insertIntoTable(dB, 'mqttPayloadContent', { ID_PayloadField: ID_payloadField, timestamp:xlsTimestamp, content: payload[key] });
-    } 
-    
-    //falls kein Zeitstempel im payload existiert, dann nimm den aktuellen Zeitstempel des Brokers
-    influxRecord.timestamp = payload.timestamp || new utils.TFDateTime().unixDateTime();
-    
-    // ggf in  Influx speichern ...
-    if (globals.influxDataStorage) influx.saveValues(  influxRecord);
-
-}
-
-
 module.exports.loadLastPayload = (ID_topic) =>
 {
-   var response = dbUtils.fetchRecords_from_Query(dB, "Select * from mqttPayloadContent Where ID_PayloadField in (Select ID From mqttPayloadFields Where ID_Topic="+ID_topic+") order by timestamp desc limit 21" );
-
-   if(response.error) return response;
-   if(response.result.length==0) return {error:true, errMsg:'Not payloads for ID_Topic:"'+ID_topic+'" yet', result:{}};
-
-   var payload = {timestamp:response.result[0].timestamp, fields:[]};
-   var ts      = Math.round(payload.timestamp*10000);
-   for(var i=0; i<response.result.length; i++)  
-   {
-     if( (Math.round(response.result[i].timestamp*1000) - ts) < 10)
-     {
-       var field = { fieldName: dbUtils.fetchValue_from_Query(dB, "select payloadFieldName From  mqttPayloadFields Where ID_Topic="+ID_topic+" AND ID="+response.result[i].ID_PayloadField).result,
-                     content  : response.result[i].content 
-                   };
-            
-        payload.fields.push(field); 
-     }  
-   } 
-
-    return {error:false, errMsg:'ok', result:payload};
+   return dbUtils.fetchRecords_from_Query(dB, "Select * from mqttPayloads Where ID_Topic="+ID_topic+" order by ID desc limit 1" );
 }
 
 
 module.exports.count = async (params) =>
 {  
- if (globals.influxDataStorage)     
- {   
-   try {
-        const response = await influx.count(params); 
-        return response
-      } catch (error) {return { error: true, errMsg: error.message, result: {} }};
- }
- else { return dbUtils.fetchValue_from_Query(dB , "Select * from Measurements Where ID_chanel="+params.ID_Chanel) }
-        
-};
+  return dbUtils.fetchValue_from_Query(dB , "Select count(*) from Measurements Where ID_chanel="+params.ID_Chanel)
+}
 
 
 module.exports.selectValues = async (params) =>
 {
-    if (globals.influxDataStorage)     
-    {   
-       try {
-            const response = await influx.selectValues(params); 
-            return response
-           } catch (error) {return { error: true, errMsg: error.message, result: {} }; }
-    }
-    else {
-           var sql = "";  
-           if(params.groupBy) sql = "Select DT,"+(params.aggr || "sum")+"(Wert) from Measurements Where ID_chanel="+params.ID_Chanel+" Group by "+params.groupBy+" Order by DT"
-           else {             sql = "Select DT,Wert from Measurements Where ID_chanel="+params.ID_Chanel+" Order by DT";
-                  return dbUtils.fetchValue_from_Query(dB , sql ) 
-           }      
-        }
+   var sql = "";  
+   if(params.groupBy) sql = "Select DT,"+(params.aggr || "sum")+"(Wert) from Measurements Where ID_chanel="+params.ID_Chanel+" Group by "+params.groupBy+" Order by DT"
+   else               sql = "Select DT,Wert from Measurements Where ID_chanel="+params.ID_Chanel+" Order by DT";
+   
+   return dbUtils.fetchRecords_from_Query(dB , sql ) 
 }
 
 
 module.exports.selectLastValues = async (params) =>
+{
+   return dbUtils.fetchRecords_from_Query(dB , "Select * from Measurements Where ID_chanel="+params.ID_Chanel+" limit "+ (params.limit || "49") ) 
+}
+
+
+
+function ___synchronize( idTopic , idChanel )
+{
+    console.log("   sychronisiere ID-TOPIC ("+idTopic+") mit Kanal ("+idChanel+")");
+    
+    var fnValue = dbUtils.fetchValue_from_Query(dB,"Select payloadField_val from chanels Where ID="+idChanel).result;
+    if(!fnValue) return;
+
+    var fnTime  = dbUtils.fetchValue_from_Query(dB,"Select payloadField_dt  from chanels Where ID="+idChanel).result;
+    if(!fnTime)  return;
+    
+    console.log("fnVale:"+fnValue);
+    console.log("fnTime:"+fnTime);  
+
+    var measure  = [];
+    var update   = [];
+
+    var response = dbUtils.fetchRecords_from_Query(dB , "select * from mqttPayloads where ID_Topic="+idTopic+" and sync=0 order by ID");
+    
+    // Daten sammeln und als EINE Transaktion ausführen....
+    for(var i=0; i<response.result.length; i++)
     {
-      if (globals.influxDataStorage)     
-      {     
-        try {
-            const response = await influx.selectLastValues(params); 
-            return response
-        } catch (error) {return { error: true, errMsg: error.message, result: {} }; }
-      }     
-      return dbUtils.fetchValue_from_Query(dB , "Select * from Measurements Where ID_chanel="+params.ID_Chanel+" limit 50") 
+        var rec  = response.result[i];
+        try {p = JSON.parse(rec.payload)}
+        catch{ console.log("parse Error") ; return }
+        
+        if( Object.hasOwn( p , fnValue) && Object.hasOwn( p , fnTime)) 
+        {
+           var dt = new utils.TFDateTime(p[fnTime]);
+           
+            measure.push({ID_Chanel:idChanel,DT:dt.excelTimestamp  ,Wert:p[fnValue]}) 
+           update.push ({ID:rec.ID, sync:1}) 
+        }   
     }
+
+    if(measure.length>0)
+    response = dbUtils.insertBatchIntoTable(dB , 'Measurements' , measure );
+
+    if(!response.error) 
+        if(update.length>0) dbUtils.updateBatchInTable(dB,'mqttPayloads',update,'ID');
+
+}
 
 
 
 module.exports.synchronize = () =>
 {
-   // alle Kanäle nach neuen Daten durchsuchen ....
-   var r = dbUtils.fetchRecords_from_Query(dB,"Select * from chanels Where TOPIC <> '' ");
-   if(!r.error)
-   for(var i=0; i<r.result.length; i++)
+   console.log("Synchrionisation ...");
+   var t = dbUtils.fetchRecords_from_Query(dB , "Select DISTINCT ID_TOPIC from mqttPayloads Where sync <> 1 order by ID") 
+
+   // alle ggf. gefundenen Topics durchlaufen ...
+   for(var j=0; j<t.result.length; j++)
    {
-     var c=r.result[i];
-     var t=dbUtils.fetchValue_from_Query(dB,"Select TOPIC from devices Where ID="+c.ID_Device).result+c.TOPIC;
-     console.log("TOPIC : "+t);
+     var idTopic = t.result[j].ID_Topic;  
      
-
-     
-
-     
-   } 
-
-
-
-
-
+     // alle Kanäle dieses Topics durchlaufen und synchronisieren ...
+     var r = dbUtils.fetchRecords_from_Query(dB,"Select ID as ID from chanels Where ID_TOPIC = "+idTopic );
+     for(var i=0; i<r.result.length; i++)  console.log(___synchronize( idTopic , r.result[i].ID ));
+   }  
 }
 
 

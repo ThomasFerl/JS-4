@@ -84,9 +84,10 @@ updateChanelGrid( )
 {
    this.dashboard.innerHTML = "";
    this.chanelGrid = dialogs.createTable( this.dashboard , this.chanels , 
-                                                          ["ID","ID_Device","ID_payloadField","UNIT","TYP","Betriebsmittel","lfdNr_BM","SIGNALART","TOPIC"]  // exclude
+                                                          ["ID","ID_Device","ID_Topic","ID_TOPIC","UNIT","TYP","Betriebsmittel","lfdNr_BM","SIGNALART","payloadField_val","payloadField_dt","DESC"]  // exclude
                                                         , {BESCHREIBUNG:"Beschreibung",
-                                                           NAME:"Name des Kanals"
+                                                           NAME:"Name des Kanals",
+                                                           InfoPktName:"Informations-Punkt-Name"
                                                           
                                                           } // translation
                                    );

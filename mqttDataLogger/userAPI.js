@@ -73,23 +73,6 @@ if( CMD=='LOADDEVICE' )
     }
   
 
-if( CMD == 'AVAILEABLETOPICS')
-    {
-      return dbUtils.fetchRecords_from_Query(dB,"Select descr from mqttTopics Where ID_Device=0 order by ID desc");
-    }
-
-if( CMD == 'GETPAYLOADFIELDS')
-      {
-        var subSQL = "(Select ID from mqttTopics Where topic='"+param.topic+"')";
-        if (param.topic.indexOf('%')>-1) subSQL = "(Select ID from mqttTopics Where topic like '"+param.topic+"')"
-
-        return dbUtils.fetchRecords_from_Query(dB,"Select ID,payloadFieldName from mqttPayloadFields Where ID_Topic in "+subSQL+" order by ID desc");
-      }
-
-if( CMD == 'GETPAYLOADFIELDNAME')
-      {
-        return dbUtils.fetchValue_from_Query(dB,"Select payloadFieldName from mqttPayloadFields Where ID="+param.ID_payloadField);
-      }
 
 
 if( CMD=='NEWDEVICE' )
@@ -126,37 +109,49 @@ if( CMD=='NEWDEVICE' )
       }
       
     
-     if( CMD=='UPDATECHANEL' )
-        {
+    if( CMD=='UPDATECHANEL' )
+      {
           var response = dbUtils.updateTable(dB,"chanels" , param.idField , param.idValue , param.fields) ;
        
           return response;
-        }
+      }
     
 
 
 
-
-
-
-if( CMD=='LSTOPICS') 
-  {
-    var sql = '';
-    if (param.ID_Device) sql =  "Select * from mqttTopics Where ID_Device="+param.ID_Device+" order by ID";
-    else                 sql =  "Select * from mqttTopics Where not topic like '$SYS%' order by ID";
-
-    var response = dbUtils.fetchRecords_from_Query( dB , sql );
-
-    if(param.excludeDescr)
+    if( CMD == 'AVAILEABLETOPICS')
+      {
+          return dbUtils.fetchRecords_from_Query(dB,"Select distinct descr from mqttTopics Where descr not in (Select Topic from devices ) order by ID desc");
+      }
+    
+   
+    if( CMD=='LSTOPICS')    
     {
-      var h=[];
-      for(var i=0; i<response.result.length; i++) h.push(response.result[i].topic.substring(response.result[i].descr.length))
-      return {error:false, errMsg:'OK', result:h}  
-    } 
+      var sql = '';
+      if (param.ID_Device)   sql =  "Select * from mqttTopics Where descr in (Select Topic from devices Where ID="+param.ID_Device+") order by ID";
+      else                   sql =  "Select * from mqttTopics Where not topic like '$SYS%' order by ID";
 
-    return dbUtils.fetchRecords_from_Query( dB , sql );
-  }
+      return dbUtils.fetchRecords_from_Query( dB , sql );
+    }
   
+
+  if( CMD == 'GETPAYLOADFIELDS')
+    {
+      var response = dbUtils.fetchValue_from_Query(dB , "Select payload from mqttPayloads Where ID_Topic="+param.ID_Topic+" order by ID desc limit 1");
+      if (response.error) return response;
+      
+      var jsn = {};
+
+      try{jsn = JSON.parse(response.result)}
+      catch { return  {error:true, errMsg:'mqttPayloads.paylod ist kein gültiges JSON-Format', result:response.result} }
+
+      var r = [];
+      for(var key in jsn) r.push(key)
+
+      return {error:false, errMsg:'ok', result:r}
+    }
+
+
 
   if( CMD=='LASTPAYLOAD') 
     {
@@ -165,74 +160,26 @@ if( CMD=='LSTOPICS')
 
   if( CMD=='COUNT') 
     {
-      
-      var response = getID_payloadField(param);
-
-      if(param)
-
-
-      
-      if(response.error) return response;
-      if(response.result=='') return {error:true,errMsg:'Für dieses Topic existiert kein Feldname mit dem Namen "'+response.fn+'" !',result:{}};
-      
-      var ID_PayloadField     = response.result;
-      var countParam          = param;
-          countParam.filter   = {idPayloadField :ID_PayloadField};
-          countParam.typeCast = {idPayloadField : "int"};
-
-      return mqttHandler.count( countParam); 
+       return mqttHandler.count( countParam); 
     }
     
-  
-
-
-
-if( CMD=='MQTTGETVALUES' )
-  {
-    var response = getID_payloadField(param);
-      
-    if(response.error) return response;
-    if(response.result=='') return {error:true,errMsg:'Für dieses Topic existiert kein Feldname mit dem Namen "'+response.fn+'" !',result:{}};
-    
-    var ID_PayloadField      = response.result;
-    var selectParam          = param;
-        selectParam.filter   = {idPayloadField :ID_PayloadField};
-        selectParam.typeCast = {idPayloadField : "int"};
-
-    return mqttHandler.selectValues( selectParam ); 
-  }
-
 
   if( CMD=='GETVALUES' )
     {
-      var sql = "";  
-      if(param.groupBy) sql = "Select DT,"+(param.aggr || "sum")+"(Wert) as Wert from Measurements Where ID_chanel="+param.ID_Chanel+" Group by "+param.groupBy+" Order by DT"
-      else {            sql = "Select DT,Wert from Measurements Where ID_chanel="+param.ID_Chanel+" Order by DT";
-                      return dbUtils.fetchValue_from_Query(dB , sql ) 
-           }      
+      return mqttHandler.selectValues( param )
     }
 
 
    if( CMD=='SYNC') 
    {
-      mqttHandler.synchronize();
+      return mqttHandler.synchronize();
    }
   
 
 
   if( CMD=='GETLASTVALUES' )
     {
-      var response = getID_payloadField(param);
-        
-      if(response.error) return response;
-      if(response.result=='') return {error:true,errMsg:'Für dieses Topic existiert kein Feldname mit dem Namen "'+response.fn+'" !',result:{}};
-      
-      var ID_PayloadField      = response.result;
-      var selectParam          = param;
-          selectParam.filter   = {idPayloadField :ID_PayloadField};
-          selectParam.typeCast = {idPayloadField : "int"};
-  
-      return mqttHandler.selectLastValues( selectParam ); 
+      return mqttHandler.selectLastValues( param ); 
     }
 
 

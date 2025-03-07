@@ -1,4 +1,4 @@
 module.exports.__Port_webSocket     =  4444;
 module.exports.ignoreSession        = true;
 module.exports.maxAgePayloadHistory = 31;  // Tage
-module.exports.influxDataStorage    = false;  // Speichert Messwerte in influxDB
+
