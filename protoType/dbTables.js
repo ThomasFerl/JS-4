@@ -7,6 +7,46 @@ var content = [];
 
 
 tables.push( 
+  {tableName:"file",
+   tableFields:[
+      {fieldName:"TYPE"         , fieldType:"Text" } ,
+      {fieldName:"DIR"          , fieldType:"integer" } ,
+      {fieldName:"FILENAME"	    , fieldType:"numeric" } ,
+      {fieldName:"DIMENSION"	  , fieldType:"Text" } ,
+      {fieldName:"FILESIZE"	    , fieldType:"INT" } ,
+      {fieldName:"PLAYTIME"	    , fieldType:"INT" } ,
+      {fieldName:"QUALITY"	    , fieldType:"INT" } ,
+      {fieldName:"SOURCE"	      , fieldType:"Text" } ,
+      {fieldName:"KATEGORIE"    , fieldType:"Text" } ,
+      {fieldName:"DESCRIPTION"	, fieldType:"Text" } ,
+      {fieldName:"GUID"         , fieldType:"Text" } ,
+   ]});
+
+
+tables.push( 
+  {tableName:"thumbs",
+     tableFields:[
+        {fieldName:"ID_FILE"      , fieldType:"integer" } ,
+        {fieldName:"NDX"    	    , fieldType:"numeric" } ,
+        {fieldName:"THUMBFILE"	  , fieldType:"Text" } ,
+        {fieldName:"POSITION"	    , fieldType:"REAL" } 
+     ]});
+
+/*     
+tables.push( 
+  {tableName:"persons",
+     tableFields:[
+        {fieldName:"FORENAME"     , fieldType:"integer" } ,
+        {fieldName:"LASTNAME"     , fieldType:"numeric" } ,
+        {fieldName:"...USW.."	    , fieldType:"Text" } ,
+        {fieldName:"POSITION"	    , fieldType:"REAL" } 
+     ]});
+
+*/
+
+
+/*
+tables.push( 
             {tableName:"anyTable",
              tableFields:[
                 {fieldName:"anyField01"     , fieldType:"integer" } ,
@@ -24,7 +64,7 @@ tables.push(
                           {fieldName:"field2"     , fieldType:"Text" } , 
                           {fieldName:"field3"     , fieldType:"Text" } 
                        ]});
-
+*/
 // USW
 
 

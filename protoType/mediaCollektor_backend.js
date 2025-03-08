@@ -7,7 +7,8 @@ class TFMediaCollektor
   {
     this.db       = _this.db; // lokale Kopie der Arbeits-Datenbank - wird via startBackend() initialisiert ....   
     this.etc      = _etc; // lokale Kopie der Konfigurations-Datenbank - wird via startBackend() initialisiert ....   
-    
+    this.path     = {};
+    this.fs       = {};
     posterPath    = "./mediaCache/poster/";
     thumbPath     = "./mediaCache/thumbs/";
     numberOfThums = 20;
@@ -21,7 +22,9 @@ class TFMediaCollektor
 
 async handleCommand( sessionID , cmd , param , webRequest ,  webResponse , fs , path )
 {
- var CMD = cmd.toUpperCase().trim();
+ this.path  = path;
+ this.fs    = fs;  
+ var CMD    = cmd.toUpperCase().trim();
  
 //---------------------------------------------------------------
 //------------ACTORS---------------------------------------------
@@ -219,45 +222,58 @@ ___videoInfo ( aPath )
 }
 
 
-___createThumb(mediaFile, destPath, time, size , callback )
+___createThumb(mediaFile, thumbFile , time, size , callback )
 {
    
-    var ext = path.extname(mediaFile).toLowerCase();
+    var ext = this.path.extname(mediaFile).toLowerCase();
     
     //ist mediafile ein Bild ?
     if((ext=='.png') || (ext=='.jpg') || (ext=='.jpeg') || (ext=='.gif') || (ext=='.bmp') || (ext=='.tiff') || (ext=='.tif') || (ext=='.webp'))
-       return createImageThumb(mediaFile, destPath, size , size , callback );
+       return this.___internal___ceateImageThumb(mediaFile, thumbFile , size , size , callback );
   
     //ist mediafile ein Video ?
     if((ext=='.mp4') || (ext=='.flv') || (ext=='.m3u8') || (ext=='.ts') || (ext=='.mov') || (ext=='.avi') || (ext=='.wmv'))
-       return createMovieThumb(mediaFile, destPath, time, size , callback );    
+       return this.___internal___createMovieThumb(mediaFile, thumbFile , time, size , callback );    
     
     return {error:true, errMsg:"unknown file type", result:{}}
 }
 
-___createImageThumb(imagePath, destPath, width , height , callback )
+
+___internal___createImageThumb(imagePath, thumbFile , width , height , callback )
 {
-  const cmd = `gm convert "${imagePath}" -resize ${width}x${height} "${destPath}"`
+  const cmd = `gm convert "${imagePath}" -resize ${width}x${height} "${thumbFile}"`
                 
   return utils.exec( cmd , callback );
 }
-
-
-___createMovieThumb(path, destPath, time, size , callback )
+___internal___createMovieThumb(moviePath, thumbFile , time, size , callback )
 { 
-  console.log("createThumb( destPath:"+destPath+" , size:" + size+")");
+  console.log("createThumb( destPath:"+this.thumbPath+" , size:" + size+")");
    
     if (!time)     time     = '147';  
-    if (!size)     size     = sizeOfThumbs;  
-    if (!destPath) destPath = thumbPath+'unnamendThumb.png';
-                                 
-    if(size=='origin') var cmd = 'ffmpeg -v error -ss '+time+' -i "'+path+'" '+destPath;
-    else               var cmd = 'ffmpeg -v error -ss '+time+' -i "'+path+'"  -vframes: 1 -filter:v scale="'+size+'"  '+destPath;
+    if (!size)     size     = this.sizeOfThumbs;  
+                                
+    if(size=='origin') var cmd = 'ffmpeg -v error -ss '+time+' -i "'+moviePath+'" '+thumbFile;
+    else               var cmd = 'ffmpeg -v error -ss '+time+' -i "'+moviePath+'"  -vframes: 1 -filter:v scale="'+size+'"  '+thumbFile;
 
     console.log('createThumb ===> ' + cmd);
 
     return utils.exec( cmd , callback );
  }
+
+ ___internal___saveMediaInDB   ( media )
+{
+   return  dbUtils.insertIntoTable(this.db,'files', {
+                                                       TYPE     : media.TYPE,
+                                                       DIR      : media.DIR,
+                                                       FILENAME : media.FILENAME,
+                                                       GUID     : media.GUID,
+                                                       DIMENSION: media.DIMENSION,
+                                                       FILESIZE : media.FILESIZE,
+                                                       PLAYTIME : media.PLAYTIME,
+                                                       SOURCE   : media.SOURCE,
+                                                       KATEGORIE: media.KATEGORIE
+                                                      } );
+}
 
 
  ___findActor(db , actorName)
@@ -402,7 +418,6 @@ ___createMovieThumb(path, destPath, time, size , callback )
  }
 
 
-
  async ___saveActor( dB , param , fs )
  {
    var response = {};
@@ -489,35 +504,6 @@ ___createMovieThumb(path, destPath, time, size , callback )
    }
 
   console.log('load: ' + img);
-
-  var type      = mime[path.extname(img).slice(1)] || 'text/plain';
-   
-  try
-  {
-    var stream    = fs.createReadStream(img);
-        res.set('Content-Type', type );
-        stream.pipe(res);
-  }      
-  catch(err)
-            {
-              res.set('Content-Type', 'text/plain');
-              res.send(err);
-            };
-}
-
-async ___loadImage ( param , fs , path , res)
-{
-  var img  = param.img;
-
-  var mime =
-     {
-      gif: 'image/gif',
-      jpg: 'image/jpeg',
-      png: 'image/png',
-      svg: 'image/svg+xml',
-     };
-
-  var type      = mime[path.extname(img).slice(1)] || 'text/plain';
 
   var type      = mime[path.extname(img).slice(1)] || 'text/plain';
    
@@ -639,60 +625,7 @@ async ___movieDetails( dB , param )
 }
  
 
-async ___movieCapture( dB , param , fs , path , res )
- {
-   var img     = '';
-   var ID      = param.ID;
-
-   var mime =
-      {
-       gif: 'image/gif',
-       jpg: 'image/jpeg',
-       png: 'image/png',
-       svg: 'image/svg+xml',
-      };
-
-   if (!ID) 
-   { 
-      res.set('Content-Type', 'text/plain');
-      res.send("missing ID"); 
-      return;
-   }
-
-   var response = dbUtils.fetchRecord_from_Query(dB , "Select Capture from clip where ID="+ ID );
-   
-   console.log("movieCapture SQL-Response: " + JSON.stringify(response));
-
-   if(response.err) 
-   { 
-     res.set('Content-Type', 'text/plain');
-     res.send(response.errMsg); 
-     return;
-   }
-   
-   img          = imgPath + response.result.CAPTURE; 
-   
-   console.log('try to load: ' + img);
-
-   var type      = mime[path.extname(img).slice(1)] || 'text/plain';
-
-   var type      = mime[path.extname(img).slice(1)] || 'text/plain';
-   
-   try
-   {
-     var stream    = fs.createReadStream(img);
-         res.set('Content-Type', type );
-         stream.pipe(res);
-   }      
-   catch(err)
-             {
-               res.set('Content-Type', 'text/plain');
-               res.send(err);
-             };
-}
-
-
-async ___movieThumbs( dB , param , fs , path , res )
+async ___loadThumbsFromDB( dB , param , fs , path , res )
 {
   var img     = '';
   var ID      = param.ID;
@@ -742,31 +675,12 @@ async ___movieThumbs( dB , param , fs , path , res )
 }
 
 
-async ___playMovie( dB , param , fs , path , res , req )
+async ___showMediaFromDB( dB , param , fs , path , res , req )
 {
   var ID      = param.ID;
-  var mime =
-     {
-      mp4:  'video/mp4',
-      flv:  'video/x-flv',
-      m3u8: 'application/x-mpegURL',
-      ts:   'video/MP2T',
-      mov:  'video/quicktime',
-      avi:  'video/x-msvideo',
-      wmv:  'video/x-ms-wmv',
-     };
-
-     if (!ID) 
-     { 
-        res.set('Content-Type', 'text/plain');
-        res.send("missing ID"); 
-        return;
-     }
-
-
-  var response = dbUtils.fetchRecord_from_Query(dB , "Select DIR , FILENAME from clip where ID="+ ID  );
-  console.log("playMovie SQL-Response: " + JSON.stringify(response));
-   
+  var fn      = '';
+ 
+  var response = dbUtils.fetchRecord_from_Query(dB , "Select * from files where ID="+ ID  );
   if(response.err) 
   { 
     res.set('Content-Type', 'text/plain');
@@ -774,7 +688,6 @@ async ___playMovie( dB , param , fs , path , res , req )
     return;
   }
   
-   
   if(!response.result.FILENAME)
   {
     console.log( 'ID not found' );
@@ -782,301 +695,106 @@ async ___playMovie( dB , param , fs , path , res , req )
     res.send( JSON.stringify({error:true,errMsg:'ID not found !',result:''}));
   }
   
-  if(pathReplace)
-  {
-    var movie   = response.result.DIR.replace( pathReplace ,'');
-        movie   = path.normalize(movie + path.sep) + response.result.FILENAME;
-  }      
+ fn = path.join( res.result.DIR , res.result.FILENAME );
+ console.log('try to load "' + fn +'"');
 
-  if( !fs.existsSync(movie) )
+
+  if( !fs.existsSync(fn) )
   {
-    console.log( 'file('+movie+') not found' );
+    console.log( 'file('+fn+') not found' );
     res.set('Content-Type', 'text/plain');
     res.send( JSON.stringify({error:true,errMsg: 'file('+movie+') not found' ,result:''}));
     return;
   }
 
-  console.log( 'load: ' + movie );
-
-  var type      = mime[path.extname(movie).slice(1).toLowerCase()] || 'text/plain';
-
- console.log( 'load: ' + movie );
- console.log( 'typ : ' + type );
-
- try{
- const stat      = fs.statSync(movie);
- const fileSize  = stat.size
- const range     = req.headers.range
-
- if (range)
- {
-    const parts     = range.replace(/bytes=/, "").split("-")
-    const start     = parseInt(parts[0], 10)
-    const end       = parts[1] ? parseInt(parts[1], 10) : fileSize-1
-    const chunksize = (end-start)+1
-    const file      = fs.createReadStream( movie , {start, end} )
-    const head      =
-    {
-      'Content-Range' : `bytes ${start}-${end}/${fileSize}`,
-      'Accept-Ranges' : 'bytes',
-      'Content-Length': chunksize,
-      'Content-Type'  : 'video/mp4',
-    }
-
-    res.writeHead(206, head);
-    file.pipe(res);
-  }
-  else
-    {
-       const head = {
-      'Content-Length': fileSize,
-      'Content-Type': 'video/mp4',
-    }
-    res.writeHead(200, head)
-    fs.createReadStream(movie).pipe(res)
-  }
-} catch {} 
+  if(res.result.TYPE.toUpperCase == 'VIDEO') return utils.getMovieFile( fs , path , fn  , req , res  );
+  if(res.result.TYPE.toUpperCase == 'IMAGE') return utils.getImageFile( fs , path , img , req , res  );
+  
+  console.log( 'unkown fileType' );
+  res.set('Content-Type', 'text/plain');
+  res.send( JSON.stringify({error:true,errMsg:'unkown fileType !',result:''}));
 
 }
 
 
-async ___loadMovie( param ,fs , path , res , req )
+async ___isMediaRegistered( dB , param , fs , path  )
 {
-  var movie   = param.fileName;
+   var result    = {registered:false,  thumbs:[], actors:[] , tags:[], file:{} };
+   var mediaGUID = utils.buildFileGUID( fs , param.filePath );
   
-  console.log( 'playMovie('+movie+')' );
-
-  var mime =
-     {
-      mp4:  'video/mp4',
-      flv:  'video/x-flv',
-      m3u8: 'application/x-mpegURL',
-      ts:   'video/MP2T',
-      mov:  'video/quicktime',
-      avi:  'video/x-msvideo',
-      wmv:  'video/x-ms-wmv',
-      m4v:  'video/x-m4v',
-      webm: 'video/webm',
-      mpg:  'application/x-mpegURL',
-      mpeg: 'application/x-mpegURL',
-      weba: 'audio/webm', 
-      ogm:  'video/ogg',
-      ogv:  'video/ogg',
-      ogg:  'video/ogg',
-
-     };
-
-  if( !fs.existsSync(movie) )
-  { 
-     res.set('Content-Type', 'text/plain');
-     res.send("missing fileName"); 
-     return;
-  }
-
-  console.log( 'try to load "' + movie +'"');
-
- var type      = mime[path.extname(movie).slice(1).toLowerCase()] || 'text/plain';
-
- console.log( 'typ : ' + type );
-
- try
- {
-  const stat      = fs.statSync(movie);
-  const fileSize  = stat.size
-  const range     = req.headers.range
-
-  if (range)
-  {
-    const parts     = range.replace(/bytes=/, "").split("-")
-    const start     = parseInt(parts[0], 10)
-    const end       = parts[1] ? parseInt(parts[1], 10) : fileSize-1
-    const chunksize = (end-start)+1
-    const file      = fs.createReadStream( movie , {start, end} )
-    const head      =
-    {
-      'Content-Range' : `bytes ${start}-${end}/${fileSize}`,
-      'Accept-Ranges' : 'bytes',
-      'Content-Length': chunksize,
-      'Content-Type'  : 'video/mp4',
-    }
-
-    res.writeHead(206, head);
-    file.pipe(res);
-  }
-  else
-    {
-       const head = {
-      'Content-Length': fileSize,
-      'Content-Type': 'video/mp4',
-    }
-    res.writeHead(200, head)
-    fs.createReadStream(movie).pipe(res)
-  }
-} catch(err) { console.log(err.message) }
-
-}
-
-async ___isRegistered( dB , param , fs , path  )
-{
-  var movie     = ''
-  var clipID    = param.movieID;
-  var result    = {registered:false,  clip:{} , thumbs:[], actors:[] , tags:[], movieID:''};
-
-  if(!clipID)
-  {
-   var movie     = param.Movie;
-       movie     = path.resolve(path.normalize(movie));
-   var movieFile = path.parse(movie).base;  
-   var movieDir  = path.parse(movie).dir;  
-  
-   var vinfo = videoInfo(movie) ;
-  
-  if(vinfo.error) return {error:true, errMsg:vinfo.errMsg, result:result }
-
-         console.log('name     :' + movieFile );
-         console.log('path     :' + movieDir );
-         console.log('size     :' + vinfo.result.format.size );
-         console.log('duration :' + vinfo.result.format.duration);
-         console.log('search for clip in database ...');
-  
-  var response = dbUtils.fetchValue_from_Query( dB , "Select ID from clip where FileName='"+movieFile+"' AND FileSize="+vinfo.result.format.size+" AND PlayTime="+vinfo.result.format.duration );
+  var response  = dbUtils.fetchRecord_from_Query( dB , "Select * from files where GUID='"+mediaGUID+"'");
   console.log("response from dB: " + JSON.stringify( response ));
   
-  if(response.error) return {error:true, errMsg:response.errMsg , result:result }
+  if(response.error) return response;
 
-   clipID  = response.result;
-  }  
-  
-   if(!clipID ) return {error:false, errMsg:"file not registered yet." , result:result }
-   
+  if(!response.result.ID) return {error:false, errMsg:"file not registered yet." , result:{} }  
+
   result.registered = true;
+  result.file       = response.result;
 
-  response          = dbUtils.fetchRecord_from_Query ( dB ,'select * from clip where ID='+clipID );
-  if(!response.error) result.clip   = response.result;
-
-  response          = dbUtils.fetchRecords_from_Query( dB , 'select * from movieThumbs where ID_Movie='+clipID+' Order by ndx' );
+  response          = dbUtils.fetchRecords_from_Query( dB , 'select * from thumbs where ID_FILE='+result.file.ID+' Order by ndx' );
   if(!response.error) result.thumbs = response.result;
 
-  response      = dbUtils.fetchRecords_from_Query( dB , 'select * from actor where ID in (select ID_Actor from clip_actor where ID_Clip='+clipID+') order by Name');
+  response      = dbUtils.fetchRecords_from_Query( dB , 'select * from actor where ID in (select ID_Actor from fileActor where ID_FILE='+result.file.ID+') order by Name');
   if(!response.error) result.actors = response.result;
 
-  response      = dbUtils.fetchRecords_from_Query( dB , 'select * from tags where ID in (select ID_Tag from Clip_Tags where ID_Clip='+clipID+') order by Name');
+  response      = dbUtils.fetchRecords_from_Query( dB , 'select * from tags where ID in (select ID_Tag from fileTags where ID_FILE='+result.file.ID+') order by Name');
   if(!response.error) result.tags = response.result;
-
-
-  
-  result.movieID = clipID;
-  
+   
   return {error:false, errMsg:"OK" , result:result }
 }
 
-async ___registerMovie( dB , param , fs , path , res )
+
+
+async ___registerMedia( param )
 {
-  console.log('registerMovie with param: '+JSON.stringify(param));
+  var mediaFile = param.filePath;
+  var fileInfo  = utils.analyzeFile( this.fs , this.path , mediaFile );
+  if(fileInfo.error) return fileInfo;
 
-  var movie     = param.Movie;
-      movie     = path.resolve(path.normalize(movie));
-  var movieFile = path.parse(movie).base;  
-  var movieDir  = path.parse(movie).dir;  
-  var movieID   = ''; 
-  
-  // die letzte Verzeichnis-Ebene sollte der Actor-Name sein 
-  // /mnt/movieBase/Tom Cruise/MissionImpossible.mp4
-  var dirs       = movie.split('/');
-  var n          = dirs.length;
-  var actorName  = '';
-  if (n>2) actorName = dirs[n-2];
-  else     actorName = dirs[n-1];
-
-  console.log('registerMovie()');
-  console.log('movie:' + movie );
-  console.log('name :' + movieFile);
-  console.log('actor:' + actorName);
-
-      
-  console.log('get videoInfo...');
-  var vinfo = videoInfo(movie) ;
-  
-  if(vinfo.error) return {error:true, errMsg:vinfo.errMsg, result:{} } 
-
-  console.log('name     :' + movieFile );
-  console.log('size     :' + vinfo.result.format.size );
-  console.log('duration :' + vinfo.result.format.duration);
-  
-  // es wird in der Datenbank nachgesehen, ob es diesen Eintrag schon gibt.
-  // da der Pfad variabel sein kann z.B. durch verschieden Mount-Points 
-  // ist die Abfrage über  den Pfad sehr unsicher.
-  // Andererseits ist die Abfrage NUR über den Dateinamen ebenfalls unsicher, da Dateinamen in verschiedenen Ordern
-  // identisch sein können, ohne dass es sich um identische Clips handelt.
-  // Daher wird eine Kombination aus fileName+Size+Duration gebildet'movieThumbs' , {ID_Movie:
-
-  console.log('search for clip in database ...');
-
-  var response = dbUtils.fetchValue_from_Query( dB , "Select ID from clip where FileName='"+movieFile+"' AND FileSize="+vinfo.result.format.size+" AND PlayTime="+vinfo.result.format.duration );
+  var media     = {
+                   ID       : 0, 
+                   TYPE     : fileInfo.type,
+                   DIR      : fileInfo.path,
+                   FILENAME : fileInfo.name,
+                   GUID     : utils.buildFileGUID( this.fs ,fileInfo.name ),
+                   DIMENSION: '1920x1080',
+                   FILESIZE : '',
+                   PLAYTIME : '',
+                   SOURCE   : '',
+                   KATEGORIE: ''
+                  }  
+    
+  var response   = dbUtils.fetchValue_from_Query( dB , "Select ID from files where GUID='"+media.fileGUID+"'");
   if(response.error) { return response; } 
-
-  movieID  = response.result;
   
-  if(!movieID)
+  media.ID = response.result;
+
+   // Moviefile ?
+  if(media.TYPE=='MOVIE')
   {
-         console.log('Clip nicht in Datenbank gefunden -> Datensatz wird neu angelegt...'); 
-         response = dbUtils.insertIntoTable(dB,'clip', {
-                                              DIR:movieDir,
-                                              FILENAME:movieFile,
-                                              NAME:path.parse(movie).name,
-                                              DIMENSION:'1920x1080',
-                                              FILESIZE:vinfo.result.format.size,
-                                              PLAYTIME:vinfo.result.format.duration,
-                                              QUALITY:0,
-                                              CAPTURE:'',
-                                              SOURCE:'',
-                                              KATEGORIE:'',
-                                            } );
-
-         if(response.error) return response;
-
-         movieID = response.result.lastInsertRowid;
-        // Falls Datensatz angelegt werden konnte, Thums und Poster erzeugen ...
-        if (movieID!="")
-        {
-          console.log('Datensatz in "clip" angelegt ID='+movieID);
-        // Actor ermitteln oder anlegen...
-          var actor = findActor( dB , actorName);
-          if(actor) dbUtils.insertIntoTable(dB,'clip_actor', {ID_actor:actor , ID_Clip:movieID} );
-                    
-          // Poster in originalgrösse
-          var fn = posterPath+'poster_'+movieID+'.png';
-          createThumb( movie , 
-                       fn , 
-                       Math.floor(vinfo.result.format.duration*0.21) , 
-                       'origin' , 
-                        function() {dbUtils.updateTable(this.db , 'clip', 'ID' , this.ID , {CAPTURE:this.fnCapture} )}.bind({db:dB, ID:movieID, fnCapture:fn}));  
-        
-          // Thumbnails erzeugen....
-          var dt = vinfo.result.format.duration / numberOfThums; 
-          var i  = 0;
-          for( i=1 ; i<=numberOfThums ; i++ )
-          {
-            var timeStamp = Math.floor(i*dt);
-            var fname     = thumbPath + 'thumb_'+movieID+'_'+timeStamp+'.png';
-            createThumb( movie , 
-                         fname , 
-                         timeStamp , 
-                         sizeOfThumbs, 
-                         function()
-                         {
-                           console.log('thumbnail ['+this.ndx+'] created -> '+this.thumbName);  
-                           dbUtils.insertIntoTable( this.db , 'movieThumbs' , {ID_Movie:this.ID, ndx:this.ndx, thumbName:this.thumbName, position:this.position})                           
-                         }.bind({db:dB, ID:movieID, ndx:i, position:timeStamp, thumbName:fname}));
-           }
-        } // if movieID > 0                          
-     } // if not record -> Neuanlage MovieClip
-     else  
-         { 
-           console.log('Clip in database gefunden mit ID: ' + movieID ); 
-         }
+     var vinfo = videoInfo(param.filePath) ;
+     media.FILESIZE = vinfo.result.format.size;
+     media.PLAYTIME = vinfo.result.format.duration;
+  }   
   
-  return {error:false, errMsg:"OK", result:{}}
+  if(media.TYPE=='IMAGE')
+   {
+      var imgInfo = {};
+      media.PLAYTIME = 4;
+   } 
+
+   response = this.___internal___saveMediaInDB(media)
+     
+   if(response.error) return response;
+   media.ID = response.result.lastInsertRowid;
+
+   var thumbFile = this.thumbPath+'thumb_'+media.ID+'_'+media.GUID+'.png';
+
+   if (media.TYPE=='MOVIE') this.___internal___createMovieThumb( mediaFile , thumbFile, 147, 'origin' , null );
+   if (media.TYPE=='IMAGE') this.___internal___createImageThumb( mediaFile , thumbFile, 147, 'origin' , null);  
+   
+  return {error:false, errMsg:"OK", result:media}
 }  
 
 

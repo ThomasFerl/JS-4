@@ -30,9 +30,6 @@ module.exports.run = function()
   
 }
 
-
-
-
 module.exports.handleCommand = async function( sessionID , cmd , param , webRequest ,  webResponse , fs , path )
 {
 
@@ -54,7 +51,7 @@ module.exports.handleCommand = async function( sessionID , cmd , param , webRequ
 if( CMD=='TEST') 
 {
   setTimeout(()=>{console.log("TEST")},1000)
-  return {error:false,errMsg:"OK",result:{html:param.testValue}}
+  return {error:false,errMsg:"OK",result:42}
 }
 
 
