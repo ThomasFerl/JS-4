@@ -468,9 +468,14 @@ async function showSVGs(type)
  function apiTest()
  {
   var w = new TFWindow( null , 'API-Test' , '70%' , '30%' , 'CENTER' );
+  var cmds = ['LSPERSON','PERSON','SAVEPERSON','LSFILES','FILE','RUN_FILECONTENT','REGISTERMEDIA','ISREGISTERED','MEDIASCANDIR']; 
+  var cbItems = [];
+  for(var i=0; i<cmds.length; i++) cbItems.push({caption:cmds[i],value:cmds[i]}); 
+
+
   w.buildGridLayout_templateColumns('1fr');
   w.buildGridLayout_templateRows('1fr 1fr 1fr 1fr');
-  var c = dialogs.addInput ( w.hWnd ,          1 , 1 ,70 , 'Command' , '' , 'TEST' , {} );
+  var c = dialogs.addCombobox( w.hWnd ,        1 , 1 ,70 , 'Command' , '' , 'TEST' , cbItems , {} );
   var p = dialogs.addInput ( w.hWnd ,          1 , 2 , 70 , 'params' , '' , '{param:value}' , {} );
   var l = dialogs.addLabel ( w.hWnd , '' ,     1 , 3 , '100%' , '2em' , 'Parameter in der Form "param1=value1;param2=value2..." angeben !' );
   var b = dialogs.addButton( w.hWnd , '' ,     1 , 4 , '10em' , '2em' , 'OK' );

@@ -5,16 +5,18 @@ class TFMediaCollektor
 {
   constructor (  _db , _etc ) 
   {
-    this.db       = _this.db; // lokale Kopie der Arbeits-Datenbank - wird via startBackend() initialisiert ....   
-    this.etc      = _etc; // lokale Kopie der Konfigurations-Datenbank - wird via startBackend() initialisiert ....   
-    this.path     = {};
-    this.fs       = {};
-    posterPath    = "./mediaCache/poster/";
-    thumbPath     = "./mediaCache/thumbs/";
-    numberOfThums = 20;
-    sizeOfThumbs  = '270:-1';
+    this.db            = _db;  // lokale Kopie der Arbeits-Datenbank - wird via startBackend() initialisiert ....   
+    this.etc           = _etc; // lokale Kopie der Konfigurations-Datenbank - wird via startBackend() initialisiert ....   
+    this.path          = {};
+    this.fs            = {};
+    this.posterPath    = "./mediaCache/poster/";
+    this.thumbPath     = "./mediaCache/thumbs/";
+    this.numberOfThums = 20;
+    this.thumbPosition = 47;  // nach 47 Sekunden wird Movie-Thumb erzeugt
+    this.sizeOfThumbs  = '270:-1';
 
-    console.log("TFMediaCollektor.working-this.db : " + this.this.db.constructor.name);
+
+    console.log("TFMediaCollektor.working-this.db : " + this.db.constructor.name);
 
     if(this.etc) console.log("TFMediaCollektor.config-this.db  : " + this.etc.constructor.name)
     else console.log("TFMediaCollektor.config-this.db  :  not set");
@@ -24,58 +26,50 @@ async handleCommand( sessionID , cmd , param , webRequest ,  webResponse , fs , 
 {
  this.path  = path;
  this.fs    = fs;  
+ this.req   = webRequest;
+ this.res   = webResponse; 
  var CMD    = cmd.toUpperCase().trim();
  
 //---------------------------------------------------------------
-//------------ACTORS---------------------------------------------
+//------------persons---------------------------------------------
 //---------------------------------------------------------------
 
-if(CMD=='ACTORS') 
+if(CMD=='LSPERSON') return this.___listPersons( param.filter );
+
+
+//---------------------------------------------------------------
+//-------------LOAD PERSON---------------------------------------
+//---------------------------------------------------------------
+
+if(CMD=='PERSON') 
 {
-   return this.___listActors(this.db , param );  //zB.: parm:{"Name":"Ev*","Vorname":"Can*"}  
-}  
-
-
-//---------------------------------------------------------------
-//-------------ACORINFO------------------------------------------
-//---------------------------------------------------------------
-
-if(CMD=='ACTORINFO') 
-{
-   return this.___actorInfo   ( this.db , param );  // param:{"ID","2522"}
+   var     id = param.ID;
+   if(!id) id = param.ID_PERSON;
+   return dbUtils.fetchRecord_from_Query( this.db , "Select * from persons where ID="+ id );
 }
 
 
 //---------------------------------------------------------------
-//-------------SAVE ACTOR----------------------------------------
+//-------------SAVE PERSON---------------------------------------
 //---------------------------------------------------------------
-if(CMD=='SAVEACTOR') 
+if(CMD=='SAVEPERSON') 
 {
-   return this.___saveActor   ( this.db , param , fs , webResponse );  
+   var response = {};
+   
+   if(!param.person) return {error:true, errMsg:'person-data not found in params !', result:{} };
+   if (!param.person.ID) return dbUtils.insertIntoTable( this.db , 'persons' , param.person )
+   else dbUtils.updateTable(this.db,'persons','ID', param.person.ID , param.person); 
 }
 
 
 
-
 //---------------------------------------------------------------
-//--------------ACTORIMAGE---------------------------------------
+//---------------LIST FILES--------------------------------------
 //---------------------------------------------------------------
 
-if(CMD=='ACTORIMAGE') 
+if(CMD=='LSFILES') 
 {
-   await this.___actorImage ( this.db , param , fs , path , webResponse ); // ___ streamt direkt 
-   return {isStream:true};
-}  
-
-    
-
-//---------------------------------------------------------------
-//---------------MOVIES------------------------------------------
-//---------------------------------------------------------------
-
-if(CMD=='MOVIES') 
-{
-   return this.___listMovies  ( this.db , param ); 
+   return this.___internal___listFiles  ( param.filter ); 
 }  
 
 
@@ -83,21 +77,11 @@ if(CMD=='MOVIES')
 //---------------------------------------------------------------
 //---------------------------------------------------------------
 
-if(CMD=='MOVIECAPTURE') 
+if(CMD=='FILE') 
 {
-   await this.___movieCapture ( this.db , param , fs , path , webResponse ); // ___ streamt direkt 
-   return {isStream:true};
-}  
-
-     
-//---------------------------------------------------------------
-//---------------------------------------------------------------
-//---------------------------------------------------------------
-
-if(CMD=='MOVIETHUMBS') 
-{
-    await this.___movieThumbs ( this.db , param , fs , path , webResponse ); // ___ streamt direkt 
-    return {isStream:true};
+ var     id = param.ID;
+ if(!id) id = param.ID_FILE;  
+ return dbUtils.fetchRecord_from_Query( this.db ,  "Select * from files where ID="+id );
 }
 
 
@@ -105,9 +89,14 @@ if(CMD=='MOVIETHUMBS')
 //---------------------------------------------------------------
 //---------------------------------------------------------------
 
-if(CMD=='MOVIEDETAILS') 
+if(CMD=='RUN_FILECONTENT') 
 {
-    return this.___movieDetails ( this.db , param );
+  var     id = param.ID;
+  if(!id) id = param.ID_FILE;  
+
+  await ___internal___runFileContent( id );
+
+  return {isStream:true};  
 }
 
 
@@ -115,42 +104,9 @@ if(CMD=='MOVIEDETAILS')
 //---------------------------------------------------------------
 //---------------------------------------------------------------
 
-if(CMD=='PLAYMOVIE') 
-{
-    await this.___playMovie ( this.db , param , fs , path , webResponse , webRequest ); // ___ streamt direkt und braucht den 
-    return {isStream:true};  
-}
-
-
-//---------------------------------------------------------------
-//---------------------------------------------------------------
-//---------------------------------------------------------------
-
-if(CMD=='LOADIMAGE') 
-{
-   await this.___loadImage  ( param ,fs , path , webResponse ); // ___ streamt direkt 
-   return {isStream:true};
-}
-
-
-//---------------------------------------------------------------
-//---------------------------------------------------------------
-//---------------------------------------------------------------
-
-if(CMD=='LOADMOVIE') 
-{
-   await this.___loadMovie  ( param , fs , path ,  webResponse , webRequest ); // ___ streamt direkt 
-   return {isStream:true};
-}
-
-
-//---------------------------------------------------------------
-//---------------------------------------------------------------
-//---------------------------------------------------------------
-
-if(CMD=='REGISTERMOVIE') 
-{
-   return this.___registerMovie  ( this.db , param , fs , path , webResponse );                       
+if(CMD=='REGISTERMEDIA') 
+{  
+   return this.___internal___registerMedia ( param.mediaFile );                       
 }
                                           
 //---------------------------------------------------------------
@@ -159,23 +115,21 @@ if(CMD=='REGISTERMOVIE')
 
 if(CMD=='ISREGISTERED') 
 {
-   return this.___isRegistered  ( this.db , param , fs , path  );
+   return this.___internal___isMediaRegistered (param.mediaFile);
                          
 }
 
 
 
 
-
-
-if(CMD=='CLIPPERSCANDIR') 
+if(CMD=='MEDIASCANDIR') 
 {
    var dir      = param.dirName;
-   var response = utils.scanDir ( fs , path , dir );
+   var response = utils.scanDir ( this.fs , this.path , dir );
    
    if (response.error) return response;
       
-   var dbResponse = dbUtils.fetchRecords_from_Query(this.db , "Select ID,FILENAME from clip where DIR='"+dir+"'"  );
+   var dbResponse = dbUtils.fetchRecords_from_Query(this.db , "Select ID,FILENAME from files where DIR='"+dir+"'"  );
    if (dbResponse.error) return response;
 
    // Checke Files gegen this.db 
@@ -241,15 +195,17 @@ ___createThumb(mediaFile, thumbFile , time, size , callback )
 
 ___internal___createImageThumb(imagePath, thumbFile , width , height , callback )
 {
-  const cmd = `gm convert "${imagePath}" -resize ${width}x${height} "${thumbFile}"`
+   console.log("createThumb("+imagePath+" -> "+thumbFile);
+   
+   const cmd = `gm convert "${imagePath}" -resize ${width}x${height} "${thumbFile}"`
                 
   return utils.exec( cmd , callback );
 }
 ___internal___createMovieThumb(moviePath, thumbFile , time, size , callback )
 { 
-  console.log("createThumb( destPath:"+this.thumbPath+" , size:" + size+")");
+  console.log("createThumb("+moviePath+" -> "+thumbFile);
    
-    if (!time)     time     = '147';  
+    if (!time)     time     = this.thumbPosition; 
     if (!size)     size     = this.sizeOfThumbs;  
                                 
     if(size=='origin') var cmd = 'ffmpeg -v error -ss '+time+' -i "'+moviePath+'" '+thumbFile;
@@ -257,474 +213,134 @@ ___internal___createMovieThumb(moviePath, thumbFile , time, size , callback )
 
     console.log('createThumb ===> ' + cmd);
 
+    // Prüfe, ob der Zielpfad existiert
+    var thumbDir = this.path.dirname(thumbFile);
+    if (!this.fs.existsSync(thumbDir))
+    {
+      console.log('createThumb: thumbDir ('+thumbDir+') not found - create this ...');
+      this.fs.mkdirSync(thumbDir, { recursive: true });
+    }
+
     return utils.exec( cmd , callback );
  }
-
- ___internal___saveMediaInDB   ( media )
+___internal___saveMediaInDB   ( media )
 {
-   return  dbUtils.insertIntoTable(this.db,'files', {
-                                                       TYPE     : media.TYPE,
-                                                       DIR      : media.DIR,
-                                                       FILENAME : media.FILENAME,
-                                                       GUID     : media.GUID,
-                                                       DIMENSION: media.DIMENSION,
-                                                       FILESIZE : media.FILESIZE,
-                                                       PLAYTIME : media.PLAYTIME,
-                                                       SOURCE   : media.SOURCE,
-                                                       KATEGORIE: media.KATEGORIE
-                                                      } );
+   if(media.ID) return dbUtils.updateTable    (this.db,'files','ID', media.ID , media);
+   else        return  dbUtils.insertIntoTable(this.db,'files' , media );
+}
+___internal___saveThumbInDB   ( thumb ) 
+{
+   console.log("___internal___saveThumbInDB:" + JSON.stringify(thumb));
+  return  dbUtils.insertIntoTable(this.db,'thumbs', {
+                                                       ID_FILE   : thumb.ID_FILE,
+                                                       NDX       : thumb.NDX,
+                                                       THUMBFILE : thumb.THUMBFILE,
+                                                       POSITION  : thumb.POSITION,
+                                                    } );
 }
 
-
- ___findActor(db , actorName)
+___internal___listFiles ( filter)
 {
-   var firstNameLastName = actorName.split(' ');
-   var firstName = firstNameLastName[0];
-   var lastName  = '';
-   var response  = '';
-   var sql       = [];
-   if(firstNameLastName.length>1) 
-   {
-    lastName=firstNameLastName[1];
-    sql.push("Select ID from actor where Name='"+lastName+"' and Vorname='"+firstName+"'");
-   }
-   
-   // Such-Batch ...
-   sql.push("Select ID from actor where Name like '%"+firstName+"%'");
-   sql.push("Select ID from actor where Alias1 like %"+actorName+"%'");
-   sql.push("Select ID from actor where Alias2 like '%"+actorName+"%'");
-   sql.push("Select ID from actor where Alias3 like '%"+actorName+"%'");
-
-   for(var i=0; i<sql.length; i++)
-   {
-     response = dbUtils.fetchValue_from_Query(db , sql[i] );
-     if(!response.error)
-        if(response.result) return response.result;
-   }
-
-   // Acrtor wird in keiner Abfrage-Variante gefunden -> Neuanlage.....
-   response = dbUtils.insertIntoTable(db , 'actor' , {Vorname:firstName, Name:lastName });
-
-  if(!response.error) return response.result.lastInsertRowid;
-}   
-
+ if (filter.ID_FILE)   return dbUtils.fetchRecord_from_Query(this.db , "Select * from files where ID="+ filter.ID_FILE );
  
- async ___listActors( dB , param )
+ var SQL = "Select  from clip where ID > 0";
+ if (filter.ID_PERSON) SQL = SQL + " AND  ( ID in (Select ID_FILE from personsInMedia Where ID_PERSON="+filter.ID_PERSON+") ";
+ if (filter.ID_TAG)    SQL = SQL + " AND  ( ID in (Select ID_FILE from tagsInMedia    Where ID_Tag="+filter.ID_TAG+") ";  
+ if (filter.DIR)       
  {
-  var SQL = "Select ID,Name,Vorname,Ranking From Actor Where (ID>0) ";  // ID > 0 ist nur dazu gedacht, um Folgefilter mit "AND" hinzuzufügen
-  var filter = '';
-
-  console.log("___ listActors(" + JSON.stringify(param)+")");
-
-  console.log("___ listActors -> "  + param.Name );
-
-  filter = param.filterAll; 
-  if (filter)
-  {
-     while(filter.indexOf('*')>=0) { filter=filter.replace('*','%'); }
-
-     if (filter.indexOf('%') < 0) {op='=';    }
-     else                         {op='like'; }
-
-     if ( filter != '') { SQL = SQL + " AND  (( Name "+op+" '"+filter+"' ) or (Vorname "+op+" '"+filter+"' ) or (Alias1 "+op+" '"+filter+"' ) or (Alias2 "+op+" '"+filter+"' ) or (Alias3 "+op+" '"+filter+"' ))"}
-  }
-
-
-  filter = param.Name; 
-  console.log("filter : " + filter);
-  if (filter)
-  {
-    console.log("filter Name: " + filter);
-    while(filter.indexOf('*')>=0) { filter=filter.replace('*','%'); }
-
-     if (filter.indexOf('%') < 0) {op='=';    }
-     else                         {op='like'; }
-
-     if ( filter != '') { SQL = SQL + " AND  ( Name "+op+" '"+filter+"' )" ; } 
-  }
-
-
-  filter = param.Vorname;
-  if (filter)
-  {
-    console.log("filter Vorname: " + filter);
-     while(filter.indexOf('*')>=0) { filter=filter.replace('*','%'); }
-
-     if (filter.indexOf('%') < 0) {op='=';   }
-     else                         {op='like' }
-
-     if ( filter != '') { SQL = SQL + " AND  ( Vorname "+op+" '"+filter+"' )"}
-  }
-
-
-  filter = param.Alias;
-  if (filter)
-  {
-     while(filter.indexOf('*')>=0) { filter=filter.replace('*','%'); }
-
-     if (filter.indexOf('%') < 0) {op='=';    }
-     else                         {op='like'; }
-
-     if ( filter != '') { SQL = SQL + " AND  ( (Alias1 "+op+" '"+filter+"' ) or (Alias2 "+op+" '"+filter+"' ) or (Alias3 "+op+" '"+filter+"' ) )"}
-  }
-
-
-  filter = param.RankingLT;
-  if (filter)
-  {
-     if ( filter != '') { SQL = SQL + " AND  ( Ranking <= "+filter+" )"}
-  }
-
-
-  filter = param.RankingGT;
-  if (filter)
-  {
-     if ( filter != '') { SQL = SQL + " AND  ( Ranking >= "+filter+" )"}
-  }
-
-
-  filter = param.RankingEQ;
-  if (filter)
-  {
-     if ( filter != '') { SQL = SQL + " AND  ( Ranking = "+filter+" )"}
-  }
-
-
-  filter = param.Herkunft;
-  if (filter)
-  {
-     while(filter.indexOf('*')>=0) { filter=filter.replace('*','%'); }
-
-     if (filter.indexOf('%') < 0) {op='=';    }
-     else                         {op='like'; }
-
-     if ( filter != '') { SQL = SQL + " AND  ( Herkunft "+op+" '"+filter+"' )"}
-  }
-
-  
-  sortOrder = param.sortOrder;
-  if (sortOrder)
-  {
-     if ( sortOrder != '') { SQL = SQL + " Order by " + sortOrder}
-  }
-
-  return dbUtils.fetchRecords_from_Query( dB , SQL );
+    while(filter.DIR.indexOf('*')>=0) { filter.DIR=filter.DIR.replace('*','%'); }
+    if (filter.indexOf('%') < 0) SQL = SQL + " AND  ( DIR = '"+filter.DIR+"') ";
+    else                         SQL = SQL + " AND  ( DIR like '%"+filter.DIR+"%') ";
  }
 
- async ___actorInfo( dB , param )
- {
-   var ID  = param.ID;
-   return dbUtils.fetchRecord_from_Query( dB , "Select * from actor where ID="+ ID );
- }
+ if (filter.DIR)       
+   {
+      while(filter.DIR.indexOf('*')>=0) { filter.DIR=filter.DIR.replace('*','%'); }
+      if (filter.indexOf('%') < 0) SQL = SQL + " AND  ( DIR = '"+filter.DIR+"') ";
+      else                         SQL = SQL + " AND  ( DIR like '%"+filter.DIR+"%') ";
+   }
 
+ if (filter.FILENAME)       
+   {
+      while(filter.FILENAME.indexOf('*')>=0) { filter.FILENAME=filter.FILENAME.replace('*','%'); }
+      if (filter.indexOf('%') < 0) SQL = SQL + " AND  ( FILENAME = '"+filter.FILENAME+"') ";
+      else                         SQL = SQL + " AND  ( FILENAME like '%"+filter.FILENAME+"%') ";
+   }
 
- async ___saveActor( dB , param , fs )
- {
-   var response = {};
+if (filter.SOURCE)       
+   {
+     while(filter.SOURCE.indexOf('*')>=0) { filter.SOURCE=filter.SOURCE.replace('*','%'); }
+     if (filter.indexOf('%') < 0) SQL = SQL + " AND  ( SOURCE = '"+filter.SOURCE+"') ";
+     else                         SQL = SQL + " AND  ( SOURCE like '%"+filter.SOURCE+"%') ";
+   }
+
+if (filter.KATEGORIE)       
+   {
+     while(filter.KATEGORIE.indexOf('*')>=0) { filter.KATEGORIE=filter.KATEGORIE.replace('*','%'); }
+     if (filter.indexOf('%') < 0) SQL = SQL + " AND  ( KATEGORIE = '"+filter.KATEGORIE+"') ";
+     else                         SQL = SQL + " AND  ( KATEGORIE like '%"+filter.KATEGORIE+"%') ";
+   }   
+
+if (filter.DESCRIPTION)       
+   {
+     while(filter.DESCRIPTION.indexOf('*')>=0) { filter.DESCRIPTION=filter.DESCRIPTION.replace('*','%'); }
+     if (filter.indexOf('%') < 0) SQL = SQL + " AND  ( DESCRIPTION = '"+filter.DESCRIPTION+"') ";
+     else                         SQL = SQL + " AND  ( DESCRIPTION like '%"+filter.DESCRIPTION+"%') ";
+   }   
+
+ if (filter.FILESIZE) SQL = SQL + " AND  ( FILESIZE"+filter.FILESIZE+" )";     
+ if (filter.PLAYTIME) SQL = SQL + " AND  ( PLAYTIME"+filter.PLAYTIME+" )";   
+ if (filter.QUALITY)  SQL = SQL + " AND  ( QUALITY" +filter.QUALITY+" )";   
+ if (filter.RATING)   SQL = SQL + " AND  ( RATING"  +filter.RATING+" )";   
    
-   if(!param.fields) return {error:true, errMsg:'tablefields not found in params !', result:{} };
-   
-   var actorID  = param.fields['ID'];
-
-   if (!actorID) {
-                  response = dbUtils.insertIntoTable( dB , 'Actor' , param.fields )
-                  if (response.error) return response;
-                  actorID  = response.result.lastInsertRowid;
-                 }  
-   else {
-          response = dbUtils.updateTable(dB,'Actor','ID', actorID , param.fields); 
-          if (response.error) return response;
-        }  
-  
-  // wurde Image mitgeliefert ?
-  if(param.image)
-  {
-    console.log('Image wurde mitgegeben  -> '+param.image);
-    var nn = 'actor_'+actorID+'.png';
-    var fn = imgPath + nn;
-    console.log('Image ins Archiv verschiebe -> '+fn);
-        
-    utils.moveFile( fs , param.image , fn );
-
-    dbUtils.updateTable(dB,'Actor','ID',actorID,{CAPTURE:nn})
-    
-    return {error:false, errMsg:'OK', result:{}}
-  }
-
-  return response;
- }            
-  
- async ___actorImage( dB , param , fs , path , res )
- {
-   var img     = '';
-   var ID      = param.ID;
-   var mime =
-      {
-       gif: 'image/gif',
-       jpg: 'image/jpeg',
-       png: 'image/png',
-       svg: 'image/svg+xml',
-      };
-
-      if (!ID) 
-      { 
-         res.set('Content-Type', 'text/plain');
-         res.send("missing ID"); 
-         return;
-      }
-
-   var response = dbUtils.fetchRecord_from_Query( dB , "Select Capture from actor where ID="+ ID );
-
-   if(response.error)
-   {
-    res.send(JSON.stringify(response)); 
-    return;
-   }
-
-
-   if(!response.result.CAPTURE) 
-   {
-    res.send(JSON.stringify({error:true, errMsg:"no picture for this actor" , result:{}})); 
-    return;
-   }
-
-   if(response.result.CAPTURE == '') 
-   {
-    res.send(JSON.stringify({error:true, errMsg:"no picture for this actor" , result:{}})); 
-    return;
-   }
-
-   img          = response.result.CAPTURE;
-   img          = imgPath+img;
-
-   if(!fs.existsSync(img))  
-   {
-    res.send(JSON.stringify({error:true, errMsg:"file ("+img+") does not exist !" , result:{}})); 
-    return;
-   }
-
-  console.log('load: ' + img);
-
-  var type      = mime[path.extname(img).slice(1)] || 'text/plain';
-   
-  try
-  {
-    var stream    = fs.createReadStream(img);
-        res.set('Content-Type', type );
-        stream.pipe(res);
-  }      
-  catch(err)
-            {
-              res.set('Content-Type', 'text/plain');
-              res.send(err);
-            };
-}
-
-async ___listMovies ( dB , param )
-{
- var SQL     = "Select ID, NAME , QUALITY from clip where ID > 0";
- var filter  = '';
  
- filter = param.actorID;
- if (filter)
- {
-    if ( filter != '') { SQL = SQL + " AND  ( ID in (Select ID_Clip from clip_actor Where ID_Actor="+filter+") )"}
- }
-
-
- filter = param.dir;
- if (filter)
- {
-    while(filter.indexOf('*')>=0) { filter=filter.replace('*','%'); }
-
-    if (filter.indexOf('%') < 0) {op='=';   }
-    else                         {op='like' }
-
-    if ( filter != '') { SQL = SQL + " AND  ( DIR "+op+" '"+filter+"' )"}
- }
-
-
- filter = param.filename;
- if (filter)
- {
-    while(filter.indexOf('*')>=0) { filter=filter.replace('*','%'); }
-
-    if (filter.indexOf('%') < 0) {op='=';    }
-    else                         {op='like'; }
-
-    if ( filter != '') { SQL = SQL + " AND  ( FILENAME "+op+" '"+filter+"' )"}
- }
-
-
- filter = param.name;
- if (filter)
- {
-    while(filter.indexOf('*')>=0) { filter=filter.replace('*','%'); }
-
-    if (filter.indexOf('%') < 0) {op='=';    }
-    else                         {op='like'; }
-
-    if ( filter != '') { SQL = SQL + " AND  ( NAME "+op+" '"+filter+"' )"}
- }
-
-
- filter = param.Ranking;
- if (filter)
- {
-    if ((filter.indexOf('>') >= 0) || ((filter.indexOf('<') >= 0)) || ((filter.indexOf('=') >= 0)) ) {op=' ';   }
-    else                                                                                             {op='=';   }
-
-    if ( filter != '') { SQL = SQL + " AND  ( QUALITY "+op+" "+filter+" )"}
- }
-
-
-
- filter = param.source;
- if (filter)
- {
-    while(filter.indexOf('*')>=0) { filter=filter.replace('*','%'); }
-
-    if (filter.indexOf('%') < 0) {op='=';    }
-    else                         {op='like'; }
-
-    if ( filter != '') { SQL = SQL + " AND  ( SOURCE "+op+" '"+filter+"' )"}
- }
-
-
- filter = param.kategorie;
- if (filter)
- {
-    while(filter.indexOf('*')>=0) { filter=filter.replace('*','%'); }
-
-    if (filter.indexOf('%') < 0) {op='=';    }
-    else                         {op='like'; }
-
-    if ( filter != '') { SQL = SQL + " AND  ( KATEGORIE "+op+" '"+filter+"' )"}
- }
-
-
- filter = param.tag;
- if (filter)
- {
-    while(filter.indexOf('*')>=0) { filter=filter.replace('*','%'); }
-
-    if (filter.indexOf('%') < 0) {op='=';    }
-    else                         {op='like'; }
-
-    if ( filter != '') { SQL = SQL + " AND  ( ID in (Select ID_Clip from Clip_Tags Where ID_Tag in ( Select ID from Tags Where Name "+op+"  '"+filter+"') ) ) "}
- }
-
- return dbUtils.fetchRecords_from_Query(dB , SQL );
+ return dbUtils.fetchRecords_from_Query(this.db , SQL );
 
 }
-
-async ___movieDetails( dB , param )
+___internal___runFileContent( ID , TYPE )
 {
-   var ID  = param.ID;
-   return dbUtils.fetchRecord_from_Query( dB ,  "Select * from clip where ID="+ID );
-}
- 
-
-async ___loadThumbsFromDB( dB , param , fs , path , res )
-{
-  var img     = '';
-  var ID      = param.ID;
-
-  var mime =
-     {
-      gif: 'image/gif',
-      jpg: 'image/jpeg',
-      png: 'image/png',
-      svg: 'image/svg+xml',
-     };
-
-     if (!ID) 
-     { 
-        res.set('Content-Type', 'text/plain');
-        res.send("missing ID"); 
-        return;
-     }
-
-  var response = dbUtils.fetchRecord_from_Query(dB , "Select THUMBS from clip where ID="+ ID  );
-
-  console.log("movieThumbs SQL-Response: " + JSON.stringify(response));
-   
+  var response = dbUtils.fetchRecord_from_Query(this.db , "Select * from files where ID="+ ID  );
   if(response.err) 
   { 
-    res.set('Content-Type', 'text/plain');
-    res.send(response.errMsg); 
+    this.res.set('Content-Type', 'text/plain');
+    this.res.send(response); 
     return;
   }
-  
-  img          = imgPath + response.result.THUMBS; 
-  console.log('try to load: ' + img);
- 
-  var type      = mime[path.extname(img).slice(1)] || 'text/plain';
-   
-  try
-  {
-    var stream    = fs.createReadStream(img);
-        res.set('Content-Type', type );
-        stream.pipe(res);
-  }      
-  catch(err)
-            {
-              res.set('Content-Type', 'text/plain');
-              res.send(err);
-            };
-}
 
-
-async ___showMediaFromDB( dB , param , fs , path , res , req )
-{
-  var ID      = param.ID;
-  var fn      = '';
- 
-  var response = dbUtils.fetchRecord_from_Query(dB , "Select * from files where ID="+ ID  );
-  if(response.err) 
-  { 
-    res.set('Content-Type', 'text/plain');
-    res.send(response); 
-    return;
-  }
+  var f = response.result;
   
-  if(!response.result.FILENAME)
+  if(!f.ID==ID)
   {
     console.log( 'ID not found' );
-    res.set('Content-Type', 'text/plain');
-    res.send( JSON.stringify({error:true,errMsg:'ID not found !',result:''}));
+    this.res.set('Content-Type', 'text/plain');
+    this.res.send( JSON.stringify({error:true,errMsg:'ID not found !',result:''}));
   }
   
- fn = path.join( res.result.DIR , res.result.FILENAME );
+ var fn = this.path.join( f.DIR , f.FILENAME );
  console.log('try to load "' + fn +'"');
 
-
-  if( !fs.existsSync(fn) )
+ if( !this.fs.existsSync(fn) )
   {
     console.log( 'file('+fn+') not found' );
-    res.set('Content-Type', 'text/plain');
-    res.send( JSON.stringify({error:true,errMsg: 'file('+movie+') not found' ,result:''}));
+    this.res.set('Content-Type', 'text/plain');
+    this.res.send( JSON.stringify({error:true,errMsg: 'file('+movie+') not found' ,result:''}));
     return;
   }
 
-  if(res.result.TYPE.toUpperCase == 'VIDEO') return utils.getMovieFile( fs , path , fn  , req , res  );
-  if(res.result.TYPE.toUpperCase == 'IMAGE') return utils.getImageFile( fs , path , img , req , res  );
+  if(f.TYPE.toUpperCase == 'VIDEO') return utils.getMovieFile( this.fs , this.path , fn  , this.req , this.res  );
+  if(f.TYPE.toUpperCase == 'IMAGE') return utils.getImageFile( this.fs , this.path , fn  , this.req , this.res );
   
   console.log( 'unkown fileType' );
   res.set('Content-Type', 'text/plain');
   res.send( JSON.stringify({error:true,errMsg:'unkown fileType !',result:''}));
 
 }
-
-
-async ___isMediaRegistered( dB , param , fs , path  )
+___internal___isMediaRegistered( mediaFile  )
 {
-   var result    = {registered:false,  thumbs:[], actors:[] , tags:[], file:{} };
-   var mediaGUID = utils.buildFileGUID( fs , param.filePath );
+   var result    = {registered:false,  thumbs:[], persons:[] , tags:[], file:{} };
+   var mediaGUID = utils.buildFileGUID( this.fs , mediaFile );
   
-  var response  = dbUtils.fetchRecord_from_Query( dB , "Select * from files where GUID='"+mediaGUID+"'");
-  console.log("response from dB: " + JSON.stringify( response ));
-  
+  var response  = dbUtils.fetchRecord_from_Query( this.db , "Select * from files where GUID='"+mediaGUID+"'");
   if(response.error) return response;
 
   if(!response.result.ID) return {error:false, errMsg:"file not registered yet." , result:{} }  
@@ -732,13 +348,13 @@ async ___isMediaRegistered( dB , param , fs , path  )
   result.registered = true;
   result.file       = response.result;
 
-  response          = dbUtils.fetchRecords_from_Query( dB , 'select * from thumbs where ID_FILE='+result.file.ID+' Order by ndx' );
+  response          = dbUtils.fetchRecords_from_Query( this.db , 'select * from thumbs where ID_FILE='+result.file.ID+' Order by ndx' );
   if(!response.error) result.thumbs = response.result;
 
-  response      = dbUtils.fetchRecords_from_Query( dB , 'select * from actor where ID in (select ID_Actor from fileActor where ID_FILE='+result.file.ID+') order by Name');
+  response      = dbUtils.fetchRecords_from_Query( this.db , 'select * from persons where ID in (select ID_PERSON from personInMedia where ID_FILE='+result.file.ID+') order by Name');
   if(!response.error) result.actors = response.result;
 
-  response      = dbUtils.fetchRecords_from_Query( dB , 'select * from tags where ID in (select ID_Tag from fileTags where ID_FILE='+result.file.ID+') order by Name');
+  response      = dbUtils.fetchRecords_from_Query( this.db , 'select * from tags where ID in (select ID_Tag from tagsInMedia  where ID_FILE='+result.file.ID+') order by Name');
   if(!response.error) result.tags = response.result;
    
   return {error:false, errMsg:"OK" , result:result }
@@ -746,53 +362,58 @@ async ___isMediaRegistered( dB , param , fs , path  )
 
 
 
-async ___registerMedia( param )
+___internal___registerMedia( mediaFile )
 {
-  var mediaFile = param.filePath;
+  console.log('registerMedia( "'+mediaFile+'")'); 
   var fileInfo  = utils.analyzeFile( this.fs , this.path , mediaFile );
-  if(fileInfo.error) return fileInfo;
+  if(fileInfo.error) 
+  { console.log('fileInfo.error: '+JSON.stringify(fileInfo)); 
+    return fileInfo; 
+  }
+  
+  console.log('fileInfo: '+JSON.stringify(fileInfo));
 
   var media     = {
                    ID       : 0, 
-                   TYPE     : fileInfo.type,
-                   DIR      : fileInfo.path,
-                   FILENAME : fileInfo.name,
-                   GUID     : utils.buildFileGUID( this.fs ,fileInfo.name ),
+                   TYPE     : fileInfo.result.type,
+                   DIR      : fileInfo.result.dir,
+                   FILENAME : fileInfo.result.name,
+                   GUID     : utils.buildFileGUID( this.fs ,fileInfo.result.name , fileInfo.result.size ),
                    DIMENSION: '1920x1080',
-                   FILESIZE : '',
+                   FILESIZE : fileInfo.result.size,
                    PLAYTIME : '',
                    SOURCE   : '',
                    KATEGORIE: ''
                   }  
     
-  var response   = dbUtils.fetchValue_from_Query( dB , "Select ID from files where GUID='"+media.fileGUID+"'");
-  if(response.error) { return response; } 
+  var response   = dbUtils.fetchValue_from_Query( this.db , "Select ID from files where GUID='"+media.GUID+"'");
+  if(response.error) { console.log("Fehler in dB-Abfrage nach GUID -> "+response.errMsg); return response; 
+                       return response; } 
   
   media.ID = response.result;
 
    // Moviefile ?
+  try{ 
   if(media.TYPE=='MOVIE')
-  {
-     var vinfo = videoInfo(param.filePath) ;
-     media.FILESIZE = vinfo.result.format.size;
-     media.PLAYTIME = vinfo.result.format.duration;
-  }   
-  
+     media.PLAYTIME = videoInfo(mediaFile).vinfo.result.format.duration;
+} catch(err) { console.log('error in videoInfo: '+err.message); media.PLAYTIME = 0; }
+
   if(media.TYPE=='IMAGE')
    {
-      var imgInfo = {};
-      media.PLAYTIME = 4;
+    
    } 
-
+   
+   // Media-File in DB speichern...
    response = this.___internal___saveMediaInDB(media)
      
    if(response.error) return response;
    media.ID = response.result.lastInsertRowid;
+   var thumbName = 'thumb_'+media.ID+'_00.png'
+   var thumbFile = this.thumbPath+thumbName;
+   var thumb     = {ID_FILE:media.ID, NDX:0, THUMBFILE:thumbName, POSITION:this.thumbPosition};
 
-   var thumbFile = this.thumbPath+'thumb_'+media.ID+'_'+media.GUID+'.png';
-
-   if (media.TYPE=='MOVIE') this.___internal___createMovieThumb( mediaFile , thumbFile, 147, 'origin' , null );
-   if (media.TYPE=='IMAGE') this.___internal___createImageThumb( mediaFile , thumbFile, 147, 'origin' , null);  
+   if (media.TYPE=='MOVIE') this.___internal___createMovieThumb( mediaFile , thumbFile, this.thumbPosition , 'origin' , function(){this.self.___internal___saveThumbInDB(this.thumb)}.bind({self:this,thumb:thumb}) );
+   if (media.TYPE=='IMAGE') this.___internal___createImageThumb( mediaFile , thumbFile, 147, 147 ,                      function(){this.self.___internal___saveThumbInDB(this.thumb)}.bind({self:this,thumb:thumb}) ); 
    
   return {error:false, errMsg:"OK", result:media}
 }  

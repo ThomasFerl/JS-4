@@ -1,3 +1,4 @@
+const globals             = require('./backendGlobals.js');
 const utils               = require('./nodeUtils.js');
 const dbUtils             = require('./dbUtils.js');
 const { TFDateTime }      = require('./nodeUtils.js');
@@ -6,7 +7,7 @@ const { TFMediaCollektor} = require('./mediaCollektor_backend.js');
 
 var   dB           = {}; // lokale Kopie der Arbeits-Datenbank - wird via startBackend() initialisiert ....   
 var   etc          = {}; // lokale Kopie der Konfigurations-Datenbank - wird via startBackend() initialisiert ....   
-
+var   media        = {};
 
 
 module.exports.setup = function( _dB , _etc ) 
@@ -14,6 +15,11 @@ module.exports.setup = function( _dB , _etc )
   utils.log('-------------------userAPI.SETUP-----------------');
   dB  = _dB;
   etc = _etc;
+
+  if(globals.isMediaCollector)
+    {console.log("MediaCollector wird initialisiert...");
+     media = new TFMediaCollektor( dB , etc );
+    }else console.log("MediaCollector wird NICHT initialisiert..."); 
   
   utils.log("userAPI.working-dB : " + dB.constructor.name);
 
@@ -38,12 +44,16 @@ module.exports.handleCommand = async function( sessionID , cmd , param , webRequ
  utils.log("with params: "+JSON.stringify(param) );
  
 
- if(global.isMediaCollector)
- {
-   var mc = new TFMediaCollektor( dB , etc );
-       mc.handleCommand( sessionID , cmd , param , webRequest ,  webResponse , fs , path );
- }
- 
+ //-----------------------------------------------------------
+//-------------MEDIA Collektor--------------------------------
+//------------------------------------------------------------
+
+ if(globals.isMediaCollector)
+  { console.log("MediaCollector.handleCommand("+cmd+")");
+     media.handleCommand( sessionID , cmd , param , webRequest ,  webResponse , fs , path );
+  }   
+
+
 //------------------------------------------------------------
 //-------------TEST-------------------------------------------
 //------------------------------------------------------------

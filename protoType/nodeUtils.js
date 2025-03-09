@@ -877,12 +877,8 @@ module.exports.httpRequest = async function (url)
 }
 
 
-module.exports.buildFileGUID = function( fs , fileName )
+module.exports.buildFileGUID = function( fs , fileName , fileSize)
 {
-  // Dateigröße ermitteln
-  var fsStats = fs.statSync(fileName);
-  var fileSize = fsStats.size;
-
   // wandle den Dateinamen in hexadezimale Zeichen um
   var hexFileName = Buffer.from(fileName).toString('hex');
 
@@ -899,6 +895,7 @@ module.exports.analyzeFile=function(fs,path,filePath)
   var result = { path      : '',
                  name      : '',
                  ext       : '',
+                 dir       : '',
                  type      : '',
                  size      : '' 
                };
@@ -912,12 +909,15 @@ module.exports.analyzeFile=function(fs,path,filePath)
         // Datei-Pfad, Name und Erweiterung ermitteln
         result.path     = path.resolve(filePath);
         result.name     = path.basename(filePath);
-        result.ext      = path.extname(filePath).toLowerCase();
+        result.ext      = path.extname(filePath);
+        result.dir      = path.dirname(filePath);
+        result.size     = stats.size;
 
         // Datei-Typ bestimmen
         result.type  = 'unknown';
-        if (imageExtensions.includes(extension))      result.type = 'IMAGE'
-        else if (videoExtensions.includes(extension)) result.type = 'MOVIE';
+        e            = result.ext.toLowerCase();
+        if      (imageExtensions.includes(e)) result.type = 'IMAGE'
+        else if (videoExtensions.includes(e)) result.type = 'MOVIE';
        } catch (error) {return { error:true, errMsg:error.message, result:{} };
     }
   return {error:false,errMsg:'OK',result:result};  
