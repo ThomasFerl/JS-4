@@ -184,10 +184,17 @@ export class TChanelDlg
              for(var i=0; i<response.result.length; i++) this.chanel[response.result[i].fieldName] = response.result[i].defaultValue || "";
              this.chanel.ID_Device = this.device.ID;
       }
-      
         var availeableTopics = [];
         var r = utils.webApiRequest('LSTOPICS' , {ID_Device:device.ID} );
-        if(!r.error) for(var i=0; i<r.result.length;i++) availeableTopics.push({caption:r.result[i].topic.substring(r.result[i].descr.length) , value:r.result[i].ID})
+        if(!r.error) 
+           for(var i=0; i<r.result.length;i++)
+           {
+              var ID = r.result[i].ID;
+              var t  = r.result[i].topic;
+              var d  = r.result[i].descr;
+              var h  = t.substr(d.length);
+             availeableTopics.push({caption:h , value:ID})
+           }  
      
       var cpt = this.newChanel ? "neuen Kanal hinzufügen" : "Kanal bearbeiten";
           
@@ -260,7 +267,7 @@ export class TChanelDlg
           topic.callBack_onChange = function(value){ 
                                                      var t =this.form.getControlByName("DESC").editControl;
                                                      var pl=this.getPayloadFields(t.value);
-                                                     this.chanel.ID_Topic = t.value;
+                                                     
                                                      this.form.getControlByName("payloadField_val").editControl.setItems(pl);
                                                      this.form.getControlByName("payloadField_dt").editControl.setItems(pl);
                                                         
@@ -272,7 +279,8 @@ export class TChanelDlg
                                                        var t =this.form.getControlByName("DESC").editControl;  
                                                        var r =this.form.getInputFormValues();
                                                        utils.findEntryByField(r , 'field' , 'DESC').value = t.text;
-
+                                                       utils.findEntryByField(r , 'field' , 'ID_TOPIC').value = t.value;
+                                                       
                                                        this.saveChanel(r);
                                                      }.bind(this);  
            this.form.callBack_onESCBtn = function () {this.dlgWnd.destroy() ; if(this.callBack_onDialogAbort!=null) this.callBack_onDialogAbort() }.bind(this);

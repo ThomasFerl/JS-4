@@ -316,9 +316,11 @@ webServer.listen( port , () => {console.log('Server listening on Port ' + port )
 setInterval( webAPI.run          , 60000 ); // jede Minute prüfen, ob etwas im BATCH wartet ...
 setInterval( session.ctrlSession , 1000 ); 
 
-// zum Tageswechsel um 00:00:00 Uhr alte Daten löschen:
 setInterval(() => {
                    mqttHandler.synchronize(); 
-                  } , 60 * 1000); // Prüft jede Minute, ob es Mitternacht ist
+                  } , 60 * 1000); 
 
-
+// zum Tageswechsel um 00:00:00 Uhr alte Daten löschen:
+setInterval(() => {
+  mqttHandler.cleanUp_old_payLoads(); 
+ } , 60 * 1000); // Prüft jede Minute, ob es Mitternacht ist

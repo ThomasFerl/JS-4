@@ -71,7 +71,7 @@ module.exports.selectLastValues = async (params) =>
 
 function ___synchronize( idTopic , idChanel )
 {
-    console.log("   sychronisiere ID-TOPIC ("+idTopic+") mit Kanal ("+idChanel+")");
+    console.log("  Ermittle passende Payload-Fields: ");
     
     var fnValue = dbUtils.fetchValue_from_Query(dB,"Select payloadField_val from chanels Where ID="+idChanel).result;
     if(!fnValue) return;
@@ -85,7 +85,9 @@ function ___synchronize( idTopic , idChanel )
     var measure  = [];
     var update   = [];
 
+    console.log("Ermittle Payloads zum Topic -> "+idTopic);
     var response = dbUtils.fetchRecords_from_Query(dB , "select * from mqttPayloads where ID_Topic="+idTopic+" and sync=0 order by ID");
+    console.log(response.result.length+' Datensätze gefunden...');
     
     // Daten sammeln und als EINE Transaktion ausführen....
     for(var i=0; i<response.result.length; i++)
@@ -93,16 +95,20 @@ function ___synchronize( idTopic , idChanel )
         var rec  = response.result[i];
         try {p = JSON.parse(rec.payload)}
         catch{ console.log("parse Error") ; return }
-        
-        if( Object.hasOwn( p , fnValue) && Object.hasOwn( p , fnTime)) 
-        {
-           var dt = new utils.TFDateTime(p[fnTime]);
+
+        try {
+             console.log("Ermittle Values aus akt. Payload ...");
+             console.log(fnTime+'  : '+p[fnTime]);
+             console.log(fnValue+' : '+p[fnValue]);
+   
+            var dt = new utils.TFDateTime(p[fnTime]);
            
             measure.push({ID_Chanel:idChanel,DT:dt.excelTimestamp  ,Wert:p[fnValue]}) 
-           update.push ({ID:rec.ID, sync:1}) 
-        }   
-    }
-
+            update.push ({ID:rec.ID, sync:1}) 
+          } 
+         catch(err) {console.log(err.message)} 
+    }   
+    
     if(measure.length>0)
     response = dbUtils.insertBatchIntoTable(dB , 'Measurements' , measure );
 
@@ -118,31 +124,42 @@ module.exports.synchronize = () =>
    console.log("Synchrionisation ...");
    var t = dbUtils.fetchRecords_from_Query(dB , "Select DISTINCT ID_TOPIC from mqttPayloads Where sync <> 1 order by ID") 
 
+   console.log("Ermittlung aller Payloads, die noch zur Synchronisation ausstehen : "+JSON.stringify(t))
+
+   console.log("Durchlaufen aller "+t.result.length+" Datensätze...")
+   
+
    // alle ggf. gefundenen Topics durchlaufen ...
    for(var j=0; j<t.result.length; j++)
    {
      var idTopic = t.result[j].ID_Topic;  
+     console.log("Loop"+j+": ID_Topic:"+idTopic)
      
      // alle Kanäle dieses Topics durchlaufen und synchronisieren ...
      var r = dbUtils.fetchRecords_from_Query(dB,"Select ID as ID from chanels Where ID_TOPIC = "+idTopic );
-     for(var i=0; i<r.result.length; i++)  console.log(___synchronize( idTopic , r.result[i].ID ));
+     console.log("Ermittlung aller Kanäle, die an die Payloads gebunden sind und zur Synchronisation ausstehen : "+JSON.stringify(r))
+
+     for(var i=0; i<r.result.length; i++)  
+        {
+           console.log("Loop"+i+": ID_Topic:"+idTopic+" -> "+  r.result[i].ID)
+           ___synchronize( idTopic , r.result[i].ID );
+        }   
    }  
 }
 
 
-/*
-Code um ältere Datensätze zu löschen .....
-const today = new Date();
-                    if (today.getHours() === 0 && today.getMinutes() === 0) 
-                    { // Um Mitternacht:  lösche alles, das älter als "maxAgePayloadHistory" Tage ist 
-                      console.log('Mitternacht! Lösche alte Daten aus payload-Register...');
-                      // aktueller xlstimestamp:
-                      var thisXLStimestamp = Math.trunc(new utils.TFDateTime().dateTime());
-                      dbUtils.runSQL(dB, "DELETE FROM mqttPayloadContent WHERE ("+thisXLStimestamp+"-timestamp) > "+globals.maxAgePayloadHistory );
-                    }
-
-
-*/
+module.exports.cleanUp_old_payLoads = () =>
+{
+     const today = new Date();
+     //if (today.getHours() === 0 && today.getMinutes() <= 1) 
+     if(true)
+     { // Um Mitternacht:  lösche alles, das älter als "maxAgePayloadHistory" Tage ist 
+        console.log('Mitternacht! Lösche alte Daten aus payload-Register...');
+        // aktueller xlstimestamp:
+        var thisXLStimestamp = Math.trunc(new utils.TFDateTime().dateTime());
+        dbUtils.runSQL(dB, "DELETE FROM mqttPayloads WHERE sync=1 AND (("+thisXLStimestamp+"-timestamp) > "+globals.maxAgePayloadHistory+")" );
+    }
+}
 
 
     
