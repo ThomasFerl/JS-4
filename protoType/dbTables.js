@@ -33,7 +33,7 @@ tables.push(
         {fieldName:"POSITION"	    , fieldType:"REAL" } 
      ]});
 
-   
+
 tables.push( 
   {tableName:"persons",
      tableFields:[

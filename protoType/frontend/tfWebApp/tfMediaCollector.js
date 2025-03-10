@@ -18,15 +18,23 @@ class Tthumbnail
 {
   constructor( parent , params )
   {
-    this.parent = parent; 
-    this.params = params;
-    this.image  = null;
+    this.parent       = parent; 
+    this.params       = params;
 
+    this.thumbID      = params.thumbID;  
     
+    var response      = utils.webApiRequest('THUMB' , {thumbID:this.thumbID} );
+    if(!response.error) this.mediaFile = response.result
+     //result:{thumb:this.thumb, file:response.result, thumbPath:fn} };
 
+    this.mediaFile    = response.result.file;
+    this.thumb        = response.result.thumb;
+    this.thumbPath    = response.result.thumbPath;
+    this.thumbURL     = utils.buildURL('GETIMAGEFILE' , {fileName:thumbPath} );
 
-    this.thumbnail = new graphics.TFImage(parent , mediaFile , 0 , 0 , 100 , 100);
-  }
+    this.thumb        = dialogs.addImage( parent , "" , 1 , 1 , "77px" , "77px" , this.thumbURL );
+    this.thumb.callBack_onClick = function(e, d ) {alert(this.file.FILENAME)}.bind(this);                         };
+    
 }
 
 
@@ -48,7 +56,9 @@ export class TFMediaCollector
    this.btnAddLibrary = dialogs.addButton(this.menuPanel , '' , 1 , 1 , 1 , 1 , 'Medium hinzufügen');
    this.btnAddLibrary.backgroundColor='gray';
    this.btnAddLibrary.height='2em';
-   this.btnAddLibrary.callBack_onClick = function(){ dialogs.fileDialog( "*.*" , true , function(d,f,ff){debugger; this.addMediaFile(d,f,ff)}.bind(this) )}.bind(this);
+   this.btnAddLibrary.callBack_onClick = function(){this.addMediaFile()}.bind(this);
+
+   this.updateThumbs(); 
  };
 
    
@@ -56,6 +66,28 @@ export class TFMediaCollector
 
   addMediaFile( dir , file , allMediaFiles )
   {
-    dialogs.showMessage('addMediaFile: '+ file);
-  } 
-}  
+    dialogs.fileDialog( "*.*" , true ,function(d,f,ff)
+                                              {
+                                                utils.webApiRequest('REGISTERMEDIA' , {mediaFile:f} );
+                                                this.updateThumbs()
+                                              }.bind(this));
+   
+ }  
+
+
+ updateThumbs()
+  {
+    this.dashboardPanel.innerHTML = "";
+
+    var response = utils.webApiRequest('LSTHUMBS' , {} );
+    if(response.error) return;
+
+    for(var i=0; i<response.result.length; i++)
+        var t = new Tthumbnail( this.dashboardPanel , {thumbID:response.result[i].ID} );
+    
+    
+    
+
+  }
+
+} 

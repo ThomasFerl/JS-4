@@ -468,7 +468,7 @@ async function showSVGs(type)
  function apiTest()
  {
   var w = new TFWindow( null , 'API-Test' , '70%' , '30%' , 'CENTER' );
-  var cmds = ['LSPERSON','PERSON','SAVEPERSON','LSFILES','FILE','RUN_FILECONTENT','REGISTERMEDIA','ISREGISTERED','MEDIASCANDIR']; 
+  var cmds = ['LSPERSON','PERSON','SAVEPERSON','LSFILES','FILE', 'LSTHUMBS' , 'THUMB' , 'RUN_FILECONTENT','REGISTERMEDIA','ISREGISTERED','MEDIASCANDIR']; 
   var cbItems = [];
   for(var i=0; i<cmds.length; i++) cbItems.push({caption:cmds[i],value:cmds[i]}); 
 

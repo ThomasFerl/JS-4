@@ -42,9 +42,7 @@ count()
 
 async runNextProc() 
 {
-    utils.log('runNextProc -> '+this.queue);
-      
-    if( this.count()==0 ) {  utils.log('keine BatchProc`s in der Queue'); return null; }
+    if( this.count()==0 ) {  return null; }
     if( this.isRunning  ) {  utils.log('Ein Prozess ist bereist in Bearbeitung.');  return null; }
   
     var newJob     = this.queue[0];

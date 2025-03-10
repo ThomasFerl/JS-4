@@ -29,6 +29,8 @@ async handleCommand( sessionID , cmd , param , webRequest ,  webResponse , fs , 
  this.req   = webRequest;
  this.res   = webResponse; 
  var CMD    = cmd.toUpperCase().trim();
+
+ console.log("in TFMediaCollektor.handleCommand("+CMD+")");
  
 //---------------------------------------------------------------
 //------------persons---------------------------------------------
@@ -89,6 +91,41 @@ if(CMD=='FILE')
 //---------------------------------------------------------------
 //---------------------------------------------------------------
 
+
+if(CMD='LSTHUMBS') 
+   {
+    var sql = "Select * from thumbs where ID > 0";
+      if(param.ID_FILE) sql = sql + " AND ID_FILE="+param.ID_FILE;
+      return dbUtils.fetchRecords_from_Query( this.db , sql );
+   }
+   
+
+//---------------------------------------------------------------
+//---------------------------------------------------------------
+//---------------------------------------------------------------
+
+if(CMD=='THUMB') 
+{
+    var     idThumb      = param.ID;
+    if(!idThumb) idThumb = param.ID_THUMB;  
+    
+    response = dbUtils.fetchRecord_from_Query( this.db , "Select * from thumbs where ID="+idThumb+")" );
+    if(response.error) return response;
+    this.thumb = response.result;
+
+    var response = dbUtils.fetchRecord_from_Query( this.db , "Select * from files where ID="+this.thumb.ID_FILE );
+    
+    var fn = this.path.join( this.thumbPath , this.thumb.thumbFile );
+    
+    return {error:false, errMsg:"OK", result:{thumb:this.thumb, file:response.result, thumbPath:fn} };
+
+}
+
+
+//---------------------------------------------------------------
+//---------------------------------------------------------------
+//---------------------------------------------------------------
+
 if(CMD=='RUN_FILECONTENT') 
 {
   var     id = param.ID;
@@ -106,6 +143,7 @@ if(CMD=='RUN_FILECONTENT')
 
 if(CMD=='REGISTERMEDIA') 
 {  
+   console.log('registerMedia( "'+param.mediaFile+'")');
    return this.___internal___registerMedia ( param.mediaFile );                       
 }
                                           
