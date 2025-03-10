@@ -194,21 +194,25 @@ module.exports.createTable = ( db , tableName , fieldDef ) =>
 }
 
 
-function _insertIntoTable( db , tableName , fields )
+function _insertIntoTable(db, tableName, fields) 
 {
-  var fieldNames  = [];
-  var fieldValues = []
-  
-  for(var fieldName in fields ) {fieldNames.push(fieldName) , fieldValues.push(fields[fieldName]) };
+  var fieldNames = [];
+  var fieldValues = [];
 
-  var sql = "insert into "+tableName+"("+fieldNames[0] ;
-  for( var i=1; i<fieldNames.length; i++ )  sql=sql+","+fieldNames[i];
-  sql = sql + ") values('"+fieldValues[0]+"'";
-  for( var i=1; i<fieldValues.length; i++ )  sql=sql+", '"+fieldValues[i]+"'";
-  sql= sql + ")"
-  
-  return  _runSQL( db , sql );
+  // ID-Feld ausschließen, falls vorhanden
+  for (var fieldName in fields) {
+    if (fieldName.toUpperCase() != 'ID') {  
+      fieldNames.push(fieldName);
+      fieldValues.push(fields[fieldName]);
+    }
+  }
+
+  // SQL-String korrekt zusammenbauen
+  var sql = "INSERT INTO " + tableName + " (" + fieldNames.join(", ") + ") VALUES ('" + fieldValues.join("', '") + "')";
+
+  return _runSQL(db, sql);
 }
+
 
 
 module.exports.insertIntoTable = ( db , tableName , fields ) =>

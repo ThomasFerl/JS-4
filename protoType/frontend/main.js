@@ -271,6 +271,11 @@ var   btn10 = dialogs.addButton( menuContainer , "" , 10 , 1 , 1 , 1 , "ask me" 
              .callBack_onClick = ()=> { new TFMediaCollector( '77%' , '77%' , {} ); };
 
 
+dialogs.addButton( panels[9] , '' , 1 , 1 , 100 , 32 , 'API-Test' )
+             .callBack_onClick = ()=> { apiTest(); };
+
+
+
       dialogs.addListCheckbox( panels[10] ,  [ {caption:'aaaa',value:'A'},
                                               {caption:'bbbb',value:'B'},
                                               {caption:'cccc',value:'C'},
@@ -457,4 +462,35 @@ async function showSVGs(type)
  function diaShow(img)
  {
   setInterval( () => { nextImage(img); }, 4000 ); 
+ }
+
+
+ function apiTest()
+ {
+  var w = new TFWindow( null , 'API-Test' , '70%' , '30%' , 'CENTER' );
+  var cmds = ['LSPERSON','PERSON','SAVEPERSON','LSFILES','FILE','RUN_FILECONTENT','REGISTERMEDIA','ISREGISTERED','MEDIASCANDIR']; 
+  var cbItems = [];
+  for(var i=0; i<cmds.length; i++) cbItems.push({caption:cmds[i],value:cmds[i]}); 
+
+
+  w.buildGridLayout_templateColumns('1fr');
+  w.buildGridLayout_templateRows('1fr 1fr 1fr 1fr');
+  var c = dialogs.addCombobox( w.hWnd ,        1 , 1 ,70 , 'Command' , '' , 'TEST' , cbItems , {} );
+  var p = dialogs.addInput ( w.hWnd ,          1 , 2 , 70 , 'params' , '' , '{param:value}' , {} );
+  var l = dialogs.addLabel ( w.hWnd , '' ,     1 , 3 , '100%' , '2em' , 'Parameter in der Form "param1=value1;param2=value2..." angeben !' );
+  var b = dialogs.addButton( w.hWnd , '' ,     1 , 4 , '10em' , '2em' , 'OK' );
+     b.margin = '1em';
+     b.callBack_onClick = function(){ 
+                                      var param = {};
+                                      var x = this.p.value.split(';');
+                                      for(var i=0; i<x.length; i++)
+                                      {
+                                        var xx = x[i].split('=');
+                                        param[xx[0]] = xx[1];
+                                      }
+                                      var response = utils.webApiRequest(this.c.value , param);
+                                      console.log(response);
+                                      dialogs.showMessage( JSON.stringify(response) );
+                                    }.bind({c:c,p:p});
+    
  }

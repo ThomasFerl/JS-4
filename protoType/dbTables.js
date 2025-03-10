@@ -7,26 +7,56 @@ var content = [];
 
 
 tables.push( 
-            {tableName:"anyTable",
-             tableFields:[
-                {fieldName:"anyField01"     , fieldType:"integer" } ,
-                {fieldName:"anyField01"	    , fieldType:"numeric" } ,
-                {fieldName:"anyField01"	    , fieldType:"Text" } ,
-                {fieldName:"anyField01"	    , fieldType:"Text" } ,
-                {fieldName:"anyField01"	    , fieldType:"Text" } 
-             ]});
+  {tableName:"files",
+   tableFields:[
+      {fieldName:"TYPE"         , fieldType:"Text" } ,
+      {fieldName:"DIR"          , fieldType:"integer" } ,
+      {fieldName:"FILENAME"	    , fieldType:"numeric" } ,
+      {fieldName:"DIMENSION"	  , fieldType:"Text" } ,
+      {fieldName:"FILESIZE"	    , fieldType:"INT" } ,
+      {fieldName:"PLAYTIME"	    , fieldType:"INT" } ,
+      {fieldName:"QUALITY"	    , fieldType:"INT" } ,
+      {fieldName:"RATING"	      , fieldType:"INT" } ,
+      {fieldName:"SOURCE"	      , fieldType:"Text" } ,
+      {fieldName:"KATEGORIE"    , fieldType:"Text" } ,
+      {fieldName:"DESCRIPTION"	, fieldType:"Text" } ,
+      {fieldName:"GUID"         , fieldType:"Text" } ,
+   ]});
 
 
 tables.push( 
-            {tableName:"nextTable",
-             tableFields:[
-                          {fieldName:"field1"     , fieldType:"Text" } ,
-                          {fieldName:"field2"     , fieldType:"Text" } , 
-                          {fieldName:"field3"     , fieldType:"Text" } 
-                       ]});
+  {tableName:"thumbs",
+     tableFields:[
+        {fieldName:"ID_FILE"      , fieldType:"integer" } ,
+        {fieldName:"NDX"    	    , fieldType:"numeric" } ,
+        {fieldName:"THUMBFILE"	  , fieldType:"Text" } ,
+        {fieldName:"POSITION"	    , fieldType:"REAL" } 
+     ]});
 
-// USW
-
+   
+tables.push( 
+  {tableName:"persons",
+     tableFields:[
+        {fieldName:"NAME"    	    , fieldType:"Text" } ,
+        {fieldName:"VORNAME"	    , fieldType:"Text" } ,
+        {fieldName:"ALIAS1"	      , fieldType:"Text" } ,
+        {fieldName:"ALIAS2"	      , fieldType:"Text" } ,
+        {fieldName:"ALIAS3"	      , fieldType:"Text" } ,
+        {fieldName:"GEBURTSJAHR"	, fieldType:"REAL" } ,
+        {fieldName:"HERKUNFT"	    , fieldType:"Text" } ,
+        {fieldName:"BUSINESSTART"	, fieldType:"REAL" } ,
+        {fieldName:"BUSINESENDE"	, fieldType:"REAL" } ,
+        {fieldName:"RANKING"	    , fieldType:"INTEGER" } ,
+        {fieldName:"BEMERKUNGEN"	, fieldType:"REAL" } 
+       ]});
+	
+    
+tables.push( 
+        {tableName:"personsInMedia",
+           tableFields:[
+              {fieldName:"ID_FILE"	    , fieldType:"INTEGER" } ,
+              {fieldName:"ID_PERSON"    , fieldType:"INTEGER" } 
+           ]});
 
 
 

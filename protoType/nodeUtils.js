@@ -755,7 +755,6 @@ module.exports.getTextFile = function( fs , fileName )
 }
 
 
-
 exports.getImageFile = async( fs , path , img , req , res  ) =>
 {
     var mime =
@@ -781,6 +780,7 @@ exports.getImageFile = async( fs , path , img , req , res  ) =>
               };
   }
   
+
   exports.getMovieFile = async( fs , path , movie , req , res  ) =>
     {
       console.log( 'playMovie('+movie+')' );
@@ -849,7 +849,6 @@ exports.getImageFile = async( fs , path , img , req , res  ) =>
       }
     
     }
-    
 
 
 module.exports.httpRequest = async function (url) 
@@ -876,6 +875,54 @@ module.exports.httpRequest = async function (url)
 
   return res;
 }
+
+
+module.exports.buildFileGUID = function( fs , fileName , fileSize)
+{
+  // wandle den Dateinamen in hexadezimale Zeichen um
+  var hexFileName = Buffer.from(fileName).toString('hex');
+
+  return hexFileName + '_' + fileSize; 
+}
+
+
+module.exports.analyzeFile=function(fs,path,filePath) 
+{
+  // Unterstützte Formate für Bilder und Videos
+  const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.svg'];
+  const videoExtensions = ['.mp4', '.mkv', '.avi', '.mov', '.wmv', '.flv', '.webm'];
+
+  var result = { path      : '',
+                 name      : '',
+                 ext       : '',
+                 dir       : '',
+                 type      : '',
+                 size      : '' 
+               };
+    try {
+        // Prüfen, ob die Datei existiert
+        if (!fs.existsSync(filePath)) return {error:true,errMsg:'file not exists',result:{}};
+            
+        // Datei-Statistiken abrufen
+        const stats = fs.statSync(filePath);
+
+        // Datei-Pfad, Name und Erweiterung ermitteln
+        result.path     = path.resolve(filePath);
+        result.name     = path.basename(filePath);
+        result.ext      = path.extname(filePath);
+        result.dir      = path.dirname(filePath);
+        result.size     = stats.size;
+
+        // Datei-Typ bestimmen
+        result.type  = 'unknown';
+        e            = result.ext.toLowerCase();
+        if      (imageExtensions.includes(e)) result.type = 'IMAGE'
+        else if (videoExtensions.includes(e)) result.type = 'MOVIE';
+       } catch (error) {return { error:true, errMsg:error.message, result:{} };
+    }
+  return {error:false,errMsg:'OK',result:result};  
+}
+
 
 
 /* mit Callback
