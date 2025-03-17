@@ -3,6 +3,7 @@ const dbUtils              = require('./dbUtils');
 const utils                = require('./nodeUtils');
 
 var   dB                   = null;
+var   maxAgePayloadHistory = 24;
 
 module.exports.setup = (_dB ) => { dB = _dB; }
 
@@ -35,7 +36,15 @@ module.exports.onMessage = (topic, payload) =>
     else ID_Topic = response.result;
 
     //safePayload
-    dbUtils.insertIntoTable(dB,'mqttPayloads',{ID_Topic:ID_Topic,payload:payload.toString(),sync:0});
+    var dtStr = '';
+    try{
+         var p  = JSON.parse(payload.toString());
+         dtStr  = p.timestamp;
+    }catch{}  
+
+    var dt = new utils.TFDateTime(dtStr)
+
+    dbUtils.insertIntoTable(dB,'mqttPayloads',{ID_Topic:ID_Topic,payload:payload.toString(),sync:0,DT:dt.dateTime()});
 
 }   
     
@@ -103,7 +112,7 @@ function ___synchronize( idTopic , idChanel )
    
             var dt = new utils.TFDateTime(p[fnTime]);
            
-            measure.push({ID_Chanel:idChanel,DT:dt.excelTimestamp  ,Wert:p[fnValue]}) 
+            measure.push({ID_Chanel:idChanel,DT:dt.excelTimestamp  ,Wert:p[fnValue], sync:0}) 
             update.push ({ID:rec.ID, sync:1}) 
           } 
          catch(err) {console.log(err.message)} 
@@ -116,6 +125,20 @@ function ___synchronize( idTopic , idChanel )
         if(update.length>0) dbUtils.updateBatchInTable(dB,'mqttPayloads',update,'ID');
 
 }
+
+function ___aggregateHourly() 
+{
+  var sql = "INSERT INTO hourly_Measurements (ID_Chanel , DT , Wert , cnt , sync) " +
+            "SELECT ID_Chanel, max(Round(DT,2)) as DT , AVG(Wert) AS Wert , count(*) as cnt " +
+            "FROM Measurements " + 
+            "WHERE (sync <> 1) AND ( DT < CAST(strftime('%s', 'now', '-1 hour') / 86400.0 + 25569 AS INTEGER) )" +
+            "GROUP BY CAST((DT*24) As INTEGER) , ID_Chanel";
+
+  var response = dbUtils.runSQL(dB , sql );
+  
+  if (!response.error) dbUtils.runSQL(dB , "UPDATE Measurements SET sync = 1 WHERE sync = 0 AND DT < (SELECT MAX(DT) FROM HourlyMeasurements)");
+}
+
 
 
 
@@ -144,21 +167,19 @@ module.exports.synchronize = () =>
            console.log("Loop"+i+": ID_Topic:"+idTopic+" -> "+  r.result[i].ID)
            ___synchronize( idTopic , r.result[i].ID );
         }   
-   }  
+   }
+   
+   // Umschichten ...
+   ___aggregateHourly();
 }
 
 
 module.exports.cleanUp_old_payLoads = () =>
 {
-     const today = new Date();
-     //if (today.getHours() === 0 && today.getMinutes() <= 1) 
-     if(true)
-     { // Um Mitternacht:  lösche alles, das älter als "maxAgePayloadHistory" Tage ist 
-        console.log('Mitternacht! Lösche alte Daten aus payload-Register...');
-        // aktueller xlstimestamp:
-        var thisXLStimestamp = Math.trunc(new utils.TFDateTime().dateTime());
-        dbUtils.runSQL(dB, "DELETE FROM mqttPayloads WHERE sync=1 AND (("+thisXLStimestamp+"-timestamp) > "+globals.maxAgePayloadHistory+")" );
-    }
+   var currentTimestamp = new utils.TFDateTime();
+   console.log("Lösche Einträge älter als:"+currentTimestamp.dateTime()+" -> "+currentTimestamp.formatDateTime())
+   dbUtils.runSQL(dB, "DELETE FROM mqttPayloads WHERE (sync=1) AND ((("+currentTimestamp.dateTime()+"-DT)*24)>"+maxAgePayloadHistory+")" );
+   dbUtils.runSQL(dB, "DELETE FROM Measurements WHERE (sync=1) AND ((("+currentTimestamp.dateTime()+"-DT)*24)>"+(4*maxAgePayloadHistory)+")" );
 }
 
 

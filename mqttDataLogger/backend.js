@@ -317,10 +317,11 @@ setInterval( webAPI.run          , 60000 ); // jede Minute prüfen, ob etwas im 
 setInterval( session.ctrlSession , 1000 ); 
 
 setInterval(() => {
-                   mqttHandler.synchronize(); 
+                   mqttHandler.synchronize();   // Prüft jede Minute ob neue RAW-Payloads vorliegen ung kopiert die Daten ggf in "Measurements"...
+
                   } , 60 * 1000); 
 
 // zum Tageswechsel um 00:00:00 Uhr alte Daten löschen:
 setInterval(() => {
   mqttHandler.cleanUp_old_payLoads(); 
- } , 60 * 1000); // Prüft jede Minute, ob es Mitternacht ist
+ } , 60 * 1000); // Prüft jede Stunde(60 sekunden*60), was an RAW-Payloads gelöscht werden kann... (Daten wurden in Measurements gespeichert und sind älter als "maxAgePayloadHistory")

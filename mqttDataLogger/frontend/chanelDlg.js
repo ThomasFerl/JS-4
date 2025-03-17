@@ -283,6 +283,8 @@ export class TChanelDlg
                                                        
                                                        this.saveChanel(r);
                                                      }.bind(this);  
+
+                                                     
            this.form.callBack_onESCBtn = function () {this.dlgWnd.destroy() ; if(this.callBack_onDialogAbort!=null) this.callBack_onDialogAbort() }.bind(this);
         
   }

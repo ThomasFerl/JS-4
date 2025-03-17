@@ -17,9 +17,11 @@ tables.push(
 tables.push( 
             {tableName:"mqttPayloads",
              tableFields:[
-                          {fieldName:"ID_Topic"  , fieldType:"INTEGER" } ,
+                          {fieldName:"ID_Topic"  , fieldType:"INTEGER" },
                           {fieldName:"payload"   , fieldType:"TEXT" }, 
-                          {fieldName:"sync"      , fieldType:"INTEGER" } 
+                          {fieldName:"sync"      , fieldType:"INTEGER" },
+                          {fieldName:"DT"        , fieldType:"Real" } 
+
                        ]});
 
 
@@ -73,8 +75,30 @@ tables.push(
              tableFields:[
                           {fieldName:"ID_Chanel"     , fieldType:"INTEGER"} ,
                           {fieldName:"DT"            , fieldType:"REAL"} ,
-                          {fieldName:"Wert"          , fieldType:"REAL"} 
+                          {fieldName:"Wert"          , fieldType:"REAL"} ,
+                          {fieldName:"sync"          , fieldType:"INTEGER"} 
                        ]});
+
+
+tables.push( 
+            {tableName:"hourly_Measurements",
+             tableFields:[
+                          {fieldName:"ID_Chanel"     , fieldType:"INTEGER"} ,
+                          {fieldName:"DT"            , fieldType:"REAL"} ,
+                          {fieldName:"Wert"          , fieldType:"REAL"} ,
+                          {fieldName:"cnt"           , fieldType:"INTEGER"},
+                          {fieldName:"sync"          , fieldType:"INTEGER"} 
+                       ]});
+
+
+tables.push( 
+            {tableName:"daily_Measurements",
+             tableFields:[
+                          {fieldName:"ID_Chanel"     , fieldType:"INTEGER"} ,
+                          {fieldName:"DT"            , fieldType:"REAL"} ,
+                          {fieldName:"Wert"          , fieldType:"REAL"} ,
+                          {fieldName:"cnt"           , fieldType:"INTEGER"} 
+                       ]});                       
 
 
                                   // USW
