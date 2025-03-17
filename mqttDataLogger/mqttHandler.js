@@ -129,7 +129,7 @@ function ___synchronize( idTopic , idChanel )
 function ___aggregateHourly() 
 {
   var sql = "INSERT INTO hourly_Measurements (ID_Chanel , DT , Wert , cnt , sync) " +
-            "SELECT ID_Chanel, max(Round(DT,2)) as DT , AVG(Wert) AS Wert , count(*) as cnt " +
+            "SELECT ID_Chanel, max(Round(DT,2)) as DT , AVG(Wert) AS Wert , count(*) as cnt , CAST( 0 as Integer) as sync" +
             "FROM Measurements " + 
             "WHERE (sync <> 1) AND ( DT < CAST(strftime('%s', 'now', '-1 hour') / 86400.0 + 25569 AS INTEGER) )" +
             "GROUP BY CAST((DT*24) As INTEGER) , ID_Chanel";
