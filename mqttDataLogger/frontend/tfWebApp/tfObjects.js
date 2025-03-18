@@ -2693,24 +2693,22 @@ export class TFAnalogClock extends TFPanel
 
 export class TFChart extends TFPanel
 {
- __convertColor(color) 
- {
-  const ctx = this.canvas.getContext('2d');
-  ctx.fillStyle = color;
-  return ctx.fillStyle;
-}
- 
- __prepareChart()
- {  
-   // Chart type settings
+  __RGB( color , alpha)
+  {
+    return 'rgba('+color.r+','+color.g+','+color.b+','+alpha+')';
+  }
+
+  __prepareChart()
+ { 
+     // Chart type settings
    let _chartType = this.params.chartType;
    let _tension   = this.params.tension;
    let _radius    = this.params.radius;
 
-   this.params.chartPointColor         = this.__convertColor(this.params.chartPointColor);
-   this.params.chartBorderColor        = this.__convertColor(this.params.chartBorderColor);
-   this.params.chartSelectedColor      = this.__convertColor(this.params.chartSelectedColor);
-   this.params.chartBackgroundColor    = this.__convertColor(this.params.chartBackgroundColor);
+   
+   this.chartBackgroundColor    = utils.colorToRGB(this.params.chartBackgroundColor    || this.backgroundColor);
+   this.gridAreaBackgroundColor = utils.colorToRGB(this.params.gridAreaBackgroundColor || this.backgroundColor);
+ 
 
    if (this.params.chartType.toUpperCase().indexOf('LINE') > -1) 
     {
@@ -2743,7 +2741,7 @@ export class TFChart extends TFPanel
        this.chartParams.options       =  this.chartOptions;
        this.chartParams.plugins       = [{beforeDraw: function(chart) {
                                                                        const ctx     = chart.ctx;
-                                                                       ctx.fillStyle = this.params.chartBackgroundColor || this.backgroundColor;
+                                                                       ctx.fillStyle = this.chartBackgroundColor.rgb;
                                                                        ctx.fillRect(0, 0, chart.width, chart.height);
                                                                       }.bind(this)
                                          }];
@@ -2770,13 +2768,8 @@ export class TFChart extends TFPanel
     this.params.tension                 = this.params.tension                 || 0;
     this.params.radius                  = this.params.radius                  || 3;
     this.params.showLines               = this.params.showLines               || true;
-    this.params.chartPointColor         = this.params.chartPointColor         || 'rgb(147, 147, 147)';
-    this.params.chartBorderColor        = this.params.chartBorderColor        || 'rgba(2, 10, 70, 0.35)';
     this.params.chartBorderWidth        = this.params.chartBorderWidth        || 1;
-    this.params.chartSelectedColor      = this.params.chartSelectedColor      || 'rgb(255, 0, 0)';
-    this.params.chartBackgroundColor    = this.params.chartBackgroundColor    || this.backgroundColor;
-    this.params.gridAreaBackgroundColor = this.params.gridAreaBackgroundColor || this.backgroundColor;
- 
+   
     this.__prepareChart();
 
    this.ctx   = this.canvas.getContext('2d');
@@ -2786,41 +2779,42 @@ export class TFChart extends TFPanel
   this.chart.options.onHover = function(event, activeElements) 
   { 
     var c   =this.chart;
-    var self=this.self;
     // Reset all points
-    c.data.datasets.forEach((ds) => {ds.backgroundColor = ds.backgroundColor.map(() => self.params.chartPointColor); });
+    c.data.datasets.forEach((ds) => { ds.backgroundColor = ds.backgroundColor.map((item) => { return this.__RGB(utils.colorToRGB(item),0.21)}); });
 
     // Highlight the current point
     if (activeElements.length > 0) 
     {
       const index        = activeElements[0].index;
       const datasetIndex = activeElements[0].datasetIndex;
-      c.data.datasets[datasetIndex].backgroundColor[index] = self.params.chartSelectedColor;
+      const color        = c.data.datasets[datasetIndex].backgroundColor[index];
+
+      c.data.datasets[datasetIndex].backgroundColor[index] = this.__RGB( utils.colorToRGB(color),0.77);
     }
 
     c.update();
-  }.bind({chart:this.chart, self:this}); 
+  }.bind(this); 
 
 
   this.chart.options.onClick = function(e) 
   {
       var c    = this.chart;
-      var self = this.self;
                                      
       const clickedPoints = c.getElementsAtEventForMode(e, 'nearest', { intersect: true }, false);
       if (clickedPoints.length > 0) 
          {
            const clickedPoint = clickedPoints[0];
            // Reset all points to original color
-           c.data.datasets[clickedPoint.datasetIndex].backgroundColor = c.data.datasets[clickedPoint.datasetIndex].backgroundColor.map(() => self.params.chartPointColor);
+            c.data.datasets[clickedPoint.datasetIndex].backgroundColor = c.data.datasets[clickedPoint.datasetIndex].backgroundColor.map((item) => {return this.__RGB(utils.colorToRGB(item),0.21)});
            // Mark the clicked point
-           c.data.datasets[clickedPoint.datasetIndex].backgroundColor[clickedPoint.index] = self.params.chartSelectedColor;
+           var color = c.data.datasets[clickedPoint.datasetIndex].backgroundColor[clickedPoint.index];
+           c.data.datasets[clickedPoint.datasetIndex].backgroundColor[clickedPoint.index] = this.__RGB( utils.colorToRGB(color),0.77);
            const label = c.data.labels[clickedPoint.index];
            const value = c.data.datasets[clickedPoint.datasetIndex].data[clickedPoint.index];
            if(self.onChartClick) self.onChartClick({chart: c, itemIndex: clickedPoint.index, selectedLabel: label, selectedValue: value, hostedObject: hostedObject || {} });
            c.update();
          }
-  }.bind({chart:this.chart , self:this});
+  }.bind(this);
 
  
   if(this.params.chartData.length > 0) 
@@ -2836,16 +2830,16 @@ export class TFChart extends TFPanel
  // Add a new series (dataset) to the chart
  addSeries(seriesName, color) 
  {
-   // Farbein Form: rgb(rrr, ggg, bbb) bringen
-   color = this.__convertColor(color);
-
+   // Farbe in Form: rgb(rrr, ggg, bbb) bringen
+   color = utils.colorToRGB(color);
+  
    var newSeries = {
                      label           : seriesName,
                      data            : [],
-                     borderColor     : this.params.chartBorderColor,
+                     borderColor     : this.chartBorderColor,
                      backgroundColor : [],
                      fill            : false,
-                     seriesColor     : color
+                     seriesColor     : this.__RGB(color, 0.21)
                    };
 
   this.chart.data.datasets.push(newSeries);

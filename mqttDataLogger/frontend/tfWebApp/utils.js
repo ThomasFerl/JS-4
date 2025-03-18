@@ -161,13 +161,34 @@ export function strMatches(searchStr, topic)
 }
 
 
-
-
-
 export function containing( key , list )
 {
  return  list.some(element => element.toUpperCase() == key.toUpperCase());
 }
+
+
+
+export function colorToRGB( color )
+{    
+  let dummyDiv         = document.createElement("div");
+  dummyDiv.style.color = color;
+  document.body.appendChild(dummyDiv);
+
+    let computedColor = window.getComputedStyle(dummyDiv).color;
+    document.body.removeChild(dummyDiv);
+
+    let match = computedColor.match(/\d+/g); // Extrahiert alle Zahlen
+    if (!match || match.length < 3) return null;
+  
+      return {
+          r  : parseInt(match[0], 10),
+          g  : parseInt(match[1], 10),
+          b  : parseInt(match[2], 10),
+          rgb: `rgb(${match[0]}, ${match[1]}, ${match[2]})`
+      };
+  }
+
+
 
 
 export class TFDateTime 

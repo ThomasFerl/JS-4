@@ -41,7 +41,7 @@ export class TFDataViewer
 
       this.chartPanel = dialogs.addPanel(this.dashBoard,'cssWhitePanel',1,2,1,1);
 
-      dialogs.addButton(this.head,'',1,1,'10em', '2em','sync').callBack_onClick = ()=>{utils.webApiRequest("SYNC",{})}
+      dialogs.addCombobox(this.head,'',1,1,'10em', '2em','sync').callBack_onClick = ()=>{utils.webApiRequest("SYNC",{})}
 
       var response = utils.webApiRequest("LOADCHANELS" , {ID_Device:this.device.ID} );
           if(response.error) dialogs.showMessage("Fehler beim Abrufen der Kanal-Liste. Fehlermeldung: " + response.errMsg);
@@ -77,7 +77,7 @@ selectChanel( c )
 
    this.chartPanel.innerHTML = '';
 
-    var response = utils.webApiRequest( 'GETVALUES' , {ID_Chanel:c.ID} );
+    var response = utils.webApiRequest( 'GETVALUES' , {ID_Chanel:c.ID, resolution:'DAY'} );
 
     if(response.error)
     {
@@ -86,10 +86,14 @@ selectChanel( c )
     } 
 
     var chartData = [];
-    for(var i=0; i<response.result.length; i++) chartData.push({x:response.result[i].DT, y:response.result[i].Wert });
+    for(var i=0; i<response.result.length; i++)
+    {
+        var dt = new TFDateTime(response.result[i].DT);
+        chartData.push({x:dt.formatDateTime('dd.mm.yyyy'), y:response.result[i].Wert });
+    }    
 
-    this.arcChart = new TFChart( this.chartPanel , 1 , 1 , '100%' , '100%' , {chartBackgroundColor:'white',chartType:'Spline'} );
-    this.arcSeries = this.arcChart.addSeries( c.NAME , 'green' );                                         
+    this.arcChart = new TFChart( this.chartPanel , 1 , 1 , '100%' , '100%' , {chartBackgroundColor:'white',chartType:'bar'} );
+    this.arcSeries = this.arcChart.addSeries( c.NAME , 'rgba(54, 162, 235, 0.2)' );                                         
     this.arcChart.addPoint(this.arcSeries , chartData);
     
 }
