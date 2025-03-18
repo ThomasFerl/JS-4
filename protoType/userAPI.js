@@ -50,7 +50,8 @@ module.exports.handleCommand = async function( sessionID , cmd , param , webRequ
 
  if(globals.isMediaCollector)
   { console.log("MediaCollector.handleCommand("+cmd+")");
-     media.handleCommand( sessionID , cmd , param , webRequest ,  webResponse , fs , path );
+    var r =  media.handleCommand( sessionID , cmd , param , webRequest ,  webResponse , fs , path );
+    if(r!=null) return r;
   }   
 
 

@@ -53,7 +53,10 @@ if(CMD=='PERSON')
 //-------------SAVE PERSON---------------------------------------
 //---------------------------------------------------------------
 if(CMD=='SAVEPERSON') 
-{  console.log('run SAVEPERSON param: '+ JSON.stringify(param.person));
+{   
+   console.log('run SAVEPERSON stringify(param) => '+ JSON.stringify(param));
+   console.log('param.person : '+ param.person);
+   
    if(!param.person)     return {error:true, errMsg:'person-data not found in params !', result:{} };
   
    if (!param.person.ID) return dbUtils.insertIntoTable( this.db , 'persons' , param.person )
@@ -114,7 +117,7 @@ if(CMD=='THUMB')
     var f = dbUtils.fetchRecord_from_Query( this.db , "Select * from files where ID="+thumb.ID_FILE );
     var t = this.path.join( this.thumbPath , thumb.THUMBFILE );
     
-    return {error:false, errMsg:"OK", result:{thumb:thumb, file:f.response.result, thumbPath:t} };
+    return {error:false, errMsg:"OK", result:{thumb:r.result, file:f.result, thumbPath:t} };
 
 }
 
@@ -127,10 +130,7 @@ if(CMD=='CONTENTURL')
 {
   var     id = param.ID;
   if(!id) id = param.ID_FILE;  
-
-  await ___internal___contentURL( id );
-
-  return {isStream:true};  
+  return this.___internal___contentURL( id ); 
 }
 
 
@@ -184,6 +184,8 @@ if(CMD=='MEDIASCANDIR')
                         
 }
  
+return null;
+
 }
 
 //----------------------------------------------------------------
@@ -209,7 +211,6 @@ ___videoInfo ( aPath )
 
 }
 
-
 ___createThumb(mediaFile, thumbFile , time, size , callback )
 {
    
@@ -225,7 +226,6 @@ ___createThumb(mediaFile, thumbFile , time, size , callback )
     
     return {error:true, errMsg:"unknown file type", result:{}}
 }
-
 
 ___internal___createImageThumb(imagePath, thumbFile , width , height , callback )
 {
@@ -274,9 +274,11 @@ ___internal___saveThumbInDB   ( thumb )
 }
 ___internal___listFiles ( filter)
 {
- if (filter.ID_FILE)   return dbUtils.fetchRecord_from_Query(this.db , "Select * from files where ID="+ filter.ID_FILE );
+  if(!filter) filter = {};
+
+  if (filter.ID_FILE) return dbUtils.fetchRecord_from_Query(this.db , "Select * from files where ID="+ filter.ID_FILE );
  
- var SQL = "Select  from clip where ID > 0";
+ var SQL = "Select * from files where ID > 0";
  if (filter.ID_PERSON) SQL = SQL + " AND  ( ID in (Select ID_FILE from personsInMedia Where ID_PERSON="+filter.ID_PERSON+") ";
  if (filter.ID_TAG)    SQL = SQL + " AND  ( ID in (Select ID_FILE from tagsInMedia    Where ID_Tag="+filter.ID_TAG+") ";  
  if (filter.DIR)       
@@ -349,7 +351,9 @@ ___internal___contentURL( ID , TYPE )
 ___internal___isMediaRegistered( mediaFile  )
 {
    var result    = {registered:false,  thumbs:[], persons:[] , tags:[], file:{} };
-   var mediaGUID = utils.buildFileGUID( this.fs , mediaFile );
+   var mediaGUID = utils.buildFileGUID( this.fs , this.path , mediaFile );
+   if (mediaGUID.error) return mediaGUID;
+   mediaGUID = mediaGUID.result;
   
   var response  = dbUtils.fetchRecord_from_Query( this.db , "Select * from files where GUID='"+mediaGUID+"'");
   if(response.error) return response;
@@ -460,7 +464,7 @@ ___internal___registerMedia( mediaFile )
                    TYPE     : fileInfo.result.type,
                    DIR      : fileInfo.result.dir,
                    FILENAME : fileInfo.result.name,
-                   GUID     : utils.buildFileGUID( this.fs ,fileInfo.result.name , fileInfo.result.size ),
+                   GUID     : utils.buildFileGUID( this.fs , this.path , fileInfo ),
                    DIMENSION: '1920x1080',
                    FILESIZE : fileInfo.result.size,
                    PLAYTIME : '',
@@ -482,7 +486,7 @@ ___internal___registerMedia( mediaFile )
 
   if(media.TYPE=='IMAGE')
    {
-    
+    console.log("Image-processing not implemented yet");
    } 
    
    // Media-File in DB speichern...

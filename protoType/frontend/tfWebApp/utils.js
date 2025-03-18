@@ -1847,3 +1847,51 @@ export function isImageFile(ext)
    }
    return false;  
 }
+
+// parst eine Zeichenkette in ein JSON-Objekt - siehe Beispiel unten
+export function parseToJSON(inputStr)  
+  {
+    let result = {};
+    let pairs = inputStr.split(";").map(pair => pair.trim()).filter(pair => pair); // Aufteilen & leere Elemente entfernen
+
+    pairs.forEach(pair => {
+        let [path, value] = pair.split("=").map(part => part.trim());
+        value = value.replace(/^"(.*)"$/, "$1"); // Entfernt optionale Anführungszeichen um Werte
+        
+        if (path.includes(".")) {
+            // Falls ein Punkt existiert → Hierarchie aufbauen
+            let keys = path.split(".");
+            let obj = result;
+
+            keys.forEach((key, index) => {
+                if (index === keys.length - 1) {
+                    obj[key] = value; // Letzter Key → Wert zuweisen
+                } else {
+                    obj[key] = obj[key] || {}; // Neues Objekt erstellen, falls noch nicht vorhanden
+                    obj = obj[key]; // Tiefere Ebene setzen
+                }
+            });
+        } else {
+            // Kein Punkt → Direkt in das JSON-Objekt setzen
+            result[path] = value;
+        }
+    });
+
+    return result;
+}
+
+/*
+ ======Test======
+let input = "person.Name=Doe;person.VORNAME=Jon;adresse.Strasse=Hauptstrasse;Alter=30;Land=DE";
+let jsonObj = parseToJSON(input);
+console.log(jsonObj);
+
+ 
+======Ergebnis========
+{
+    person: { Name: "Doe", VORNAME: "Jon" },
+    adresse: { Strasse: "Hauptstrasse" },
+    Alter: "30",
+    Land: "DE"
+}
+*/

@@ -468,7 +468,7 @@ async function showSVGs(type)
  function apiTest()
  {
   var w = new TFWindow( null , 'API-Test' , '70%' , '30%' , 'CENTER' );
-  var cmds = ['LSPERSON','PERSON','SAVEPERSON','LSFILES','FILE', 'LSTHUMBS' , 'THUMB' , 'RUN_FILECONTENT','REGISTERMEDIA','ISREGISTERED','MEDIASCANDIR']; 
+  var cmds = ['LSPERSON','PERSON','SAVEPERSON','LSFILES','FILE', 'LSTHUMBS' , 'THUMB' , 'CONTENTURL','REGISTERMEDIA','ISREGISTERED','MEDIASCANDIR']; 
   var cbItems = [];
   for(var i=0; i<cmds.length; i++) cbItems.push({caption:cmds[i],value:cmds[i]}); 
 
@@ -481,15 +481,8 @@ async function showSVGs(type)
   var b = dialogs.addButton( w.hWnd , '' ,     1 , 4 , '10em' , '2em' , 'OK' );
      b.margin = '1em';
      b.callBack_onClick = function(){ 
-                                      var param = {};
-                                      var x = this.p.value.split(';');
-                                      for(var i=0; i<x.length; i++)
-                                      {
-                                        var xx = x[i].split('=');
-                                        param[xx[0]] = xx[1];
-                                      }
-                                      console.log("param");
-                                      console.log(param);
+                                      var param = utils.parseToJSON(this.p.value);
+                                      console.log("param =>"+JSON.stringify(param));
                                       var response = utils.webApiRequest(this.c.value , param);
                                       console.log(response);
                                       dialogs.showMessage( JSON.stringify(response) );

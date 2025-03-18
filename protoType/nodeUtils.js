@@ -877,12 +877,36 @@ module.exports.httpRequest = async function (url)
 }
 
 
-module.exports.buildFileGUID = function( fs , fileName , fileSize)
+module.exports.buildFileGUID = function( fs , path , fileInfo_or_fileFullName )
 {
-  // wandle den Dateinamen in hexadezimale Zeichen um
-  var hexFileName = Buffer.from(fileName).toString('hex');
+  var name = '';
+  var size = 0;
 
-  return hexFileName + '_' + fileSize; 
+  // ist fileInfo_or_fileFullName ein String, dann ist es der Dateiname
+  // ansonsten ist es ein Objekt mit den Datei-Infos
+  if(typeof fileInfo_or_fileFullName === 'string')
+  {
+    var mediaFile = fileInfo_or_fileFullName;
+    var fileInfo  = this.analyzeFile( fs , path , mediaFile );
+    if(fileInfo.error) 
+    { console.log('fileInfo.error: '+JSON.stringify(fileInfo)); 
+      return fileInfo; 
+    }
+    console.log('fileInfo : '+JSON.stringify(fileInfo));
+
+    name = fileInfo.result.name;
+    size = fileInfo.result.size;
+  } 
+  else
+  {
+    var fileInfo = fileInfo_or_fileFullName;
+    name = fileInfo.name;
+    size = fileInfo.size;
+  }
+    // wandle den Dateinamen in hexadezimale Zeichen um
+  var hexFileName = Buffer.from(name).toString('hex');
+
+  return {error:false,errMsg:'OK',result:hexFileName + '_' + size};
 }
 
 
@@ -980,6 +1004,55 @@ module.exports.findEntryByField = ( array , fieldName , value ) =>
   if(ndx>-1) return array[ndx];
   else       return null; 
 }
+
+
+module.exports.parseToJSON = (inputStr) =>
+  {
+    let result = {};
+    let pairs = inputStr.split(";").map(pair => pair.trim()).filter(pair => pair); // Aufteilen & leere Elemente entfernen
+
+    pairs.forEach(pair => {
+        let [path, value] = pair.split("=").map(part => part.trim());
+        value = value.replace(/^"(.*)"$/, "$1"); // Entfernt optionale Anführungszeichen um Werte
+        
+        if (path.includes(".")) {
+            // Falls ein Punkt existiert → Hierarchie aufbauen
+            let keys = path.split(".");
+            let obj = result;
+
+            keys.forEach((key, index) => {
+                if (index === keys.length - 1) {
+                    obj[key] = value; // Letzter Key → Wert zuweisen
+                } else {
+                    obj[key] = obj[key] || {}; // Neues Objekt erstellen, falls noch nicht vorhanden
+                    obj = obj[key]; // Tiefere Ebene setzen
+                }
+            });
+        } else {
+            // Kein Punkt → Direkt in das JSON-Objekt setzen
+            result[path] = value;
+        }
+    });
+
+    return result;
+}
+
+/*
+ ======Test======
+let input = "person.Name=Doe;person.VORNAME=Jon;adresse.Strasse=Hauptstrasse;Alter=30;Land=DE";
+let jsonObj = parseToJSON(input);
+console.log(jsonObj);
+
+ 
+======Ergebnis========
+{
+    person: { Name: "Doe", VORNAME: "Jon" },
+    adresse: { Strasse: "Hauptstrasse" },
+    Alter: "30",
+    Land: "DE"
+}
+*/
+
 
 
 module.exports.jsonToCSV=(jsonArray , seperator , withHead , withQ) =>
