@@ -23,7 +23,7 @@ module.exports.onMessage = (topic, payload) =>
     var ID_Topic = null;
     // prüfen, ob das ankommende Topic schon existiert....
     var response = dbUtils.fetchValue_from_Query(dB, "SELECT ID FROM mqttTopics WHERE topic = '"+topic+"'" )
-    if (response.error) { console.error('Fehler beim Prüfen des Topics:', response.errMsg); return; }
+    if (response.error) { console.error('Fehler beim Prüfen des Topics:' + response.errMsg); return; }
 
     if (response.result=='')
     {
@@ -37,10 +37,13 @@ module.exports.onMessage = (topic, payload) =>
 
     //safePayload
     var dtStr = '';
-    try{
-         var p  = JSON.parse(payload.toString());
-         dtStr  = p.timestamp;
-    }catch{}  
+    try {
+        var p = JSON.parse(payload.toString());
+        dtStr = p.timestamp;
+    } catch (err) {
+        console.error("[ERROR] Ungültiges JSON-Format für Payload:", payload.toString());
+        return;
+    }
 
     var dt = new utils.TFDateTime(dtStr)
 
@@ -57,15 +60,36 @@ module.exports.loadLastPayload = (ID_topic) =>
 
 module.exports.count = async (params) =>
 {  
-  return dbUtils.fetchValue_from_Query(dB , "Select count(*) from Measurements Where ID_chanel="+params.ID_Chanel)
+    var resolution = params.resolution.toUppercase();
+    var table      = 'Measurements';
+ 
+    if(resolution)
+    {
+       if(resolution=='HOUR')   table = 'hourly_Measurements';
+       if(resolution=='DAY')    table = 'daily_Measurements';
+       if(resolution=='MONTH')  table = 'monthly_Measurements';
+    }
+
+    return dbUtils.fetchValue_from_Query(dB , "Select count(*) from "+table+" Where ID_chanel="+params.ID_Chanel)
 }
 
 
 module.exports.selectValues = async (params) =>
 {
-   var sql = "";  
-   if(params.groupBy) sql = "Select DT,"+(params.aggr || "sum")+"(Wert) from Measurements Where ID_chanel="+params.ID_Chanel+" Group by "+params.groupBy+" Order by DT"
-   else               sql = "Select DT,Wert from Measurements Where ID_chanel="+params.ID_Chanel+" Order by DT";
+   var sql         = "";  
+   var table       = 'Measurements';
+   var aggregation = params.aggr || 'SUM' ;
+   
+   if(params.resolution)
+    {
+       var resolution                 =  (params.resolution || "").toUpperCase(); 
+       if(resolution=='HOUR')   table = 'hourly_Measurements';
+       if(resolution=='DAY')    table = 'daily_Measurements';
+       if(resolution=='MONTH')  table = 'monthly_Measurements';
+    }
+
+   if(params.groupBy) sql = "Select max(DT) , "+aggregation+"(Wert) from "+table+" Where ID_chanel="+params.ID_Chanel+" Group by "+params.groupBy+" Order by DT"
+   else               sql = "Select DT,Wert from "+table+" Where ID_chanel="+params.ID_Chanel+" Order by DT";
    
    return dbUtils.fetchRecords_from_Query(dB , sql ) 
 }
@@ -126,20 +150,37 @@ function ___synchronize( idTopic , idChanel )
 
 }
 
-function ___aggregateHourly() 
+
+module.exports.aggregateHourly = () =>
 {
+  var thisHour = Math.trunc( (new utils.TFDateTime().dateTime()*24) );  
+
   var sql = "INSERT INTO hourly_Measurements (ID_Chanel , DT , Wert , cnt , sync) " +
-            "SELECT ID_Chanel, max(Round(DT,2)) as DT , AVG(Wert) AS Wert , count(*) as cnt , CAST( 0 as Integer) as sync " +
+            "SELECT ID_Chanel, (Round(DT*24)/24) as DT , AVG(Wert) AS Wert , count(*) as cnt , CAST( 0 as Integer) as sync " +
             "FROM Measurements " + 
-            "WHERE (sync <> 1) AND ( DT < CAST(strftime('%s', 'now', '-1 hour') / 86400.0 + 25569 AS INTEGER) ) " +
+            "WHERE (sync <> 1) AND ( (DT*24) < "+thisHour+" ) " +
             "GROUP BY CAST((DT*24) As INTEGER) , ID_Chanel";
 
   var response = dbUtils.runSQL(dB , sql );
   
-  if (!response.error) dbUtils.runSQL(dB , "UPDATE Measurements SET sync = 1 WHERE sync = 0 AND DT < (SELECT MAX(DT) FROM HourlyMeasurements)");
+  if (!response.error) dbUtils.runSQL(dB , "UPDATE Measurements SET sync = 1 WHERE sync <> 1 AND  ( (DT*24) < "+thisHour+" ) ");
 }
 
 
+module.exports.aggregateDaily = () =>
+{
+  var thisDay = Math.trunc( new utils.TFDateTime().dateTime() );
+  
+  var sql = "INSERT INTO daily_Measurements (ID_Chanel , DT , Wert , cnt , sync) " +
+            "SELECT ID_Chanel, CAST( DT as INTEGER) as DT,  AVG(Wert) AS Wert , count(*) as cnt , CAST( 0 as Integer) as sync " +
+            "FROM hourly_Measurements " + 
+            "WHERE (sync <> 1) AND ( DT < "+thisDay+" ) " +
+            "GROUP BY (CAST( DT as INTEGER)) , ID_Chanel";
+
+  var response = dbUtils.runSQL(dB , sql );
+  
+  if (!response.error) dbUtils.runSQL(dB , "UPDATE hourly_Measurements SET sync = 1 WHERE (sync <> 1) AND ( DT < "+thisDay+" )");
+}
 
 
 module.exports.synchronize = () =>
@@ -168,18 +209,19 @@ module.exports.synchronize = () =>
            ___synchronize( idTopic , r.result[i].ID );
         }   
    }
-   
-   // Umschichten ...
-   ___aggregateHourly();
 }
 
 
 module.exports.cleanUp_old_payLoads = () =>
 {
-   var currentTimestamp = new utils.TFDateTime();
-   console.log("Lösche Einträge älter als:"+currentTimestamp.dateTime()+" -> "+currentTimestamp.formatDateTime())
-   dbUtils.runSQL(dB, "DELETE FROM mqttPayloads WHERE (sync=1) AND ((("+currentTimestamp.dateTime()+"-DT)*24)>"+maxAgePayloadHistory+")" );
-   dbUtils.runSQL(dB, "DELETE FROM Measurements WHERE (sync=1) AND ((("+currentTimestamp.dateTime()+"-DT)*24)>"+(4*maxAgePayloadHistory)+")" );
+    var currentTimestamp   = new utils.TFDateTime();
+    var cutoffPayload      = currentTimestamp.dateTime() - (maxAgePayloadHistory / 24);
+    var cutoffMeasurements = currentTimestamp.dateTime() - ((7 * maxAgePayloadHistory) / 24);
+
+    console.log("Lösche Einträge älter als:"+currentTimestamp.dateTime()+" -> "+currentTimestamp.formatDateTime())
+    
+    dbUtils.runSQL(dB, "DELETE FROM mqttPayloads WHERE sync = 1 AND DT < ?", [cutoffPayload]);
+    dbUtils.runSQL(dB, "DELETE FROM Measurements WHERE sync = 1 AND DT < ?", [cutoffMeasurements]);
 }
 
 

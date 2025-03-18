@@ -248,6 +248,18 @@ function handle_backDoor_Request( reqStr , res)
   res.send( "no_Way" );
 }
 
+
+function handleSyncForce( req , res )
+{
+  mqttHandler.synchronize();   
+  mqttHandler.aggregateHourly();   
+  mqttHandler.aggregateDaily();   
+  mqttHandler.cleanUp_old_payLoads(); 
+  res.send("Synchronisation außerhalb des Scheduler ausgeführt ...");
+}  
+
+
+
 webAPI.setup( dB , etc );
 
 
@@ -291,7 +303,7 @@ webApp.get('/userLogin'                    ,  userLogin );
 webApp.get('/userLoginx/:username/:passwd' ,  userLoginx );
 webApp.get('/DEBUG'                        ,  handleDebug );
 webApp.get('/x'                            ,  handleRequest );
-
+webApp.get('/syncForce'                    ,  handleSyncForce );
 webApp.post('/xpost'                       ,  handleRequest );
 webApp.post('/upload', upload.single('file'), (req, res) => {
                                                               if (!req.file) return res.send(handleError('no uploadfile found !'));
@@ -313,15 +325,32 @@ else         webServer  = http.createServer (              webApp );
 
 webServer.listen( port , () => {console.log('Server listening on Port ' + port )});
 
-setInterval( webAPI.run          , 60000 ); // jede Minute prüfen, ob etwas im BATCH wartet ...
+// interne Session-Steuerung
 setInterval( session.ctrlSession , 1000 ); 
 
-setInterval(() => {
-                   mqttHandler.synchronize();   // Prüft jede Minute ob neue RAW-Payloads vorliegen ung kopiert die Daten ggf in "Measurements"...
+// jede Minute prüfen, ob etwas im BATCH wartet ...
+setInterval( webAPI.run          , 60000 ); 
 
+// Prüft jede Minute ob neue RAW-Payloads vorliegen ung kopiert die Daten ggf in "Measurements"...
+setInterval(() => {
+                   mqttHandler.synchronize();   
                   } , 60 * 1000); 
 
-// zum Tageswechsel um 00:00:00 Uhr alte Daten löschen:
+// Prüft jede Stunde ob neue Daten in "Measurements" vorliegen und aggregiert diese zu Stundenwerten
 setInterval(() => {
-  mqttHandler.cleanUp_old_payLoads(); 
- } , 60 * 1000); // Prüft jede Stunde(60 sekunden*60), was an RAW-Payloads gelöscht werden kann... (Daten wurden in Measurements gespeichert und sind älter als "maxAgePayloadHistory")
+                   mqttHandler.aggregateHourly();   
+                  } , 60 * 60 * 1000); 
+
+
+// Prüft bei jedem Tageswechsel ob neue Daten in "hourly_Measurements" vorliegen und aggregiert diese zu Tageswerten
+setInterval(() => {
+                    // liegt ein Tageswechsel vor ?
+                    var d = new utils.TFDateTime();
+                    if(d.hour=1) mqttHandler.aggregateDaily();   
+                  } , 60 * 60 * 1000); 
+
+
+// Prüft jede Stunde(60 sekunden*60), was an RAW-Payloads gelöscht werden kann... (Daten wurden in Measurements gespeichert und sind älter als "maxAgePayloadHistory")
+setInterval(() => {
+                    mqttHandler.cleanUp_old_payLoads(); 
+                  } , 60*60 * 1000);

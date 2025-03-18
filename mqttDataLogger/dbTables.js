@@ -97,7 +97,8 @@ tables.push(
                           {fieldName:"ID_Chanel"     , fieldType:"INTEGER"} ,
                           {fieldName:"DT"            , fieldType:"REAL"} ,
                           {fieldName:"Wert"          , fieldType:"REAL"} ,
-                          {fieldName:"cnt"           , fieldType:"INTEGER"} 
+                          {fieldName:"cnt"           , fieldType:"INTEGER"},
+                          {fieldName:"sync"          , fieldType:"INTEGER"}  
                        ]});                       
 
 
