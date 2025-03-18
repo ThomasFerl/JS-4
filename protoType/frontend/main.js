@@ -488,6 +488,8 @@ async function showSVGs(type)
                                         var xx = x[i].split('=');
                                         param[xx[0]] = xx[1];
                                       }
+                                      console.log("param");
+                                      console.log(param);
                                       var response = utils.webApiRequest(this.c.value , param);
                                       console.log(response);
                                       dialogs.showMessage( JSON.stringify(response) );

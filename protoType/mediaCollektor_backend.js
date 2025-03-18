@@ -26,18 +26,16 @@ async handleCommand( sessionID , cmd , param , webRequest ,  webResponse , fs , 
 {
  this.path  = path;
  this.fs    = fs;  
- this.req   = webRequest;
- this.res   = webResponse; 
  var CMD    = cmd.toUpperCase().trim();
-
- console.log("in TFMediaCollektor.handleCommand("+CMD+")");
  
 //---------------------------------------------------------------
 //------------persons---------------------------------------------
 //---------------------------------------------------------------
 
-if(CMD=='LSPERSON') return this.___listPersons( param.filter );
-
+if(CMD=='LSPERSON')
+   {
+     return this.___internal___listPersons( param.filter || "" );
+   } 
 
 //---------------------------------------------------------------
 //-------------LOAD PERSON---------------------------------------
@@ -55,12 +53,11 @@ if(CMD=='PERSON')
 //-------------SAVE PERSON---------------------------------------
 //---------------------------------------------------------------
 if(CMD=='SAVEPERSON') 
-{
-   var response = {};
-   
-   if(!param.person) return {error:true, errMsg:'person-data not found in params !', result:{} };
+{  console.log('run SAVEPERSON param: '+ JSON.stringify(param.person));
+   if(!param.person)     return {error:true, errMsg:'person-data not found in params !', result:{} };
+  
    if (!param.person.ID) return dbUtils.insertIntoTable( this.db , 'persons' , param.person )
-   else dbUtils.updateTable(this.db,'persons','ID', param.person.ID , param.person); 
+   else                  return dbUtils.updateTable(this.db,'persons','ID', param.person.ID , param.person); 
 }
 
 
@@ -92,7 +89,7 @@ if(CMD=='FILE')
 //---------------------------------------------------------------
 
 
-if(CMD='LSTHUMBS') 
+if(CMD=='LSTHUMBS') 
    {
     var sql = "Select * from thumbs where ID > 0";
       if(param.ID_FILE) sql = sql + " AND ID_FILE="+param.ID_FILE;
@@ -109,15 +106,15 @@ if(CMD=='THUMB')
     var     idThumb      = param.ID;
     if(!idThumb) idThumb = param.ID_THUMB;  
     
-    response = dbUtils.fetchRecord_from_Query( this.db , "Select * from thumbs where ID="+idThumb+")" );
-    if(response.error) return response;
-    this.thumb = response.result;
-
-    var response = dbUtils.fetchRecord_from_Query( this.db , "Select * from files where ID="+this.thumb.ID_FILE );
+    var r = dbUtils.fetchRecord_from_Query( this.db , "Select * from thumbs where (ID="+idThumb+")" );
+    if(r.error) return r;
     
-    var fn = this.path.join( this.thumbPath , this.thumb.thumbFile );
+    var thumb = r.result;
+    // zusätzlich zum Thumb wird das zugehörige File abgerufen
+    var f = dbUtils.fetchRecord_from_Query( this.db , "Select * from files where ID="+thumb.ID_FILE );
+    var t = this.path.join( this.thumbPath , thumb.THUMBFILE );
     
-    return {error:false, errMsg:"OK", result:{thumb:this.thumb, file:response.result, thumbPath:fn} };
+    return {error:false, errMsg:"OK", result:{thumb:thumb, file:f.response.result, thumbPath:t} };
 
 }
 
@@ -126,12 +123,12 @@ if(CMD=='THUMB')
 //---------------------------------------------------------------
 //---------------------------------------------------------------
 
-if(CMD=='RUN_FILECONTENT') 
+if(CMD=='CONTENTURL') 
 {
   var     id = param.ID;
   if(!id) id = param.ID_FILE;  
 
-  await ___internal___runFileContent( id );
+  await ___internal___contentURL( id );
 
   return {isStream:true};  
 }
@@ -140,11 +137,10 @@ if(CMD=='RUN_FILECONTENT')
 //---------------------------------------------------------------
 //---------------------------------------------------------------
 //---------------------------------------------------------------
-
+         
 if(CMD=='REGISTERMEDIA') 
 {  
-   console.log('registerMedia( "'+param.mediaFile+'")');
-   return this.___internal___registerMedia ( param.mediaFile );                       
+  return this.___internal___registerMedia ( param.mediaFile );                       
 }
                                           
 //---------------------------------------------------------------
@@ -276,7 +272,6 @@ ___internal___saveThumbInDB   ( thumb )
                                                        POSITION  : thumb.POSITION,
                                                     } );
 }
-
 ___internal___listFiles ( filter)
 {
  if (filter.ID_FILE)   return dbUtils.fetchRecord_from_Query(this.db , "Select * from files where ID="+ filter.ID_FILE );
@@ -288,42 +283,42 @@ ___internal___listFiles ( filter)
  {
     while(filter.DIR.indexOf('*')>=0) { filter.DIR=filter.DIR.replace('*','%'); }
     if (filter.indexOf('%') < 0) SQL = SQL + " AND  ( DIR = '"+filter.DIR+"') ";
-    else                         SQL = SQL + " AND  ( DIR like '%"+filter.DIR+"%') ";
+    else                         SQL = SQL + " AND  ( DIR like '"+filter.DIR+"') ";
  }
 
  if (filter.DIR)       
    {
       while(filter.DIR.indexOf('*')>=0) { filter.DIR=filter.DIR.replace('*','%'); }
       if (filter.indexOf('%') < 0) SQL = SQL + " AND  ( DIR = '"+filter.DIR+"') ";
-      else                         SQL = SQL + " AND  ( DIR like '%"+filter.DIR+"%') ";
+      else                         SQL = SQL + " AND  ( DIR like '"+filter.DIR+"') ";
    }
 
  if (filter.FILENAME)       
    {
       while(filter.FILENAME.indexOf('*')>=0) { filter.FILENAME=filter.FILENAME.replace('*','%'); }
       if (filter.indexOf('%') < 0) SQL = SQL + " AND  ( FILENAME = '"+filter.FILENAME+"') ";
-      else                         SQL = SQL + " AND  ( FILENAME like '%"+filter.FILENAME+"%') ";
+      else                         SQL = SQL + " AND  ( FILENAME like '"+filter.FILENAME+"') ";
    }
 
 if (filter.SOURCE)       
    {
-     while(filter.SOURCE.indexOf('*')>=0) { filter.SOURCE=filter.SOURCE.replace('*','%'); }
+     while(filter.SOURCE.indexOf('*')>=0) { filter.SOURCE=filter.SOURCE.replace('*',''); }
      if (filter.indexOf('%') < 0) SQL = SQL + " AND  ( SOURCE = '"+filter.SOURCE+"') ";
-     else                         SQL = SQL + " AND  ( SOURCE like '%"+filter.SOURCE+"%') ";
+     else                         SQL = SQL + " AND  ( SOURCE like '"+filter.SOURCE+"') ";
    }
 
 if (filter.KATEGORIE)       
    {
      while(filter.KATEGORIE.indexOf('*')>=0) { filter.KATEGORIE=filter.KATEGORIE.replace('*','%'); }
      if (filter.indexOf('%') < 0) SQL = SQL + " AND  ( KATEGORIE = '"+filter.KATEGORIE+"') ";
-     else                         SQL = SQL + " AND  ( KATEGORIE like '%"+filter.KATEGORIE+"%') ";
+     else                         SQL = SQL + " AND  ( KATEGORIE like '"+filter.KATEGORIE+"') ";
    }   
 
 if (filter.DESCRIPTION)       
    {
      while(filter.DESCRIPTION.indexOf('*')>=0) { filter.DESCRIPTION=filter.DESCRIPTION.replace('*','%'); }
      if (filter.indexOf('%') < 0) SQL = SQL + " AND  ( DESCRIPTION = '"+filter.DESCRIPTION+"') ";
-     else                         SQL = SQL + " AND  ( DESCRIPTION like '%"+filter.DESCRIPTION+"%') ";
+     else                         SQL = SQL + " AND  ( DESCRIPTION like '"+filter.DESCRIPTION+"') ";
    }   
 
  if (filter.FILESIZE) SQL = SQL + " AND  ( FILESIZE"+filter.FILESIZE+" )";     
@@ -335,43 +330,21 @@ if (filter.DESCRIPTION)
  return dbUtils.fetchRecords_from_Query(this.db , SQL );
 
 }
-___internal___runFileContent( ID , TYPE )
+___internal___contentURL( ID , TYPE )
 {
   var response = dbUtils.fetchRecord_from_Query(this.db , "Select * from files where ID="+ ID  );
-  if(response.err) 
-  { 
-    this.res.set('Content-Type', 'text/plain');
-    this.res.send(response); 
-    return;
-  }
+  if(response.err) return response;
 
   var f = response.result;
   
-  if(!f.ID==ID)
-  {
-    console.log( 'ID not found' );
-    this.res.set('Content-Type', 'text/plain');
-    this.res.send( JSON.stringify({error:true,errMsg:'ID not found !',result:''}));
-  }
-  
+  if(!f.ID==ID) return {error:true,errMsg:'ID not found !',result:''}
+
  var fn = this.path.join( f.DIR , f.FILENAME );
  console.log('try to load "' + fn +'"');
 
- if( !this.fs.existsSync(fn) )
-  {
-    console.log( 'file('+fn+') not found' );
-    this.res.set('Content-Type', 'text/plain');
-    this.res.send( JSON.stringify({error:true,errMsg: 'file('+movie+') not found' ,result:''}));
-    return;
-  }
-
-  if(f.TYPE.toUpperCase == 'VIDEO') return utils.getMovieFile( this.fs , this.path , fn  , this.req , this.res  );
-  if(f.TYPE.toUpperCase == 'IMAGE') return utils.getImageFile( this.fs , this.path , fn  , this.req , this.res );
+ if( this.fs.existsSync(fn) ) return {error:false,errMsg:'OK',result:fn} 
+ else                         return {error:true,errMsg: 'file('+fn+') not found' ,result:''}
   
-  console.log( 'unkown fileType' );
-  res.set('Content-Type', 'text/plain');
-  res.send( JSON.stringify({error:true,errMsg:'unkown fileType !',result:''}));
-
 }
 ___internal___isMediaRegistered( mediaFile  )
 {
@@ -397,12 +370,83 @@ ___internal___isMediaRegistered( mediaFile  )
    
   return {error:false, errMsg:"OK" , result:result }
 }
+___internal___listPersons ( filter )
+   {
+    var SQL = "Select * From persons Where (ID>0) ";  // ID > 0 ist nur dazu gedacht, um Folgefilter mit "AND" hinzuzufügen
+    var op  = '';
 
+    if ( filter.find )  // sucht über alle Namensfelder
+    {
+     SQL = SQL + " AND  (( Name like '%"+filter.find+"%' ) or " +
+                        "(Vorname like '%"+filter.find+"%' ) or " + 
+                        "(Alias1 like '%"+filter.find+"%' ) or " +
+                        "(Alias2 like '%"+filter.find+"%' ) or " +
+                        "(Alias3 like '%"+filter.find+"%' ))";
+    }
+  
+    if (filter.NAME)
+    {
+      while(filter.NAME.indexOf('*')>=0) { filter.NAME=filter.NAME.replace('*','%'); }
+  
+       if (filter.NAME.indexOf('%') < 0) {op='=';    }
+       else                              {op='like'; }
+  
+      SQL = SQL + " AND  ( Name "+op+" '"+filter.NAME+"' )" ;
+    }
+  
+
+    if (filter.VORNAME)
+      {
+        while(filter.VORNAME.indexOf('*')>=0) { filter.VORNAME=filter.VORNAME.replace('*','%'); }
+    
+         if (filter.VORNAME.indexOf('%') < 0) {op='=';    }
+         else                                 {op='like'; }
+    
+        SQL = SQL + " AND  ( VORNAME "+op+" '"+filter.VORNAME+"' )" ;
+      }
+  
+  
+   var alias = filter.ALIAS || filter.ALIAS1 || filter.ALIAS2 || filter.ALIAS3;
+   if (alias)
+   {
+      
+       while(alias.indexOf('*')>=0) { alias=alias.replace('*','%'); }
+  
+       if (alias.indexOf('%') < 0) {op='=';    }
+       else                        {op='like'; }
+     
+       SQL = SQL + " AND  ( ( Alias1  "+op+" '"+alias+"' ) or (Alias2 "+op+" '"+alias+"' ) or (Alias3 "+op+" '"+alias+"' ) )"
+    }
+  
+  
+   if (filter.RANKING)
+    {
+      SQL = SQL + " AND  ( Ranking "+filter.RANKING+" )"
+    }
+  
+    
+    if (filter.HERKUNFT)
+    {
+       while(filter.HERKUNFT.indexOf('*')>=0) { filter.HERKUNFT=filter.HERKUNFT.replace('*','%'); }
+  
+       if (filter.HERKUNFT.indexOf('%') < 0) {op='=';    }
+       else                                  {op='like'; }
+  
+       SQL = SQL + " AND  ( Herkunft "+op+" '"+filter.HERKUNFT+"' )"
+    }
+  
+    if(filter.ORDERBY) SQL = SQL + " Order by " + filter.ORDERBY;
+    else               SQL = SQL + " Order by Name";
+
+    return dbUtils.fetchRecords_from_Query( this.db , SQL );
+   }
+  
+ 
 
 
 ___internal___registerMedia( mediaFile )
 {
-  console.log('registerMedia( "'+mediaFile+'")'); 
+  console.log('___internal___registerMedia( "'+mediaFile+'")'); 
   var fileInfo  = utils.analyzeFile( this.fs , this.path , mediaFile );
   if(fileInfo.error) 
   { console.log('fileInfo.error: '+JSON.stringify(fileInfo)); 
@@ -432,8 +476,8 @@ ___internal___registerMedia( mediaFile )
 
    // Moviefile ?
   try{ 
-  if(media.TYPE=='MOVIE')
-     media.PLAYTIME = videoInfo(mediaFile).vinfo.result.format.duration;
+   if (media.TYPE === 'MOVIE')
+      media.PLAYTIME = this.___videoInfo(mediaFile).result.format.duration;
 } catch(err) { console.log('error in videoInfo: '+err.message); media.PLAYTIME = 0; }
 
   if(media.TYPE=='IMAGE')
