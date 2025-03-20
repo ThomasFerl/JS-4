@@ -39,7 +39,12 @@ export class TFDataViewer
       this.dashBoard.buildGridLayout_templateColumns('1fr');
       this.dashBoard.buildGridLayout_templateRows('1fr 1fr');
 
-      this.chartPanel = dialogs.addPanel(this.dashBoard,'cssWhitePanel',1,2,1,1);
+      this.chartPanel = dialogs.addPanel(this.dashBoard,'cssContainerPanel',1,2,1,1);
+      var helpPanel   = dialogs.addPanel(this.dashBoard,'cssContainerPanel',1,1,1,1);
+      helpPanel.buildGridLayout_templateColumns('1fr 1fr');
+      helpPanel.buildGridLayout_templateRows('1fr');
+      this.infoPanel       = dialogs.addPanel(helpPanel,'cssContainerPanel',1,1,1,1);
+      this.hourChartPanel  = dialogs.addPanel(helpPanel,'cssContainerPanel',2,1,1,1);
 
       dialogs.addCombobox(this.head,'',1,1,'10em', '2em','sync').callBack_onClick = ()=>{utils.webApiRequest("SYNC",{})}
 
@@ -63,6 +68,7 @@ export class TFDataViewer
        p.buildGridLayout_templateColumns('1fr');
        p.buildGridLayout_templateRows   ('1fr 1fr 1fr');
        p.chanel = c;
+       c.panel  = p;
        p.callBack_onClick = function(){ this.self.selectChanel(this.chanel)}.bind({self:this,chanel:p.chanel});
        dialogs.addLabel(p,'',1,1,1,1,c.NAME).fontWeight = 'bold';
        dialogs.addLabel(p,'',1,2,1,1,c.BESCHREIBUNG);
@@ -73,9 +79,50 @@ export class TFDataViewer
 
 selectChanel( c )
 {
-   this.selectedChanel = c;
+  // alle Listeneinträge auf weiss setzen
+  for(var i=0; i<this.chanels.length; i++) this.chanels[i].panel.backgroundColor = 'white';
+     
+  // das ausgewählte Element hervorheben
+   this.selectedChanel     = c;
+   c.panel.backgroundColor = 'rgb(160, 202, 236)';
 
+    // die Chart-Panel leeren
    this.chartPanel.innerHTML = '';
+
+   // info-Panel leeren
+    this.infoPanel.innerHTML = '';
+
+    // Detail-Chart-Panel leeren
+    this.hourChartPanel.innerHTML = '';
+
+    // Informationen abrufen... 
+    var response = utils.webApiRequest( 'CHANELINFO' , {ID_Chanel:c.ID} );
+    if(response.error) 
+    {
+        this.infoPanel.innerHTML = 'Fehler beim Abruf der Kanal-Informationen: ' + response.errMsg;
+        return;
+    }
+
+    var infoData = [];
+    infoData.push({Bezeichnung:response.result.device.BEZEICHNUNG});
+    infoData.push({Typ:response.result.device.TYP});
+    infoData.push({Standort:response.result.device.STANDORT});
+    infoData.push({Bemerkungen:response.result.device.BEMERKUNGEN});
+    infoData.push({PLZ:response.result.device.PLZ});
+    infoData.push({Ort:response.result.device.Ort}); 
+    infoData.push({Strasse:response.result.device.Strasse + ' ' +response.result.device.HNr});
+    infoData.push({MQTTtopic:response.result.device.TOPIC});
+    infoData.push({SerienNummer:response.result.device.SERIENNUMMER});
+    infoData.push({IP_Adresse:response.result.device.IP});
+    infoData.push({Messlinie:response.result.chanel.NAME});
+    infoData.push({LinienTyp:response.result.chanel.TYP});
+    infoData.push({Beschreibung:response.result.chanel.BESCHREIBUNG});
+    infoData.push({Infopunkt:response.result.chanel.InfoPktName});
+
+    //chanel:chanel,device:device,lastMeasurement:lastMeasurement,firstMeasurement:firstMeasurement}}
+
+    dialogs.valueList( this.infoPanel , '' , infoData , [] , [] );
+    
 
     var response = utils.webApiRequest( 'GETVALUES' , {ID_Chanel:c.ID, resolution:'DAY'} );
 

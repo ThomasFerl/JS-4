@@ -95,6 +95,31 @@ module.exports.selectValues = async (params) =>
 }
 
 
+module.exports.getChanelInfo = ( idChanel ) =>
+{
+  var response = dbUtils.fetchRecord_from_Query(dB , "Select * from chanels Where ID="+idChanel);
+  if(response.error) return response;
+  var chanel   = response.result;
+
+  response     = dbUtils.fetchRecord_from_Query(dB , "Select * from devices Where ID="+chanel.ID_Device);
+  if(response.error) return response;
+  var device   = response.result;
+
+  response     = dbUtils.fetchRecord_from_Query(dB , "Select * from Measurements Where ID_Chanel="+chanel.ID+" order by DT desc limit 1");
+  if(response.error) return response;
+  var lastMeasurement   = response.result;
+
+  response     = dbUtils.fetchRecord_from_Query(dB , "Select * from hourly_Measurements Where ID_Chanel="+chanel.ID+" order by DT limit 1");
+  if(response.error) return response;
+  var firstMeasurement   = response.result;
+
+   return {error:false, errMsg:'ok', result:{chanel:chanel,device:device,lastMeasurement:lastMeasurement,firstMeasurement:firstMeasurement}}
+
+} 
+
+
+
+
 module.exports.selectLastValues = async (params) =>
 {
    return dbUtils.fetchRecords_from_Query(dB , "Select * from Measurements Where ID_chanel="+params.ID_Chanel+" limit "+ (params.limit || "49") ) 
