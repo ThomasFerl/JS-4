@@ -40,13 +40,24 @@ export class TFDataViewer
       this.dashBoard.buildGridLayout_templateRows('1fr 1fr');
 
       this.chartPanel = dialogs.addPanel(this.dashBoard,'cssContainerPanel',1,2,1,1);
+      
       var helpPanel   = dialogs.addPanel(this.dashBoard,'cssContainerPanel',1,1,1,1);
       helpPanel.buildGridLayout_templateColumns('1fr 1fr');
-      helpPanel.buildGridLayout_templateRows('1fr');
+      helpPanel.buildGridLayout_templateRows   ('1fr');
+      
       this.infoPanel       = dialogs.addPanel(helpPanel,'cssContainerPanel',1,1,1,1);
-      this.hourChartPanel  = dialogs.addPanel(helpPanel,'cssContainerPanel',2,1,1,1);
 
-      dialogs.addCombobox(this.head,'',1,1,'10em', '2em','sync').callBack_onClick = ()=>{utils.webApiRequest("SYNC",{})}
+      var helpPanel2       = dialogs.addPanel(helpPanel,'cssContainerPanel',2,1,1,1);
+      helpPanel2.buildGridLayout_templateColumns('1fr');
+      helpPanel2.buildGridLayout_templateRows('7em 1fr');
+      
+      this.hourChartPanel  = dialogs.addPanel(helpPanel2,'cssContainerPanel',1,2,1,1);
+      this.lastValuesPanel = dialogs.addPanel(helpPanel2,'',1,1,1,1);
+      this.lastValuesPanel.buildGridLayout_templateColumns('1fr');
+      this.lastValuesPanel.buildGridLayout_templateRows   ('2em 1fr 1fr');
+      this.lastValuesPanel.backgroundColor = 'rgb(212, 248, 248)';
+      this.lastValuesPanel.hide();
+      //dialogs.addCombobox(this.head,'',1,1,'10em', '2em','sync').callBack_onClick = ()=>{utils.webApiRequest("SYNC",{})}
 
       var response = utils.webApiRequest("LOADCHANELS" , {ID_Device:this.device.ID} );
           if(response.error) dialogs.showMessage("Fehler beim Abrufen der Kanal-Liste. Fehlermeldung: " + response.errMsg);
@@ -93,7 +104,9 @@ selectChanel( c )
     this.infoPanel.innerHTML = '';
 
     // Detail-Chart-Panel leeren
-    this.hourChartPanel.innerHTML = '';
+    this.hourChartPanel.innerHTML  = '';
+    this.lastValuesPanel.innerHTML = '';
+    this.lastValuesPanel.show();
 
     // Informationen abrufen... 
     var response = utils.webApiRequest( 'CHANELINFO' , {ID_Chanel:c.ID} );
@@ -111,7 +124,7 @@ selectChanel( c )
     infoData.push({PLZ:response.result.device.PLZ});
     infoData.push({Ort:response.result.device.Ort}); 
     infoData.push({Strasse:response.result.device.Strasse + ' ' +response.result.device.HNr});
-    infoData.push({MQTTtopic:response.result.device.TOPIC});
+    infoData.push({MQTTtopic:response.result.device.TOPIC+response.result.chanel.TOPIC});
     infoData.push({SerienNummer:response.result.device.SERIENNUMMER});
     infoData.push({IP_Adresse:response.result.device.IP});
     infoData.push({Messlinie:response.result.chanel.NAME});
@@ -119,10 +132,17 @@ selectChanel( c )
     infoData.push({Beschreibung:response.result.chanel.BESCHREIBUNG});
     infoData.push({Infopunkt:response.result.chanel.InfoPktName});
 
+    dialogs.valueList( this.infoPanel , '' , infoData , [] , [] );
     //chanel:chanel,device:device,lastMeasurement:lastMeasurement,firstMeasurement:firstMeasurement}}
 
-    dialogs.valueList( this.infoPanel , '' , infoData , [] , [] );
-    
+    var caption                 = dialogs.addPanel(this.lastValuesPanel,'cssContainerPanel',1,1,1,1);
+        caption.marginTop       = 0;
+        caption.backgroundColor = 'rgb(3, 4, 61)';
+        dialogs.addLabel(caption             ,'',1,1,"100%",'100%','letzter Messwert').color = 'white';
+        dialogs.addLabel(this.lastValuesPanel,'',1,2,1,1,response.result.lastMeasurement.Wert + ' ' + response.result.chanel.UNIT ).fontWeight = 'bold';    
+    var dt = new TFDateTime(response.result.lastMeasurement.DT);    
+        dialogs.addLabel(this.lastValuesPanel,'',1,3,1,1,dt.formatDateTime('dd.mm.yyyy hh:mn')).fontSize='0.75em';
+
 
     var response = utils.webApiRequest( 'GETVALUES' , {ID_Chanel:c.ID, resolution:'DAY'} );
 
@@ -142,10 +162,37 @@ selectChanel( c )
     this.arcChart = new TFChart( this.chartPanel , 1 , 1 , '100%' , '100%' , {chartBackgroundColor:'white',chartType:'bar'} );
     this.arcSeries = this.arcChart.addSeries( c.NAME , 'rgba(54, 162, 235, 0.2)' );                                         
     this.arcChart.addPoint(this.arcSeries , chartData);
-    
+    this.arcChart.onChartClick = (param)=>{this.updateHourChart(param.selectedLabel)};
+
+    this.updateHourChart( c.ID , response.result[0].DT);
 }
 
 
+updateHourChart(day)
+{
+  this.hourChartPanel.innerHTML = '';
+  
+    var dtExcelFormat = new TFDateTime(day).dateTime();
+      
+    var response = utils.webApiRequest( 'GETVALUES' , {ID_Chanel:this.selectedChanel.ID, resolution:'HOUR', from:dtExcelFormat, to:dtExcelFormat } );
+
+    if(response.error)
+    {
+        this.hourChartPanel.innerHTML = 'Fehler beim Abruf der Archive: ' + response.errMsg;
+        return;
+    } 
+
+    var chartData = [];
+    for(var i=0; i<response.result.length; i++)
+    {
+        var dt = new TFDateTime(response.result[i].DT);
+        chartData.push({x:dt.formatDateTime('hh:mn'), y:response.result[i].Wert });
+    }    
+
+    this.hourChart = new TFChart( this.hourChartPanel , 1 , 1 , '100%' , '100%' , {chartBackgroundColor:'white',chartType:'line'} );
+    this.hourSeries = this.hourChart.addSeries( this.selectedChanel.NAME , 'rgba(227, 21, 21, 0.27)' );                                         
+    this.hourChart.addPoint(this.hourSeries , chartData);
+}
 
 
 

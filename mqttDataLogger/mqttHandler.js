@@ -79,6 +79,8 @@ module.exports.selectValues = async (params) =>
    var sql         = "";  
    var table       = 'Measurements';
    var aggregation = params.aggr || 'SUM' ;
+   var dtFrom      = null;
+   var dtTo        = null;
    
    if(params.resolution)
     {
@@ -88,9 +90,37 @@ module.exports.selectValues = async (params) =>
        if(resolution=='MONTH')  table = 'monthly_Measurements';
     }
 
-   if(params.groupBy) sql = "Select max(DT) , "+aggregation+"(Wert) from "+table+" Where ID_chanel="+params.ID_Chanel+" Group by "+params.groupBy+" Order by DT"
-   else               sql = "Select DT,Wert from "+table+" Where ID_chanel="+params.ID_Chanel+" Order by DT";
+    if(params.from)
+      {
+         console.log("from:"+params.from);   
+         dtFrom = new utils.TFDateTime(params.from);
+         console.log("from:"+dtFrom.dateTime()); 
+         
+      }
    
+      if(params.to)
+      {
+         console.log("to:"+params.to);   
+         dtTo = new utils.TFDateTime(params.to);
+         console.log("from:"+dtTo.dateTime()); 
+         
+      }
+
+    if(params.groupBy)
+      {
+          sql = "Select max(DT) , "+aggregation+"(Wert) from "+table+" Where ID_chanel="+params.ID_Chanel+" ";
+          if (dtFrom) sql += " AND CAST(DT as Integer) >= "+dtFrom.dateTime();
+          if (dtTo)   sql += " AND CAST(DT as Integer) <= "+dtTo.dateTime();   
+                      sql += " Group by "+params.groupBy+" Order by DT";
+      }
+
+    else
+        { sql = "Select DT,Wert from "+table+" Where ID_chanel="+params.ID_Chanel+" ";
+         if (dtFrom) sql += " AND CAST(DT as Integer) >= "+dtFrom.dateTime();
+         if (dtTo)   sql += " AND CAST(DT as Integer) <= "+dtTo.dateTime();
+                     sql += " Order by DT";
+     }
+      
    return dbUtils.fetchRecords_from_Query(dB , sql ) 
 }
 
