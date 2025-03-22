@@ -176,13 +176,14 @@ if( CMD=='NEWDEVICE' )
    }
   
 
-
   if( CMD=='GETLASTVALUES' )
     {
       return mqttHandler.selectLastValues( param ); 
     }
 
 
-
-
-}
+  if( CMD=='CHANELINFO' )
+    {
+      return mqttHandler.getChanelInfo( param.ID_Chanel ); 
+    }
+  }    

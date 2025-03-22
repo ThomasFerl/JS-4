@@ -2724,9 +2724,9 @@ export class TFChart extends TFPanel
    
    if (this.params.chartType.toUpperCase().indexOf('SPLINE_NO_POINTS') > -1) 
      {
-         _chartType = 'line';
-         _tension   = 0.4;
-         _radius    = 0;
+        _chartType = 'line';
+        _tension   = 0.4;
+        _radius    = 0;
      }
  
        this.chartOptions.showLines    = this.params.showLines;
@@ -2799,7 +2799,6 @@ export class TFChart extends TFPanel
   this.chart.options.onClick = function(e) 
   {
       var c    = this.chart;
-                                     
       const clickedPoints = c.getElementsAtEventForMode(e, 'nearest', { intersect: true }, false);
       if (clickedPoints.length > 0) 
          {
@@ -2811,7 +2810,7 @@ export class TFChart extends TFPanel
            c.data.datasets[clickedPoint.datasetIndex].backgroundColor[clickedPoint.index] = this.__RGB( utils.colorToRGB(color),0.77);
            const label = c.data.labels[clickedPoint.index];
            const value = c.data.datasets[clickedPoint.datasetIndex].data[clickedPoint.index];
-           if(self.onChartClick) self.onChartClick({chart: c, itemIndex: clickedPoint.index, selectedLabel: label, selectedValue: value, hostedObject: hostedObject || {} });
+           if(this.onChartClick) {this.onChartClick({chart: c, itemIndex: clickedPoint.index, selectedLabel: label, selectedValue: value });}
            c.update();
          }
   }.bind(this);
