@@ -14,28 +14,67 @@ import { TFWindow }      from "./tfWindows.js";
 import { TFChart }       from "./tfObjects.js";
 import { TFDateTime }    from "./utils.js";
 
+
 class Tthumbnail
 {
   constructor( parent , params )
-  {
+  { 
     this.parent       = parent; 
     this.params       = params;
-
-    this.thumbID      = params.thumbID;  
+    this.mediaFile    = {};
+    this.thumb        = {};
     
-    var response      = utils.webApiRequest('THUMB' , {thumbID:this.thumbID} );
-    if(!response.error) this.mediaFile = response.result
-     //result:{thumb:this.thumb, file:response.result, thumbPath:fn} };
+    if(params.thumbID)
+    { 
+      this.thumbID      = params.thumbID;  
+      var response      = utils.webApiRequest('THUMB' , {ID:this.thumbID} );
+      if(response.error) return response;
+      this.mediaFile    = response.result.file;
+      this.thumb        = response.result.thumb;
+    }
+    else
+    {
+     if(params.thumb) this.thumb     = params.thumb;
+     if(params.file)  this.mediaFile = params.file;
+    } 
 
-    this.mediaFile    = response.result.file;
-    this.thumb        = response.result.thumb;
-    this.thumbPath    = response.result.thumbPath;
-    this.thumbURL     = utils.buildURL('GETIMAGEFILE' , {fileName:thumbPath} );
-
-    this.thumb        = dialogs.addImage( parent , "" , 1 , 1 , "77px" , "77px" , this.thumbURL );
-    this.thumb.callBack_onClick = function(e, d ) {alert(this.file.FILENAME)}.bind(this);                         };
+    this.thumbURL     = utils.buildURL('GETIMAGEFILE' , {fileName:this.thumb.fullPath} );
+    this.thumbImg     = dialogs.addImage( this.parent , "" , 1 , 1 , "100px" , "100px" , this.thumbURL );
+    this.thumbImg.callBack_onClick = function (e, d) 
+                  { 
+                    this.handleMediaFile(); 
+                  }.bind(this);
     
+    //this.sec = 0;
+    //setInterval(() =>{this.sec++; console.log("MediaFile nach "+this.sec+" Sekunde(n):", JSON.stringify(this.mediaFile))}, 1000);
+                                
+    }
+
+handleMediaFile()
+{
+  // File zusammenbauen
+  var fn = utils.pathJoin(this.mediaFile.DIR , this.mediaFile.FILENAME );
+
+  if (this.mediaFile.TYPE == "MOVIE")
+  {
+    var w = dialogs.createWindow( null,fn,"80%","80%","CENTER");
+    var url = utils.buildURL('GETMOVIEFILE',{fileName:fn} );
+    dialogs.playMovieFile( w.hWnd , url );
+  }
+
+
+  if (this.mediaFile.TYPE == "IMAGE")
+    {
+      var w   = dialogs.createWindow( null,fn,"80%","80%","CENTER");
+      var url = utils.buildURL('GETIMAGEFILE',{fileName:fn} );
+      dialogs.addImage( w.hWnd , '' , 1 , 1 , '100%' , '100%' , url ); 
+    }
+ 
 }
+
+
+}
+
 
 
 export class TFMediaCollector
@@ -78,16 +117,16 @@ export class TFMediaCollector
  updateThumbs()
   {
     this.dashboardPanel.innerHTML = "";
+    this.dashboardPanel.alignItems='flex-start';
+    this.dashboardPanel.justifyContent='flex-start';
+    this.dashboardPanel.buildFlexBoxLayout()
 
     var response = utils.webApiRequest('LSTHUMBS' , {} );
     if(response.error) return;
 
     for(var i=0; i<response.result.length; i++)
-        var t = new Tthumbnail( this.dashboardPanel , {thumbID:response.result[i].ID} );
+    new Tthumbnail( this.dashboardPanel , {thumb:response.result[i].thumb , file:response.result[i].file} );
     
-    
-    
-
   }
 
 } 

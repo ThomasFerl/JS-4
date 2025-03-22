@@ -757,7 +757,10 @@ module.exports.getTextFile = function( fs , fileName )
 
 exports.getImageFile = async( fs , path , img , req , res  ) =>
 {
-    var mime =
+  // existiert das File ?
+  if (!fs.existsSync(img)) {res.send("missing fileName '"+img+"'"); return; } 
+  
+  var mime =
        {
         gif: 'image/gif',
         jpg: 'image/jpeg',
@@ -881,11 +884,12 @@ module.exports.buildFileGUID = function( fs , path , fileInfo_or_fileFullName )
 {
   var name = '';
   var size = 0;
-
+ 
   // ist fileInfo_or_fileFullName ein String, dann ist es der Dateiname
   // ansonsten ist es ein Objekt mit den Datei-Infos
   if(typeof fileInfo_or_fileFullName === 'string')
   {
+    console.log("buildFileGUID based on String -> "+fileInfo_or_fileFullName);
     var mediaFile = fileInfo_or_fileFullName;
     var fileInfo  = this.analyzeFile( fs , path , mediaFile );
     if(fileInfo.error) 
@@ -899,6 +903,7 @@ module.exports.buildFileGUID = function( fs , path , fileInfo_or_fileFullName )
   } 
   else
   {
+    console.log("buildFileGUID based on Object -> "+JSON.stringify(fileInfo_or_fileFullName));  
     var fileInfo = fileInfo_or_fileFullName;
     name = fileInfo.name;
     size = fileInfo.size;

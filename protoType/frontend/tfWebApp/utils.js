@@ -971,7 +971,9 @@ export function pathJoin(d,f,e)
 {
   var p='';
   if (d=='/') p = '/'+f;
-  else        p = d+'/'+f;
+  else
+      if(d[d.leghth]=='/') p = d+f;
+      else                 p = d+'/'+f;
   
   if(e) p=p+'.'+e;
  

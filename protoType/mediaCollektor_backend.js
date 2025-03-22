@@ -9,10 +9,10 @@ class TFMediaCollektor
     this.etc           = _etc; // lokale Kopie der Konfigurations-Datenbank - wird via startBackend() initialisiert ....   
     this.path          = {};
     this.fs            = {};
-    this.posterPath    = "./mediaCache/poster/";
-    this.thumbPath     = "./mediaCache/thumbs/";
+    this.posterPath    = "/home/tferl/GIT/JS-4/protoType/mediaCache/poster/";
+    this.thumbPath     = "/home/tferl/GIT/JS-4/protoType/mediaCache/thumbs/";
     this.numberOfThums = 20;
-    this.thumbPosition = 47;  // nach 47 Sekunden wird Movie-Thumb erzeugt
+    this.thumbPosition = 7;  // nach 7 Sekunden wird Movie-Thumb erzeugt
     this.sizeOfThumbs  = '270:-1';
 
 
@@ -94,9 +94,23 @@ if(CMD=='FILE')
 
 if(CMD=='LSTHUMBS') 
    {
-    var sql = "Select * from thumbs where ID > 0";
+     var result = [];
+     var sql = "Select * from thumbs where ID > 0";
       if(param.ID_FILE) sql = sql + " AND ID_FILE="+param.ID_FILE;
-      return dbUtils.fetchRecords_from_Query( this.db , sql );
+
+      var response = dbUtils.fetchRecords_from_Query( this.db , sql );
+      if (response.error)  return response;
+     
+      var thumbs = response.result;
+      for(var i=0; i<thumbs.length; i++)
+       {
+         var thumb = thumbs[i]; 
+         var file  = dbUtils.fetchRecord_from_Query( this.db , "Select * from files where ID="+thumbs[i].ID_FILE ).result;
+         thumb.fullPath = this.path.join( this.thumbPath , thumb.THUMBFILE );
+         result.push({thumb:thumb , file:file});
+       }
+
+      return {error:false, errMsg:"OK", result:result}
    }
    
 
@@ -114,10 +128,11 @@ if(CMD=='THUMB')
     
     var thumb = r.result;
     // zusätzlich zum Thumb wird das zugehörige File abgerufen
-    var f = dbUtils.fetchRecord_from_Query( this.db , "Select * from files where ID="+thumb.ID_FILE );
-    var t = this.path.join( this.thumbPath , thumb.THUMBFILE );
+    var file = dbUtils.fetchRecord_from_Query( this.db , "Select * from files where ID="+thumb.ID_FILE ).result;
     
-    return {error:false, errMsg:"OK", result:{thumb:r.result, file:f.result, thumbPath:t} };
+    thumb.fullPath = this.path.join( this.thumbPath , thumb.THUMBFILE );
+    
+    return {error:false, errMsg:"OK", result:{ thumb:thumb, file:file } };
 
 }
 
@@ -351,7 +366,7 @@ ___internal___contentURL( ID , TYPE )
 ___internal___isMediaRegistered( mediaFile  )
 {
    var result    = {registered:false,  thumbs:[], persons:[] , tags:[], file:{} };
-   var mediaGUID = utils.buildFileGUID( this.fs , this.path , mediaFile );
+   var mediaGUID = utils.buildFileGUID( this.fs , this.path , mediaFile ).result;
    if (mediaGUID.error) return mediaGUID;
    mediaGUID = mediaGUID.result;
   
@@ -450,8 +465,10 @@ ___internal___listPersons ( filter )
 
 ___internal___registerMedia( mediaFile )
 {
+  console.log('=============================================');  
   console.log('___internal___registerMedia( "'+mediaFile+'")'); 
   var fileInfo  = utils.analyzeFile( this.fs , this.path , mediaFile );
+  
   if(fileInfo.error) 
   { console.log('fileInfo.error: '+JSON.stringify(fileInfo)); 
     return fileInfo; 
@@ -464,7 +481,7 @@ ___internal___registerMedia( mediaFile )
                    TYPE     : fileInfo.result.type,
                    DIR      : fileInfo.result.dir,
                    FILENAME : fileInfo.result.name,
-                   GUID     : utils.buildFileGUID( this.fs , this.path , fileInfo ),
+                   GUID     : utils.buildFileGUID( this.fs , this.path , fileInfo.result ).result,
                    DIMENSION: '1920x1080',
                    FILESIZE : fileInfo.result.size,
                    PLAYTIME : '',
