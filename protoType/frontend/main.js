@@ -248,7 +248,7 @@ var   btn10 = dialogs.addButton( menuContainer , "" , 10 , 1 , 1 , 1 , "ask me" 
       var l=dialogs.addLabel( panels[0] , '' , 1 , 1 , 1 , 1 , 'irgend ein Text (Label)' );
       
       editPath = dialogs.addInput( panels[1] , 1 , 1 , 10 , 'path' , '' , '' , {} );
-      editPath.callBack_onClick=()=>{mediaViewer=null; dialogs.fileDialog( "*.*" , true , (d,f,ff)=>{editPath.value=d+'/';} , (fn)=>{viewMedia(fn)} )};
+      editPath.callBack_onClick=()=>{mediaViewer=null; dialogs.fileDialog( "/" , "*.*" , true , (d,f,ff)=>{editPath.value=d+'/';} , (fn)=>{viewMedia(fn)} )};
     
 
       dialogs.addDateTimePicker( panels[2] , 1 , 1 , 'dateTime' , '01.01.2000 17:35' , null , {} );

@@ -700,15 +700,21 @@ module.exports.strCompare = (str, rule) =>
 }
 
 
-module.exports.scanDir = (fs , path , dirName ) =>
+module.exports.scanDir = (fs , path , dirName , fileMask) =>
 {
-  if (!dirName) dirName='/';
+  if (!dirName) dirName='./';
+
+  if ((!fileMask)||(fileMask=='')) fileMask = ['*.*']
+  
+  // ist fileMast ein String, und enthält ein Komma dann durch "joining" in ein Array umwandeln
+  if(typeof fileMask === 'string' && fileMask.includes(',')) fileMask = fileMask.split(',');
+  if(typeof fileMask === 'string') fileMask = [fileMask];
 
   this.log('scanDir('+dirName+')');
   
   try {
 
-  var scanResult = fs.readdirSync( dirName , 'utf8' );
+  var scanResult = fs.readdirSync( dirName , 'utf8');
   
   if(scanResult.errno<0)
   { // Fehler ...
@@ -721,17 +727,29 @@ module.exports.scanDir = (fs , path , dirName ) =>
   const response = [];
   for (var i=0; i<scanResult.length; i++)
   {
+    var ok=false;
     var n=scanResult[i]
     var p=path.join(dirName,n);
         p= path.resolve(path.normalize(p));
 
-    if (fs.existsSync(p))
+    if (fs.existsSync(p) )
     { 
-      var e=path.extname(p);   
+      // den Punkt am Anfang der Dateiendung  entfernen  (.jpg -> jpg)
+      var e=path.extname(p);
+      if((e.length>0) && (e.indexOf(".")==0)) e=e.substring(1);
+
       var s=fs.statSync(p).size;
       var D=fs.statSync(p).isDirectory();
       var F=fs.statSync(p).isFile();
-      response.push({ name:n, ext:e, size:s, isDir:D, isFile:F});
+            
+      if((fileMask.length>0) && (!D))
+        {    
+          console.log('fileMask: '+fileMask);
+          console.log('e: '+e); 
+          ok =  fileMask.includes(e) || fileMask.includes('*.*');    
+      } else ok=true;    
+
+     if(ok) response.push({ name:n, ext:e, size:s, isDir:D, isFile:F});
     }
   }    
   
@@ -915,11 +933,34 @@ module.exports.buildFileGUID = function( fs , path , fileInfo_or_fileFullName )
 }
 
 
+const videoExtensions = [
+  'mp4', 'm4v', 'mov', 'avi', 'wmv', 'flv',
+  'f4v', 'mkv', 'webm', 'ts', 'mpeg', 'mpg',
+  '3gp', 'ogv'
+];
+
+const imageExtensions = [
+  'jpeg', 'jpg', 'png', 'gif', 'bmp', 'webp', 'svg'
+];
+
+
+
+
+
+
 module.exports.analyzeFile=function(fs,path,filePath) 
 {
   // Unterstützte Formate für Bilder und Videos
-  const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.svg'];
-  const videoExtensions = ['.mp4', '.mkv', '.avi', '.mov', '.wmv', '.flv', '.webm'];
+  const videoExtensions = [
+    'mp4', 'm4v', 'mov', 'avi', 'wmv', 'flv',
+    'f4v', 'mkv', 'webm', 'ts', 'mpeg', 'mpg',
+    '3gp', 'ogv'
+  ];
+  
+  const imageExtensions = [
+    'jpeg', 'jpg', 'png', 'gif', 'bmp', 'webp', 'svg'
+  ];
+  
 
   var result = { path      : '',
                  name      : '',
@@ -944,7 +985,7 @@ module.exports.analyzeFile=function(fs,path,filePath)
 
         // Datei-Typ bestimmen
         result.type  = 'unknown';
-        e            = result.ext.toLowerCase();
+        e            = result.ext.toLowerCase().substring(1);
         if      (imageExtensions.includes(e)) result.type = 'IMAGE'
         else if (videoExtensions.includes(e)) result.type = 'MOVIE';
        } catch (error) {return { error:true, errMsg:error.message, result:{} };

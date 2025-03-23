@@ -15,6 +15,18 @@ import { TFChart }       from "./tfObjects.js";
 import { TFDateTime }    from "./utils.js";
 
 
+const videoExtensions = [
+  'mp4', 'm4v', 'mov', 'avi', 'wmv', 'flv',
+  'f4v', 'mkv', 'webm', 'ts', 'mpeg', 'mpg',
+  '3gp', 'ogv'
+];
+
+const imageExtensions = [
+  'jpeg', 'jpg', 'png', 'gif', 'bmp', 'webp', 'svg'
+];
+
+
+
 class Tthumbnail
 {
   constructor( parent , params )
@@ -92,10 +104,20 @@ export class TFMediaCollector
    // Menu-Buttons
    this.menuPanel.buildGridLayout_templateColumns('1fr 1fr 1fr 1fr 1fr 1fr 1fr');
     this.menuPanel.buildGridLayout_templateRows('1fr');
-   this.btnAddLibrary = dialogs.addButton(this.menuPanel , '' , 1 , 1 , 1 , 1 , 'Medium hinzufügen');
-   this.btnAddLibrary.backgroundColor='gray';
-   this.btnAddLibrary.height='2em';
-   this.btnAddLibrary.callBack_onClick = function(){this.addMediaFile()}.bind(this);
+
+   this.btnAddVideo = dialogs.addButton(this.menuPanel , '' , 1 , 1 , 1 , 1 , 'Videoclip hinzufügen');
+   this.btnAddVideo.backgroundColor='gray';
+   this.btnAddVideo.height='2em';
+   this.btnAddVideo.callBack_onClick = function(){this.addMediaFile('VIDEO')}.bind(this);
+
+   this.btnAddImage = dialogs.addButton(this.menuPanel , '' , 2 , 1 , 1 , 1 , 'Bild hinzufügen');
+   this.btnAddImage.backgroundColor='gray';
+   this.btnAddImage.height='2em';
+   this.btnAddImage.callBack_onClick = function(){this.addMediaFile('IMAGE')}.bind(this);
+
+   this.btnAddImage = dialogs.addButton(this.menuPanel , '' , 3 , 1 , 1 , 1 , 'Bild-Verzeichnis hinzufügen');
+   this.btnAddImage.height='2em';
+   this.btnAddImage.callBack_onClick = function(){this.addMediaFile('DIR')}.bind(this);
 
    this.updateThumbs(); 
  };
@@ -103,13 +125,27 @@ export class TFMediaCollector
    
 
 
-  addMediaFile( dir , file , allMediaFiles )
+  addMediaFile(kind)
   {
-    dialogs.fileDialog( "*.*" , true ,function(d,f,ff)
+    var ext = ['*.*'];
+    if (kind == 'IMAGE') ext = imageExtensions;
+    if (kind == 'DIR')   ext = imageExtensions;
+    if (kind == 'VIDEO') ext = videoExtensions;
+    dialogs.fileDialog( '/home/tferl/Downloads', ext , true ,function(d,f,ff)
                                               {
-                                                utils.webApiRequest('REGISTERMEDIA' , {mediaFile:f} );
-                                                this.updateThumbs()
-                                              }.bind(this));
+                                                if(this.kind == 'DIR') 
+                                                {
+                                                  for(var i=0; i<ff.length; i++)
+                                                  {
+                                                    var fi=utils.pathJoin(d,ff[i].name);
+                                                    utils.webApiRequest('REGISTERMEDIA' , {mediaFile:fi} );
+                                                    this.self.updateThumbs()
+                                                  }  
+                                                } else {
+                                                         utils.webApiRequest('REGISTERMEDIA' , {mediaFile:f} );
+                                                         this.self.updateThumbs()
+                                                }   
+                                              }.bind({self:this,kind:kind}) );
    
  }  
 

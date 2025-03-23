@@ -95,7 +95,7 @@ if( CMD=='WAIT')            {setTimeout(()=>{return{error:false, errMsg:"10 Seku
 
 if( CMD=='KEEPALIVE')       return session.keepAlive(sessionID)
 
-if( CMD=='SCANDIR')         return utils.scanDir ( fs , path , param.dir );
+if( CMD=='SCANDIR')         return utils.scanDir ( fs , path , param.dir , param.fileExt);
 
 if( CMD=='GETFILE')         return utils.getTextFile( fs , param.fileName );
 

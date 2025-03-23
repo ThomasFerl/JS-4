@@ -825,9 +825,9 @@ export function setProperties( obj , properties )
   }  
 }
 
-export function fileDialog( mask , multiple , callBackOnSelect , onSelectionChanged )
+export function fileDialog( rootPath, mask , multiple , callBackOnSelect , onSelectionChanged )
 {
-  return new TFileDialog( {mask:mask , root:"/" , multiple:multiple , callBackOnSelect:callBackOnSelect , onSelectionChanged:onSelectionChanged} );
+  return new TFileDialog( {mask:mask , root:rootPath , multiple:multiple , callBackOnSelect:callBackOnSelect , onSelectionChanged:onSelectionChanged} );
 }
 
 

@@ -23,6 +23,7 @@
     "node-sql-parser": "^5.3.5",
     "os": "^0.1.2",
     "path": "^0.12.7",
+    "sharp": "^0.33.5",
     "sql-parser": "^0.5.0"
   },
   "keywords": [],

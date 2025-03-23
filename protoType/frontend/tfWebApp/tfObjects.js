@@ -1821,7 +1821,7 @@ if(gridTemplate.apx)
      if(this.params.editLength) 
       {
         if(this.params.editLength != 'auto') this.input.style.width = this.params.editLength+'em';
-        else                                 this.input.style.width = '100%'; 
+        else                                 this.input.style.width = '99%'; 
 
         if(this.params.justifyEditField =='left') this.input.style.justifySelf = 'start';
         else                                      this.input.style.justifySelf = 'end'; 
@@ -3332,8 +3332,13 @@ export class TFileDialog
     this.wnd              = new TFWindow( null , this.caption , this.width , this.height , 'CENTER' );
     this.wnd.buildGridLayout_templateColumns('1fr');
     this.wnd.buildGridLayout_templateRows('3em 1fr 4em');
-
-    this.editFilePath     = new TFEdit( this.wnd.hWnd , 1 , 1  , 1 , 1 , {caption:"Filename",appendix:" "} );
+    var hlp               = new TFPanel( this.wnd.hWnd , 1 , 1 , 1 , 1 , {css:'cssContainerPanel'} );
+        hlp.buildGridLayout_templateColumns('1fr 7%');
+        hlp.buildGridLayout_templateRows('1fr');
+    this.editFilePath     = new TFEdit( hlp , 1 , 1  , 1 , 1 , {caption:"Filename",appendix:" "} );
+    this.editFileExt      = new TFEdit( hlp , 2 , 1  , 1 , 1 , {caption:"",appendix:"",value:this.mask} );
+    this.editFileExt.callBack_onChange = function() { this.renderFiles() }.bind(this);
+    
     
 
     var btbPanel = new TFPanel( this.wnd.hWnd , 1 , 3 , 1 , 1 , {} );
@@ -3384,7 +3389,7 @@ export class TFileDialog
            }
       }    
   
-    var response=utils.webApiRequest('scanDir', {dir:this.dir} );
+    var response=utils.webApiRequest('scanDir', {dir:this.dir , fileExt:this.editFileExt.value} );
 
     if(response.error) return false;
     
@@ -3406,16 +3411,11 @@ export class TFileDialog
     
   }
 
-
-  
-
-
-
   renderFiles()
   {
     this.panelFiles.innerHTML = '';
     this.fileGrid             = null;
-
+    
     var f=[];
     for (var i=0; i<this.files.length; i++) 
         f.push({name:this.files[i].name, ext:this.files[i].ext, formatedSize:utils.formatFileSize(this.files[i].size)  ,size:this.files[i].size, path:this.dir})

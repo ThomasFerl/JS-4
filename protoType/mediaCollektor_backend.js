@@ -1,5 +1,34 @@
 const utils           = require('./nodeUtils');
 const dbUtils         = require('./dbUtils');
+const sharp           = require('sharp');
+
+
+//--------------------------------------------------------------
+//--------- USING "sharp" -------------------------------------
+//-------------------------------------------------------------
+
+async function createThumbnail(inputPath, outputDir, width = 200) 
+{
+   const fileName   = path.basename(inputPath);
+   const outputPath = path.join(outputDir, 'thumb_' + fileName);
+ 
+   try {
+     await sharp(inputPath)
+       .resize({ width })
+       .toFile(outputPath);
+      console.log(`✅ Thumbnail gespeichert: ${outputPath}`);
+      return outputPath;
+   } catch (err) {
+     console.error(`❌ Fehler beim Erstellen des Thumbnails:`, err);
+     return null;
+   }
+ }
+//-------------------------------------------------------------
+//-------------------------------------------------------------
+//-------------------------------------------------------------
+
+
+
 
 class TFMediaCollektor
 {
@@ -242,14 +271,21 @@ ___createThumb(mediaFile, thumbFile , time, size , callback )
     return {error:true, errMsg:"unknown file type", result:{}}
 }
 
-___internal___createImageThumb(imagePath, thumbFile , width , height , callback )
+
+
+___internal___createImageThumb(imagePath, thumbFile, width, height, callback) 
 {
-   console.log("createThumb("+imagePath+" -> "+thumbFile);
-   
-   const cmd = `gm convert "${imagePath}" -resize ${width}x${height} "${thumbFile}"`
-                
-  return utils.exec( cmd , callback );
-}
+   createThumbnail(imagePath, thumbFile, width)
+     .then(result => {
+       console.log('Thumbnail fertig:', result);
+       callback(null, result); // Erfolg → err = null
+     })
+     .catch(err => {
+       console.error('Fehler beim Thumbnail:', err);
+       callback(err); // Fehler → err gesetzt
+     });
+ }
+
 ___internal___createMovieThumb(moviePath, thumbFile , time, size , callback )
 { 
   console.log("createThumb("+moviePath+" -> "+thumbFile);
@@ -482,7 +518,7 @@ ___internal___registerMedia( mediaFile )
                    DIR      : fileInfo.result.dir,
                    FILENAME : fileInfo.result.name,
                    GUID     : utils.buildFileGUID( this.fs , this.path , fileInfo.result ).result,
-                   DIMENSION: '1920x1080',
+                   DIMENSION: '?x?',
                    FILESIZE : fileInfo.result.size,
                    PLAYTIME : '',
                    SOURCE   : '',
@@ -494,7 +530,7 @@ ___internal___registerMedia( mediaFile )
                        return response; } 
   
   media.ID = response.result;
-
+  
    // Moviefile ?
   try{ 
    if (media.TYPE === 'MOVIE')
@@ -503,7 +539,7 @@ ___internal___registerMedia( mediaFile )
 
   if(media.TYPE=='IMAGE')
    {
-    console.log("Image-processing not implemented yet");
+      media.PLAYTIME = 0;
    } 
    
    // Media-File in DB speichern...
