@@ -346,7 +346,9 @@ export class TFObject
           this.DOMelement.addEventListener('mousemove'  , (e)=>{if( this.callBack_onMouseMove)   this.callBack_onMouseMove  (e,this.dataBinding) });
           this.DOMelement.addEventListener('mouseleave' , (e)=>{if( this.callBack_onMouseOut )   this.callBack_onMouseOut   (e,this.dataBinding) });
           
-          if(this.popupMenu) this.addPopupMenu(this.popupMenu)
+          console.log(this.constructor.name+" popup:"+this.popupMenu);
+
+          if(this.popupMenu) { this.addPopupMenu(this.popupMenu)}
           else this.DOMelement.addEventListener('contextmenu', (e)=>{e.preventDefault();
                                                                      if( this.callBack_onClick) this.callBack_onClick (e,this.dataBinding) 
                                                                     });   
@@ -364,7 +366,7 @@ export class TFObject
   {  
     this.popupMenu = p;
     this.DOMelement.addEventListener('contextmenu', (e)=>{ if(this.popupMenu) 
-                                                           {
+                                                           { 
                                                              e.preventDefault();
                                                              this.popupMenu.show(this,e.pageX, e.pageY);
                                                            }
@@ -1264,7 +1266,6 @@ export class TFImage extends TFObject
   {
     if(!params) params = {css:"cssPanel"};
     else    params.css = params.css || "cssPanel";
-
     super(parent , left , top , width , height , params );
   } 
   
@@ -1272,11 +1273,29 @@ export class TFImage extends TFObject
   { 
     super.render();
 
-    this.imgContainer = new TFPanel(this , 1 , 1 , '100%' , '100%' , { preventGrid:true , css:"cssImageContainer"});
+    this.position = 'relative';
+    this.overflow = 'hidden';
+
+    var p=this.params;
+    p.preventGrid=true;
+    p.css = "cssImageContainer";
+
+    this.imgContainer = new TFPanel(this , 1 , 1 , '100%' , '100%' , p );
     this.imgContainer.overflow = 'hidden';
- 
-    if(this.params.imgURL) this.imgContainer.imgURL = this.params.imgURL;
+
+    if(this.params.imgURL) this.imgURL = this.params.imgURL;
+
   }  
+
+  prepareNextImage( nextImageURL)
+  {
+    var p=this.params;
+    p.preventGrid=true;
+    p.css = "cssImageContainer";
+    this.nextImgContainer = new TFPanel(this , 1 , 1 , '100%' , '100%' , p );
+    this.nextImgContainer.overflow = 'hidden';
+    this.nextImgContainer.imgURL = nextImageURL;
+  }
 
 
   set svgContent( value )

@@ -39,6 +39,7 @@ dbTables.buildTables( dB );
 // dbTables.checkdbTableStructure();
 
 
+const pixPath = '/home/tferl/Downloads/xxx/hotfitlena/';
 
 const webApp      = express();
   var staticPath  = path.join (__dirname, 'frontend' );
@@ -188,8 +189,6 @@ function userLoginx( req , res )
 
 function lsPix( req , res )
 {
-  // ermittle alle Datein im Ordner ./frontend/pix
-  var pixPath = path.join(__dirname, 'frontend/pix');
   var files   = fs.readdirSync(pixPath);
   var pix     = [];
   for(var i=0; i<files.length; i++)
@@ -197,7 +196,7 @@ function lsPix( req , res )
     var f = files[i];
     var p = path.join(pixPath , f);
     var s = fs.statSync(p);
-    if(s.isFile()) pix.push(f);
+    if(s.isFile()) pix.push(p);
   }
  
   res.send( JSON.stringify({error:false, errMsg:"OK", result:pix}));

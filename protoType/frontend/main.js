@@ -16,7 +16,7 @@ import { TFWindow }      from "./tfWebApp/tfWindows.js";
 import { TFChart }       from "./tfWebApp/tfObjects.js";
 import { TFDateTime }    from "./tfWebApp/utils.js";
 
-import { TFMediaCollector } from "./tfWebApp/tfMediaCollector.js";
+import { TFMediaCollector } from "./tfMediaCollector.js";
 
 
 const svgPath = '/GIT/JS-3/tfWebApp/fontAwsome/svgs/';  // '/home/tferl/GIT/JS-3/tfWebApp/fontAwsome/svgs/';

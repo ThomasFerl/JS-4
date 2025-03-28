@@ -5,7 +5,7 @@ var   { spawn }         = require('child_process');
 const { TFLogging }     = require('./logging.js');
 
 
-module.exports.debug    = true;
+module.exports.debug    = false;
 module.exports.logging  = new TFLogging();
 
 
@@ -735,7 +735,7 @@ module.exports.scanDir = (fs , path , dirName , fileMask) =>
     if (fs.existsSync(p) )
     { 
       // den Punkt am Anfang der Dateiendung  entfernen  (.jpg -> jpg)
-      var e=path.extname(p);
+      var e=path.extname(p).toLowerCase();
       if((e.length>0) && (e.indexOf(".")==0)) e=e.substring(1);
 
       var s=fs.statSync(p).size;

@@ -951,6 +951,32 @@ export function playMovieFile(container, fileName)  // fileName kann auch ein Ar
   }  // MEHRERE vIDEOS IN lISTE    
   
   }
+  
+
+
+  export function diaShow( parent , imageUrls , interval )
+  {
+    var container = new TFPanel( parent , 0 , 0 , parent.widthPx+'px' , parent.heightPx+'px' , {css:"slideshow-container"} );
+        container.ID = 'slideshow';
+
+    imageUrls.forEach((url, i) => {
+        const img = document.createElement('img');
+        img.src = url;
+        img.classList.add('slideshow-image');
+        if (i === 0) img.classList.add('active');
+        container.appendChild(img);
+      });
+
+      let index = 0;
+      const images = container.DOMelement.querySelectorAll('.slideshow-image');
+      setInterval(() => 
+        { 
+         images[index].classList.remove('active');
+         index = (index + 1) % images.length;
+         images[index].classList.add('active');
+        }, interval);
+    
+  }
 
 
 

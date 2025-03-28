@@ -1,18 +1,35 @@
 const utils           = require('./nodeUtils');
 const dbUtils         = require('./dbUtils');
+const {TBatchQueue}   = require('./batchProc');
+const {TBatchPocess } = require('./batchProc');
+const fileType        = require('file-type');
+const os              = require('os');
 const sharp           = require('sharp');
+const { imageHash }   = require('image-hash');
+const hamming         = require('hamming-distance');
 
+const videoExtensions = [
+   'mp4', 'm4v', 'mov', 'avi', 'wmv', 'flv',
+   'f4v', 'mkv', 'webm', 'ts', 'mpeg', 'mpg',
+   '3gp', 'ogv'
+ ];
+ 
+ const imageExtensions = [
+   'jpeg', 'jpg', 'png', 'gif', 'bmp', 'webp', 'svg'
+ ];
+ 
+ const hashableExtensions = [
+   'jpeg', 'jpg', 'png', 'gif', 'bmp', 'webp'
+ ];
+ 
 
-//--------------------------------------------------------------
-//--------- USING "sharp" -------------------------------------
+//-------------------------------------------------------------
+//--------- USING "sharp / imageHash / hamming"----------------
 //-------------------------------------------------------------
 
-async function createThumbnail(inputPath, outputDir, width = 200) 
+async function createThumbnail(inputPath, outputPath, width = 200) 
 {
-   const fileName   = path.basename(inputPath);
-   const outputPath = path.join(outputDir, 'thumb_' + fileName);
- 
-   try {
+ try {
      await sharp(inputPath)
        .resize({ width })
        .toFile(outputPath);
@@ -23,6 +40,109 @@ async function createThumbnail(inputPath, outputDir, width = 200)
      return null;
    }
  }
+
+
+/**
+ * Erzeugt einen perceptual Hash eines Bildes.
+ * imagePath - Pfad zur Bilddatei
+ * size - Hash-Größe (Standard: 16 = 16x16 Bits)
+ * Promise<string> - Perceptual Hash als Hex-String
+ */
+
+async function createImageHash(path , fs , imagePath, size = 16) 
+ {
+  try {
+    const buffer = fs.readFileSync(imagePath);
+
+    const detected = await fileType.fromBuffer(buffer);
+    const realExt = detected?.ext || 'unknown';
+
+    if (!hashableExtensions.includes(realExt.toLowerCase())) {
+      throw new Error(`Nicht hashbares Format: ${realExt}`);
+    }
+
+    const tempFile = path.join(os.tmpdir(), `__imgHash_${Date.now()}.png`);
+    await sharp(buffer).toFile(tempFile); // kann crashen bei kaputtem Bild
+
+    const hash = await new Promise((resolve, reject) => {
+      imageHash(tempFile, size, true, (err, hash) => {
+        fs.unlink(tempFile, () => {}); // Aufräumen
+        if (err) {
+          reject(new Error(`Hashing fehlgeschlagen (${realExt}): ${err.message}`));
+        } else {
+          resolve(hash);
+        }
+      });
+    });
+
+    return hash;
+  } catch (err) {
+    // 🔥 Hier landen alle Fehler, auch scharfe image-hash oder sharp crashes
+    return Promise.reject(new Error(`createImageHash() ERROR bei Datei ${imagePath} → ${err.message}`));
+  }
+}
+  
+
+ function sortBySimilarity(fileList) 
+ {
+   var remaining  = [];
+   var noHash     = [];
+
+   // image-files besitzen einen HASH
+   for (let i = 0; i < fileList.length; i++)
+    {
+     var f = fileList[i]; 
+     if(f.file)
+      if(f.file.hasOwnProperty("HASH"))
+      { 
+       console.log('--------------------------------------');
+       console.log('f.file : '+ JSON.stringify(f.file));
+       if (f.file.HASH.length > 21) remaining.push(f);
+      }
+     else noHash.push(f);
+    }
+   
+   if (remaining.length === 0) return fileList;
+
+   const sorted = [];
+   // Starte mit erstem beliebigen Bild
+   const start = remaining.shift();
+   sorted.push(start);
+ 
+   while (remaining.length > 0) 
+   {
+     const last = sorted[sorted.length - 1];
+ 
+     // Ähnlichstes Bild finden
+     let bestMatchIndex = 0;
+     let bestDist = Infinity;
+ 
+     for (let i = 0; i < remaining.length; i++) 
+      {
+       const dist = hamming(
+         Buffer.from(last.file.HASH, 'hex'),
+         Buffer.from(remaining[i].file.HASH, 'hex')
+       );
+       if (dist < bestDist) {
+         bestDist = dist;
+         bestMatchIndex = i;
+       }
+     }
+ 
+     // Das beste hinzufügen & aus verbleibenden entfernen
+     sorted.push(remaining.splice(bestMatchIndex, 1)[0]);
+   }
+   
+   // die "NICHT-Bilder" wieder anhängen
+   for(let i=0; i<noHash.length; i++) sorted.push(noHash[i]);  
+
+    return sorted;
+ }
+ 
+
+
+
+
 //-------------------------------------------------------------
 //-------------------------------------------------------------
 //-------------------------------------------------------------
@@ -44,6 +164,8 @@ class TFMediaCollektor
     this.thumbPosition = 7;  // nach 7 Sekunden wird Movie-Thumb erzeugt
     this.sizeOfThumbs  = '270:-1';
 
+    this.batchQueue    = new TBatchQueue( this.handleBatchCommand.bind(this) );
+    this.batchQueue.start();
 
     console.log("TFMediaCollektor.working-this.db : " + this.db.constructor.name);
 
@@ -51,11 +173,45 @@ class TFMediaCollektor
     else console.log("TFMediaCollektor.config-this.db  :  not set");
 }   
 
+async handleBatchCommand( nextJob , enviroment )
+// Diese Funktion wird NIEMALS direkt aufgerufen, sondern nur von der Steuerlogik der BatchQueue
+// Diese Funktion wid dem Konstruktor der BatchQueue übergeben und wird von der BatchQueue aufgerufen
+{
+  // Kontext wieder herstellen, da der Scope des Handlers nicht im Kontext eines Webrequests steht
+  console.log('handleBatchCommand -> '+JSON.stringify(nextJob));
+  this.cmd         = nextJob.cmd;
+  this.param       = nextJob.param; 
+  this.sessionID   = enviroment.sessionID;
+  this.path        = enviroment.path;
+  this.fs          = enviroment.fs; 
+  // VORSICHT VOR DOPPELTEN RESPONSES !!!
+  this.webRequest  = enviroment.req;
+  this.webResponse = enviroment.res;
+
+  
+  await this.___internal___registerMedia( nextJob.param.mediaFile );
+
+}
+
+
 async handleCommand( sessionID , cmd , param , webRequest ,  webResponse , fs , path )
 {
- this.path  = path;
- this.fs    = fs;  
- var CMD    = cmd.toUpperCase().trim();
+ this.cmd         = cmd;
+ this.param       = param; 
+ this.sessionID   = sessionID;
+ this.path        = path;
+ this.fs          = fs; 
+ this.webRequest  = webRequest;
+ this.webResponse = webResponse;   
+
+ console.log('mediaCollector.handleCommand -> '+cmd+' / '+JSON.stringify(param));
+ 
+ var CMD          = cmd.toUpperCase().trim();
+
+ if(CMD=="GETJOBLIST") return this.batchQueue.lsBatchProc();
+
+
+
  
 //---------------------------------------------------------------
 //------------persons---------------------------------------------
@@ -124,10 +280,14 @@ if(CMD=='FILE')
 if(CMD=='LSTHUMBS') 
    {
      var result = [];
+     var orderByHash = param.orderBy=="hash" || false;
+
      var sql = "Select * from thumbs where ID > 0";
       if(param.ID_FILE) sql = sql + " AND ID_FILE="+param.ID_FILE;
-
+      sql = sql + " Order by ID";
+   
       var response = dbUtils.fetchRecords_from_Query( this.db , sql );
+
       if (response.error)  return response;
      
       var thumbs = response.result;
@@ -138,6 +298,8 @@ if(CMD=='LSTHUMBS')
          thumb.fullPath = this.path.join( this.thumbPath , thumb.THUMBFILE );
          result.push({thumb:thumb , file:file});
        }
+
+      if(orderByHash) result = sortBySimilarity(result); 
 
       return {error:false, errMsg:"OK", result:result}
    }
@@ -184,8 +346,108 @@ if(CMD=='CONTENTURL')
          
 if(CMD=='REGISTERMEDIA') 
 {  
-  return this.___internal___registerMedia ( param.mediaFile );                       
-}
+  // Register Media soll entkoppelt als "Batch" im Hintergrund laufen 
+  // und nicht blockierend für den Aufrufer sein.
+    
+  var enviroment   = { sessionID:sessionID ,  fs:fs , path:path , req:webRequest , res:webResponse };
+
+  // wenn param.mediaFile ein Verzeichnis ist, 
+  // dann wird der Inhalt des Verzeichnisses gescannt 
+  // und die Dateien in die Batch-Queue eingetragen
+  if(fs.statSync(param.mediaFile).isDirectory()) 
+  {  
+    console.log('RegisterMedia: '+param.mediaFile+' is a directory');
+    // alle Files im Directory scannen und in die Batch-Queue eintragen
+    var dir        = param.mediaFile;
+    var dirContent = utils.scanDir (fs , path , dir )
+    if (dirContent.error) return dirContent;
+
+    console.log('RegisterMedia: '+param.mediaFile+' contains '+dirContent.result.length+' files');
+
+    // mediafile als DIR in DB speichern ....
+    var media = {ID:0, TYPE:'DIR', DIR:dir, FILENAME:'', GUID:'', DIMENSION:'?x?', FILESIZE:dirContent.result.length, PLAYTIME:'', SOURCE:'', KATEGORIE:''};
+    response = this.___internal___saveMediaInDB(media);
+
+    // das erste mediaFile im DIR ist das repräsentierende Thumbnail des Directories
+    if(response.error) {console.log("Fehler meim Speichern in DB: "+response.errMsg); return response;}
+
+    console.log('RegisterMedia: '+param.mediaFile+' saved in DB with ID='+response.result.lastInsertRowid); 
+    
+    media.ID = response.result.lastInsertRowid;
+    var thumbName    = 'thumb_'+media.ID+'_00.png'
+    var thumbFile    = this.thumbPath+thumbName;
+    var thumbSource  = {};
+    var mediaFiles   = [];
+    var foundSomeone = false;
+
+    console.log('RegisterMedia: suche nach Dateien im Verzeichnis ...');
+
+    // zuerst wird nach dem ERSTEN Bild/Movie im Verzeichnis gesucht um daraus das räpresentierende Thumbnail zu erzeugen ...
+    for(var i=0; i<dirContent.result.length; i++) 
+      {
+         var f  = dirContent.result[i];
+         var fn = path.join( dir , f.name );
+         
+         console.log('RegisterMedia: check file '+fn);
+
+         var fileInfo  = utils.analyzeFile( fs , path , fn );
+
+         console.log('RegisterMedia / fileInfo : '+JSON.stringify(fileInfo));
+
+         if(!fileInfo.error)
+         { 
+           if(fileInfo.result.type.toUpperCase()=='MOVIE') 
+            {
+              console.log('--> MOVIE');
+              if(!foundSomeone) {thumbSource.file = fn; thumbSource.type='MOVIE'} 
+              foundSomeone = true;
+              mediaFiles.push(fn);
+            }  
+              
+            if(fileInfo.result.type.toUpperCase()=='IMAGE') 
+            {
+              console.log('--> IMAGE');
+              if(!foundSomeone) {thumbSource.file = fn; thumbSource.type='IMAGE'} 
+              foundSomeone = true;
+              mediaFiles.push(fn);
+            }  
+         }
+      }
+
+    if(foundSomeone)
+    {  
+      console.log('RegisterMedia: found ' + mediaFiles.length + ' files');
+
+      console.log('RegisterMedia: thumbSource: ' + JSON.stringify(thumbSource));
+
+      if(thumbSource.type=='IMAGE')
+       { 
+         console.log('RegisterMedia: create Image-Thumb ...');
+         var thumb = {ID_FILE:media.ID, NDX:0, THUMBFILE:thumbFile, POSITION:0};
+         this.___internal___createImageThumb( thumbSource.file , thumbFile, 147, 147 , function(){this.self.___internal___saveThumbInDB(this.thumb)}.bind({self:this,thumb:thumb}) ); 
+       }
+
+       if(thumbSource.type=='MOVIE')
+        {  
+          console.log('RegisterMedia: create Movie-Thumb ...');
+          var thumb = {ID_FILE:media.ID, NDX:0, THUMBFILE:thumbFile, POSITION:0};
+          this.___internal___createMovieThumb( thumbSource.file , thumbFile, this.thumbPosition , 'origin' , function(){this.self.___internal___saveThumbInDB(this.thumb)}.bind({self:this,thumb:thumb}) );
+        }
+   } else return {error:true, errMsg:"no image or movie found in directory", result:{}}
+
+  for(var i=0; i<mediaFiles.length; i++)
+    { 
+      console.log('RegisterMedia: add '+mediaFiles[i]+' to BatchQueue');
+      this.batchQueue.addBatchProc( 'REGISTERMEDIA' , {mediaFile:mediaFiles[i]} , enviroment );
+    }  
+    return {error:false, errMsg:"OK", result:{queuLength:this.batchQueue.count()} };                       
+} // Verzeichnis
+else {
+       // kein Verzeichnis
+      this.batchQueue.addBatchProc( 'REGISTERMEDIA' , param , enviroment );
+      return {error:false, errMsg:"OK", result:{queuLength:this.batchQueue.count()} };                       
+     } 
+} 
                                           
 //---------------------------------------------------------------
 //---------------------------------------------------------------
@@ -254,38 +516,34 @@ ___videoInfo ( aPath )
   return {error:false, errMsg:"OK", result:j}
 
 }
-
 ___createThumb(mediaFile, thumbFile , time, size , callback )
 {
    
     var ext = this.path.extname(mediaFile).toLowerCase();
+        ext = ext.subString(1);
     
     //ist mediafile ein Bild ?
-    if((ext=='.png') || (ext=='.jpg') || (ext=='.jpeg') || (ext=='.gif') || (ext=='.bmp') || (ext=='.tiff') || (ext=='.tif') || (ext=='.webp'))
-       return this.___internal___ceateImageThumb(mediaFile, thumbFile , size , size , callback );
-  
+    if(imageExtensions.includes(ext)) return this.___internal___ceateImageThumb(mediaFile, thumbFile , size , size , callback );
+    
     //ist mediafile ein Video ?
-    if((ext=='.mp4') || (ext=='.flv') || (ext=='.m3u8') || (ext=='.ts') || (ext=='.mov') || (ext=='.avi') || (ext=='.wmv'))
-       return this.___internal___createMovieThumb(mediaFile, thumbFile , time, size , callback );    
+    if(videoExtensions.includes(ext)) return this.___internal___createMovieThumb(mediaFile, thumbFile , time, size , callback );    
     
     return {error:true, errMsg:"unknown file type", result:{}}
 }
-
-
-
 ___internal___createImageThumb(imagePath, thumbFile, width, height, callback) 
-{
+{  
+   // Prüfe, ob der Zielpfad existiert
+   var thumbDir = this.path.dirname(thumbFile);
+   if (!this.fs.existsSync(thumbDir))
+   {
+     console.log('createThumb: thumbDir ('+thumbDir+') not found - create this ...');
+     this.fs.mkdirSync(thumbDir, { recursive: true });
+   }
+   
    createThumbnail(imagePath, thumbFile, width)
-     .then(result => {
-       console.log('Thumbnail fertig:', result);
-       callback(null, result); // Erfolg → err = null
-     })
-     .catch(err => {
-       console.error('Fehler beim Thumbnail:', err);
-       callback(err); // Fehler → err gesetzt
-     });
+     .then(result => { callback(null, result); })// Erfolg → err auf null setzen
+     .catch(err   => { callback(err); }); // Fehler → err gesetzt
  }
-
 ___internal___createMovieThumb(moviePath, thumbFile , time, size , callback )
 { 
   console.log("createThumb("+moviePath+" -> "+thumbFile);
@@ -499,7 +757,7 @@ ___internal___listPersons ( filter )
  
 
 
-___internal___registerMedia( mediaFile )
+async ___internal___registerMedia( mediaFile )
 {
   console.log('=============================================');  
   console.log('___internal___registerMedia( "'+mediaFile+'")'); 
@@ -532,30 +790,49 @@ ___internal___registerMedia( mediaFile )
   media.ID = response.result;
   
    // Moviefile ?
-  try{ 
-   if (media.TYPE === 'MOVIE')
-      media.PLAYTIME = this.___videoInfo(mediaFile).result.format.duration;
-} catch(err) { console.log('error in videoInfo: '+err.message); media.PLAYTIME = 0; }
+  if (media.TYPE === 'MOVIE')
+   {
+      try{ media.PLAYTIME = this.___videoInfo(mediaFile).result.format.duration; }
+      catch(err) { console.error('Fehler beim Ermitteln der Video-Metadaten:', err); media.PLAYTIME = 0; }  
+      
+       media.HASH = '.x.'; 
+       // Media-File in DB speichern...
+       response = this.___internal___saveMediaInDB(media);
+
+      if(response.error) return response;
+      media.ID = response.result.lastInsertRowid;
+      var thumbName = 'thumb_'+media.ID+'_00.png'
+      var thumbFile = this.thumbPath+thumbName;
+      var thumb     = {ID_FILE:media.ID, NDX:0, THUMBFILE:thumbName, POSITION:this.thumbPosition};
+
+      this.___internal___createMovieThumb( mediaFile , thumbFile, this.thumbPosition , 'origin' , function(){this.self.___internal___saveThumbInDB(this.thumb)}.bind({self:this,thumb:thumb}) );
+    
+      return {error:false, errMsg:"OK", result:media}
+   }
+      
 
   if(media.TYPE=='IMAGE')
    {
       media.PLAYTIME = 0;
-   } 
-   
-   // Media-File in DB speichern...
-   response = this.___internal___saveMediaInDB(media)
-     
-   if(response.error) return response;
-   media.ID = response.result.lastInsertRowid;
-   var thumbName = 'thumb_'+media.ID+'_00.png'
-   var thumbFile = this.thumbPath+thumbName;
-   var thumb     = {ID_FILE:media.ID, NDX:0, THUMBFILE:thumbName, POSITION:this.thumbPosition};
+       var imagePath = this.path.join(media.DIR, media.FILENAME);
 
-   if (media.TYPE=='MOVIE') this.___internal___createMovieThumb( mediaFile , thumbFile, this.thumbPosition , 'origin' , function(){this.self.___internal___saveThumbInDB(this.thumb)}.bind({self:this,thumb:thumb}) );
-   if (media.TYPE=='IMAGE') this.___internal___createImageThumb( mediaFile , thumbFile, 147, 147 ,                      function(){this.self.___internal___saveThumbInDB(this.thumb)}.bind({self:this,thumb:thumb}) ); 
-   
-  return {error:false, errMsg:"OK", result:media}
-}  
+       try { media.HASH = await createImageHash(this.path , this.fs , imagePath, 16);}
+       catch (err) {media.HASH = 'errHash';}
+ 
+        // Media-File in DB speichern...
+        response = this.___internal___saveMediaInDB(media);
+
+        if(response.error) return response;
+        media.ID = response.result.lastInsertRowid;
+        var thumbName = 'thumb_'+media.ID+'_00.png'
+        var thumbFile = this.thumbPath+thumbName;
+        var thumb     = {ID_FILE:media.ID, NDX:0, THUMBFILE:thumbName, POSITION:this.thumbPosition};
+                                                                                             
+        this.___internal___createImageThumb( mediaFile , thumbFile, 147, 147 , function(){this.self.___internal___saveThumbInDB(this.thumb)}.bind({self:this,thumb:thumb}) ); 
+                                                  
+        return {error:false, errMsg:"OK", result:media}
+  }  
+}
 
 
 //----------------------------------------------------------------

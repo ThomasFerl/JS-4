@@ -1,18 +1,21 @@
 
-import * as globals      from "./globals.js";
-import * as utils        from "./utils.js";    
-import * as dialogs      from "./tfDialogs.js";
-import * as graphics     from "./tfGrafics.js";
+import * as globals      from "./tfWebApp/globals.js";
+import * as utils        from "./tfWebApp/utils.js";    
+import * as dialogs      from "./tfWebApp/tfDialogs.js";
+import * as graphics     from "./tfWebApp/tfGrafics.js";
 
 import { TFEdit, 
          TForm,
-         TFPopUpMenu,
+         TFImage,
          TPropertyEditor,
-         TFAnalogClock}  from "./tfObjects.js";
+         TFAnalogClock,
+         TFPopUpMenu}    from "./tfWebApp/tfObjects.js";
 
-import { TFWindow }      from "./tfWindows.js"; 
-import { TFChart }       from "./tfObjects.js";
-import { TFDateTime }    from "./utils.js";
+import { TFWindow }      from "./tfWebApp/tfWindows.js"; 
+import { TFChart }       from "./tfWebApp/tfObjects.js";
+import { TFDateTime }    from "./tfWebApp/utils.js";
+
+import { TPerson }       from "./personen.js";
 
 
 const videoExtensions = [
@@ -27,6 +30,7 @@ const imageExtensions = [
 
 
 
+
 class Tthumbnail
 {
   constructor( parent , params )
@@ -35,7 +39,28 @@ class Tthumbnail
     this.params       = params;
     this.mediaFile    = {};
     this.thumb        = {};
-    
+
+    this.popup = new TFPopUpMenu([{caption:'view',value:1} , 
+                                  {caption:'diashow',value:2 } ,
+                                  {caption:'Metadaten bearbeiten',value:3},
+                                  {caption:'Person zuordnen',value:4} ,]);
+      
+    this.popup.onClick = (sender , item )=>{ debugger;
+                                             if(item.value==1) {this.handleMediaFile();}
+              
+                                             if(item.value==2) {}
+            
+                                             if(item.value==3) {}
+
+                                             if(item.value==4) {this.newPerson()}
+                                              
+                                          }  ;
+
+
+
+
+
+
     if(params.thumbID)
     { 
       this.thumbID      = params.thumbID;  
@@ -51,7 +76,7 @@ class Tthumbnail
     } 
 
     this.thumbURL     = utils.buildURL('GETIMAGEFILE' , {fileName:this.thumb.fullPath} );
-    this.thumbImg     = dialogs.addImage( this.parent , "" , 1 , 1 , "100px" , "100px" , this.thumbURL );
+    this.thumbImg     = new TFImage(this.parent ,1,1,"150px" , "150px" , {popupMenu:this.popup , imgURL:this.thumbURL} );
     this.thumbImg.callBack_onClick = function (e, d) 
                   { 
                     this.handleMediaFile(); 
@@ -61,6 +86,26 @@ class Tthumbnail
     //setInterval(() =>{this.sec++; console.log("MediaFile nach "+this.sec+" Sekunde(n):", JSON.stringify(this.mediaFile))}, 1000);
                                 
     }
+
+newPerson()
+{
+  var aPerson = {
+    ID           : 0,
+    NAME         : '',
+    VORNAME      : '',
+    ALIAS1       : '',
+    ALIAS2       : '',
+    ALIAS3       : '',
+    GEBURTSJAHR  : null,
+    HERKUNFT     : '',
+    BUSINESSTART : null,
+    BUSINESENDE  : null,
+    RANKING      : 0,
+    BEMERKUNGEN  : '' };
+  
+    var p = new TPerson(aPerson);
+    p.edit();
+}    
 
 handleMediaFile()
 {
@@ -93,6 +138,8 @@ export class TFMediaCollector
 {
   constructor ( width , height , params ) 
   {
+   this.joblistWnd = null;
+
    this.mainWindow = new TFWindow(globals.webApp.activeWorkspace , 'media' , width , height , 'CENTER' );
    this.mainWindow.buildGridLayout_templateColumns('1fr');
    this.mainWindow.buildGridLayout_templateRows('3em 1fr');
@@ -122,7 +169,57 @@ export class TFMediaCollector
    this.updateThumbs(); 
  };
 
-   
+ __startPollingJoblist()
+{
+  this.pollingTimer = setInterval( this.__updateView_Joblist.bind(this) , 4000);
+} 
+
+__stopPollingJoblist()
+{
+  clearInterval(this.pollingTimer);
+  this.pollingTimer = null;
+  this.updateThumbs();
+}  
+ 
+
+ __updateView_Joblist()
+{
+  var response = utils.webApiRequest('GETJOBLIST', {} );
+  if(response.error) 
+  { 
+    dialogs.showMessage(response.errMsg);
+    this.__stopPollingJoblist();
+    this.joblistWnd.destroy();
+    this.joblistWnd = null;
+    return; 
+  }  
+
+  if(response.result.length==0) 
+  { 
+    this.__stopPollingJoblist();
+    this.joblistWnd.destroy();
+    this.joblistWnd = null;
+    return;
+  }
+
+  if(response.result.length>0) 
+  { 
+    if(this.joblistWnd==null) this.joblistWnd = dialogs.createWindow( null, 'Jobliste','50%','50%','CENTER');
+    
+    this.joblistWnd.innerHTML = 'leere Jobliste';
+       
+    var l='<h4 style="margin:0;padding:0;">pending jobs</h4><ul>';
+    for(var i=0; i<response.result.length; i++) 
+    {
+        var job    = response.result[i].param;
+        var state  = response.result[i].status;
+        l = l + '<li> ' + job + ' ' + state + '</li>';
+    }  
+    var l=l+'</ul>';
+    this.joblistWnd.innerHTML = l;
+  }
+}  
+
 
 
   addMediaFile(kind)
@@ -131,19 +228,17 @@ export class TFMediaCollector
     if (kind == 'IMAGE') ext = imageExtensions;
     if (kind == 'DIR')   ext = imageExtensions;
     if (kind == 'VIDEO') ext = videoExtensions;
-    dialogs.fileDialog( '/home/tferl/Downloads', ext , true ,function(d,f,ff)
-                                              {
+
+    dialogs.fileDialog( '/', ext , true ,function(d,f,ff)
+                                              { 
                                                 if(this.kind == 'DIR') 
-                                                {
-                                                  for(var i=0; i<ff.length; i++)
-                                                  {
-                                                    var fi=utils.pathJoin(d,ff[i].name);
-                                                    utils.webApiRequest('REGISTERMEDIA' , {mediaFile:fi} );
-                                                    this.self.updateThumbs()
-                                                  }  
-                                                } else {
-                                                         utils.webApiRequest('REGISTERMEDIA' , {mediaFile:f} );
-                                                         this.self.updateThumbs()
+                                                { 
+                                                  utils.webApiRequest('REGISTERMEDIA' , {mediaFile:d} );
+                                                  this.self.__startPollingJoblist();
+                                                }  
+                                                else {
+                                                       utils.webApiRequest('REGISTERMEDIA' , {mediaFile:f} );
+                                                       this.self.updateThumbs()
                                                 }   
                                               }.bind({self:this,kind:kind}) );
    
@@ -153,10 +248,11 @@ export class TFMediaCollector
  updateThumbs()
   {
     this.dashboardPanel.innerHTML = "";
+    this.dashboardPanel.buildFlexBoxLayout();
     this.dashboardPanel.alignItems='flex-start';
     this.dashboardPanel.justifyContent='flex-start';
-    this.dashboardPanel.buildFlexBoxLayout()
 
+    //var response = utils.webApiRequest('LSTHUMBS' , {orderBy:"hash"} );
     var response = utils.webApiRequest('LSTHUMBS' , {} );
     if(response.error) return;
 

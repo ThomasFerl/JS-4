@@ -20,9 +20,11 @@ tables.push(
       {fieldName:"SOURCE"	      , fieldType:"Text" } ,
       {fieldName:"KATEGORIE"    , fieldType:"Text" } ,
       {fieldName:"DESCRIPTION"	, fieldType:"Text" } ,
-      {fieldName:"GUID"         , fieldType:"Text" } ,
+      {fieldName:"HASH"       	, fieldType:"Text" } ,
+      {fieldName:"GUID"         , fieldType:"Text" } 
    ]});
 
+   
 
 tables.push( 
   {tableName:"thumbs",
@@ -47,7 +49,7 @@ tables.push(
         {fieldName:"BUSINESSTART"	, fieldType:"REAL" } ,
         {fieldName:"BUSINESENDE"	, fieldType:"REAL" } ,
         {fieldName:"RANKING"	    , fieldType:"INTEGER" } ,
-        {fieldName:"BEMERKUNGEN"	, fieldType:"REAL" } 
+        {fieldName:"BEMERKUNGEN"	, fieldType:"Text" } 
        ]});
 	
     
