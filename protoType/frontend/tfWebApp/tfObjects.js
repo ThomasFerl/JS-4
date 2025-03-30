@@ -243,6 +243,7 @@ export class TFObject
     this.callBack_onContextMenu= undefined;
 
     this.callBack_onDragStart  = undefined;
+    this.callBack_onDragging   = undefined;
     this.callBack_onDragOver   = undefined;
     this.callBack_onDrop       = undefined;   
     this.callBack_onDragEnd    = undefined;
@@ -268,14 +269,20 @@ export class TFObject
     {
       this.DOMelement.setAttribute('draggable', true);
       this.DOMelement.addEventListener('dragstart', (e)=>{
-                                                          var d = null;
-                                                          if(this.draggingData) d=this.draggingData;
-                                                          else if(this.dataBinding) d=this.dataBinding;
-                                                          if(d==null) d = '';
-                                                          if(utils.isJSON(d)) d = JSON.stringify(d);
-                                                          e.dataTransfer.setData('application/json', d );
+                                                          if(this.draggingData)
+                                                          {  
+                                                            var d=this.draggingData;
+                                                            if(utils.isJSON(d)) d = JSON.stringify(d);
+                                                            e.dataTransfer.setData('application/json', d );
+                                                          }  
                                                           if( this.callBack_onDragStart) this.callBack_onDragStart(e);
-                                                          });  
+                                                          }); 
+                                                          
+      this.DOMelement.addEventListener("drag", (e) => {
+                                                          if( this.callBack_onDragging) this.callBack_onDragging(e);  
+                                                          });                                                          
+
+
       this.DOMelement.addEventListener('dragend',   (e)=>{
                                                             var d = null;
                                                             if(this.draggingData) d=this.draggingData;
@@ -297,7 +304,7 @@ export class TFObject
                                                             if( this.callBack_onDragOver)  this.callBack_onDragOver (e ,d); 
                                                           });
 
-        this.DOMelement.addEventListener('drop',      (e)=>{ debugger;
+        this.DOMelement.addEventListener('drop',      (e)=>{
                                                             e.preventDefault();
                                                             var d = e.dataTransfer.getData('application/json');
                                                             if(utils.isJSON(d)) d = JSON.parse(d);

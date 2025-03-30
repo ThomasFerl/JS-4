@@ -102,7 +102,7 @@ edit()
 
   var  f      = dialogs.addPanel(_w,'',1,1,3,4); 
   var  p      = new TFPanel( _w , 4 , 1 , 1 , 3 , {dropTarget:true} ); 
-       p.callBack_onDrop = function( e,d ) {alert ('onDrop: '+JSON.stringify(d))}.bind(this);
+       p.callBack_onDrop = function( e,d ) {debugger; alert ( 'onDrop: '+JSON.stringify(d))}.bind(this);
 
      //  p.imgURL = this.portrait;
   var  c      = dialogs.addPanel(_w,'cssRibbon',4,4,1,1);

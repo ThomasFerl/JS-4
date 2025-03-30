@@ -112,50 +112,26 @@ export class TFWindow extends TFObject
     this.caption.buildGridLayout_templateColumns('1fr 2em 2em 2em');
     this.caption.buildGridLayout_templateRows('1fr');
 
-    this.caption.callBack_onDragStart = ( e )=>{
-         // Speichere den Abstand zwischen dem Mauszeiger und der oberen linken Ecke des DIVs
-            console.log('dragStart: x=' +this.leftPx+'   y='+this.topPx); 
-            this.dragOffsetX = e.clientX ;
-            this.dragOffsetY = e.clientY ;
-    }
+    this.caption.callBack_onDragStart = (e) => {
+      // Fenster in den Vordergrund bringen
+      const maxZ = windows.reduce((z, w) => Math.max(z, w.zIndex), zIndexStart);
+      this.zIndex = maxZ + 1;
+    
+      this.dragOffsetX = e.clientX;
+      this.dragOffsetY = e.clientY;
+    };
 
-    //this.caption.callBack_onDragMove = ( e )=>{}
+   
+  this.caption.callBack_onDragging = (e) => {
+    const dx = e.clientX - this.dragOffsetX;
+    const dy = e.clientY - this.dragOffsetY;
 
+    this.leftPx = this.leftPx + dx;
+    this.topPx = this.topPx + dy;
 
-    this.caption.callBack_onDragEnd = ( e )=>{      
-          // Setze die neue Position des DIVs
-          const dx = e.clientX - this.dragOffsetX;
-          const dy = e.clientY - this.dragOffsetY;
-          console.log('dragEnd: dx=' +dx+'   dy='+dy);
-  
-          if(dx!=0 || dy!=0) 
-          {    
-          this.leftPx = this.leftPx + dx;
-          this.topPx  = this.topPx + dy;
-          } 
-      }
-
-      /*
-    this.callBack_onDragStart = ( e )=>{ 
-         // Speichere den Abstand zwischen dem Mauszeiger und der oberen linken Ecke des DIVs
-            console.log('dragStart: x=' +this.leftPx+'   y='+this.topPx); 
-            this.dragOffsetX = e.clientX ;
-            this.dragOffsetY = e.clientY ;
-    }        
-
-    this.callBack_onDragEnd = ( e )=>{ 
-         // Setze die neue Position des DIVs
-        const dx = e.clientX - this.dragOffsetX;
-        const dy = e.clientY - this.dragOffsetY;
-        console.log('dragEnd: dx=' +dx+'   dy='+dy);
-
-        if(dx!=0 || dy!=0) 
-        {    
-         this.leftPx = this.leftPx + dx;
-         this.topPx  = this.topPx + dy;
-        } 
-    }
-    */ 
+    this.dragOffsetX = e.clientX;
+    this.dragOffsetY = e.clientY;
+  } ;
 
   
     //close button
