@@ -1,6 +1,12 @@
 
 import * as utils        from "./tfWebApp/utils.js";
 import * as dialogs      from "./tfWebApp/tfDialogs.js";
+import { TForm,
+         TFPanel,
+         TFImage,
+         TPropertyEditor
+       }                 from "./tfWebApp/tfObjects.js";
+
 
 export class TPerson 
 {
@@ -10,18 +16,28 @@ export class TPerson
   
     constructor(dbPerson = {}) 
     {
-     for (const field in dbPerson) 
+     // enthält dbPerson NUR das Feld "ID", dann wird die Datenstruktur+Daten direkt aus der DB geladen 
+     if (dbPerson.ID)
         {
-         const value = dbPerson[field];
-         this.#defineField(field, value);
+          var response = this.load_from_dB(dbPerson.ID); 
+            if(!response.error) dbPerson = response.result;
+        }  
+       
+        for (const field in dbPerson) 
+            {
+             const value = dbPerson[field];
+             this.#defineField(field, value);
         }
     }
   
    
     #defineField(fieldName, defaultValue) 
     {
-      this.#data    [fieldName] = defaultValue;
-      this.#original[fieldName] = defaultValue;
+      if(defaultValue)
+        {
+         this.#data    [fieldName] = defaultValue;
+         this.#original[fieldName] = defaultValue;
+        }  
   
       Object.defineProperty(this, fieldName, {
                                                get: () => this.#data[fieldName],
@@ -46,13 +62,14 @@ export class TPerson
       Object.assign(this.#original, this.#data);
     }
   
+    load_from_dB(id) 
+    {
+      return  utils.webApiRequest('PERSON',{ID:id} );
+    }
+
     load(id) 
     {
-      this.#data     = {}; 
-      this.#original = {}; 
-      this.#dirtyFields.clear(); 
-
-      var response = utils.webApiRequest('PERSON',{ID:id} );
+       var response = this.load_from_dB(id); 
        if(response.error){return false;}
                         
       this.#data = response.result;                                    
@@ -61,14 +78,14 @@ export class TPerson
     }
   
     save() 
-    {
+    { debugger;
       var response = utils.webApiRequest('SAVEPERSON',{person:this.#data} );
       if(response.error){
          dialogs.showMessage(response.errMsg);
         return false;
       }
                         
-      this.#data.ID = response.result.lastInsertedId;                                   
+      this.#data.ID = response.result.lastInsertRowid;                                   
       this.markClean();
       return true;
     }
@@ -80,63 +97,48 @@ edit()
   var w       =    dialogs.createWindow( null,caption,"80%","80%","CENTER");  
   var _w      =    w.hWnd;
   
-  utils.buildGridLayout_templateColumns( _w , '1fr 1fr 1fr 1fr');
-  utils.buildGridLayout_templateRows   ( _w , '1fr 1fr 1fr 1fr');
+  w.buildGridLayout_templateColumns('1fr 1fr 1fr 1fr');
+  w.buildGridLayout_templateRows   ('1fr 1fr 1fr 1fr');
 
-  var  w      = dialogs.addPanel(_w,'',1,1,3,4); 
-  var  p      = dialogs.addPanel(_w,'',4,1,1,2); 
+  var  f      = dialogs.addPanel(_w,'',1,1,3,4); 
+  var  p      = new TFPanel( _w , 4 , 1 , 1 , 3 , {dropTarget:true} ); 
+       p.callBack_onDrop = function( e,d ) {alert ('onDrop: '+JSON.stringify(d))}.bind(this);
+
      //  p.imgURL = this.portrait;
-  var  c      = dialogs.addPanel(_w,'cssRibbon',4,3,1,1); 
+  var  c      = dialogs.addPanel(_w,'cssRibbon',4,4,1,1);
+  c.backgroundColor = 'gray';
   
   var  clpBtn = dialogs.addButton(c,'',1,1,100,35,'clipbrd');
        clpBtn.callBack_onClick = function() { loadpersonImageFromClipboard( this.picture ) }.bind(this);
-     
-              // aParent      , aData    , aLabels , aAppendix , aExclude , aInpType , URLForm )
-  var inp = new TForm( _w , formData , {}      , {}        , []       , {}       , '' );    
-/*
-      inp.setLabel("favFastfood" , "Lieblings-Fastfood")
-      inp.setInputType("favFastfood" , "select" , {items:["Pizza","Pommes","Döner","HotDog","Sushi"]} );
-      inp.setInputType("gebDatum" , "date");
-      inp.setInputType("level" , "range" , {sliderMin:1,sliderMax:100,sliderStep:5,sliderPosition:formData.level} );
-      inp.setInputType("online" , "checkBox"  );
- */     
-      inp.render( true);  
-  
-      inp.callBack_onOKBtn = function(values) { debugger;
-                                               console.log(JSON.stringify(values));
-                                               for(var i=0; i<values.length; i++) 
-                                               { this[values[i].field] = values[i].value }
 
-                                            }.bind( {wnd:_w, inp:inp , img:this.picture} )
+              // aParent      , aData      , aLabels , aAppendix , aExclude , aInpType , URLForm )
+  var inp = new TForm( f      , this.#data , {}      , {}        , ['ID']       , {}       , '' );    
+
+      
+      inp.setLabel('NAME','Name');
+      inp.setLabel('VORNAME','Vorname');
+      inp.setLabel('ALIAS1','Alias #1');
+      inp.setLabel('ALIAS2','Alias #2');
+      inp.setLabel('ALIAS3','Alias #3');
+      inp.setLabel('GEBURTSJAHR','Geburtsjahr');
+      inp.setLabel('BUSINESSTART','Start Busines');
+      inp.setLabel('BUSINESENDE','Ende Busines');
+      inp.setLabel('RANKING','Ranking (1..10)');
+      inp.setInputType('RANKING','range', {sliderMin:1,sliderMax:10,sliderStep:1,sliderPosition:this.#data.RANKING} );
+      
+      inp.render( true);  
+      
+      inp.callBack_onOKBtn = function(values) { 
+                                               for(var i=0; i<values.length; i++) 
+                                               { this.self.#data[values[i].field] = values[i].value }
+                                               this.self.save();  
+                                               this.wnd.close();
+                                             }.bind( {self:this, wnd:w, inp:inp , img:this.picture} )
 }
 
 }
  
-     /* 
-      inp.form.setLabel('NAME','Name');
-      inp.form.setLabel('VORNAME','Vorname');
-      inp.form.setLabel('ALIAS1','Alias #1');
-      inp.form.setLabel('ALIAS2','Alias #2');
-      inp.form.setLabel('ALIAS3','Alias #3');
-
-      inp.form.setLabel('GEBURTSJAHR','Geburtsjahr');
-      inp.form.setInputType('GEBURTSJAHR','number');
-      inp.form.setInputLength('GEBURTSJAHR','5em');
-
-      inp.form.setLabel('BUSINESSTART','Start Busines');
-      inp.form.setInputType('BUSINESSTART','number');
-      inp.form.setInputLength('BUSINESSTART','5em');
-
-      inp.form.setLabel('BUSINESENDE','Ende Busines');
-      inp.form.setInputType('BUSINESENDE','number');
-      inp.form.setInputLength('BUSINESENDE','5em');
-
-      inp.form.setLabel('RANKING','Ranking (1..10)');
-      inp.form.setInputType('RANKING','range');
-      inp.form.setInputLength('RANKING','14em');
-
-}
-
+   /*
 async function loadpersonImageFromClipboard( imageObj ) 
 {
   console.log('loadpersonImageFromClipboard ...');

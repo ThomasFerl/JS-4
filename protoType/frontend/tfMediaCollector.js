@@ -45,7 +45,7 @@ class Tthumbnail
                                   {caption:'Metadaten bearbeiten',value:3},
                                   {caption:'Person zuordnen',value:4} ,]);
       
-    this.popup.onClick = (sender , item )=>{ debugger;
+    this.popup.onClick = (sender , item )=>{ 
                                              if(item.value==1) {this.handleMediaFile();}
               
                                              if(item.value==2) {}
@@ -76,7 +76,13 @@ class Tthumbnail
     } 
 
     this.thumbURL     = utils.buildURL('GETIMAGEFILE' , {fileName:this.thumb.fullPath} );
-    this.thumbImg     = new TFImage(this.parent ,1,1,"150px" , "150px" , {popupMenu:this.popup , imgURL:this.thumbURL} );
+    this.thumbImg     = new TFImage(this.parent ,1,1,"150px" , "150px" , {popupMenu:this.popup , imgURL:this.thumbURL , dragable:true , draggingData:this.thumb} );
+    
+    this.thumbImg.callBack_onDragEnd = function (e, d)
+                  { debugger;
+                    e.dataTransfer.setData('text/plain', JSON.stringify(this.thumb));
+                  }.bind(this);
+    
     this.thumbImg.callBack_onClick = function (e, d) 
                   { 
                     this.handleMediaFile(); 
@@ -103,7 +109,7 @@ newPerson()
     RANKING      : 0,
     BEMERKUNGEN  : '' };
   
-    var p = new TPerson(aPerson);
+    var p = new TPerson({ID:1});
     p.edit();
 }    
 

@@ -101,6 +101,41 @@ export class TFWindow extends TFObject
             this.zIndex = zIndex;
   }  
    
+    // keinen Zugridff übwer die Propertuies, weil diese überladen werden, damit diese Eigenschaften für das Fenster
+    // und nicht für den Container gelten
+    this.DOMelement.style.backgroundColor = 'black';
+
+    utils.buildGridLayout_templateColumns(this,'1fr',{stretch:true});
+    utils.buildGridLayout_templateRows(this,'1.7em 1fr',{stretch:true});
+       
+    this.caption  = new TFPanel( this , 1 , 1 , 1 , 1 , {css:"cssWindowCaptionJ4" , dragable:true} );
+    this.caption.buildGridLayout_templateColumns('1fr 2em 2em 2em');
+    this.caption.buildGridLayout_templateRows('1fr');
+
+    this.caption.callBack_onDragStart = ( e )=>{
+         // Speichere den Abstand zwischen dem Mauszeiger und der oberen linken Ecke des DIVs
+            console.log('dragStart: x=' +this.leftPx+'   y='+this.topPx); 
+            this.dragOffsetX = e.clientX ;
+            this.dragOffsetY = e.clientY ;
+    }
+
+    //this.caption.callBack_onDragMove = ( e )=>{}
+
+
+    this.caption.callBack_onDragEnd = ( e )=>{      
+          // Setze die neue Position des DIVs
+          const dx = e.clientX - this.dragOffsetX;
+          const dy = e.clientY - this.dragOffsetY;
+          console.log('dragEnd: dx=' +dx+'   dy='+dy);
+  
+          if(dx!=0 || dy!=0) 
+          {    
+          this.leftPx = this.leftPx + dx;
+          this.topPx  = this.topPx + dy;
+          } 
+      }
+
+      /*
     this.callBack_onDragStart = ( e )=>{ 
          // Speichere den Abstand zwischen dem Mauszeiger und der oberen linken Ecke des DIVs
             console.log('dragStart: x=' +this.leftPx+'   y='+this.topPx); 
@@ -120,17 +155,8 @@ export class TFWindow extends TFObject
          this.topPx  = this.topPx + dy;
         } 
     }
-     
-    // keinen Zugridff übwer die Propertuies, weil diese überladen werden, damit diese Eigenschaften für das Fenster
-    // und nicht für den Container gelten
-    this.DOMelement.style.backgroundColor = 'black';
+    */ 
 
-    utils.buildGridLayout_templateColumns(this,'1fr',{stretch:true});
-    utils.buildGridLayout_templateRows(this,'1.7em 1fr',{stretch:true});
-       
-    this.caption  = new TFPanel( this , 1 , 1 , 1 , 1 , {css:"cssWindowCaptionJ4"} );
-    this.caption.buildGridLayout_templateColumns('1fr 2em 2em 2em');
-    this.caption.buildGridLayout_templateRows('1fr');
   
     //close button
     this.btnClose = new TFPanel( this.caption , 4 , 1 , 1 , 1 , {css:'cssWindowSysButtonJ4'} );
@@ -473,6 +499,11 @@ get opacity()
     
     return url;
     
+  }
+  
+  close()
+  {
+    this.destroy();
   }
 
   destroy()

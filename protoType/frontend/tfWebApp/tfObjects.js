@@ -192,6 +192,8 @@ export class TFObject
 
     this.isDragable   = false;
     if( this.params.dragable)   this.isDragable   = this.params.dragable;
+    
+    if(this.isDragable) {this.draggingData = this.params.draggingData || null;}
 
     this.isDropTarget = false;
     if( this.params.dropTarget) this.isDropTarget   = this.params.dropTarget;  
@@ -295,7 +297,7 @@ export class TFObject
                                                             if( this.callBack_onDragOver)  this.callBack_onDragOver (e ,d); 
                                                           });
 
-        this.DOMelement.addEventListener('drop',      (e)=>{ 
+        this.DOMelement.addEventListener('drop',      (e)=>{ debugger;
                                                             e.preventDefault();
                                                             var d = e.dataTransfer.getData('application/json');
                                                             if(utils.isJSON(d)) d = JSON.parse(d);
@@ -2964,7 +2966,7 @@ export class TForm
   // aAppendix:JSON-Objekt mit den Appendix
   // aExclude: Array mit den auszuschließenden Feldern
   // URLForm:  URL zur Form-Definition (optional) Falls dieses nicht definiert wird buildFormGeneric() aufgerufen
-  {
+  { 
     this.objName            = this.constructor.name;
     this.isTFObject         = false;
     this.parent             = aParent;
@@ -3100,6 +3102,16 @@ export class TForm
       ctrl.type = type;
       ctrl.params = params;
     }  
+  }
+
+  setInputLength(key , length)
+  {
+    var ctrl = this.getControlByName(key);
+    if (ctrl!=null)
+    {
+      // {fieldName:key, value:this.data[key], label:null, appendix:null, type:"null", enabled:true,  visible:true, lblControl:null, editControl:el, apxControl:null}
+      ctrl.editControl.width = length;
+    }
   }
 
 

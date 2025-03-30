@@ -24,6 +24,23 @@ tables.push(
       {fieldName:"GUID"         , fieldType:"Text" } 
    ]});
 
+   tables.push( 
+      {tableName:"mediaSets",
+       tableFields:[
+          {fieldName:"TYPE"         , fieldType:"Text" } ,
+          {fieldName:"NAME"	      , fieldType:"numeric" } ,
+          {fieldName:"KATEGORIE"    , fieldType:"Text" } ,
+          {fieldName:"DESCRIPTION"	, fieldType:"Text" } 
+       ]}); 
+       
+   tables.push( 
+      {tableName:"mediaInSet",
+            tableFields:[
+               {fieldName:"ID_FILE"	    , fieldType:"INTEGER" } ,
+               {fieldName:"ID_MEDIA"    , fieldType:"INTEGER" } 
+            ]});
+      
+
    
 
 tables.push( 
