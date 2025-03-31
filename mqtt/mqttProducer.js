@@ -2,7 +2,14 @@ const mqtt = require('mqtt');
 
 // Verbindungsparameter
 const brokerUrl = 'mqtt://10.102.13.99:4701'; // Broker-URL (anpassen, falls notwendig)
-const topic = 'ems/test/01/pt1000'; // Topic, auf dem die Daten gesendet werden
+
+const topics    = ['ems/test/01/pt1000.1',
+                   'ems/test/01/pt1000.2',
+                   'ems/test/01/pt1000.3',
+                   'ems/test/02/pt1000.1',
+                   'ems/test/02/pt1000.2',
+                   'ems/test/02/pt1000.3'];
+  
 var x = 0;
 var dx=0.01;
 
@@ -17,11 +24,13 @@ client.on('connect', () =>
     // Sende jede 4 Sekunden einen zufälligen Wert
     setInterval(() => 
       {
-        x=x+dx;
-        var y = Math.sin(x)*70+(Math.random() * 7); // Zufallswert zwischen 0 und 99
-        client.publish(topic, JSON.stringify({ value: Math.round(y) , timestamp: Date.now() }));
-        console.log(`Wert gesendet: ${Math.round(y)}`);
-      }, 60000);
+        x     = x+dx;
+        var y = (Math.sin(x)+1)*70; // Zufallswert zwischen 0 und 140;
+
+        for(var i=0; i<topics.length; i++)
+          client.publish(topics[i], JSON.stringify({ value: Math.round(y+(Math.random() * 35)) , timestamp: Date.now() }));
+
+      }, 10000);
   }
 );
 
