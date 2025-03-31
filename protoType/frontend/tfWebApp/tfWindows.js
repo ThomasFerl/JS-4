@@ -112,27 +112,31 @@ export class TFWindow extends TFObject
     this.caption.buildGridLayout_templateColumns('1fr 2em 2em 2em');
     this.caption.buildGridLayout_templateRows('1fr');
 
-    this.caption.callBack_onDragStart = (e) => {
+    this.caption.DOMelement.addEventListener('mousedown', (e) => 
+    {
+      e.preventDefault();
+    
       // Fenster in den Vordergrund bringen
       const maxZ = windows.reduce((z, w) => Math.max(z, w.zIndex), zIndexStart);
       this.zIndex = maxZ + 1;
     
-      this.dragOffsetX = e.clientX;
-      this.dragOffsetY = e.clientY;
-    };
-
-   
-  this.caption.callBack_onDragging = (e) => {
-    const dx = e.clientX - this.dragOffsetX;
-    const dy = e.clientY - this.dragOffsetY;
-
-    this.leftPx = this.leftPx + dx;
-    this.topPx = this.topPx + dy;
-
-    this.dragOffsetX = e.clientX;
-    this.dragOffsetY = e.clientY;
-  } ;
-
+      const offsetX = e.clientX - this.leftPx;
+      const offsetY = e.clientY - this.topPx;
+    
+      const onMouseMove = (e) => {
+        this.leftPx = e.clientX - offsetX;
+        this.topPx = e.clientY - offsetY;
+      };
+    
+      const onMouseUp = () => {
+        document.removeEventListener('mousemove', onMouseMove);
+        document.removeEventListener('mouseup', onMouseUp);
+      };
+    
+      document.addEventListener('mousemove', onMouseMove);
+      document.addEventListener('mouseup', onMouseUp);
+    });
+    
   
     //close button
     this.btnClose = new TFPanel( this.caption , 4 , 1 , 1 , 1 , {css:'cssWindowSysButtonJ4'} );

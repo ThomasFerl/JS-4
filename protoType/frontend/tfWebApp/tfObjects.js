@@ -266,13 +266,14 @@ export class TFObject
     this.DOMelement.setAttribute('ID'   ,  this.ID );
 
     if(this.isDragable) 
-    {
+    { // das element "dragable" machen
       this.DOMelement.setAttribute('draggable', true);
+      
+      // die Reaktionen diesbezüglich ...
       this.DOMelement.addEventListener('dragstart', (e)=>{
                                                           if(this.draggingData)
                                                           {  
-                                                            var d=this.draggingData;
-                                                            if(utils.isJSON(d)) d = JSON.stringify(d);
+                                                            const d = JSON.stringify(this.draggingData);  
                                                             e.dataTransfer.setData('application/json', d );
                                                           }  
                                                           if( this.callBack_onDragStart) this.callBack_onDragStart(e);
@@ -284,14 +285,8 @@ export class TFObject
 
 
       this.DOMelement.addEventListener('dragend',   (e)=>{
-                                                            var d = null;
-                                                            if(this.draggingData) d=this.draggingData;
-                                                            else if(this.dataBinding) d=this.dataBinding;
-                                                            if(d==null) d = '';
-                                                            if(utils.isJSON(d)) d = JSON.stringify(d);
-                                                            e.dataTransfer.setData('application/json', d );
-                                                            if( this.callBack_onDragEnd) this.callBack_onDragEnd(e);
-                                                            });  
+                                                           if( this.callBack_onDragEnd) this.callBack_onDragEnd(e);
+                                                         });  
 
     }
     
