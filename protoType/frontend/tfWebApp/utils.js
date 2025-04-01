@@ -967,9 +967,10 @@ export function formatFileSize( sizeInBytes )
   return ( sizeInBytes / Math.pow(1024, i) ).toFixed(2) * 1 + ' ' + ['Byte', 'KB', 'MB', 'GB', 'TB'][i];
 }
 
-export function pathJoin(d, f, e) 
+export function pathJoin(d='', f='', e) 
 {
   let p = '';
+  if (d === '' && f === '') return '';
   
   if (d === '/') p = '/' + f;
   else {

@@ -3473,14 +3473,24 @@ export class TFileDialog
    
     for (var i=0; i<this.files.length; i++) 
     {
-      var filePath = this.dir + this.files[i].name; 
-      var ext      = this.files[i].ext.toLowerCase();
-      var t        = new TFPanel( this.panelFiles , 1 , 1 , "77px" , "77px" , {css:'cssImageContainer'} );
-      t.margin     = '4px';
+      var filePath      = utils.pathJoin(this.dir , this.files[i].name ) 
+      var ext           = this.files[i].ext.toLowerCase();
+      var t             = new TFPanel( this.panelFiles , 1 , 1 , "77px" , "77px" , {dragable:true,draggingData:this.files[i]} );
+          t.dataBinding = {name:this.files[i].name, ext:this.files[i].ext, formatedSize:utils.formatFileSize(this.files[i].size)  ,size:this.files[i].size, path:this.dir};
+               
+          t.margin      = '4px';
+          t.callBack_onClick = function (e, d) 
+          { 
+            this.handleFileSelection( d ) 
+          }.bind(this);
+
 
       if (utils.isImageFile(ext))
-          t.imgURL = utils.buildURL('GETIMAGEFILE',{fileName:filePath } );
-      else t.innerHTML = '<div style="width:100%;height:100%;background-color:gray;">' + this.files[i].name + '</div>'; 
+      {
+       //var img=new TFImage( t, 0,0,'100%','100%');
+      t.imgURL = utils.buildURL('GETIMAGEFILE',{fileName:filePath } );
+      }     
+      else t.innerHTML = '<div style="width:100%;height:100%;background-color:white;">' + this.files[i].name + '</div>'; 
     }
   }
 
