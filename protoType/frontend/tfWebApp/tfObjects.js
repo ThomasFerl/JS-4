@@ -3356,6 +3356,7 @@ export class TFileDialog
     this.height           = params.height || '70%';
     this.caption          = params.caption || 'Dateiauswahl';
     this.root             = params.root || './';
+    this.thumbView        = false;
     this.fullPath         = '';
     this.dir              = '';
     this.file             = '';
@@ -3364,14 +3365,27 @@ export class TFileDialog
     this.fileGrid         = null;
     this.wnd              = new TFWindow( null , this.caption , this.width , this.height , 'CENTER' );
     this.wnd.buildGridLayout_templateColumns('1fr');
-    this.wnd.buildGridLayout_templateRows('3em 1fr 4em');
-    var hlp               = new TFPanel( this.wnd.hWnd , 1 , 1 , 1 , 1 , {css:'cssContainerPanel'} );
-        hlp.buildGridLayout_templateColumns('1fr 7%');
-        hlp.buildGridLayout_templateRows('1fr');
-    this.editFilePath     = new TFEdit( hlp , 1 , 1  , 1 , 1 , {caption:"Filename",appendix:" "} );
-    this.editFileExt      = new TFEdit( hlp , 2 , 1  , 1 , 1 , {caption:"",appendix:"",value:this.mask} );
+    this.wnd.buildGridLayout_templateRows('4.2em 1fr 4em');
+    
+    var hlp1               = new TFPanel( this.wnd.hWnd , 1 , 1 , 1 , 1 , {css:'cssContainerPanel'} );
+        hlp1.buildGridLayout_templateColumns('1fr 1fr 4em 3em');
+        hlp1.buildGridLayout_templateRows('1fr');
+    this.editFilePath     = new TFEdit    ( hlp1 , 1 , 1  , 1 , 1 , {caption:"Filename",labelPosition:"TOP" } );
+    this.cbBookmarks      = new TFComboBox( hlp1 , 2 , 1  , 1 , 1 , {caption:"Lesezeichen", items:[], labelPosition:"TOP"  } );   
+    this.editFileExt      = new TFEdit    ( hlp1 , 3 , 1  , 1 , 1 , {caption:"Typ",value:this.mask,labelPosition:"TOP"} );
     this.editFileExt.callBack_onChange = function() { this.renderFiles() }.bind(this);
     
+    var hlp2              = new TFPanel( hlp1 , 4 , 1 , 1 , 1 , {css:'cssContainerPanel'} );
+    hlp2.padding          = 0;
+    hlp2.margin           = '4px';
+
+    hlp2.backgroundColor  = "gray";
+    hlp2.buildFlexBoxLayout();
+    this.thumbViewBtn     = new TFButton( hlp2 , 0 , 0  , "100%" , '100%' , {caption:"."} );
+    this.thumbViewBtn.margin = 0;
+    this.thumbViewBtn.alignItems = 'center';
+    this.thumbViewBtn.callBack_onClick = function() { this.thumbView = !this.thumbView; this.renderFiles() }.bind(this);
+  
     
 
     var btbPanel = new TFPanel( this.wnd.hWnd , 1 , 3 , 1 , 1 , {} );
@@ -3446,7 +3460,34 @@ export class TFileDialog
 
   renderFiles()
   {
+    if(this.thumbView) this.#renderFiles_ThumbView();
+    else               this.#renderFiles_GridView();
+  } 
+
+
+  #renderFiles_ThumbView()
+  {
     this.panelFiles.innerHTML = '';
+    this.panelFiles.backgroundColor = 'white';
+    this.panelFiles.buildFlexBoxLayout();
+   
+    for (var i=0; i<this.files.length; i++) 
+    {
+      var filePath = this.dir + this.files[i].name; 
+      var ext      = this.files[i].ext.toLowerCase();
+      var t        = new TFPanel( this.panelFiles , 1 , 1 , "77px" , "77px" , {css:'cssImageContainer'} );
+      t.margin     = '4px';
+
+      if (utils.isImageFile(ext))
+          t.imgURL = utils.buildURL('GETIMAGEFILE',{fileName:filePath } );
+      else t.innerHTML = '<div style="width:100%;height:100%;background-color:gray;">' + this.files[i].name + '</div>'; 
+    }
+  }
+
+  #renderFiles_GridView()
+  {
+    this.panelFiles.innerHTML = '';
+    this.panelFiles.backgroundColor = 'white';
     this.fileGrid             = null;
     
     var f=[];
