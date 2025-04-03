@@ -290,22 +290,59 @@ export class TFObject
 
     }
     
-    if(this.isDropTarget) 
-      {
-        this.DOMelement.addEventListener('dragover', (e)=>{ 
-                                                            e.preventDefault();
-                                                            var d = e.dataTransfer.getData('application/json');
-                                                            if(utils.isJSON(d)) d = JSON.parse(d);
-                                                            if( this.callBack_onDragOver)  this.callBack_onDragOver (e ,d); 
-                                                          });
-
-        this.DOMelement.addEventListener('drop',      (e)=>{
-                                                            e.preventDefault();
-                                                            var d = e.dataTransfer.getData('application/json');
-                                                            if(utils.isJSON(d)) d = JSON.parse(d);
-                                                            if( this.callBack_onDrop)  this.callBack_onDrop (e ,d); 
-         });
+    if (this.isDropTarget) 
+    {
+      this.DOMelement.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        if (this.callBack_onDragOver) this.callBack_onDragOver(e, null);
+      });
+    
+      this.DOMelement.addEventListener("drop", (e) => {
+        e.preventDefault();
+    
+        const items = e.dataTransfer.items;
+        const dropResult = {};
+        let pending = 0;
+    
+        for (let item of items) {
+          if (item.kind === "file") {
+            dropResult.localFile = item.getAsFile();
+          }
+    
+          else if (item.kind === "string" && item.type === "application/json") {
+            pending++;
+            item.getAsString((jsonStr) => {
+              try {
+                dropResult.json = JSON.parse(jsonStr);
+              } catch (err) {
+                console.warn("Ungültiges JSON im Drop-Item", err);
+              }
+              if (--pending === 0 && this.callBack_onDrop) this.callBack_onDrop(e, dropResult);
+            });
+          }
+    
+          else if (item.kind === "string" && item.type === "text/uri-list") {
+            pending++;
+            item.getAsString((url) => {
+              dropResult.url = url;
+              if (--pending === 0 && this.callBack_onDrop) this.callBack_onDrop(e, dropResult);
+            });
+          }
+    
+          else if (item.kind === "string" && item.type === "text/plain") {
+            pending++;
+            item.getAsString((txt) => {
+              dropResult.plainText = txt;
+              if (--pending === 0 && this.callBack_onDrop) this.callBack_onDrop(e, dropResult);
+            });
+          }
+        }
+    
+        // Wenn alles synchron war (z.B. nur lokale Datei), sofort Callback
+        if (pending === 0 && this.callBack_onDrop) this.callBack_onDrop(e, dropResult);
+      });
     }
+    
 
     this.left   = this.params.left;
     this.top    = this.params.top;

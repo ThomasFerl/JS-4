@@ -101,7 +101,7 @@ edit()
 
   var  f      = dialogs.addPanel(_w,'',1,1,3,4); 
   var  p      = new TFPanel( _w , 4 , 1 , 1 , 3 , {dropTarget:true} ); 
-       p.callBack_onDrop = function( e,d ) { alert ( 'onDrop: '+JSON.stringify(d))}.bind(this);
+       p.callBack_onDrop = function(e,d) {this.dropImage(e,d)}.bind(this); 
 
      //  p.imgURL = this.portrait;
   var  c      = dialogs.addPanel(_w,'cssRibbon',4,4,1,1);
@@ -132,6 +132,29 @@ edit()
                                                this.wnd.close();
                                              }.bind( {self:this, wnd:w, inp:inp , img:this.picture} )
 }
+
+
+dropImage( e , data )  // onDrop ( event , data )
+{
+  
+        if (data.localFile) {
+          alert("Lokales File gedroppt:", utils.JSONstringify(data.localFile));
+        }
+      
+        if (data.json) {
+          alert("JSON gedroppt:", utils.JSONstringify(data.json));
+        }
+      
+        if (data.url) {
+          alert("Web-Image gedroppt:", data.url);
+        }
+      
+        if (data.plainText) {
+          alert("Plain Text:", data.plainText);
+        }
+}
+
+
 
 }
  
