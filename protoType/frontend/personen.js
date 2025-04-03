@@ -18,7 +18,7 @@ export class TPerson
     {
      // enthält dbPerson NUR das Feld "ID", dann wird die Datenstruktur+Daten direkt aus der DB geladen 
      if (dbPerson.ID)
-        {
+        { 
           var response = this.load_from_dB(dbPerson.ID); 
             if(!response.error) dbPerson = response.result;
         }  
@@ -26,19 +26,18 @@ export class TPerson
         for (const field in dbPerson) 
             {
              const value = dbPerson[field];
-             this.#defineField(field, value);
+             this.#defineField(field, value || '');
+             console.log("THIS->" + utils.JSONstringify(this));
         }
     }
   
    
     #defineField(fieldName, defaultValue) 
     {
-      if(defaultValue)
-        {
-         this.#data    [fieldName] = defaultValue;
-         this.#original[fieldName] = defaultValue;
-        }  
-  
+      // "ERZEUGEN" des Feldnamen innerhalb des lokalen "Data-Containers" 
+      this.#data    [fieldName] = defaultValue || '';
+      this.#original[fieldName] = defaultValue || '';
+     
       Object.defineProperty(this, fieldName, {
                                                get: () => this.#data[fieldName],
                                                set: (val) => {
