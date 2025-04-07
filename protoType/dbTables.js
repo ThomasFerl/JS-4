@@ -56,17 +56,18 @@ tables.push(
 tables.push( 
   {tableName:"persons",
      tableFields:[
-        {fieldName:"NAME"    	    , fieldType:"Text" } ,
-        {fieldName:"VORNAME"	    , fieldType:"Text" } ,
-        {fieldName:"ALIAS1"	      , fieldType:"Text" } ,
-        {fieldName:"ALIAS2"	      , fieldType:"Text" } ,
-        {fieldName:"ALIAS3"	      , fieldType:"Text" } ,
+        {fieldName:"NAME"    	   , fieldType:"Text" } ,
+        {fieldName:"VORNAME"	   , fieldType:"Text" } ,
+        {fieldName:"ALIAS1"	   , fieldType:"Text" } ,
+        {fieldName:"ALIAS2"	   , fieldType:"Text" } ,
+        {fieldName:"ALIAS3"	   , fieldType:"Text" } ,
         {fieldName:"GEBURTSJAHR"	, fieldType:"REAL" } ,
-        {fieldName:"HERKUNFT"	    , fieldType:"Text" } ,
-        {fieldName:"BUSINESSTART"	, fieldType:"REAL" } ,
+        {fieldName:"HERKUNFT"	   , fieldType:"Text" } ,
+        {fieldName:"BUSINESSTART", fieldType:"REAL" } ,
         {fieldName:"BUSINESENDE"	, fieldType:"REAL" } ,
-        {fieldName:"RANKING"	    , fieldType:"INTEGER" } ,
-        {fieldName:"BEMERKUNGEN"	, fieldType:"Text" } 
+        {fieldName:"RANKING"     , fieldType:"INTEGER" } ,
+        {fieldName:"BEMERKUNGEN"	, fieldType:"Text" } ,
+        {fieldName:"PORTRAIT"    , fieldType:"Text" } , 
        ]});
 	
     

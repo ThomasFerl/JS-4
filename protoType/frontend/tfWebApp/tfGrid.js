@@ -18,7 +18,7 @@ class TFieldDef
     // Debug 
     console.log("TFieldDef: " + aFieldName + " , " + aCaption + " , " + testValue )
     
-    if( (typeof testValue != 'object') && (testValue) )
+    if( (typeof testValue != 'object') && (typeof testValue != 'function') && (testValue) )
     {
       if(!isNaN(testValue)) 
       { // numerischer Inhalt:

@@ -1499,33 +1499,72 @@ render()
 
 //---------------------------------------------------------------------------
 
-export class TFileUploader
+export class TFileUploadPanel 
 {
-  constructor ( button , fileTyp , multiple , onChange )
- {
-  this.uploader               = document.createElement("input");
-  this.uploader.type          = 'file';
-  this.uploader.multiple      = multiple;
-  this.uploader.accept        = fileTyp;
+  constructor(parent, params) 
+  {
+    if (!params) params = {};
 
-  if(!onChange) this.onChange = ()=>{console.log('no handler for file upload')};
-  else          this.onChange = onChange;
+    this.panel = new TFPanel(parent, 1, 1, '100%' , '100%' , { css: 'cssDropZoneJ4' });
+    this.panel.position = 'relative';
+    this.panel.display = 'flex';
+    this.panel.alignItems = 'center';
+    this.panel.justifyContent = 'center';
+    this.panel.DOMelement.style.border = '2px dashed gray';
+    this.panel.DOMelement.style.minHeight = '100px';
+    this.panel.DOMelement.style.cursor = 'pointer';
+    
+    this.label = new TFLabel(this.panel, 1, 1, '75%','75%', { caption: params.label || 'Datei(en) hierher ziehen oder klicken' });
+    this.label.textAlign = 'center';
 
-  this.uploader.style.display = 'none';
-      button.callBack_onClick = ()=>{console.log('uploader.click()');this.uploader.click()}
-      document.body.appendChild(this.uploader);
-      
-      // Event Listener hinzufügen, um die ausgewählten Dateien zu ggf verarbeiten / vorschauen / ...
-      this.uploader.addEventListener('change', function() { this.onChange( this.uploader.files ); }.bind(this) ); 
+    this.destDir = params.destDir || '';
+
+    // Upload-Logik
+    this.accept = params.accept || '*/*';
+    this.onUpload = params.onUpload || ((file, serverResponse) => alert('Upload fertig:' + utils.JSONstringify(serverResponse)));
+                           
+    // Versteckter File-Input
+    this.input = document.createElement("input");
+    this.input.type = "file";
+    this.input.multiple = params.multiple || false;
+    this.input.accept = this.accept;
+    this.input.style.display = "none";
+    document.body.appendChild(this.input);
+
+    // Button-Click → öffnet Datei-Dialog
+    this.panel.callBack_onClick = () => this.input.click();
+
+    // Datei über Dialog ausgewählt
+    this.input.addEventListener("change", () => this.__handleFiles(this.input.files));
+
+    // Drag-and-drop Events
+    this.panel.DOMelement.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      this.panel.DOMelement.classList.add("hover");
+    });
+
+    this.panel.DOMelement.addEventListener("dragleave", () => {
+      this.panel.DOMelement.classList.remove("hover");
+    });
+
+    this.panel.DOMelement.addEventListener("drop", (e) => {
+      e.preventDefault();
+      this.panel.DOMelement.classList.remove("hover");
+      const files = e.dataTransfer.files;
+      if (files.length > 0) this.__handleFiles(files);
+    });
+  }
+
+  __handleFiles(fileList) 
+  {
+    for (let file of fileList) 
+    {
+      const fileName = globals.session.userName + '_' + utils.buildRandomID();
+      utils.uploadFileToServer(file, fileName, (result) =>{this.onUpload(result)} , {destDir:this.destDir} );
+    }
+  }
 }
 
-
-async upload( pathName )
-{
-  const files = this.uploader.files;
-  for (let i = 0; i < files.length; i++) utils.uploadFileToServer(files[i], globals.session.userName+'_' + utils.buildRandomID(1), ()=>{console.log('uploaded ... ' + files[i] )} ) 
-}
-}
 
 //---------------------------------------------------------------------------
 
@@ -3071,7 +3110,7 @@ export class TForm
 
         this.controls.push({fieldName:key, value:this.data[key], label:lbl, appendix:apx, type: type || "TEXT", enabled:true,  visible:true, editControl:null, params:{} })
 
-      } else  this.controls.push({fieldName:key, value:this.data[key], label:"" , appendix:"" , type:"TEXT", enabled:false, visible:false , params:{} })
+      } // else  this.controls.push({fieldName:key, value:this.data[key], label:"" , appendix:"" , type:"TEXT", enabled:false, visible:false , params:{} })
     }
   }   // else  
 

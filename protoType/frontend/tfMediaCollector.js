@@ -15,7 +15,7 @@ import { TFWindow }      from "./tfWebApp/tfWindows.js";
 import { TFChart }       from "./tfWebApp/tfObjects.js";
 import { TFDateTime }    from "./tfWebApp/utils.js";
 
-import { TPerson }       from "./personen.js";
+import { TPerson, TPersonList } from "./personen.js";
 
 
 const videoExtensions = [
@@ -52,7 +52,7 @@ class Tthumbnail
             
                                              if(item.value==3) {}
 
-                                             if(item.value==4) {this.newPerson()}
+                                             if(item.value==4) {}
                                               
                                           }  ;
 
@@ -93,25 +93,7 @@ class Tthumbnail
                                 
     }
 
-newPerson()
-{
-  var aPerson = {
-    ID           : 0,
-    NAME         : '',
-    VORNAME      : '',
-    ALIAS1       : '',
-    ALIAS2       : '',
-    ALIAS3       : '',
-    GEBURTSJAHR  : null,
-    HERKUNFT     : '',
-    BUSINESSTART : null,
-    BUSINESENDE  : null,
-    RANKING      : 0,
-    BEMERKUNGEN  : '' };
-  
-    var p = new TPerson({ID:1});
-    p.edit();
-}    
+   
 
 handleMediaFile()
 {
@@ -171,6 +153,10 @@ export class TFMediaCollector
    this.btnAddImage = dialogs.addButton(this.menuPanel , '' , 3 , 1 , 1 , 1 , 'Bild-Verzeichnis hinzufügen');
    this.btnAddImage.height='2em';
    this.btnAddImage.callBack_onClick = function(){this.addMediaFile('DIR')}.bind(this);
+
+   this.btnPersonen = dialogs.addButton(this.menuPanel , '' , 4 , 1 , 1 , 1 , 'Personen');
+   this.btnPersonen.height='2em';
+   this.btnPersonen.callBack_onClick = function(){ new TPersonList(); }.bind(this);
 
    this.updateThumbs(); 
  };

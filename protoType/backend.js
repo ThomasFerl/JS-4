@@ -46,9 +46,18 @@ const webApp      = express();
       utils.log("static Path: " + staticPath );
 
 
+uploadPath  = path.join (__dirname, 'tmpUploads' );
+
+ // existiet der Pfad tmpUploads ?
+if(!fs.existsSync(uploadPath))
+{
+  fs.mkdirSync(uploadPath , { recursive: true });
+  utils.log( uploadPath + " created");
+}
+
  // Konfiguriere Multer, für fileUpload
 const storage = multer.diskStorage({
-  destination: function (req, file, cb) { cb(null, 'tmp/'); }, // Zielverzeichnis für uploads 
+  destination: function (req, file, cb ) { cb(null, uploadPath ); }, // Zielverzeichnis für uploads 
   
   // Hier kannst du den Dateinamen dynamisch basierend auf den Formulardaten anpassen
   filename   : function (req, file, cb) { const fileName = req.body.fileName || '~'+utils.generateRandomString(49); 
@@ -203,9 +212,60 @@ function lsPix( req , res )
 }  
 
 
+function handleUpload( req , res )
+{
+  // Delegation an multer ... mit CallBack ... 
+  console.log("handleUpload -> " + req.body.file);
+  console.log("             -> " + req.body.fileName);
+  console.log("             -> " + req.body.destDir);
 
+    if (!req.file) return res.send(handleError('no uploadfile found !'));
+  
+    const destDir = req.body.destDir; // optional : Zielverzeichnis via Parameter (über req.body)
 
-
+    if (destDir) 
+    {  
+      const baseName = path.basename(req.file.filename); // nur der Dateiname
+  
+      // Zielpfad bauen
+      const targetDir  = path.join(__dirname, destDir); // z. B. ./uploads/bilder/personen/avatars
+      const targetPath = path.join(targetDir, baseName);
+  
+      // Verzeichnis anlegen, falls nicht vorhanden
+      fs.mkdirSync(targetDir, { recursive: true });
+  
+      // Datei verschieben
+      fs.rename(req.file.path, targetPath, (err) => {
+      if (err) return res.send(handleError('Fehler beim Verschieben der Datei: ' + err.message));
+  
+      utils.log(`Upload & verschoben → ${targetPath}`);
+  
+      res.send(JSON.stringify({
+        error: false,
+        errMsg: "OK",
+        result: {
+          originalName: req.file.originalname,
+          savedName: baseName,
+          savedPath: targetPath,
+          destination: destDir
+        }
+      }));
+    });
+  }
+  else
+  {
+    // Wenn kein Zielverzeichnis angegeben ist, wird die Datei im temporären Verzeichnis gespeichert
+    res.send(JSON.stringify({
+      error: false,
+      errMsg: "OK",
+      result: {
+        originalName: req.file.originalname,
+        savedName: req.file.filename,
+        savedPath: req.file.path
+      }
+    }));
+  }  
+}
 
 
 function handle_backDoor_Request( reqStr , res)
@@ -260,19 +320,10 @@ webApp.get('/x'                            ,  handleRequest );
 webApp.get('/lsPix'                        ,  lsPix );
 
 webApp.post('/xpost'                       ,  handleRequest );
-webApp.post('/upload', upload.single('file'), (req, res) => {
-                                                              if (!req.file) return res.send(handleError('no uploadfile found !'));
-                                                              
-                                                              // Datei wurde erfolgreich hochgeladen und ist über req.file zugänglich
-                                                              res.send(JSON.stringify({error:false, errMsg:"OK", result:req.file}))
-                                                              utils.log('Datei hochgeladen:', req.file);
+
+webApp.post('/upload', upload.single('file'), handleUpload );
   
-                                                              // Weitere Verarbeitung oder Antwort hier...
-                                                            });  // Ende UPLOAD
-
-
-
-
+ 
 var webServer = {};
 
 if(useHTTPS) webServer  = https.createServer( sslOptions , webApp );

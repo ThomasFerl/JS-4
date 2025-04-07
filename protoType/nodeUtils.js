@@ -778,6 +778,9 @@ exports.getImageFile = async( fs , path , img , req , res  ) =>
   // existiert das File ?
   if (!fs.existsSync(img)) {res.send("missing fileName '"+img+"'"); return; } 
   
+  // ist img ein Verzeichnis ?
+  if( fs.statSync(img).isDirectory() ) {res.send(img + " is a directory"); return; } 
+
   var mime =
        {
         gif: 'image/gif',

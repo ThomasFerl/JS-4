@@ -644,7 +644,7 @@ html, body {
 
   .cssButton01 
   {
-    background-color: #5a9900;
+    background-color: #5f8a23;
     border          : thin solid black;
     box-shadow      : 0 .2em .4em black;
     height          : auto;
@@ -962,6 +962,26 @@ html, body {
    align-items       : center; /* Vertikal zentrieren */    
    overflow          : hidden;
  } 
+
+ .cssDropZoneJ4 {
+   border: 2px dashed #aaa;
+   border-radius: 8px;
+   background-color: #f9f9f9;
+   transition: background-color 0.2s ease, border-color 0.2s ease;
+   color: #444;
+   font-size: 1em;
+   padding: 1em;
+   text-align: center;
+   user-select: none;
+ }
+ 
+ .cssDropZoneJ4.hover {
+   border-color: #007acc;
+   background-color: #e0f2ff;
+   color: #007acc;
+ }
+
+
 
 
 .cssHidePanel

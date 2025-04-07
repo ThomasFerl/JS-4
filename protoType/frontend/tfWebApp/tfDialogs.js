@@ -34,7 +34,7 @@ import { THTMLTable } from "./tfGrid.js";
 import { TFTreeView } from "./tfTreeView.js"; 
 
 import { TFCheckBox, 
-         TFileUploader, 
+         TFileUploadPanel, 
          TFImage, 
          TFLabel,     
          TFPanel,
@@ -259,9 +259,9 @@ export function addTimePicker( aParent , left , top , labelText , preset , dontR
 
 
 
-export function addFileUploader( button , fileTyp , multiple , onChange )
+export function addFileUploader( parent , fileTyp , multiple , destDir , onUpload )  
 {
-  return new TFileUploader( button , fileTyp , multiple , onChange );   
+ return new TFileUploadPanel( parent , {fileType:fileTyp, multiple:multiple, onUpload:onUpload, destDir:destDir}); 
 }
 
 

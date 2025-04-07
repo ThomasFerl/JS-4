@@ -257,7 +257,7 @@ var   btn10 = dialogs.addButton( menuContainer , "" , 10 , 1 , 1 , 1 , "ask me" 
 
       dialogs.addTimePicker( panels[4] , 1 , 1 , 'time' , '01.01.2000 17:35' , null , {} );
 
-      dialogs.addFileUploader( dialogs.addButton(panels[5],'',1,1,1,1,'Upload any File') , '*.*' , true , (selectedFiles) => {console.log(JSON.stringify(selectedFiles))}  );
+      dialogs.addFileUploader(panels[5] , '*.*' , true , 'testUpload' , (selectedFiles) => {dialogs.showMessage(JSON.stringify(selectedFiles))}  );
                  
       
       dialogs.addCombobox( panels[6] , 1 , 1 , 10 , 'combobox' , '' , 'aaaa' , [ {caption:'aaaa',value:'A'},
