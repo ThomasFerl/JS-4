@@ -111,7 +111,7 @@ buildTreeView()
                                                          }});
 
              this.treeView.callBack_onClick = (node) => {if(node.content.ID_topic) 
-                                                            { debugger;
+                                                            {
                                                                this.showLastPayloads( node.content.ID_topic )
                                                                this.showMQTTValue( node.content.ID_topic , node.content.topic );
                                                                this.showMQTchart( node.content.ID_topic , node.content.topic );
@@ -145,11 +145,15 @@ showLastPayloads( ID_topic , topic)
         payloadTable.innerHTML = 'Fehler beim Abruf der Payloads';
         return;
     } 
-    
-    var dt = new TFDateTime(response.result.timestamp);  
+    debugger;
+    var dt = new TFDateTime(response.result[0].DT);  
+    try {var pl = JSON.parse(response.result[0].payload);}
+    catch {  pl = response.result[0].payload; }
     
     payloadTableCaption.caption = 'letzter Datenempfang: ' + dt.formatDateTime('dd.mm.yyyy hh:mn:ss');
-    this.dataSheet = dialogs.createTable( payloadTable , response.result.fields ,  ['timestamp'] , {} );
+
+
+    dialogs.valueList( payloadTable , '' , pl , [] , {} );
     
 }
 

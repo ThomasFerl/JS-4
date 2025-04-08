@@ -54,7 +54,9 @@ module.exports.onMessage = (topic, payload) =>
 
 module.exports.loadLastPayload = (ID_topic) =>
 {
-   return dbUtils.fetchRecords_from_Query(dB, "Select * from mqttPayloads Where ID_Topic="+ID_topic+" order by ID desc limit 1" );
+   var response = dbUtils.fetchRecords_from_Query(dB, "Select * from mqttPayloads Where ID_Topic="+ID_topic+" order by ID desc limit 1" );
+   console.log("loadLastPayload: "+JSON.stringify(response.result));
+   return response;
 }
 
 
