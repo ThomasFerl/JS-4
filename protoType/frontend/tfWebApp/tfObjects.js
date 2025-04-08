@@ -1055,6 +1055,7 @@ get opacity()
 
  set imgURL(value) 
  {
+  if(!value) return;
   if (value.endsWith('.svg')) 
     {
       this.__svgURL = value;
@@ -1521,7 +1522,7 @@ export class TFileUploadPanel
 
     // Upload-Logik
     this.accept = params.accept || '*/*';
-    this.onUpload = params.onUpload || ((file, serverResponse) => alert('Upload fertig:' + utils.JSONstringify(serverResponse)));
+    this.onUpload = params.onUpload || ((file, serverResponse) => alert('not handled Upload: ' + utils.JSONstringify(serverResponse)));
                            
     // Versteckter File-Input
     this.input = document.createElement("input");
