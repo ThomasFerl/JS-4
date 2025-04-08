@@ -160,6 +160,8 @@ class TFMediaCollektor
     this.fs            = {};
     this.posterPath    = "/home/tferl/GIT/JS-4/protoType/mediaCache/poster/";
     this.thumbPath     = "/home/tferl/GIT/JS-4/protoType/mediaCache/thumbs/";
+    this.portraitPath  = "/home/tferl/GIT/JS-4/protoType/mediaCache/persons/";
+
     this.numberOfThums = 20;
     this.thumbPosition = 7;  // nach 7 Sekunden wird Movie-Thumb erzeugt
     this.sizeOfThumbs  = '270:-1';
@@ -231,6 +233,19 @@ if(CMD=='PERSON')
    var     id = param.ID;
    if(!id) id = param.ID_PERSON;
    return dbUtils.fetchRecord_from_Query( this.db , "Select * from persons where ID="+ id );
+}
+
+if(CMD=='PORTRAITURL')
+{
+  var portrait = ''
+
+  if(param.ID_PERSON) portrait = dbUtils.fetchValue_from_Query( this.db , "Select PORTRAIT from persons where ID="+ param.ID_PERSON ).result;
+  if(param.portrait)  portrait = param.portrait;
+
+  portrait  = this.path.join( this.portraitPath , portrait );
+        
+  return {error:false, errMsg:"OK", result:portrait };
+    
 }
 
 

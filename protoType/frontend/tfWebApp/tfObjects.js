@@ -266,13 +266,14 @@ export class TFObject
     this.DOMelement.setAttribute('ID'   ,  this.ID );
 
     if(this.isDragable) 
-    {
+    { // das element "dragable" machen
       this.DOMelement.setAttribute('draggable', true);
+      
+      // die Reaktionen diesbezüglich ...
       this.DOMelement.addEventListener('dragstart', (e)=>{
                                                           if(this.draggingData)
                                                           {  
-                                                            var d=this.draggingData;
-                                                            if(utils.isJSON(d)) d = JSON.stringify(d);
+                                                            const d = JSON.stringify(this.draggingData);  
                                                             e.dataTransfer.setData('application/json', d );
                                                           }  
                                                           if( this.callBack_onDragStart) this.callBack_onDragStart(e);
@@ -284,33 +285,64 @@ export class TFObject
 
 
       this.DOMelement.addEventListener('dragend',   (e)=>{
-                                                            var d = null;
-                                                            if(this.draggingData) d=this.draggingData;
-                                                            else if(this.dataBinding) d=this.dataBinding;
-                                                            if(d==null) d = '';
-                                                            if(utils.isJSON(d)) d = JSON.stringify(d);
-                                                            e.dataTransfer.setData('application/json', d );
-                                                            if( this.callBack_onDragEnd) this.callBack_onDragEnd(e);
-                                                            });  
+                                                           if( this.callBack_onDragEnd) this.callBack_onDragEnd(e);
+                                                         });  
 
     }
     
-    if(this.isDropTarget) 
-      {
-        this.DOMelement.addEventListener('dragover', (e)=>{ 
-                                                            e.preventDefault();
-                                                            var d = e.dataTransfer.getData('application/json');
-                                                            if(utils.isJSON(d)) d = JSON.parse(d);
-                                                            if( this.callBack_onDragOver)  this.callBack_onDragOver (e ,d); 
-                                                          });
-
-        this.DOMelement.addEventListener('drop',      (e)=>{
-                                                            e.preventDefault();
-                                                            var d = e.dataTransfer.getData('application/json');
-                                                            if(utils.isJSON(d)) d = JSON.parse(d);
-                                                            if( this.callBack_onDrop)  this.callBack_onDrop (e ,d); 
-         });
+    if (this.isDropTarget) 
+    {
+      this.DOMelement.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        if (this.callBack_onDragOver) this.callBack_onDragOver(e, null);
+      });
+    
+      this.DOMelement.addEventListener("drop", (e) => {
+        e.preventDefault();
+    
+        const items = e.dataTransfer.items;
+        const dropResult = {};
+        let pending = 0;
+    
+        for (let item of items) {
+          if (item.kind === "file") {
+            dropResult.localFile = item.getAsFile();
+          }
+    
+          else if (item.kind === "string" && item.type === "application/json") {
+            pending++;
+            item.getAsString((jsonStr) => {
+              try {
+                dropResult.json = JSON.parse(jsonStr);
+              } catch (err) {
+                console.warn("Ungültiges JSON im Drop-Item", err);
+              }
+              if (--pending === 0 && this.callBack_onDrop) this.callBack_onDrop(e, dropResult);
+            });
+          }
+    
+          else if (item.kind === "string" && item.type === "text/uri-list") {
+            pending++;
+            item.getAsString((url) => {
+              dropResult.url = url;
+              if (--pending === 0 && this.callBack_onDrop) this.callBack_onDrop(e, dropResult);
+            });
+          }
+    
+          else if (item.kind === "string" && item.type === "text/plain") {
+            pending++;
+            item.getAsString((txt) => {
+              dropResult.plainText = txt;
+              if (--pending === 0 && this.callBack_onDrop) this.callBack_onDrop(e, dropResult);
+            });
+          }
+        }
+    
+        // Wenn alles synchron war (z.B. nur lokale Datei), sofort Callback
+        if (pending === 0 && this.callBack_onDrop) this.callBack_onDrop(e, dropResult);
+      });
     }
+    
 
     this.left   = this.params.left;
     this.top    = this.params.top;
@@ -1467,33 +1499,72 @@ render()
 
 //---------------------------------------------------------------------------
 
-export class TFileUploader
+export class TFileUploadPanel 
 {
-  constructor ( button , fileTyp , multiple , onChange )
- {
-  this.uploader               = document.createElement("input");
-  this.uploader.type          = 'file';
-  this.uploader.multiple      = multiple;
-  this.uploader.accept        = fileTyp;
+  constructor(parent, params) 
+  {
+    if (!params) params = {};
 
-  if(!onChange) this.onChange = ()=>{console.log('no handler for file upload')};
-  else          this.onChange = onChange;
+    this.panel = new TFPanel(parent, 1, 1, '100%' , '100%' , { css: 'cssDropZoneJ4' });
+    this.panel.position = 'relative';
+    this.panel.display = 'flex';
+    this.panel.alignItems = 'center';
+    this.panel.justifyContent = 'center';
+    this.panel.DOMelement.style.border = '2px dashed gray';
+    this.panel.DOMelement.style.minHeight = '100px';
+    this.panel.DOMelement.style.cursor = 'pointer';
+    
+    this.label = new TFLabel(this.panel, 1, 1, '75%','75%', { caption: params.label || 'Datei(en) hierher ziehen oder klicken' });
+    this.label.textAlign = 'center';
 
-  this.uploader.style.display = 'none';
-      button.callBack_onClick = ()=>{console.log('uploader.click()');this.uploader.click()}
-      document.body.appendChild(this.uploader);
-      
-      // Event Listener hinzufügen, um die ausgewählten Dateien zu ggf verarbeiten / vorschauen / ...
-      this.uploader.addEventListener('change', function() { this.onChange( this.uploader.files ); }.bind(this) ); 
+    this.destDir = params.destDir || '';
+
+    // Upload-Logik
+    this.accept = params.accept || '*/*';
+    this.onUpload = params.onUpload || ((file, serverResponse) => alert('Upload fertig:' + utils.JSONstringify(serverResponse)));
+                           
+    // Versteckter File-Input
+    this.input = document.createElement("input");
+    this.input.type = "file";
+    this.input.multiple = params.multiple || false;
+    this.input.accept = this.accept;
+    this.input.style.display = "none";
+    document.body.appendChild(this.input);
+
+    // Button-Click → öffnet Datei-Dialog
+    this.panel.callBack_onClick = () => this.input.click();
+
+    // Datei über Dialog ausgewählt
+    this.input.addEventListener("change", () => this.__handleFiles(this.input.files));
+
+    // Drag-and-drop Events
+    this.panel.DOMelement.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      this.panel.DOMelement.classList.add("hover");
+    });
+
+    this.panel.DOMelement.addEventListener("dragleave", () => {
+      this.panel.DOMelement.classList.remove("hover");
+    });
+
+    this.panel.DOMelement.addEventListener("drop", (e) => {
+      e.preventDefault();
+      this.panel.DOMelement.classList.remove("hover");
+      const files = e.dataTransfer.files;
+      if (files.length > 0) this.__handleFiles(files);
+    });
+  }
+
+  __handleFiles(fileList) 
+  {
+    for (let file of fileList) 
+    {
+      const fileName = globals.session.userName + '_' + utils.buildRandomID();
+      utils.uploadFileToServer(file, fileName, (result) =>{this.onUpload(result)} , {destDir:this.destDir} );
+    }
+  }
 }
 
-
-async upload( pathName )
-{
-  const files = this.uploader.files;
-  for (let i = 0; i < files.length; i++) utils.uploadFileToServer(files[i], globals.session.userName+'_' + utils.buildRandomID(1), ()=>{console.log('uploaded ... ' + files[i] )} ) 
-}
-}
 
 //---------------------------------------------------------------------------
 
@@ -3039,7 +3110,7 @@ export class TForm
 
         this.controls.push({fieldName:key, value:this.data[key], label:lbl, appendix:apx, type: type || "TEXT", enabled:true,  visible:true, editControl:null, params:{} })
 
-      } else  this.controls.push({fieldName:key, value:this.data[key], label:"" , appendix:"" , type:"TEXT", enabled:false, visible:false , params:{} })
+      } // else  this.controls.push({fieldName:key, value:this.data[key], label:"" , appendix:"" , type:"TEXT", enabled:false, visible:false , params:{} })
     }
   }   // else  
 
@@ -3361,6 +3432,7 @@ export class TFileDialog
     this.height           = params.height || '70%';
     this.caption          = params.caption || 'Dateiauswahl';
     this.root             = params.root || './';
+    this.thumbView        = false;
     this.fullPath         = '';
     this.dir              = '';
     this.file             = '';
@@ -3369,14 +3441,27 @@ export class TFileDialog
     this.fileGrid         = null;
     this.wnd              = new TFWindow( null , this.caption , this.width , this.height , 'CENTER' );
     this.wnd.buildGridLayout_templateColumns('1fr');
-    this.wnd.buildGridLayout_templateRows('3em 1fr 4em');
-    var hlp               = new TFPanel( this.wnd.hWnd , 1 , 1 , 1 , 1 , {css:'cssContainerPanel'} );
-        hlp.buildGridLayout_templateColumns('1fr 7%');
-        hlp.buildGridLayout_templateRows('1fr');
-    this.editFilePath     = new TFEdit( hlp , 1 , 1  , 1 , 1 , {caption:"Filename",appendix:" "} );
-    this.editFileExt      = new TFEdit( hlp , 2 , 1  , 1 , 1 , {caption:"",appendix:"",value:this.mask} );
+    this.wnd.buildGridLayout_templateRows('4.2em 1fr 4em');
+    
+    var hlp1               = new TFPanel( this.wnd.hWnd , 1 , 1 , 1 , 1 , {css:'cssContainerPanel'} );
+        hlp1.buildGridLayout_templateColumns('1fr 1fr 4em 3em');
+        hlp1.buildGridLayout_templateRows('1fr');
+    this.editFilePath     = new TFEdit    ( hlp1 , 1 , 1  , 1 , 1 , {caption:"Filename",labelPosition:"TOP" } );
+    this.cbBookmarks      = new TFComboBox( hlp1 , 2 , 1  , 1 , 1 , {caption:"Lesezeichen", items:[], labelPosition:"TOP"  } );   
+    this.editFileExt      = new TFEdit    ( hlp1 , 3 , 1  , 1 , 1 , {caption:"Typ",value:this.mask,labelPosition:"TOP"} );
     this.editFileExt.callBack_onChange = function() { this.renderFiles() }.bind(this);
     
+    var hlp2              = new TFPanel( hlp1 , 4 , 1 , 1 , 1 , {css:'cssContainerPanel'} );
+    hlp2.padding          = 0;
+    hlp2.margin           = '4px';
+
+    hlp2.backgroundColor  = "gray";
+    hlp2.buildFlexBoxLayout();
+    this.thumbViewBtn     = new TFButton( hlp2 , 0 , 0  , "100%" , '100%' , {caption:"."} );
+    this.thumbViewBtn.margin = 0;
+    this.thumbViewBtn.alignItems = 'center';
+    this.thumbViewBtn.callBack_onClick = function() { this.thumbView = !this.thumbView; this.renderFiles() }.bind(this);
+  
     
 
     var btbPanel = new TFPanel( this.wnd.hWnd , 1 , 3 , 1 , 1 , {} );
@@ -3451,7 +3536,44 @@ export class TFileDialog
 
   renderFiles()
   {
+    if(this.thumbView) this.#renderFiles_ThumbView();
+    else               this.#renderFiles_GridView();
+  } 
+
+
+  #renderFiles_ThumbView()
+  {
     this.panelFiles.innerHTML = '';
+    this.panelFiles.backgroundColor = 'white';
+    this.panelFiles.buildFlexBoxLayout();
+   
+    for (var i=0; i<this.files.length; i++) 
+    {
+      var filePath      = utils.pathJoin(this.dir , this.files[i].name ) 
+      var ext           = this.files[i].ext.toLowerCase();
+      var t             = new TFPanel( this.panelFiles , 1 , 1 , "77px" , "77px" , {dragable:true,draggingData:this.files[i]} );
+          t.dataBinding = {name:this.files[i].name, ext:this.files[i].ext, formatedSize:utils.formatFileSize(this.files[i].size)  ,size:this.files[i].size, path:this.dir};
+               
+          t.margin      = '4px';
+          t.callBack_onClick = function (e, d) 
+          { 
+            this.handleFileSelection( d ) 
+          }.bind(this);
+
+
+      if (utils.isImageFile(ext))
+      {
+       //var img=new TFImage( t, 0,0,'100%','100%');
+      t.imgURL = utils.buildURL('GETIMAGEFILE',{fileName:filePath } );
+      }     
+      else t.innerHTML = '<div style="width:100%;height:100%;background-color:white;">' + this.files[i].name + '</div>'; 
+    }
+  }
+
+  #renderFiles_GridView()
+  {
+    this.panelFiles.innerHTML = '';
+    this.panelFiles.backgroundColor = 'white';
     this.fileGrid             = null;
     
     var f=[];

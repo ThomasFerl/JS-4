@@ -967,9 +967,10 @@ export function formatFileSize( sizeInBytes )
   return ( sizeInBytes / Math.pow(1024, i) ).toFixed(2) * 1 + ' ' + ['Byte', 'KB', 'MB', 'GB', 'TB'][i];
 }
 
-export function pathJoin(d, f, e) 
+export function pathJoin(d='', f='', e) 
 {
   let p = '';
+  if (d === '' && f === '') return '';
   
   if (d === '/') p = '/' + f;
   else {
@@ -1394,24 +1395,28 @@ export function findEntryByField( array , fieldName , value )
 
 
 
-export function uploadFileToServer(file, fileName , callBackAfterUpload ) 
-{
+export function uploadFileToServer(file, fileName , callBackAfterUpload , params  ) 
+{ 
   console.log('uploadFileToServer...');
-  console.log('  - file     :'+file);
+  console.log('  - file     :'+ file.name);
   console.log('  - fileName :'+fileName);
 
   let formData = new FormData();
   formData.append('file', file);
   formData.append('fileName', fileName ); // Hinzufügen des Dateinamens zum FormData-Objekt
 
+  if(params.destDir) formData.append('destDir' , params.destDir); 
+
 // Erstelle ein XMLHttpRequest-Objekt
 var xhr = new XMLHttpRequest();
 
 // Konfiguriere die Anfrage (Method, URL und asynchroner Modus)
+// getUploadURL() -> getServer()+'/upload'; API-Endpunkt für den Upload
 xhr.open('POST', globals.getUploadURL() , true);
 
 // Definiere eine Funktion, die aufgerufen wird, wenn die Anfrage abgeschlossen ist
-xhr.onload = function () {
+xhr.onload = function () 
+{
     if (xhr.status >= 200 && xhr.status < 300) {
         // Erfolgreiche Antwort verarbeiten
         console.log('uploadFileToServer Response::', xhr.responseText);
