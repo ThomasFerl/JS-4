@@ -1,5 +1,5 @@
 const useHTTPS          = false;
-const port              = '4000';
+const port              = '4001';
 
 const MQTT_BROKER_URL   = 'mqtt://10.102.13.99:4701'; 
 
