@@ -21,7 +21,7 @@ import {TFDistributor,
 import * as mqttArchive from "./tfMQTTArchive.js";        
 
 
-const start_ab_Ebene = 3;
+const start_ab_Ebene = 1;
 
 
 export class TFMQTTExplorer
@@ -145,11 +145,15 @@ showLastPayloads( ID_topic , topic)
         payloadTable.innerHTML = 'Fehler beim Abruf der Payloads';
         return;
     } 
-    
-    var dt = new TFDateTime(response.result.timestamp);  
+    debugger;
+    var dt = new TFDateTime(response.result[0].DT);  
+    try {var pl = JSON.parse(response.result[0].payload);}
+    catch {  pl = response.result[0].payload; }
     
     payloadTableCaption.caption = 'letzter Datenempfang: ' + dt.formatDateTime('dd.mm.yyyy hh:mn:ss');
-    this.dataSheet = dialogs.createTable( payloadTable , response.result.fields ,  ['timestamp'] , {} );
+
+
+    dialogs.valueList( payloadTable , '' , pl , [] , {} );
     
 }
 

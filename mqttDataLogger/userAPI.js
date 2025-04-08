@@ -152,8 +152,8 @@ if( CMD=='NEWDEVICE' )
     }
 
 
-
-  if( CMD=='LASTPAYLOAD') 
+    
+  if( CMD=='MQTTLASTPAYLOAD') 
     {
       return mqttHandler.loadLastPayload( param.ID_topic ); 
     }
