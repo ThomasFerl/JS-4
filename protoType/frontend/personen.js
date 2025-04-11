@@ -1,4 +1,5 @@
 
+import * as globals      from "./tfWebApp/globals.js";
 import * as utils        from "./tfWebApp/utils.js";
 import * as dialogs      from "./tfWebApp/tfDialogs.js";
 import { TForm,
@@ -10,14 +11,17 @@ import { TForm,
 
 export class TPerson 
 {
-    #data        = {};
-    #original    = {};
-    #dirtyFields = new Set();
+    #data          = {};
+    #original      = {};
+    #dirtyFields   = new Set();
+    #portraitPanel = null;
+    #destDir       = 'mediaCache/persons';
     
   
     constructor(dbPerson = {}) 
     { 
-     // Prüfung: enthält dbPerson **nur** das Feld "ID"
+      
+      // Prüfung: enthält dbPerson **nur** das Feld "ID"
      const keys = Object.keys(dbPerson);
 
     if (keys.length === 1 && keys[0] === "ID") 
@@ -115,9 +119,9 @@ edit( callback_if_ready )
   // form 
   var  f      = dialogs.addPanel(_w,'',1,1,3,4); 
  
-  var p        = new TFPanel( _w  , 4 , 1 , 1 , 3 , {dropTarget:true} ); 
-      p.imgURL = this.portraitURL();
-      p.callBack_onDrop = function(e,d) { this.dropImage(e,d)}.bind(this); 
+  this.#portraitPanel  = new TFPanel( _w  , 4 , 1 , 1 , 3 , {dropTarget:true} ); 
+  this.#portraitPanel.imgURL = this.portraitURL();
+  this.#portraitPanel.callBack_onDrop = function(e,d) { this.dropImage(e,d)}.bind(this); 
 
   
  // dialogs.addFileUploader  ( p , '*.*' , true , 'mediaCache/persons' , (selectedFiles) => { this.PORTRAIT=selectedFiles.result.savedName});
@@ -155,11 +159,19 @@ edit( callback_if_ready )
 
 
 dropImage( e , data )  // onDrop ( event , data )
-{ debugger;
-  if (data.localFile) {
-          alert("Lokales File gedroppt:"+ data.localFile.name);
-        }
-      
+{ 
+  if (data.localFile) 
+    {
+     const f = (globals.session.userName || 'developer') + '_' + utils.buildRandomID();
+     utils.uploadFileToServer(data.localFile, f, 
+           function(result)
+           { debugger;
+             this.self.PORTRAIT=result ; 
+             this.portraitPanel.imgURL=this.portraitURL() 
+            }.bind({self:this,destDir:this.#destDir}) , {destDir:this.#destDir} );
+    }
+
+ 
         if (data.json) {
           alert("JSON gedroppt:"+ utils.JSONstringify(data.json));
         }
