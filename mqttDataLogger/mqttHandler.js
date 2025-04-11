@@ -60,6 +60,28 @@ module.exports.loadLastPayload = (ID_topic) =>
 }
 
 
+module.exports.loadLastPayloads = (ID_topic , fnValue , fnTimestamp ) =>
+   { 
+      var result   = [];
+      var response = dbUtils.fetchRecords_from_Query(dB, "Select * from mqttPayloads Where ID_Topic="+ID_topic+" order by ID " );
+      if(response.error) return response;
+
+      for(var i=0; i<response.result.length; i++)
+      {
+         var rec = response.result[i];
+         try {var p = JSON.parse(rec.payload);}
+         catch { console.log("parse Error") ; return {error:true, errMsg:"JSON-parse-Error", result:result}; }
+          
+         result.push({fnTimestamp:p[fnTimestamp],fnValue:p[fnValue]})
+
+      } 
+
+      console.log("loadLastPayloadS: "+JSON.stringify(result));
+      return {error:false, errMsg:'ok', result:result};
+   }
+
+
+
 module.exports.count = async (params) =>
 {  
     var resolution = params.resolution.toUppercase();

@@ -145,7 +145,7 @@ showLastPayloads( ID_topic , topic)
         payloadTable.innerHTML = 'Fehler beim Abruf der Payloads';
         return;
     } 
-    debugger;
+    
     var dt = new TFDateTime(response.result[0].DT);  
     try {var pl = JSON.parse(response.result[0].payload);}
     catch {  pl = response.result[0].payload; }
@@ -179,10 +179,16 @@ showMQTTValue( ID_topic , topic  )
 showMQTchart( ID_topic , topic )
 {
   // last 50 values
-  var response = mqttArchive.getLastValues( {ID_topic:ID_topic , fieldName:'value', limit:50} );
+  var response = mqttArchive.lastpayloads(ID_topic , 'value' , 'timestamp' );
+
+  if(response.error)
+  {
+      this.MQTTContainer.innerHTML = 'Fehler beim Abruf der Werte: ' + response.errMsg;
+      return;
+  }
   var chartData = [];
-  for(var i=response.result.timeSeries.length-1; i>-1; i--) 
-    chartData.push({x:response.result.timeSeries[i].time, y:response.result.timeSeries[i].value });
+  for(var i=0; i<response.result.length;  i++) 
+    chartData.push({x:i, y:response.result[i].fnValue });
   
   new TFMQTTChart( this.MQTTContainer , 2,1,'100%','100%', {
                                                   distributor            : this.mqttDistributor, 
@@ -202,7 +208,7 @@ showArchive( ID_topic , topic )
 
     var response = mqttArchive.getValues( {ID_topic:ID_topic , fieldName:'value', group:{interval:'1m', aggregate:'mean'}} );
 
-    if(response.error)
+    if(response.error) 
     {
         this.archiveContainer.innerHTML = 'Fehler beim Abruf der Archive: ' + response.errMsg;
         return;

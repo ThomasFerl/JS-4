@@ -1,6 +1,6 @@
 const useHTTPS                = false;
 
-export var debug              = false;
+export var debug              = true;
 export var webApp             = {activeWorkspace:null};
 
 
