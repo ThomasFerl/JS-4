@@ -772,14 +772,14 @@ module.exports.getTextFile = function( fs , fileName )
   } catch(err) { return {error:true, errMsg:err.message, result:"" }; } 
 }
 
-
+// keep in mind:  fs & path sind librarys.... img hätter besser imgPath heissen sollen ...
 exports.getImageFile = async( fs , path , img , req , res  ) =>
 {
   // existiert das File ?
   if (!fs.existsSync(img)) {res.send("missing fileName '"+img+"'"); return; } 
   
   // ist img ein Verzeichnis ?
-  if( fs.statSync(img).isDirectory() ) {res.send(img + " is a directory"); return; } 
+  if( fs.statSync(img).isDirectory() ) {console.log("is Directory -> abort ... ");res.send(img + " is a directory"); return; } 
 
   var mime =
        {

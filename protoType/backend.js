@@ -215,17 +215,19 @@ function lsPix( req , res )
 function handleUpload( req , res )
 {
   // Delegation an multer ... mit CallBack ... 
-  console.log("handleUpload -> " + req.body.file);
-  console.log("             -> " + req.body.fileName);
-  console.log("             -> " + req.body.destDir);
+  var file     = req.body.file;
+  var fileName = req.body.fileName;
+  var destDir  = req.body.destDir;
 
-    if (!req.file) return res.send(handleError('no uploadfile found !'));
+  console.log("handleUpload -> " + file);
+  console.log("             -> " + fileName);
+  console.log("             -> " + destDir);
+
+    if (!file) return res.send(handleError('no uploadfile found !'));
   
-    const destDir = req.body.destDir; // optional : Zielverzeichnis via Parameter (über req.body)
-
     if (destDir) 
     {  
-      const baseName = path.basename(req.file.filename); // nur der Dateiname
+      const baseName = path.basename(fileName); // nur der Dateiname
   
       // Zielpfad bauen
       const targetDir  = path.join(__dirname, destDir); // z. B. ./uploads/bilder/personen/avatars
@@ -235,7 +237,7 @@ function handleUpload( req , res )
       fs.mkdirSync(targetDir, { recursive: true });
   
       // Datei verschieben
-      fs.rename(req.file.path, targetPath, (err) => {
+      fs.rename(file.path, targetPath, (err) => {
       if (err) return res.send(handleError('Fehler beim Verschieben der Datei: ' + err.message));
   
       utils.log(`Upload & verschoben → ${targetPath}`);
@@ -244,7 +246,7 @@ function handleUpload( req , res )
         error: false,
         errMsg: "OK",
         result: {
-          originalName: req.file.originalname,
+          originalName: file.originalname,
           savedName: baseName,
           savedPath: targetPath,
           destination: destDir

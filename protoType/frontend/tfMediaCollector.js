@@ -1,5 +1,6 @@
 
 import * as globals      from "./tfWebApp/globals.js";
+import * as mcGlobals    from "./tfMediaCollector_globals.js";
 import * as utils        from "./tfWebApp/utils.js";    
 import * as dialogs      from "./tfWebApp/tfDialogs.js";
 import * as graphics     from "./tfWebApp/tfGrafics.js";
@@ -16,17 +17,11 @@ import { TFChart }       from "./tfWebApp/tfObjects.js";
 import { TFDateTime }    from "./tfWebApp/utils.js";
 
 import { TPerson, TPersonList } from "./personen.js";
+import { TFMediaCollector_fileManager }        from "./tfMediaCollector_fileManager.js";
 
 
-const videoExtensions = [
-  'mp4', 'm4v', 'mov', 'avi', 'wmv', 'flv',
-  'f4v', 'mkv', 'webm', 'ts', 'mpeg', 'mpg',
-  '3gp', 'ogv'
-];
-
-const imageExtensions = [
-  'jpeg', 'jpg', 'png', 'gif', 'bmp', 'webp', 'svg'
-];
+const videoExtensions = mcGlobals.videoExtensions;
+const imageExtensions = mcGlobals.imageExtensions;
 
 
 
@@ -150,9 +145,9 @@ export class TFMediaCollector
    this.btnAddImage.height='2em';
    this.btnAddImage.callBack_onClick = function(){this.addMediaFile('IMAGE')}.bind(this);
 
-   this.btnAddImage = dialogs.addButton(this.menuPanel , '' , 3 , 1 , 1 , 1 , 'Bild-Verzeichnis hinzufügen');
+   this.btnAddImage = dialogs.addButton(this.menuPanel , '' , 3 , 1 , 1 , 1 , 'Set hinzufügen');
    this.btnAddImage.height='2em';
-   this.btnAddImage.callBack_onClick = function(){this.addMediaFile('DIR')}.bind(this);
+   this.btnAddImage.callBack_onClick = function(){this.addMediaSet()}.bind(this);
 
    this.btnPersonen = dialogs.addButton(this.menuPanel , '' , 4 , 1 , 1 , 1 , 'Personen');
    this.btnPersonen.height='2em';
@@ -213,7 +208,6 @@ __stopPollingJoblist()
 }  
 
 
-
   addMediaFile(kind)
   {
     var ext = ['*.*'];
@@ -245,12 +239,59 @@ __stopPollingJoblist()
     this.dashboardPanel.justifyContent='flex-start';
 
     //var response = utils.webApiRequest('LSTHUMBS' , {orderBy:"hash"} );
-    var response = utils.webApiRequest('LSTHUMBS' , {} );
+    var response = utils.webApiRequest('LSTHUMBS' , {kind:"MEDIASET"} );
     if(response.error) return;
 
     for(var i=0; i<response.result.length; i++)
     new Tthumbnail( this.dashboardPanel , {thumb:response.result[i].thumb , file:response.result[i].file} );
     
   }
+
+  addMediaFiles(files)
+  {
+    if (!files) return;
+    if (files.length == 0) return;
+
+    // Order aus dem ersten File entnehmen ...
+    var path = files[0].path;
+    var pathParts = path.split('/');
+    var setName = pathParts[pathParts.length-1];
+
+    var mediaSet = {TYPE:'DIR' , NAME:setName , KATEGORIE:'DIR' , DESCRIPTION:path};
+
+    // zuerst ein neues Set anlegen ...
+    var response =  utils.webApiRequest('CREATEMEDIASET' , mediaSet );
+    
+    if(response.error) 
+    { 
+      dialogs.showMessage(response.errMsg);
+      return;
+    }
+
+    var setID = response.result.lastInsertRowid;
+
+    for(var i=0; i<files.length; i++) 
+    {
+      var f  = files[i];
+      var fn = utils.pathJoin(f.path , f.name);
+      var response =  utils.webApiRequest('REGISTERMEDIA_IN_SET' , {mediaFile:fn , mediaSet:setID} );
+     
+    }
+
+    this.updateThumbs();
+    
+  }
+
+
+
+  addMediaSet()
+  {
+    new TFMediaCollector_fileManager(this.mainWindow.hWnd , {root:'/' } , function(files){this.addMediaFiles(files)}.bind(this)).run();
+  }
+
+
+
+
+  
 
 } 
