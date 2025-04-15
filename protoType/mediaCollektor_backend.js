@@ -320,6 +320,13 @@ if(CMD=='CREATEMEDIASET')
 //---------------------------------------------------------------
 //---------------------------------------------------------------
 
+if(CMD=='LSTMEDIASET')
+{
+  Select m.* , (Select ID from thumbs Where ID_FILE in (Select ID_File from mediaInSet Where ID_Media=m.ID) order by ID limit 1) as ID_thumb
+from mediaSets m
+}
+
+
 
 if(CMD=='LSTHUMBS') 
    {
