@@ -73,6 +73,15 @@ export function lastpayload( ID_topic  )
 }
 
 
+// holt die Zeitreihe aus den Values des Payloads
+export function lastpayloads( ID_topic , fieldNameValues , fieldNameTimestamp )
+{
+  return utils.webApiRequest('MQTTLASTPAYLOADS' , { ID_topic:ID_topic ,  fieldNameValues:fieldNameValues ,fieldNameTimestamp:fieldNameTimestamp }); 
+}
+
+
+
+
 
 export function count( ID_topic , fieldName , ID_Chanel)
 {

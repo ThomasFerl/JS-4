@@ -259,6 +259,54 @@ function handleSyncForce( req , res )
 }  
 
 
+function handleMQTT( req , res )
+{
+  const url       = req.originalUrl;
+  const parts     = url.split("/mqtt/");
+  const topicPath = parts[1]; 
+  console.log("TOPIC " + topicPath);
+
+  // Paylods zum Topic ermitteln....
+  var response = dbUtils.fetchRecords_from_Query( dB , "Select ID from mqttTopics Where topic like '"+topicPath+"%'" );
+  if ((response.error) || (response.result.lengtt==0))return res.send( handleError("mqttTopic not found: " + topicPath ));
+
+  result = ['<?xml version="1.0"?>']
+  result.push('<PV>');
+
+  for(var i=0; i<response.result.length; i++)
+  {
+    var ID_topic = response.result[i].ID;
+    var payload = dbUtils.fetchRecords_from_Query( dB , "Select * from mqttPayloads Where ID_Topic="+ID_topic+" order by ID desc limit 1" );
+    if (!payload.error) 
+    {
+      try {
+            console.log("("+i+") payload: " + payload.result[i].payload);
+            var jsn = JSON.parse(payload.result[i].payload); 
+            var n=jsn.name;
+            // entferne leerzeichen aus dem Namen:
+            n = n.replace(/\s+/g, '');
+            result.push('  <'+n+' _="' + jsn.value + '"/>');
+          }
+      catch {  jsn = {} }
+    }  
+  }  
+
+  result.push('</PV>');
+
+  if ((result.length==0)) res.send( handleError("mqttPayload not found: " + topicPath ));
+  else 
+  {
+    var r = '';
+    for(var i=0; i<result.length; i++) r += result[i]+'\n'; 
+    
+     res.setHeader('Content-Type', 'application/xml');
+     res.send(r);
+  }  
+
+}  
+
+
+
 
 webAPI.setup( dB , etc );
 
@@ -305,6 +353,7 @@ webApp.get('/DEBUG'                        ,  handleDebug );
 webApp.get('/x'                            ,  handleRequest );
 webApp.get('/syncForce'                    ,  handleSyncForce );
 webApp.post('/xpost'                       ,  handleRequest );
+webApp.get('/mqtt/*'                         ,  handleMQTT );
 webApp.post('/upload', upload.single('file'), (req, res) => {
                                                               if (!req.file) return res.send(handleError('no uploadfile found !'));
                                                               

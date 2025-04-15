@@ -158,6 +158,14 @@ if( CMD=='NEWDEVICE' )
       return mqttHandler.loadLastPayload( param.ID_topic ); 
     }
 
+
+  if( CMD=='MQTTLASTPAYLOADS') 
+    {
+      return mqttHandler.loadLastPayloads( param.ID_topic , param.fieldNameValues , param.fieldNameTimestamp ); 
+    }
+
+
+
   if( CMD=='COUNT') 
     {
        return mqttHandler.count( countParam); 
