@@ -17,104 +17,12 @@ import { TFChart }       from "./tfWebApp/tfObjects.js";
 import { TFDateTime }    from "./tfWebApp/utils.js";
 
 import { TPerson, TPersonList } from "./personen.js";
-import { TFMediaCollector_fileManager }        from "./tfMediaCollector_fileManager.js";
-
+import { TFMediaCollector_thumb }          from "./tfMediaCollector_thumb.js";
+import { TFMediaCollector_fileManager }    from "./tfMediaCollector_fileManager.js";
+import { TFMediaCollector_mediaSetViewer } from "./tfMediaCollector_mediaSetViewer.js";
 
 const videoExtensions = mcGlobals.videoExtensions;
 const imageExtensions = mcGlobals.imageExtensions;
-
-
-
-
-class Tthumbnail
-{
-  constructor( parent , params )
-  { 
-    this.parent       = parent; 
-    this.params       = params;
-    this.mediaFile    = {};
-    this.thumb        = {};
-
-    this.popup = new TFPopUpMenu([{caption:'view',value:1} , 
-                                  {caption:'diashow',value:2 } ,
-                                  {caption:'Metadaten bearbeiten',value:3},
-                                  {caption:'Person zuordnen',value:4} ,]);
-      
-    this.popup.onClick = (sender , item )=>{ 
-                                             if(item.value==1) {this.handleMediaFile();}
-              
-                                             if(item.value==2) {}
-            
-                                             if(item.value==3) {}
-
-                                             if(item.value==4) {}
-                                              
-                                          }  ;
-
-
-
-
-
-
-    if(params.thumbID)
-    { 
-      this.thumbID      = params.thumbID;  
-      var response      = utils.webApiRequest('THUMB' , {ID:this.thumbID} );
-      if(response.error) return response;
-      this.mediaFile    = response.result.file;
-      this.thumb        = response.result.thumb;
-    }
-    else
-    {
-     if(params.thumb) this.thumb     = params.thumb;
-     if(params.file)  this.mediaFile = params.file;
-    } 
-
-    this.thumbURL     = utils.buildURL('GETIMAGEFILE' , {fileName:this.thumb.fullPath} );
-    this.thumbImg     = new TFImage(this.parent ,1,1,"150px" , "150px" , {popupMenu:this.popup , imgURL:this.thumbURL , dragable:true } );
-    
-    this.thumbImg.callBack_onDragStart = function (e)
-                  { 
-                    e.dataTransfer.setData('application/json', JSON.stringify(this.thumb));
-                  }.bind(this);
-    
-    this.thumbImg.callBack_onClick = function (e, d) 
-                  { 
-                    this.handleMediaFile(); 
-                  }.bind(this);
-    
-    //this.sec = 0;
-    //setInterval(() =>{this.sec++; console.log("MediaFile nach "+this.sec+" Sekunde(n):", JSON.stringify(this.mediaFile))}, 1000);
-                                
-    }
-
-   
-
-handleMediaFile()
-{
-  // File zusammenbauen
-  var fn = utils.pathJoin(this.mediaFile.DIR , this.mediaFile.FILENAME );
-
-  if (this.mediaFile.TYPE == "MOVIE")
-  {
-    var w = dialogs.createWindow( null,fn,"80%","80%","CENTER");
-    var url = utils.buildURL('GETMOVIEFILE',{fileName:fn} );
-    dialogs.playMovieFile( w.hWnd , url );
-  }
-
-
-  if (this.mediaFile.TYPE == "IMAGE")
-    {
-      var w   = dialogs.createWindow( null,fn,"80%","80%","CENTER");
-      var url = utils.buildURL('GETIMAGEFILE',{fileName:fn} );
-      dialogs.addImage( w.hWnd , '' , 1 , 1 , '100%' , '100%' , url ); 
-    }
- 
-}
-
-
-}
-
 
 
 export class TFMediaCollector
@@ -238,13 +146,11 @@ __stopPollingJoblist()
     this.dashboardPanel.alignItems='flex-start';
     this.dashboardPanel.justifyContent='flex-start';
 
-    //var response = utils.webApiRequest('LSTHUMBS' , {orderBy:"hash"} );
-    var response = utils.webApiRequest('LSTHUMBS' , {kind:"MEDIASET"} );
-    if(response.error) return;
+    var response = utils.webApiRequest('LSMEDIASET' , {} );
+    if(response.error) {dialogs.showMessage(response.errMsg); return; }
 
     for(var i=0; i<response.result.length; i++)
-    new Tthumbnail( this.dashboardPanel , {thumb:response.result[i].thumb , file:response.result[i].file} );
-    
+    new TFMediaCollector_thumb( this.dashboardPanel , {thumb:response.result[i].thumb , mediaSet:response.result[i]} );
   }
 
   addMediaFiles(files)
