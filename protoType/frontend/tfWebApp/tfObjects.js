@@ -153,18 +153,19 @@ export class TFObject
     if(!aParent) { alert("constructor TFObject => parent = null ! "); return; }
 
     if(utils.isHTMLElement(aParent)) 
-      {
-          // Wenn das Parent-Objekt ein normales HTML-Element ist, müssen ein paar Kompatibilitätsanpassungen vorgenommen werden,
+      {   // Wenn das Parent-Objekt ein normales HTML-Element ist, müssen ein paar Kompatibilitätsanpassungen vorgenommen werden,
           // damit der Prozess trotzdem funktioniert...
           // Es wird ein "Minimal-Objekt"als Parent erstellt ...
           this.parent               = {isTFObject:false};  // erstellung eines Minimal-Objektes mit den notw. Properties
           this.parent.objName       = 'HTMLelement';
-          this.parent.layout        = ()=>{return window.getComputedStyle(parent).getPropertyValue("display").toUpperCase()};
+          this.parent.layout        = function(){return window.getComputedStyle(this.parent.DOMelement).getPropertyValue("display").toUpperCase()}.bind(this);
   
-          this.parent.hasGridLayout = ()=>{ if(this.params.preventGrid) return false; 
-                                            else                        return this.parent.layout().toUpperCase() == 'GRID'; }; 
-          this.parent.widthPx       = ()=>{ return this.DOMelement.getBoundingClientRect().width; };
-          this.parent.heightPx      = ()=>{ return this.DOMelement.getBoundingClientRect().height; };
+          this.parent.hasGridLayout = function(){ if(this.params.preventGrid) return false; 
+                                                  else                        return this.parent.layout().toUpperCase() == 'GRID';  
+                                                }.bind(this);
+
+          this.parent.widthPx       = function(){ return this.DOMelement.getBoundingClientRect().width; }.bind(this);
+          this.parent.heightPx      = function(){ return this.DOMelement.getBoundingClientRect().height; }.bind(this);
           this.parent.DOMelement    = aParent;
           this.parentWidth          = aParent.clientWidth;
           this.parentHeight         = aParent.clientHeight;

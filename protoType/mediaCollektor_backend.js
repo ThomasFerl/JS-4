@@ -238,7 +238,6 @@ if(CMD=='PERSON')
 if(CMD=='PORTRAITURL')
 {
   var portrait = ''
-
   if(param.ID_PERSON) portrait = dbUtils.fetchValue_from_Query( this.db , "Select PORTRAIT from persons where ID="+ param.ID_PERSON ).result;
   if(param.portrait)  portrait = param.portrait;
 
@@ -286,19 +285,80 @@ if(CMD=='FILE')
  return dbUtils.fetchRecord_from_Query( this.db ,  "Select * from files where ID="+id );
 }
 
+if(CMD=='PORTRAITFROMFILE') 
+  {
+    console.log('run PORTRAITFROMFILE stringify(param) => '+ JSON.stringify(param));
+    var id_file  = param.ID_FILE;
+   var response = dbUtils.fetchRecord_from_Query( this.db ,  "Select * from files where ID="+id_file );
+    if(response.error) return response;
+  // kopiere das Bild in den Portrait-Ordner ...
+    var fn = path.join(response.result.DIR , response.result.FILENAME);
+    //kopiere das Bild in den Portrait-Ordner
+    var portraitName = param.fnPortrait || response.result.FILENAME
+    var portrait = path.join(this.portraitPath , portraitName);
+    var portraitDir = this.path.dirname(portrait);
+    if (!this.fs.existsSync(portraitDir))
+    {
+      console.log('copyFile: portraitDir ('+portraitDir+') not found - create this ...');
+      this.fs.mkdirSync(portraitDir, { recursive: true });
+    } 
+    this.fs.copyFileSync(fn, portrait); 
+
+    return({error:false, errMsg:"OK", result:portraitName});
+
+  }
+
+if(CMD=='CREATEMEDIASET') 
+{
+    return dbUtils.insertIntoTable_if_not_exist( this.db , 'mediaSets', {TYPE:param.TYPE, 
+                                                                         NAME:param.NAME, 
+                                                                         KATEGORIE:param.KATEGORIE, 
+                                                                         DESCRIPTION:param.DESCRIPTION} );
+  }
 
 //---------------------------------------------------------------
 //---------------------------------------------------------------
 //---------------------------------------------------------------
+
+if(CMD=='LSMEDIASET')
+{
+ var sql = "Select m.* , " +
+           "(Select ID from thumbs " +
+           "  Where ID_FILE in ( " +
+           "    Select ID_File from mediaInSet " +
+           "      Where ID_Media=m.ID) order by ID limit 1) as ID_thumb" +
+           " from mediaSets m ";
+
+  var response =  dbUtils.fetchRecords_from_Query( this.db , sql );
+      if(response.error) return response;
+  
+  var mediaSets = [];
+   
+  for(var i=0; i<response.result.length; i++)
+    {
+      var m = response.result[i];
+      if(m.ID_thumb) 
+        {
+          var thumb = dbUtils.fetchRecord_from_Query( this.db , "Select * from thumbs where ID="+m.ID_thumb ).result;
+              thumb.fullPath = this.path.join( this.thumbPath , thumb.THUMBFILE );
+          m.thumb = thumb;
+        }  
+      mediaSets.push(m);
+    }
+  return{error:false, errMsg:"OK", result:mediaSets };    
+}
+
 
 
 if(CMD=='LSTHUMBS') 
    {
      var result = [];
+     var mediaSet = param.mediaSet || 0;
      var orderByHash = param.orderBy=="hash" || false;
 
      var sql = "Select * from thumbs where ID > 0";
       if(param.ID_FILE) sql = sql + " AND ID_FILE="+param.ID_FILE;
+      if(mediaSet!=0)   sql = sql + " AND ID_FILE in (Select ID_FILE from mediaInSet where ID_MEDIA="+mediaSet+")";
       sql = sql + " Order by ID";
    
       var response = dbUtils.fetchRecords_from_Query( this.db , sql );
@@ -352,6 +412,26 @@ if(CMD=='CONTENTURL')
   var     id = param.ID;
   if(!id) id = param.ID_FILE;  
   return this.___internal___contentURL( id ); 
+}
+
+
+if(CMD=='REGISTERMEDIA_IN_SET') 
+{
+  var mediaFile  = param.mediaFile;
+  var mediaSet   = param.mediaSet;
+
+  console.log('REGISTERMEDIA_IN_SET: mediaFile / mediaSet: '+mediaFile+'/'+mediaSet);
+
+  var response   = await this.___internal___registerMedia( mediaFile );
+  
+  console.log('REGISTERMEDIA_IN_SET: response: '+JSON.stringify(response));
+
+  if (response.error) return response;
+
+  var mediaID    = response.result.lastInsertRowid; 
+
+  return dbUtils.insertIntoTable( this.db , 'mediaInSet' , {ID_FILE:mediaID, ID_MEDIA:mediaSet} );
+
 }
 
 
@@ -825,7 +905,7 @@ async ___internal___registerMedia( mediaFile )
       return {error:false, errMsg:"OK", result:media}
    }
       
-
+  // Imagefile ? 
   if(media.TYPE=='IMAGE')
    {
       media.PLAYTIME = 0;

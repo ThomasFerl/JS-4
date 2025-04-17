@@ -91,6 +91,35 @@ export class THTMLTable
  } 
 
 
+ selectAll() 
+ {
+  const rows = this.table.getElementsByTagName('tr');
+  for (let i = 1; i < rows.length; i++) { // i=1 => Header überspringen
+    rows[i].classList.add('trSelected');
+    rows[i].setAttribute('selected', '1');
+  }
+}
+
+selectNothing() 
+{
+  const rows = this.table.getElementsByTagName('tr');
+  for (let i = 1; i < rows.length; i++) {
+    rows[i].classList.remove('trSelected');
+    rows[i].setAttribute('selected', '0');
+  }
+}
+
+selectReverse() 
+{
+  const rows = this.table.getElementsByTagName('tr');
+  for (let i = 1; i < rows.length; i++) {
+    const isSelected = rows[i].getAttribute('selected') === '1';
+    rows[i].classList.toggle('trSelected');
+    rows[i].setAttribute('selected', isSelected ? '0' : '1');
+  }
+}
+
+
  onRowClickEvent(event)
  {
     console.log('onRowClick');  

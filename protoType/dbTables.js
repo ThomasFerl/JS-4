@@ -28,7 +28,7 @@ tables.push(
       {tableName:"mediaSets",
        tableFields:[
           {fieldName:"TYPE"         , fieldType:"Text" } ,
-          {fieldName:"NAME"	      , fieldType:"numeric" } ,
+          {fieldName:"NAME"	      , fieldType:"Text" } ,
           {fieldName:"KATEGORIE"    , fieldType:"Text" } ,
           {fieldName:"DESCRIPTION"	, fieldType:"Text" } 
        ]}); 

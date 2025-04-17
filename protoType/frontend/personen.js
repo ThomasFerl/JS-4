@@ -14,14 +14,21 @@ export class TPerson
     #data          = {};
     #original      = {};
     #dirtyFields   = new Set();
-    #portraitPanel = null;
     #destDir       = 'mediaCache/persons';
-    
-  
+   
     constructor(dbPerson = {}) 
     { 
-      
-      // Prüfung: enthält dbPerson **nur** das Feld "ID"
+      // enumarable: false macht das Feld „unsichtbar“ für z.B. Object.keys()     
+      Object.defineProperty(this, 'portraitPanel', {
+        value: {}, // dein Panel hier
+        writable: true,
+        configurable: true,
+        enumerable: false  // <-- macht das Feld „unsichtbar“ für z.B. Object.keys()
+      });
+    // portraitPanel.imgURL = this.portraitURL(); 
+
+
+     // Prüfung: enthält dbPerson **nur** das Feld "ID"
      const keys = Object.keys(dbPerson);
 
     if (keys.length === 1 && keys[0] === "ID") 
@@ -119,9 +126,9 @@ edit( callback_if_ready )
   // form 
   var  f      = dialogs.addPanel(_w,'',1,1,3,4); 
  
-  this.#portraitPanel  = new TFPanel( _w  , 4 , 1 , 1 , 3 , {dropTarget:true} ); 
-  this.#portraitPanel.imgURL = this.portraitURL();
-  this.#portraitPanel.callBack_onDrop = function(e,d) { this.dropImage(e,d)}.bind(this); 
+  this.portraitPanel  = new TFPanel( _w  , 4 , 1 , 1 , 3 , {dropTarget:true} ); 
+  this.portraitPanel.imgURL = this.portraitURL();
+  this.portraitPanel.callBack_onDrop = function(e,d) { this.dropImage(e,d) }.bind(this); 
 
   
  // dialogs.addFileUploader  ( p , '*.*' , true , 'mediaCache/persons' , (selectedFiles) => { this.PORTRAIT=selectedFiles.result.savedName});
@@ -165,17 +172,27 @@ dropImage( e , data )  // onDrop ( event , data )
      const f = (globals.session.userName || 'developer') + '_' + utils.buildRandomID();
      utils.uploadFileToServer(data.localFile, f, 
            function(result)
-           { debugger;
-             this.self.PORTRAIT=result ; 
-             this.portraitPanel.imgURL=this.portraitURL() 
+           { 
+             this.self.PORTRAIT=result.result.savedName; ; 
+             this.self.portraitPanel.imgURL=this.self.portraitURL() 
             }.bind({self:this,destDir:this.#destDir}) , {destDir:this.#destDir} );
     }
 
  
-        if (data.json) {
-          alert("JSON gedroppt:"+ utils.JSONstringify(data.json));
-        }
+    if (data.json) 
+    {
+      debugger
+      var response = utils.webApiRequest('PORTRAITFROMFILE' , {ID_FILE:data.json.ID_FILE , fnPortrait:this.ID+"_"+Date.now() } );
+      if (response.error) 
+      {
+        dialogs.showMessage(response.errMsg);
+        return;
+      }
+      this.PORTRAIT             = response.result;
+      this.portraitPanel.imgURL = this.portraitURL() 
+    }
       
+
         if (data.url) {
           alert("Web-Image gedroppt:"+ data.url);
         }
@@ -259,7 +276,7 @@ export class TPersonList
 
     
     selectedPerson(p)
-    {
+    {debugger;
       this.person            = p;
       this.selected          = p;
       this.imagePanel.imgURL = p.portraitURL();
