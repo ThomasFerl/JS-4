@@ -103,3 +103,6 @@ function updateDeviceGrid( )
     
 }
 
+
+
+// https://www.google.com/maps/@51.8857346,11.6943251,13z/data=!3m1!1e3?entry=ttu
