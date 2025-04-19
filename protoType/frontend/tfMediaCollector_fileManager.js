@@ -65,11 +65,11 @@ export class TFMediaCollector_fileManager
          b.height = '2em';
          b.callBack_onClick = function(){if(this.fileGrid) this.fileGrid.selectReverse()}.bind(this);
 
-         b=dialogs.addButton( this.fileMenuPanel ,'cssAbortBtn01', 6 , 1 , 1 , 1 ,'Abbruch' );
+         b=dialogs.addButton( this.fileMenuPanel ,'cssAbortBtn01', 6 , 1 , 1 , 1 ,'schließen' );
          b.marginLeft = '10px';
          b.callBack_onClick = function(){this.wnd.close()}.bind(this);
 
-         b=dialogs.addButton( this.fileMenuPanel ,'', 7 , 1 , 1 , 1 ,'OK' );
+         b=dialogs.addButton( this.fileMenuPanel ,'', 7 , 1 , 1 , 1 ,'hinzufügen' );
          b.marginLeft = '10px';
          b.marginRight = '4px';
          b.callBack_onClick = function(){if(this.callBack_if_ready) this.callBack_if_ready(this.getSelectedFiles())}.bind(this);
@@ -194,7 +194,7 @@ export class TFMediaCollector_fileManager
    
   
     getSelectedFiles() 
-    {
+    { debugger;
       console.log('getSelectedFiles()');
       var selRows = this.fileGrid.getSelectedRows();
       var result  = [];

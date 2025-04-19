@@ -189,9 +189,10 @@ async handleBatchCommand( nextJob , enviroment )
   // VORSICHT VOR DOPPELTEN RESPONSES !!!
   this.webRequest  = enviroment.req;
   this.webResponse = enviroment.res;
-
   
-  await this.___internal___registerMedia( nextJob.param.mediaFile );
+  if(nextJob.cmd=='REGISTERMEDIA')        await this.___internal___registerMedia       ( this.param.mediaFile );
+  if(nextJob.cmd=='REGISTERMEDIA_IN_SET') await this.___internal___registerMedia_in_set( this.param.mediaFile , this.param.mediaSet );
+                                                     
 
 }
 
@@ -205,8 +206,6 @@ async handleCommand( sessionID , cmd , param , webRequest ,  webResponse , fs , 
  this.fs          = fs; 
  this.webRequest  = webRequest;
  this.webResponse = webResponse;   
-
- console.log('mediaCollector.handleCommand -> '+cmd+' / '+JSON.stringify(param));
  
  var CMD          = cmd.toUpperCase().trim();
 
@@ -415,23 +414,31 @@ if(CMD=='CONTENTURL')
 }
 
 
+
 if(CMD=='REGISTERMEDIA_IN_SET') 
 {
-  var mediaFile  = param.mediaFile;
+  var mediaFiles  = param.mediaFiles;
   var mediaSet   = param.mediaSet;
 
-  console.log('REGISTERMEDIA_IN_SET: mediaFile / mediaSet: '+mediaFile+'/'+mediaSet);
+console.log(JSON.stringify(mediaFiles));
 
-  var response   = await this.___internal___registerMedia( mediaFile );
-  
-  console.log('REGISTERMEDIA_IN_SET: response: '+JSON.stringify(response));
 
-  if (response.error) return response;
+  // Register Media soll entkoppelt als "Batch" im Hintergrund laufen 
+  // und nicht blockierend für den Aufrufer sein.
+  var enviroment   = { sessionID:sessionID ,  fs:fs , path:path , req:webRequest , res:webResponse };
 
-  var mediaID    = response.result.lastInsertRowid; 
+  // frontendCall:
+  //.webApiRequest('REGISTERMEDIA_IN_SET' , {mediaFiles:f , mediaSet:setID} , 'POST');
+   
+  console.log('REGISTERMEDIA_IN_SET: mediaSet: '+mediaSet+' with ' + mediaFiles.length + ' files');
 
-  return dbUtils.insertIntoTable( this.db , 'mediaInSet' , {ID_FILE:mediaID, ID_MEDIA:mediaSet} );
-
+  for(var i=0; i<mediaFiles.length; i++)
+  { 
+      console.log('RegisterMedia: add '+mediaFiles[i]+' to BatchQueue');
+      this.batchQueue.addBatchProc( 'REGISTERMEDIA_IN_SET' , {mediaFile:mediaFiles[i] , mediaSet:mediaSet} , enviroment );
+  }  
+    
+    return {error:false, errMsg:"OK", result:{queuLength:this.batchQueue.count()} };  
 }
 
 
@@ -445,112 +452,27 @@ if(CMD=='REGISTERMEDIA')
   // und nicht blockierend für den Aufrufer sein.
     
   var enviroment   = { sessionID:sessionID ,  fs:fs , path:path , req:webRequest , res:webResponse };
+  var files        = [];
 
-  // wenn param.mediaFile ein Verzeichnis ist, 
-  // dann wird der Inhalt des Verzeichnisses gescannt 
-  // und die Dateien in die Batch-Queue eingetragen
-  if(fs.statSync(param.mediaFile).isDirectory()) 
-  {  
-    console.log('RegisterMedia: '+param.mediaFile+' is a directory');
-    // alle Files im Directory scannen und in die Batch-Queue eintragen
-    var dir        = param.mediaFile;
-    var dirContent = utils.scanDir (fs , path , dir )
-    if (dirContent.error) return dirContent;
+  // ist param.mediaFile ein Array ?
+  if(Array.isArray(param.mediaFile)) files = param.mediaFile;
+  else files.push(param.mediaFile);
 
-    console.log('RegisterMedia: '+param.mediaFile+' contains '+dirContent.result.length+' files');
-
-    // mediafile als DIR in DB speichern ....
-    var media = {ID:0, TYPE:'DIR', DIR:dir, FILENAME:'', GUID:'', DIMENSION:'?x?', FILESIZE:dirContent.result.length, PLAYTIME:'', SOURCE:'', KATEGORIE:''};
-    response = this.___internal___saveMediaInDB(media);
-
-    // das erste mediaFile im DIR ist das repräsentierende Thumbnail des Directories
-    if(response.error) {console.log("Fehler meim Speichern in DB: "+response.errMsg); return response;}
-
-    console.log('RegisterMedia: '+param.mediaFile+' saved in DB with ID='+response.result.lastInsertRowid); 
-    
-    media.ID = response.result.lastInsertRowid;
-    var thumbName    = 'thumb_'+media.ID+'_00.png'
-    var thumbFile    = this.thumbPath+thumbName;
-    var thumbSource  = {};
-    var mediaFiles   = [];
-    var foundSomeone = false;
-
-    console.log('RegisterMedia: suche nach Dateien im Verzeichnis ...');
-
-    // zuerst wird nach dem ERSTEN Bild/Movie im Verzeichnis gesucht um daraus das räpresentierende Thumbnail zu erzeugen ...
-    for(var i=0; i<dirContent.result.length; i++) 
-      {
-         var f  = dirContent.result[i];
-         var fn = path.join( dir , f.name );
-         
-         console.log('RegisterMedia: check file '+fn);
-
-         var fileInfo  = utils.analyzeFile( fs , path , fn );
-
-         console.log('RegisterMedia / fileInfo : '+JSON.stringify(fileInfo));
-
-         if(!fileInfo.error)
-         { 
-           if(fileInfo.result.type.toUpperCase()=='MOVIE') 
-            {
-              console.log('--> MOVIE');
-              if(!foundSomeone) {thumbSource.file = fn; thumbSource.type='MOVIE'} 
-              foundSomeone = true;
-              mediaFiles.push(fn);
-            }  
-              
-            if(fileInfo.result.type.toUpperCase()=='IMAGE') 
-            {
-              console.log('--> IMAGE');
-              if(!foundSomeone) {thumbSource.file = fn; thumbSource.type='IMAGE'} 
-              foundSomeone = true;
-              mediaFiles.push(fn);
-            }  
-         }
-      }
-
-    if(foundSomeone)
-    {  
-      console.log('RegisterMedia: found ' + mediaFiles.length + ' files');
-
-      console.log('RegisterMedia: thumbSource: ' + JSON.stringify(thumbSource));
-
-      if(thumbSource.type=='IMAGE')
-       { 
-         console.log('RegisterMedia: create Image-Thumb ...');
-         var thumb = {ID_FILE:media.ID, NDX:0, THUMBFILE:thumbFile, POSITION:0};
-         this.___internal___createImageThumb( thumbSource.file , thumbFile, 147, 147 , function(){this.self.___internal___saveThumbInDB(this.thumb)}.bind({self:this,thumb:thumb}) ); 
-       }
-
-       if(thumbSource.type=='MOVIE')
-        {  
-          console.log('RegisterMedia: create Movie-Thumb ...');
-          var thumb = {ID_FILE:media.ID, NDX:0, THUMBFILE:thumbFile, POSITION:0};
-          this.___internal___createMovieThumb( thumbSource.file , thumbFile, this.thumbPosition , 'origin' , function(){this.self.___internal___saveThumbInDB(this.thumb)}.bind({self:this,thumb:thumb}) );
-        }
-   } else return {error:true, errMsg:"no image or movie found in directory", result:{}}
-
-  for(var i=0; i<mediaFiles.length; i++)
+  for(var i=0; i<files.length; i++)
     { 
-      console.log('RegisterMedia: add '+mediaFiles[i]+' to BatchQueue');
-      this.batchQueue.addBatchProc( 'REGISTERMEDIA' , {mediaFile:mediaFiles[i]} , enviroment );
+      console.log('RegisterMedia: add '+files[i]+' to BatchQueue');
+      this.batchQueue.addBatchProc( 'REGISTERMEDIA' , {mediaFile:files[i]} , enviroment );
     }  
     return {error:false, errMsg:"OK", result:{queuLength:this.batchQueue.count()} };                       
-} // Verzeichnis
-else {
-       // kein Verzeichnis
-      this.batchQueue.addBatchProc( 'REGISTERMEDIA' , param , enviroment );
-      return {error:false, errMsg:"OK", result:{queuLength:this.batchQueue.count()} };                       
-     } 
 } 
-                                          
+
 //---------------------------------------------------------------
 //---------------------------------------------------------------
 //---------------------------------------------------------------
 
 if(CMD=='ISREGISTERED') 
 {
-   return this.___internal___isMediaRegistered (param.mediaFile);
+   return this.___internal___isMediaRegistered (param.mediaFile , true);
                          
 }
 
@@ -752,32 +674,36 @@ ___internal___contentURL( ID , TYPE )
  else                         return {error:true,errMsg: 'file('+fn+') not found' ,result:''}
   
 }
-___internal___isMediaRegistered( mediaFile  )
+___internal___isMediaRegistered( mediaFile , load_if_exists )
 {
    var result    = {registered:false,  thumbs:[], persons:[] , tags:[], file:{} };
    var mediaGUID = utils.buildFileGUID( this.fs , this.path , mediaFile ).result;
    if (mediaGUID.error) return mediaGUID;
    mediaGUID = mediaGUID.result;
   
+   // existiert die GUID in der DB ?
   var response  = dbUtils.fetchRecord_from_Query( this.db , "Select * from files where GUID='"+mediaGUID+"'");
-  if(response.error) return response;
+  if(response.error) return {error:false, errMsg:"file not registered yet." , result:{registered:false} }  
 
-  if(!response.result.ID) return {error:false, errMsg:"file not registered yet." , result:{} }  
+  if(!response.result.ID) return {error:false, errMsg:"file not registered yet." , result:{registered:false} }  
+
+  if(!load_if_exists) return {error:false, errMsg:"file already registered." , result:{registered:true, media:response.result} }
 
   result.registered = true;
-  result.file       = response.result;
+  result.media      = response.result;
 
-  response          = dbUtils.fetchRecords_from_Query( this.db , 'select * from thumbs where ID_FILE='+result.file.ID+' Order by ndx' );
+  response          = dbUtils.fetchRecords_from_Query( this.db , 'select * from thumbs where ID_FILE='+result.media.ID+' Order by ndx' );
   if(!response.error) result.thumbs = response.result;
 
-  response      = dbUtils.fetchRecords_from_Query( this.db , 'select * from persons where ID in (select ID_PERSON from personInMedia where ID_FILE='+result.file.ID+') order by Name');
+  response      = dbUtils.fetchRecords_from_Query( this.db , 'select * from persons where ID in (select ID_PERSON from personInMedia where ID_FILE='+result.media.ID+') order by Name');
   if(!response.error) result.actors = response.result;
 
-  response      = dbUtils.fetchRecords_from_Query( this.db , 'select * from tags where ID in (select ID_Tag from tagsInMedia  where ID_FILE='+result.file.ID+') order by Name');
+  response      = dbUtils.fetchRecords_from_Query( this.db , 'select * from tags where ID in (select ID_Tag from tagsInMedia  where ID_FILE='+result.media.ID+') order by Name');
   if(!response.error) result.tags = response.result;
    
   return {error:false, errMsg:"OK" , result:result }
 }
+
 ___internal___listPersons ( filter )
    {
     var SQL = "Select * From persons Where (ID>0) ";  // ID > 0 ist nur dazu gedacht, um Folgefilter mit "AND" hinzuzufügen
@@ -850,83 +776,93 @@ ___internal___listPersons ( filter )
    }
   
  
-
-
-async ___internal___registerMedia( mediaFile )
+// Version von GPT überarbeitet
+async ___internal___registerMedia(mediaFile) 
 {
-  console.log('=============================================');  
-  console.log('___internal___registerMedia( "'+mediaFile+'")'); 
-  var fileInfo  = utils.analyzeFile( this.fs , this.path , mediaFile );
+  console.log('=============================================');
+  console.log('___internal___registerMedia("' + mediaFile + '")');
+
+  const fileInfo = utils.analyzeFile(this.fs, this.path, mediaFile);
+  if (fileInfo.error) return fileInfo;
   
-  if(fileInfo.error) 
-  { console.log('fileInfo.error: '+JSON.stringify(fileInfo)); 
-    return fileInfo; 
+  // Prüfen, ob Datei schon registriert ist
+  let registeredCheck = this.___internal___isMediaRegistered(mediaFile , false );
+  if (registeredCheck.error) return registeredCheck;
+
+  // Wenn registriert → direkt Rückgabe
+  if (registeredCheck.result.registered) {
+    console.log('Datei bereits registriert mit ID:', registeredCheck.result.media.ID);
+    return { error: false, errMsg: "Bereits registriert", result: registeredCheck.result.media };
   }
-  
-  console.log('fileInfo: '+JSON.stringify(fileInfo));
 
-  var media     = {
-                   ID       : 0, 
-                   TYPE     : fileInfo.result.type,
-                   DIR      : fileInfo.result.dir,
-                   FILENAME : fileInfo.result.name,
-                   GUID     : utils.buildFileGUID( this.fs , this.path , fileInfo.result ).result,
-                   DIMENSION: '?x?',
-                   FILESIZE : fileInfo.result.size,
-                   PLAYTIME : '',
-                   SOURCE   : '',
-                   KATEGORIE: ''
-                  }  
-    
-  var response   = dbUtils.fetchValue_from_Query( this.db , "Select ID from files where GUID='"+media.GUID+"'");
-  if(response.error) { console.log("Fehler in dB-Abfrage nach GUID -> "+response.errMsg); return response; 
-                       return response; } 
-  
-  media.ID = response.result;
-  
-   // Moviefile ?
-  if (media.TYPE === 'MOVIE')
-   {
-      try{ media.PLAYTIME = this.___videoInfo(mediaFile).result.format.duration; }
-      catch(err) { console.error('Fehler beim Ermitteln der Video-Metadaten:', err); media.PLAYTIME = 0; }  
-      
-       media.HASH = '.x.'; 
-       // Media-File in DB speichern...
-       response = this.___internal___saveMediaInDB(media);
+  // Neues Media-Objekt anlegen
+  let media = {
+    ID: 0,
+    TYPE: fileInfo.result.type,
+    DIR: fileInfo.result.dir,
+    FILENAME: fileInfo.result.name,
+    GUID: utils.buildFileGUID(this.fs, this.path, fileInfo.result).result,
+    DIMENSION: '?x?',
+    FILESIZE: fileInfo.result.size,
+    PLAYTIME: '',
+    SOURCE: '',
+    KATEGORIE: ''
+  };
 
-      if(response.error) return response;
-      media.ID = response.result.lastInsertRowid;
-      var thumbName = 'thumb_'+media.ID+'_00.png'
-      var thumbFile = this.thumbPath+thumbName;
-      var thumb     = {ID_FILE:media.ID, NDX:0, THUMBFILE:thumbName, POSITION:this.thumbPosition};
-
-      this.___internal___createMovieThumb( mediaFile , thumbFile, this.thumbPosition , 'origin' , function(){this.self.___internal___saveThumbInDB(this.thumb)}.bind({self:this,thumb:thumb}) );
-    
-      return {error:false, errMsg:"OK", result:media}
-   }
-      
-  // Imagefile ? 
-  if(media.TYPE=='IMAGE')
-   {
+  if (media.TYPE === 'MOVIE') {
+    try {
+      media.PLAYTIME = this.___videoInfo(mediaFile).result.format.duration;
+    } catch (err) {
+      console.warn('Fehler beim Ermitteln der Video-Metadaten:', err);
       media.PLAYTIME = 0;
-       var imagePath = this.path.join(media.DIR, media.FILENAME);
+    }
+    media.HASH = '.x.';
 
-       try { media.HASH = await createImageHash(this.path , this.fs , imagePath, 16);}
-       catch (err) {media.HASH = 'errHash';}
- 
-        // Media-File in DB speichern...
-        response = this.___internal___saveMediaInDB(media);
+  } else if (media.TYPE === 'IMAGE') {
+    try {
+      const imagePath = this.path.join(media.DIR, media.FILENAME);
+      media.HASH = await createImageHash(this.path, this.fs, imagePath, 16);
+    } catch (err) {
+      media.HASH = 'errHash';
+    }
+    media.PLAYTIME = 0;
+  } else {
+    return { error: true, errMsg: "Unbekannter Medientyp: " + media.TYPE };
+  }
 
-        if(response.error) return response;
-        media.ID = response.result.lastInsertRowid;
-        var thumbName = 'thumb_'+media.ID+'_00.png'
-        var thumbFile = this.thumbPath+thumbName;
-        var thumb     = {ID_FILE:media.ID, NDX:0, THUMBFILE:thumbName, POSITION:this.thumbPosition};
-                                                                                             
-        this.___internal___createImageThumb( mediaFile , thumbFile, 147, 147 , function(){this.self.___internal___saveThumbInDB(this.thumb)}.bind({self:this,thumb:thumb}) ); 
-                                                  
-        return {error:false, errMsg:"OK", result:media}
-  }  
+  // Datei in DB speichern (INSERT oder UPDATE)
+  const response = this.___internal___saveMediaInDB(media);
+  if (response.error) return response;
+  media.ID = response.result.lastInsertRowid;
+
+  // Vorschaubild erzeugen
+  const thumbName = 'thumb_' + media.ID + '_00.png';
+  const thumbFile = this.thumbPath + thumbName;
+  const thumb = { ID_FILE: media.ID, NDX: 0, THUMBFILE: thumbName, POSITION: this.thumbPosition };
+
+  if (media.TYPE === 'MOVIE') {
+    this.___internal___createMovieThumb(mediaFile, thumbFile, this.thumbPosition, 'origin',
+      () => this.___internal___saveThumbInDB(thumb));
+  } else if (media.TYPE === 'IMAGE') {
+    this.___internal___createImageThumb(mediaFile, thumbFile, 147, 147,
+      () => this.___internal___saveThumbInDB(thumb));
+  }
+
+  return { error: false, errMsg: "OK", result: media };
+}
+
+
+async ___internal___registerMedia_in_set( mediaFile , mediaSet ) 
+{
+  var response   = await this.___internal___registerMedia( mediaFile );
+  
+  if (response.error) return response;
+
+  var mediaID    = response.result.ID; 
+
+  if(!mediaID) return {error:true, errMsg:"no mediaID found", result:{}};
+
+  return dbUtils.insertIntoTable( this.db , 'mediaInSet' , {ID_FILE:mediaID, ID_MEDIA:mediaSet} );
 }
 
 

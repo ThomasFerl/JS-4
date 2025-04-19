@@ -155,6 +155,7 @@ __stopPollingJoblist()
 
   addMediaFiles(files)
   {
+    /*
     if (!files) return;
     if (files.length == 0) return;
 
@@ -173,26 +174,26 @@ __stopPollingJoblist()
       dialogs.showMessage(response.errMsg);
       return;
     }
-
     var setID = response.result.lastInsertRowid;
 
+    var f     = [];
     for(var i=0; i<files.length; i++) 
-    {
-      var f  = files[i];
-      var fn = utils.pathJoin(f.path , f.name);
-      var response =  utils.webApiRequest('REGISTERMEDIA_IN_SET' , {mediaFile:fn , mediaSet:setID} );
-     
-    }
+       f.push( utils.pathJoin(files[i].path , files[i].name) );
 
-    this.updateThumbs();
+    utils.webApiRequest('REGISTERMEDIA_IN_SET' , {mediaFiles:f , mediaSet:setID} , 'POST');
     
+    this.__startPollingJoblist();
+    
+    setTimeout( this.updateThumbs.bind(this) , 4000);  // mal etwas warten, bis die Thumbs da sind
+   */ 
   }
 
 
 
   addMediaSet()
   {
-    new TFMediaCollector_fileManager(this.mainWindow.hWnd , {root:'/' } , function(files){this.addMediaFiles(files)}.bind(this)).run();
+    new TFMediaCollector_mediaSetViewer();
+    //new TFMediaCollector_fileManager(this.mainWindow.hWnd , {root:'/' } , function(files){this.addMediaFiles(files)}.bind(this)).run();
   }
 
 

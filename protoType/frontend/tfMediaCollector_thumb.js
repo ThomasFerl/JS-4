@@ -83,7 +83,7 @@ export class TFMediaCollector_thumb
    
 
 handleMediaFile()
-{
+{ 
   if(this.mediaFile)
   {  
     // File zusammenbauen

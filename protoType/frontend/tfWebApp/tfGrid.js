@@ -150,28 +150,22 @@ selectReverse()
  }
 
 
-getSelectedRows()
-{
-  var rows   = this.table.getElementsByTagName('tr'); 
-  var result = [];
-  console.log("getSelectedRows()"); 
-  for(var i=0; i<rows.length; i++)
-  {
-    var row = rows[i];
-    if(row.getAttribute("selected")=='1')
-    {
-      console.log("row "+i+" -> HTMLObj: " + JSON.stringify(this.jsonData[i-1]) + " selected: " + row.getAttribute("selected") ); 
-      result.push( this.jsonData[i-1] );
-    }  
-    if(row.getAttribute("selected")=='1')
-    {
-      console.log("row "+i+" -> HTMLObj: " + JSON.stringify(this.jsonData[i-1]) + " selected: " + row.getAttribute("selected") ); 
-      result.push( this.jsonData[i-1] );
-    }  
-  } 
-   return result;
-}
-
+ getSelectedRows()
+ {
+   var rows   = this.table.getElementsByTagName('tr'); 
+   var result = [];
+   console.log("getSelectedRows()"); 
+   for(var i=0; i<rows.length; i++)
+   {
+     var row = rows[i];
+     if(row.getAttribute("selected")=='1')
+     {
+       console.log("row "+i+" -> HTMLObj: " + JSON.stringify(this.jsonData[i-1]) + " selected: " + row.getAttribute("selected") ); 
+       result.push( this.jsonData[i-1] );
+     }  
+   } 
+    return result;
+ }
 
 
  fieldByName(fieldName)
