@@ -64,6 +64,7 @@ __init__()
      this.menuPanel        = dialogs.addPanel ( this.workSpace , '' , 1 , 1 , 10 , 1 );
      this.menuPanel.buildGridLayout_templateColumns('7em 7em 7em 1fr');
      this.menuPanel.buildGridLayout_templateRows('1fr');
+
      var  b=dialogs.addButton( this.menuPanel ,'', 1 , 1 , 1 , 1 ,'+' );
           b.backgroundColor = 'gray';
           b.margin = '7px';
@@ -85,7 +86,11 @@ __init__()
                                                    }.bind(this);
         }.bind(this);
 
-     this.dashboardPanel   = dialogs.addPanel ( this.workSpace , 'cssContainerPanel' , 1 , 2 , 10 , 9 );
+     this.dashboardPanel   = new TFPanel( this.workSpace ,  1 , 2 , 10 , 9 ,{css:'cssContainerPanel',dropTarget:true} );
+     this.dashboardPanel.callBack_onDrop = function (e , data)
+                                           { 
+                                             this.___dropImage( e , data ); 
+                                           }.bind(this);
        
    this.updateThumbs();  
   }
@@ -116,7 +121,7 @@ __init__()
       this.dashboardPanel.buildFlexBoxLayout();
       this.dashboardPanel.alignItems='flex-start';
       this.dashboardPanel.justifyContent='flex-start';
-  
+
       var response = utils.webApiRequest('LSTHUMBS' , {mediaSet:this.mediaSet.ID} );
       if(response.error) {dialogs.showMessage(response.errMsg); return; }
   
@@ -147,7 +152,22 @@ __init__()
         }
         if(!found) this.mediaFiles.push(f);
       }
-    }     
+    } 
+    
+    
+ ___dropImage( e , data )  // onDrop ( event , data )
+   {   
+    if (data.json) 
+    {
+      debugger
+    }  
+      
+
+    if (data.url) {
+                   alert("Web-Image gedroppt:"+ data.url);
+                  }
+   }
+
 
   
     add2MediaSet()

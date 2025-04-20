@@ -30,6 +30,10 @@ export class TFMediaCollector_thumb
     this.thumb        = params.thumb || null;
     this.thumbID      = params.thumbID || null;
 
+    if(this.thumb==null) this.thumb
+
+
+
     // temporär - wird später ausgelagert ....
     this.popup = new TFPopUpMenu([{caption:'view',value:1} , 
                                   {caption:'diashow',value:2 } ,

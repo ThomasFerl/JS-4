@@ -321,12 +321,7 @@ if(CMD=='CREATEMEDIASET')
 
 if(CMD=='LSMEDIASET')
 {
- var sql = "Select m.* , " +
-           "(Select ID from thumbs " +
-           "  Where ID_FILE in ( " +
-           "    Select ID_File from mediaInSet " +
-           "      Where ID_Media=m.ID) order by ID limit 1) as ID_thumb" +
-           " from mediaSets m ";
+ var sql = "Select * from mediaSets order by ID";
 
   var response =  dbUtils.fetchRecords_from_Query( this.db , sql );
       if(response.error) return response;
@@ -336,13 +331,14 @@ if(CMD=='LSMEDIASET')
   for(var i=0; i<response.result.length; i++)
     {
       var m = response.result[i];
-      if(m.ID_thumb) 
+      if(m.ID_THUMB) 
         {
-          var thumb = dbUtils.fetchRecord_from_Query( this.db , "Select * from thumbs where ID="+m.ID_thumb ).result;
-              thumb.fullPath = this.path.join( this.thumbPath , thumb.THUMBFILE );
-          m.thumb = thumb;
-        }  
-      mediaSets.push(m);
+           var thumb          = dbUtils.fetchRecord_from_Query( this.db , "Select * from thumbs where ID="+m.ID_THUMB ).result;
+               thumb.fullPath = this.path.join( this.thumbPath , thumb.THUMBFILE );
+             m.thumb          = thumb;
+        } 
+        else m.thumb          = {ID:0, ID_FILE:'', NDX:-1, THUMBFILE:'file-image' , fullPath:utils.getSymbolPath('file-image').result}; 
+        mediaSets.push(m);
     }
   return{error:false, errMsg:"OK", result:mediaSets };    
 }

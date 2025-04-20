@@ -30,22 +30,35 @@ const validExtensions = mcGlobals.videoExtensions.concat(mcGlobals.imageExtensio
 export class TFMediaCollector_editSet
 {
   constructor( mediaSet )
-  { debugger;
+  { 
       this.mediaFiles        = [];
       this.newMediaFiles     = [];
       this.mediaSet          = mediaSet || null;
       this.callback_if_ready = null;
 
       var caption = this.mediaSet?.ID ? 'Set bearbeiten' : 'neues Set anlegen';
-      var w       =    dialogs.createWindow( null,caption,"50%","50%","CENTER");  
-      this.wnd    =    w.hWnd;
+      this.wnd    = dialogs.createWindow( null,caption,"50%","50%","CENTER");  
+      this.hWnd   = this.wnd.hWnd;
       
-      w.buildGridLayout_templateColumns('1fr 1fr 1fr 1fr');
-      w.buildGridLayout_templateRows   ('1fr 1fr 1fr 1fr');
-      
-      this.formPanel = dialogs.addPanel(this.wnd,'',1,1,2,4); 
+      this.wnd.buildGridLayout_templateColumns('1fr 1fr 1fr 1fr');
+      this.wnd.buildGridLayout_templateRows   ('1fr 1fr 1fr 1fr');
+
+      var hlp = dialogs.addPanel(this.hWnd,'',1,1,2,4); 
+      hlp.buildGridLayout_templateColumns('1fr');
+      hlp.buildGridLayout_templateRows   ('1fr 1fr 1fr');
+
+      var hlp2 = dialogs.addPanel(hlp,'cssContainerPanel',1,1,1,1);
+      hlp2.buildGridLayout_templateColumns('1fr 1fr');
+      hlp2.buildGridLayout_templateRows   ('1fr');
      
-      var hlpContainer  = new TFPanel( this.wnd  , 3 , 1 , 2 , 4  ); 
+      this.thumbContainer = new TFPanel( hlp2  , 2 , 1 , 1 , 2 , {dropTarget:true} ); 
+      this.thumbContainer.callBack_onDrop = function(e,d) { this.dropThumbImage(e,d) }.bind(this); 
+          
+      dialogs.addLabel( hlp2 , '' , 1 , 1 , 1, 1 , 'Vorschaubild' );                                      
+      
+      this.formPanel = dialogs.addPanel(hlp,'',1,2,1,42); 
+     
+      var hlpContainer  = new TFPanel( this.hWnd  , 3 , 1 , 2 , 4  ); 
           hlpContainer.buildGridLayout_templateColumns('1fr');
           hlpContainer.buildGridLayout_templateRows   ('2em 1fr');
       
@@ -81,23 +94,54 @@ export class TFMediaCollector_editSet
     {
         this.mediaListPanel.innerHTML = "";
         this.mediaListPanel.buildBlockLayout();
+
+        var thumb = null;
             
         for(var i=0; i<this.mediaFiles.length; i++) 
         { 
           var f   = this.mediaFiles[i];
-          var url = utils.buildURL('GETIMAGEFILE',{fileName:f.path + f.name });
+          if(f.ID==this.mediaSet.ID_thumb) thumb = f;
+          
+          var url = utils.buildURL('GETIMAGEFILE',{ fileName:utils.pathJoin(f.DIR , f.FILENAME) });
 
-          var p= dialogs.addPanel(this.mediaListPanel , '' , 1 , 1 , '97%' , '97%' ); 
-              p.buildGridLayout_templateColumns('4em 1fr');
+          var p= dialogs.addPanel(this.mediaListPanel , 'cssContainerPanel' , 1 , 1 , '97%' , '3em' ); 
+              p.overflow = 'hidden';
+              p.padding = '0px';
+              p.backgroundColor = 'white';
+              p.buildGridLayout_templateColumns('3.1em 1fr');
               p.buildGridLayout_templateRows   ('1fr 1fr');
             
-          var t   = dialogs.addImage( p , "" , 0 , 0 , "100%" , "100%" );
-              t.imgURL = imgs[i];
-              t.dataBinding = {imgURL:url, index:i};
+            
+           var t             = new TFImage(p ,1,1,1,2 , {dragable:true } );
+               t.imgURL      = url;
+               t.dataBinding = {mediaFile:f, imgURL:url, index:i};
+               t.callBack_onDragStart = function (e)
+                            { 
+                              e.dataTransfer.setData('application/json', JSON.stringify({ID:this.ID,url:this.url}));
+                            }.bind({ID:f.ID,url:url});
+               
+          var l   = dialogs.addLabel( p , '' , 2 , 1 , 1 , 1 , f.DIR );  
+              l.color = 'gray';
+              l.fontSize = '0.8em';
+
+              l   = dialogs.addLabel( p , '' , 2 , 2 , 1 , 1 , f.FILENAME );         
+              l.fontWeight = 'bold';
+              l.fontSize = '0.8em';
+              l.color = 'black';
+        }
+
+        if(thumb)
+        {
+          url = utils.buildURL('GETIMAGEFILE',{ fileName:utils.pathJoin(thumb.DIR , thumb.FILENAME) });
+          this.thumbContainer.imgURL = url;          
         }
     }  
           
-      
+dropThumbImage(e,d)      
+{
+   this.mediaSet.ID_thumb = d.ID; 
+   this.thumbContainer.imgURL = d.url;  
+}
   
 load(id) 
 {
@@ -109,7 +153,7 @@ save()
 { 
     var response = {};
     
-    if(this.mediaSet.ID==0)
+    if(!this.mediaSet.ID)
     {
       // neues Set anlegen
       response = utils.webApiRequest('CREATEMEDIASET' , this.mediaSet );
@@ -128,6 +172,7 @@ save()
     for(var i=0; i<this.newMediaFiles.length; i++) 
     f.push( utils.pathJoin(this.mediaFiles[i].path , this.mediaFiles[i].name) );
 
+    if(f.length>0)
     utils.webApiRequest('REGISTERMEDIA_IN_SET' , {mediaFiles:f , mediaSet:this.mediaSet.ID} , 'POST');
 }
    
@@ -136,8 +181,8 @@ edit()
 {
   this.__updateThumbs();
 
-  // aParent      , aData      , aLabels , aAppendix , aExclude , aInpType , URLForm )
-  var inp = new TForm( this.formPanel      , this.mediaSet , {}      , {}        , ['ID']       , {}       , '' );    
+  //                   aParent             , aData         , aLabels , aAppendix , aExclude                        , aInpType , URLForm )
+  var inp = new TForm( this.formPanel      , this.mediaSet , {}      , {}        , ['ID','ID_thumb','thumb']       , {}       , '' );    
       inp.setLabel('TYPE','Typ/Art');
       inp.setLabel('NAME','Bezeichnung');
       inp.setLabel('KATEGORIE','Kategorie');
@@ -145,7 +190,7 @@ edit()
       
       inp.render( true);  
       
-      inp.callBack_onOKBtn = function(values) {
+      inp.callBack_onOKBtn = function(values) { 
                                                for(var i=0; i<values.length; i++) 
                                                { this.self.mediaSet[values[i].field] = values[i].value }
                                                this.self.save();  
@@ -156,40 +201,9 @@ edit()
       inp.callBack_onESCBtn = function(values) {
                                                this.wnd.close(); 
                                               }.bind( this )
+        
 }
 
-
-dropImage( e , data )  // onDrop ( event , data )
-{ 
-  if (data.localFile) 
-    {/*
-     const f = (globals.session.userName || 'developer') + '_' + utils.buildRandomID();
-     utils.uploadFileToServer(data.localFile, f, 
-           function(result)
-           { 
-             this.self.PORTRAIT=result.result.savedName; ; 
-             this.self.portraitPanel.imgURL=this.self.portraitURL() 
-            }.bind({self:this,destDir:this.#destDir}) , {destDir:this.#destDir} );
-    */}
-
- 
-    if (data.json) 
-    {
-      debugger
-      
-    }
-      
-
-    if (data.url) {
-                   alert("Web-Image gedroppt:"+ data.url);
-                  }
-      
-    if (data.plainText) {
-                          alert("Plain Text:"+ data.plainText);
-                        }
-
-   this.__updateThumbs();                      
-}
 
 
 ___addMediaFiles(files)

@@ -1,5 +1,5 @@
 const { TFLogging }= require('./logging.js');
-const utils        = require('./nodeUtils');
+const utils        = require('./nodeUtils.js');
 const batchProc    = require('./batchProc.js');
 const dbUtils      = require('./dbUtils');
 const grants       = require('./nodeGrants');
@@ -230,6 +230,12 @@ if(CMD=='GETUSERGRANTS')
 } 
 
 
+if(CMD=='SYMBOLPATH') 
+  {
+    return utils.getSymbolPath(param.symbol);
+  } 
+  
+
 
 if(CMD=='GETVAR') 
 {
@@ -302,31 +308,3 @@ return  await userAPI.handleCommand( sessionID , cmd , param , req ,  res , fs ,
 }   
 
 
-/*
-
-scanDir
-{"dir":"/home/tferl/GIT"}
-
-
-CreateTable
-{"tableName":"sqare", "fieldDefs":[{"fieldName":"x","fieldType":"real"} , {"fieldName":"y","fieldType":"real"} ]  }
-
-
-insertIntoTable  
-{"tableName":"sqare" ,  "fields":{"X":"1","Y":"1"} }
-
-
-fetchRecords
-{"sql":"select * from sqare"}
-bzw.
-fetchRecord
-{"sql":"select * from sqare where x=3"}
-
-
-updateTable
-{"tableName":"sqare" , "ID_field":"ID" , "ID_value":"2" ,  "fields":{"x":"7" , "y":"77"} }
-
-
-
-
-*/

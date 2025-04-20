@@ -140,12 +140,12 @@ __stopPollingJoblist()
 
 
  updateThumbs()
-  {
+  {  
     this.dashboardPanel.innerHTML = "";
     this.dashboardPanel.buildFlexBoxLayout();
     this.dashboardPanel.alignItems='flex-start';
     this.dashboardPanel.justifyContent='flex-start';
-
+debugger;
     var response = utils.webApiRequest('LSMEDIASET' , {} );
     if(response.error) {dialogs.showMessage(response.errMsg); return; }
 

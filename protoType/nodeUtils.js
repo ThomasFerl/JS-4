@@ -3,6 +3,7 @@ var axios               = require('axios');
 const excelJS           = require('exceljs');
 var   { spawn }         = require('child_process');
 const { TFLogging }     = require('./logging.js');
+const globals           = require('./backendGlobals.js');
 
 
 module.exports.debug    = false;
@@ -75,6 +76,12 @@ module.exports.strDateTimeToExcel = (strDateTime) =>
 {
   return new TFDateTime(strDateTime).dateTime();
 }
+
+module.exports.getSymbolPath = (s) =>
+{
+  return {error:false, errMsg:"", result:globals.symbolPath()+'/'+s+'.svg' }
+}  
+
 
 
 //--------------------------------------------------------------------------------------------

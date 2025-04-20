@@ -27,10 +27,11 @@ tables.push(
    tables.push( 
       {tableName:"mediaSets",
        tableFields:[
+          {fieldName:"ID_THUMB"     , fieldType:"Text" } ,
           {fieldName:"TYPE"         , fieldType:"Text" } ,
           {fieldName:"NAME"	      , fieldType:"Text" } ,
           {fieldName:"KATEGORIE"    , fieldType:"Text" } ,
-          {fieldName:"DESCRIPTION"	, fieldType:"Text" } 
+          {fieldName:"DESCRIPTION"	, fieldType:"Text" }           
        ]}); 
        
    tables.push( 

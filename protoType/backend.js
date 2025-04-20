@@ -39,11 +39,9 @@ dbTables.buildTables( dB );
 // dbTables.checkdbTableStructure();
 
 
-const pixPath = '/home/tferl/Downloads/xxx/hotfitlena/';
-
-const webApp      = express();
-  var staticPath  = path.join (__dirname, 'frontend' );
-      utils.log("static Path: " + staticPath );
+const webApp       = express();
+globals.staticPath = path.join (__dirname, 'frontend' );
+utils.log("static Path: " + globals.staticPath );
 
 
 uploadPath  = path.join (__dirname, 'tmpUploads' );
@@ -312,7 +310,7 @@ webApp.use( ( req , res , next ) =>
       });
       
       
-webApp.use( express.static( staticPath  ) );
+webApp.use( express.static( globals.staticPath  ) );
 
 webApp.get('/userLogin'                    ,  userLogin );
 webApp.get('/userLoginx/:username/:passwd' ,  userLoginx );
