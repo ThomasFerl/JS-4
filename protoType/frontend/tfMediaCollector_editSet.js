@@ -138,9 +138,9 @@ export class TFMediaCollector_editSet
     }  
           
 dropThumbImage(e,d)      
-{
-   this.mediaSet.ID_thumb = d.ID; 
-   this.thumbContainer.imgURL = d.url;  
+{ 
+   this.mediaSet.ID_THUMB = d.json.ID; 
+   this.thumbContainer.imgURL = d.json.url;  
 }
   
 load(id) 
@@ -152,7 +152,6 @@ load(id)
 save() 
 { 
     var response = {};
-    
     if(!this.mediaSet.ID)
     {
       // neues Set anlegen

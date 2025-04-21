@@ -1,6 +1,5 @@
 import * as globals   from "./globals.js";
 
-
 const debug              = globals.debug;
 
 function mod(a,b) { if(b!=0) return Math.floor(a/b); else return NaN;}

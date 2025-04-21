@@ -10,7 +10,8 @@ import { TFEdit,
          TFImage,
          TPropertyEditor,
          TFAnalogClock,
-         TFPopUpMenu}    from "./tfWebApp/tfObjects.js";
+         TFPopUpMenu,
+         TFPanel}    from "./tfWebApp/tfObjects.js";
 
 import { TFMediaCollector_mediaSetViewer } from "./tfMediaCollector_mediaSetViewer.js";         
 
@@ -23,38 +24,16 @@ export class TFMediaCollector_thumb
 {
   constructor( parent , params )
   { 
-    this.parent       = parent; 
-    this.params       = params;
-    this.mediaSet     = params.mediaSet || null;
-    this.mediaFile    = params.file || params.mediaFile || null;
-    this.thumb        = params.thumb || null;
-    this.thumbID      = params.thumbID || null;
+    this.parent           = parent; 
+    this.params           = params;
+    this.mediaSet         = params.mediaSet || null;
+    this.mediaFile        = params.file || params.mediaFile || null;
+    this.thumb            = params.thumb || null;
+    this.thumbID          = params.thumbID || null;
+    this.popupMenu        = params.popupMenu || null;
+    this.callBack_onClick = params.callBack_onClick || null;
 
-    if(this.thumb==null) this.thumb
-
-
-
-    // temporär - wird später ausgelagert ....
-    this.popup = new TFPopUpMenu([{caption:'view',value:1} , 
-                                  {caption:'diashow',value:2 } ,
-                                  {caption:'Metadaten bearbeiten',value:3},
-                                  {caption:'Person zuordnen',value:4} ,]);
-      
-    this.popup.onClick = (sender , item )=>{ 
-                                             if(item.value==1) {this.handleMediaFile();}
-              
-                                             if(item.value==2) {}
-            
-                                             if(item.value==3) {}
-
-                                             if(item.value==4) {}
-                                              
-                                          }  ;
-
-
-
-
-
+    if(this.thumb==null) this.thumb = {ID:0, DIR:'', FILENAME:'', FILETYPE:'', FILESIZE:0, THUMBNAIL:'', THUMBNAILFILETYPE:'', THUMBNAILFILESIZE:0, THUMBNAILDIR:''};
 
     if(params.thumbID)
     { 
@@ -67,49 +46,29 @@ export class TFMediaCollector_thumb
    
 
     this.thumbURL     = utils.buildURL('GETIMAGEFILE' , {fileName:this.thumb.fullPath} );
-    this.thumbImg     = new TFImage(this.parent ,1,1,"150px" , "150px" , {popupMenu:this.popup , imgURL:this.thumbURL , dragable:true } );
-    
+    this.thumbImg     = new TFPanel(this.parent ,1,1,"150px" , "150px" , {popupMenu:this.popupMenu , dragable:true } );
+    //this.thumbImg.DOMelement.setStyle({backgroundImage: `url(${this.thumbURL})`, backgroundSize: "cover"});
+    this.thumbImg.imgURL = this.thumbURL ,
+
+
     this.thumbImg.callBack_onDragStart = function (e)
-                  { 
-                    e.dataTransfer.setData('application/json', JSON.stringify(this.thumb));
+                  {
+                    e.dataTransfer.setData('application/json', JSON.stringify({thumb:this.thumb, mediaFile:this.mediaFile || {notSet:true} ,mediaSet:this.mediaSet || {notSet:true}}));
                   }.bind(this);
    
     this.thumbImg.callBack_onClick = function (e, d) 
                   { 
-                    this.handleMediaFile(); 
+                    this.handleMediaFile(e,d); 
                   }.bind(this);
-    
-    //this.sec = 0;
-    //setInterval(() =>{this.sec++; console.log("MediaFile nach "+this.sec+" Sekunde(n):", JSON.stringify(this.mediaFile))}, 1000);
-                                
-    }
+  }
 
    
 
-handleMediaFile()
+handleMediaFile(e,d)
 { 
-  if(this.mediaFile)
-  {  
-    // File zusammenbauen
-    var fn = utils.pathJoin(this.mediaFile.DIR , this.mediaFile.FILENAME );
-
-    if (this.mediaFile.TYPE == "MOVIE")
-    {
-      var w = dialogs.createWindow( null,fn,"80%","80%","CENTER");
-      var url = utils.buildURL('GETMOVIEFILE',{fileName:fn} );
-      dialogs.playMovieFile( w.hWnd , url );
-    }
-
-    if (this.mediaFile.TYPE == "IMAGE")
-    {
-      var w   = dialogs.createWindow( null,fn,"80%","80%","CENTER");
-      var url = utils.buildURL('GETIMAGEFILE',{fileName:fn} );
-      dialogs.addImage( w.hWnd , '' , 1 , 1 , '100%' , '100%' , url ); 
-    }
-  }  
- 
-  if(this.mediaSet) new TFMediaCollector_mediaSetViewer( this.mediaSet );
-
+  if(this.callBack_onClick) this.callBack_onClick(d,e,{mediaFile:this.mediaFile || {notSet:true} , 
+                                                       mediaSet :this.mediaSet || {notSet:true} , 
+                                                       thumb    :this.thumb || {notSet:true} });
 }
 
 

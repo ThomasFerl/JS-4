@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Diashow ohne Überzoom</title>
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      width:100%;
+      overflow: hidden;
+    }
+
+    #slideshow-container {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      background-color: black; /* Hintergrund für leere Bereiche */
+    }
+
+    .slide {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      transition: opacity 1.5s ease-in-out;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .slide.active {
+      opacity: 1;
+    }
+
+    .slide img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain; /* Skaliert das Bild, ohne es zu beschneiden */
+      background-color: black; /* Optional: Hintergrundfarbe für kleinere Bilder */
+    }
+  </style>
+</head>
+<body>
+  <div id="slideshow-container"></div>
+
+  <script>
+       let currentIndex           = 0;
+       let slides                 = [];
+       let slideInterval          = 7000; // 7 Sekunden Intervall
+       let slideShowIntervalTimer = null;
+
+       window.addEventListener('keydown', (event) => { 
+                                                       if (event.key === 'Escape')      window.close(); 
+                                                       if (event.key === 'ArrowRight')  prev(); 
+                                                       if (event.key === 'ArrowLeft')   next(); 
+                                                       if (event.key === " " || event.code === "Space") togglePause();
+                                                     });
+
+
+        window.addEventListener('message', (event) => {
+                                                        console.log('Nachricht erhalten:', JSON.stringify(event.data));
+                                                        currentIndex  = event.data.currentIndex;
+                                                        slideInterval = event.data.slideInterval;
+                                                        imgURLs       = event.data.imgURLs;
+
+                                                        // Diashow initialisieren
+                                                        if (imgURLs.length == 0) { 
+                                                                                    alert("Keine Bilder übergeben!");
+                                                                                    return;
+                                                                                   } 
+
+                                                        initializeSlideshow(imgURLs)
+                                                      });
+
+    function next()
+    {
+      clearInterval(slideShowIntervalTimer);
+      currentIndex = (currentIndex + 1) % slides.length;
+      showSlide(currentIndex);
+      startSlideshow();
+    }
+
+    function prev()
+    {
+      clearInterval(slideShowIntervalTimer);
+      currentIndex = (currentIndex - 1 + slides.length) % slides.length;
+      showSlide(currentIndex);  
+      startSlideshow();
+    }
+ 
+    function togglePause()
+    {
+      if (slideShowIntervalTimer != null) { clearInterval(slideShowIntervalTimer); slideShowIntervalTimer = null; }
+      else startSlideshow();
+    }
+
+        // Funktion, um die Folien dynamisch zu generieren
+    function initializeSlideshow(imageUrls) 
+    {
+      const container = document.getElementById('slideshow-container');
+
+      // Vorherige Inhalte entfernen
+      container.innerHTML = '';
+
+      // Für jede URL eine Folie erstellen
+      imageUrls.forEach((url, index) => {
+                                          const slide     = document.createElement('div');
+                                          slide.className = 'slide';
+                                          if (index === 0) slide.classList.add('active'); // Erste Folie aktiv
+
+                                           // Bild einfügen
+                                           const img     = document.createElement('img');
+                                                 img.src = url;
+                                                 img.alt = `Bild ${index + 1}`;
+
+                                          slide.appendChild(img);
+                                          container.appendChild(slide);
+                                        });
+
+      // Alle Folien speichern
+      slides = document.querySelectorAll('.slide');
+
+      // Diashow starten
+      startSlideshow();
+    }
+
+    // Funktion, um die aktive Folie zu wechseln
+    function showSlide(index) 
+    {
+      slides.forEach((slide, i) => { slide.classList.toggle('active', i === index);});
+    }
+
+    // Diashow starten
+    function startSlideshow() 
+    {
+      slideShowIntervalTimer = setInterval(() => {
+                                                   currentIndex = (currentIndex + 1) % slides.length;
+                                                   showSlide(currentIndex);
+                                                 }, slideInterval);
+    }
+
+  </script>
+</body>
+</html>

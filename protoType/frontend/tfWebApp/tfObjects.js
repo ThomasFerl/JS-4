@@ -1357,7 +1357,7 @@ export class TFImage extends TFObject
   {
     this.__URL = value;
 
-   if (value.endsWith('.svg')) 
+ if (value.endsWith('.svg')) 
      {
        // SVG als `<img>` oder Inline-SVG einfügen
        fetch(value)

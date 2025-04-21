@@ -6,7 +6,8 @@ const fileType        = require('file-type');
 const os              = require('os');
 const sharp           = require('sharp');
 const { imageHash }   = require('image-hash');
-const hamming         = require('hamming-distance');
+const hamming         = require('hamming-distance');  // Ähnlichkeit von Bildern ...
+
 
 const videoExtensions = [
    'mp4', 'm4v', 'mov', 'avi', 'wmv', 'flv',
@@ -307,13 +308,26 @@ if(CMD=='PORTRAITFROMFILE')
 
   }
 
+
 if(CMD=='CREATEMEDIASET') 
 {
     return dbUtils.insertIntoTable_if_not_exist( this.db , 'mediaSets', {TYPE:param.TYPE, 
+                                                                         ID_THUMB:param.ID_THUMB || 0,
                                                                          NAME:param.NAME, 
                                                                          KATEGORIE:param.KATEGORIE, 
                                                                          DESCRIPTION:param.DESCRIPTION} );
   }
+
+
+if(CMD=='UPDATEMEDIASET') 
+{
+        return dbUtils.updateTable( this.db , 'mediaSets', 'ID' , param.ID ,  {TYPE:param.TYPE, 
+                                                                               ID_THUMB:param.ID_THUMB || 0,
+                                                                               NAME:param.NAME, 
+                                                                               KATEGORIE:param.KATEGORIE, 
+                                                                               DESCRIPTION:param.DESCRIPTION} );
+}
+
 
 //---------------------------------------------------------------
 //---------------------------------------------------------------
@@ -321,17 +335,21 @@ if(CMD=='CREATEMEDIASET')
 
 if(CMD=='LSMEDIASET')
 {
+ console.log('LSMEDIASET -> param:' + JSON.stringify(param)); 
+
  var sql = "Select * from mediaSets order by ID";
 
   var response =  dbUtils.fetchRecords_from_Query( this.db , sql );
-      if(response.error) return response;
+
+  if(response.error) return response;
   
   var mediaSets = [];
-   
+  
   for(var i=0; i<response.result.length; i++)
     {
       var m = response.result[i];
-      if(m.ID_THUMB) 
+      console.log('LSMEDIASET :'+i+'.loop:' + JSON.stringify(m)); 
+      if(m.ID_THUMB!="0") 
         {
            var thumb          = dbUtils.fetchRecord_from_Query( this.db , "Select * from thumbs where ID="+m.ID_THUMB ).result;
                thumb.fullPath = this.path.join( this.thumbPath , thumb.THUMBFILE );
@@ -340,6 +358,8 @@ if(CMD=='LSMEDIASET')
         else m.thumb          = {ID:0, ID_FILE:'', NDX:-1, THUMBFILE:'file-image' , fullPath:utils.getSymbolPath('file-image').result}; 
         mediaSets.push(m);
     }
+
+    console.log('result:' + JSON.stringify(mediaSets));  
   return{error:false, errMsg:"OK", result:mediaSets };    
 }
 
@@ -410,11 +430,33 @@ if(CMD=='CONTENTURL')
 }
 
 
+if(CMD=='MOVEMEDIA_IN_SET') 
+{
+  console.log('MOVEMEDIA_IN_SET -> param:' + JSON.stringify(param));
+
+  var mediaFiles  = param.mediaFiles;
+  var destination = param.destination;
+  var source      = param.source;
+  
+  console.log(JSON.stringify(mediaFiles));
+
+  for(var i=0; i<mediaFiles.length; i++)
+  { 
+    if(source.ID) // Move from source to destination Set 
+    dbUtils.runSQL( this.db , 'update mediaInSet set ID_MEDIA='+destination+' where ID_MEDIA='+source+' and ID_FILE='+mediaFiles[i].ID ); 
+    else          // Copy to destination Set
+    dbUtils.insertIntoTable( this.db , 'mediaInSet' , {ID_MEDIA:destination , ID_FILE:mediaFiles[i].ID} );
+  }
+
+  return {error:false, errMsg:"OK", result:{} };
+  
+}  
+
 
 if(CMD=='REGISTERMEDIA_IN_SET') 
 {
   var mediaFiles  = param.mediaFiles;
-  var mediaSet   = param.mediaSet;
+  var mediaSet    = param.mediaSet;
 
 console.log(JSON.stringify(mediaFiles));
 
