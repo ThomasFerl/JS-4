@@ -161,34 +161,13 @@ export function strMatches(searchStr, topic)
 }
 
 
+
+
+
 export function containing( key , list )
 {
  return  list.some(element => element.toUpperCase() == key.toUpperCase());
 }
-
-
-
-export function colorToRGB( color )
-{    
-  let dummyDiv         = document.createElement("div");
-  dummyDiv.style.color = color;
-  document.body.appendChild(dummyDiv);
-
-    let computedColor = window.getComputedStyle(dummyDiv).color;
-    document.body.removeChild(dummyDiv);
-
-    let match = computedColor.match(/\d+/g); // Extrahiert alle Zahlen
-    if (!match || match.length < 3) return null;
-  
-      return {
-          r  : parseInt(match[0], 10),
-          g  : parseInt(match[1], 10),
-          b  : parseInt(match[2], 10),
-          rgb: `rgb(${match[0]}, ${match[1]}, ${match[2]})`
-      };
-  }
-
-
 
 
 export class TFDateTime 
@@ -981,15 +960,29 @@ export function formatTime( _dt )
 }
 
 
-export function pathJoin(d,f,e)
+export function formatFileSize( sizeInBytes )
 {
-  if (d=='/') d = '';
-  
-  var p='.';
-  if(e=='') p='';
- 
-  return d+'/'+f+p+e;
+  if(sizeInBytes == 0) return '0 Byte';
+  var i = Math.floor( Math.log(sizeInBytes) / Math.log(1024) );
+  return ( sizeInBytes / Math.pow(1024, i) ).toFixed(2) * 1 + ' ' + ['Byte', 'KB', 'MB', 'GB', 'TB'][i];
 }
+
+export function pathJoin(d='', f='', e) 
+{
+  let p = '';
+  if (d === '' && f === '') return '';
+  
+  if (d === '/') p = '/' + f;
+  else {
+       if (d[d.length - 1] === '/') p = d + f;
+       else                         p = d + '/' + f;
+  } 
+  
+  if (e) p += '.' + e;
+
+  return p;
+}
+
 
 
 
@@ -1402,24 +1395,28 @@ export function findEntryByField( array , fieldName , value )
 
 
 
-export function uploadFileToServer(file, fileName , callBackAfterUpload ) 
-{
+export function uploadFileToServer(file, fileName , callBackAfterUpload , params  ) 
+{ 
   console.log('uploadFileToServer...');
-  console.log('  - file     :'+file);
+  console.log('  - file     :'+ file.name);
   console.log('  - fileName :'+fileName);
 
   let formData = new FormData();
   formData.append('file', file);
   formData.append('fileName', fileName ); // Hinzufügen des Dateinamens zum FormData-Objekt
 
+  if(params.destDir) formData.append('destDir' , params.destDir); 
+
 // Erstelle ein XMLHttpRequest-Objekt
 var xhr = new XMLHttpRequest();
 
 // Konfiguriere die Anfrage (Method, URL und asynchroner Modus)
+// getUploadURL() -> getServer()+'/upload'; API-Endpunkt für den Upload
 xhr.open('POST', globals.getUploadURL() , true);
 
 // Definiere eine Funktion, die aufgerufen wird, wenn die Anfrage abgeschlossen ist
-xhr.onload = function () {
+xhr.onload = function () 
+{
     if (xhr.status >= 200 && xhr.status < 300) {
         // Erfolgreiche Antwort verarbeiten
         console.log('uploadFileToServer Response::', xhr.responseText);
@@ -1841,3 +1838,70 @@ export function keys_toUpperCase(jsn)
                           return newObj;
                         });
 }
+
+
+export function isMovieFile(ext)
+{
+   for(var i=0; i<globals.movieFileExtensions.length; i++)
+   {
+     if(ext.toUpperCase()==globals.movieFileExtensions[i].toUpperCase()) return true;
+   }
+   return false;  
+}
+
+export function isImageFile(ext)
+{
+   for(var i=0; i<globals.imageFileExtensions.length; i++)
+   {
+     if(ext.toUpperCase()==globals.imageFileExtensions[i].toUpperCase()) return true;
+   }
+   return false;  
+}
+
+// parst eine Zeichenkette in ein JSON-Objekt - siehe Beispiel unten
+export function parseToJSON(inputStr)  
+  {
+    let result = {};
+    let pairs = inputStr.split(";").map(pair => pair.trim()).filter(pair => pair); // Aufteilen & leere Elemente entfernen
+
+    pairs.forEach(pair => {
+        let [path, value] = pair.split("=").map(part => part.trim());
+        value = value.replace(/^"(.*)"$/, "$1"); // Entfernt optionale Anführungszeichen um Werte
+        
+        if (path.includes(".")) {
+            // Falls ein Punkt existiert → Hierarchie aufbauen
+            let keys = path.split(".");
+            let obj = result;
+
+            keys.forEach((key, index) => {
+                if (index === keys.length - 1) {
+                    obj[key] = value; // Letzter Key → Wert zuweisen
+                } else {
+                    obj[key] = obj[key] || {}; // Neues Objekt erstellen, falls noch nicht vorhanden
+                    obj = obj[key]; // Tiefere Ebene setzen
+                }
+            });
+        } else {
+            // Kein Punkt → Direkt in das JSON-Objekt setzen
+            result[path] = value;
+        }
+    });
+
+    return result;
+}
+
+/*
+ ======Test======
+let input = "person.Name=Doe;person.VORNAME=Jon;adresse.Strasse=Hauptstrasse;Alter=30;Land=DE";
+let jsonObj = parseToJSON(input);
+console.log(jsonObj);
+
+ 
+======Ergebnis========
+{
+    person: { Name: "Doe", VORNAME: "Jon" },
+    adresse: { Strasse: "Hauptstrasse" },
+    Alter: "30",
+    Land: "DE"
+}
+*/

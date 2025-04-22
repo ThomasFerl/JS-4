@@ -2,6 +2,9 @@ import * as globals  from "./globals.js";
 import * as utils    from "./utils.js";
 import * as graphics from "./tfGrafics.js";
 import * as chartJS  from "./chart.js";
+import { TFWindow }  from "./tfWindows.js"; 
+import { TFTreeView }from "./tfTreeView.js"; 
+import { THTMLTable } from "./tfGrid.js";
 
 
 var screen = null;
@@ -189,6 +192,8 @@ export class TFObject
 
     this.isDragable   = false;
     if( this.params.dragable)   this.isDragable   = this.params.dragable;
+    
+    if(this.isDragable) {this.draggingData = this.params.draggingData || null;}
 
     this.isDropTarget = false;
     if( this.params.dropTarget) this.isDropTarget   = this.params.dropTarget;  
@@ -238,6 +243,7 @@ export class TFObject
     this.callBack_onContextMenu= undefined;
 
     this.callBack_onDragStart  = undefined;
+    this.callBack_onDragging   = undefined;
     this.callBack_onDragOver   = undefined;
     this.callBack_onDrop       = undefined;   
     this.callBack_onDragEnd    = undefined;
@@ -260,45 +266,83 @@ export class TFObject
     this.DOMelement.setAttribute('ID'   ,  this.ID );
 
     if(this.isDragable) 
-    {
+    { // das element "dragable" machen
       this.DOMelement.setAttribute('draggable', true);
+      
+      // die Reaktionen diesbezüglich ...
       this.DOMelement.addEventListener('dragstart', (e)=>{
-                                                          var d = null;
-                                                          if(this.draggingData) d=this.draggingData;
-                                                          else if(this.dataBinding) d=this.dataBinding;
-                                                          if(d==null) d = '';
-                                                          if(utils.isJSON(d)) d = JSON.stringify(d);
-                                                          e.dataTransfer.setData('application/json', d );
-                                                          if( this.callBack_onDragStart) this.callBack_onDragStart(e);
-                                                          });  
-      this.DOMelement.addEventListener('dragend',   (e)=>{
-                                                            var d = null;
-                                                            if(this.draggingData) d=this.draggingData;
-                                                            else if(this.dataBinding) d=this.dataBinding;
-                                                            if(d==null) d = '';
-                                                            if(utils.isJSON(d)) d = JSON.stringify(d);
+                                                          if(this.draggingData)
+                                                          {  
+                                                            const d = JSON.stringify(this.draggingData);  
                                                             e.dataTransfer.setData('application/json', d );
-                                                            if( this.callBack_onDragEnd) this.callBack_onDragEnd(e);
-                                                            });  
+                                                          }  
+                                                          if( this.callBack_onDragStart) this.callBack_onDragStart(e);
+                                                          }); 
+                                                          
+      this.DOMelement.addEventListener("drag", (e) => {
+                                                          if( this.callBack_onDragging) this.callBack_onDragging(e);  
+                                                          });                                                          
+
+
+      this.DOMelement.addEventListener('dragend',   (e)=>{
+                                                           if( this.callBack_onDragEnd) this.callBack_onDragEnd(e);
+                                                         });  
 
     }
     
-    if(this.isDropTarget) 
-      {
-        this.DOMelement.addEventListener('dragover', (e)=>{ 
-                                                            e.preventDefault();
-                                                            var d = e.dataTransfer.getData('application/json');
-                                                            if(utils.isJSON(d)) d = JSON.parse(d);
-                                                            if( this.callBack_onDragOver)  this.callBack_onDragOver (e ,d); 
-                                                          });
-
-        this.DOMelement.addEventListener('drop',      (e)=>{ 
-                                                            e.preventDefault();
-                                                            var d = e.dataTransfer.getData('application/json');
-                                                            if(utils.isJSON(d)) d = JSON.parse(d);
-                                                            if( this.callBack_onDrop)  this.callBack_onDrop (e ,d); 
-         });
+    if (this.isDropTarget) 
+    {
+      this.DOMelement.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        if (this.callBack_onDragOver) this.callBack_onDragOver(e, null);
+      });
+    
+      this.DOMelement.addEventListener("drop", (e) => {
+        e.preventDefault();
+    
+        const items = e.dataTransfer.items;
+        const dropResult = {};
+        let pending = 0;
+    
+        for (let item of items) {
+          if (item.kind === "file") {
+            dropResult.localFile = item.getAsFile();
+          }
+    
+          else if (item.kind === "string" && item.type === "application/json") {
+            pending++;
+            item.getAsString((jsonStr) => {
+              try {
+                dropResult.json = JSON.parse(jsonStr);
+              } catch (err) {
+                console.warn("Ungültiges JSON im Drop-Item", err);
+              }
+              if (--pending === 0 && this.callBack_onDrop) this.callBack_onDrop(e, dropResult);
+            });
+          }
+    
+          else if (item.kind === "string" && item.type === "text/uri-list") {
+            pending++;
+            item.getAsString((url) => {
+              dropResult.url = url;
+              if (--pending === 0 && this.callBack_onDrop) this.callBack_onDrop(e, dropResult);
+            });
+          }
+    
+          else if (item.kind === "string" && item.type === "text/plain") {
+            pending++;
+            item.getAsString((txt) => {
+              dropResult.plainText = txt;
+              if (--pending === 0 && this.callBack_onDrop) this.callBack_onDrop(e, dropResult);
+            });
+          }
+        }
+    
+        // Wenn alles synchron war (z.B. nur lokale Datei), sofort Callback
+        if (pending === 0 && this.callBack_onDrop) this.callBack_onDrop(e, dropResult);
+      });
     }
+    
 
     this.left   = this.params.left;
     this.top    = this.params.top;
@@ -343,15 +387,9 @@ export class TFObject
           this.DOMelement.addEventListener('mousemove'  , (e)=>{if( this.callBack_onMouseMove)   this.callBack_onMouseMove  (e,this.dataBinding) });
           this.DOMelement.addEventListener('mouseleave' , (e)=>{if( this.callBack_onMouseOut )   this.callBack_onMouseOut   (e,this.dataBinding) });
           
-          if(this.popupMenu)
-           {  
-            this.DOMelement.addEventListener('contextmenu', (e)=>{ if(this.popupMenu) 
-                                                                   {
-                                                                     e.preventDefault();
-                                                                     this.popupMenu.show(this,e.pageX, e.pageY);
-                                                                   }
-                                                                  });   
-          } 
+          console.log(this.constructor.name+" popup:"+this.popupMenu);
+
+          if(this.popupMenu) { this.addPopupMenu(this.popupMenu)}
           else this.DOMelement.addEventListener('contextmenu', (e)=>{e.preventDefault();
                                                                      if( this.callBack_onClick) this.callBack_onClick (e,this.dataBinding) 
                                                                     });   
@@ -364,6 +402,18 @@ export class TFObject
           this.DOMelement.addEventListener('keyup'      , (e)=>{if( this.callBack_onKeyUp)       this.callBack_onKeyUp      (e,this.dataBinding) });
 
   } 
+
+  addPopupMenu(p)
+  {  
+    this.popupMenu = p;
+    this.DOMelement.addEventListener('contextmenu', (e)=>{ if(this.popupMenu) 
+                                                           { 
+                                                             e.preventDefault();
+                                                             this.popupMenu.show(this,e.pageX, e.pageY);
+                                                           }
+                                                          });   
+  } 
+
 
   set id(value)
   {
@@ -1257,7 +1307,6 @@ export class TFImage extends TFObject
   {
     if(!params) params = {css:"cssPanel"};
     else    params.css = params.css || "cssPanel";
-
     super(parent , left , top , width , height , params );
   } 
   
@@ -1265,11 +1314,29 @@ export class TFImage extends TFObject
   { 
     super.render();
 
-    this.imgContainer = new TFPanel(this , 1 , 1 , '100%' , '100%' , { preventGrid:true , css:"cssImageContainer"});
+    this.position = 'relative';
+    this.overflow = 'hidden';
+
+    var p=this.params;
+    p.preventGrid=true;
+    p.css = "cssImageContainer";
+
+    this.imgContainer = new TFPanel(this , 1 , 1 , '100%' , '100%' , p );
     this.imgContainer.overflow = 'hidden';
- 
-    if(this.params.imgURL) this.imgContainer.imgURL = this.params.imgURL;
+
+    if(this.params.imgURL) this.imgURL = this.params.imgURL;
+
   }  
+
+  prepareNextImage( nextImageURL)
+  {
+    var p=this.params;
+    p.preventGrid=true;
+    p.css = "cssImageContainer";
+    this.nextImgContainer = new TFPanel(this , 1 , 1 , '100%' , '100%' , p );
+    this.nextImgContainer.overflow = 'hidden';
+    this.nextImgContainer.imgURL = nextImageURL;
+  }
 
 
   set svgContent( value )
@@ -1432,33 +1499,72 @@ render()
 
 //---------------------------------------------------------------------------
 
-export class TFileUploader
+export class TFileUploadPanel 
 {
-  constructor ( button , fileTyp , multiple , onChange )
- {
-  this.uploader               = document.createElement("input");
-  this.uploader.type          = 'file';
-  this.uploader.multiple      = multiple;
-  this.uploader.accept        = fileTyp;
+  constructor(parent, params) 
+  {
+    if (!params) params = {};
 
-  if(!onChange) this.onChange = ()=>{console.log('no handler for file upload')};
-  else          this.onChange = onChange;
+    this.panel = new TFPanel(parent, 1, 1, '100%' , '100%' , { css: 'cssDropZoneJ4' });
+    this.panel.position = 'relative';
+    this.panel.display = 'flex';
+    this.panel.alignItems = 'center';
+    this.panel.justifyContent = 'center';
+    this.panel.DOMelement.style.border = '2px dashed gray';
+    this.panel.DOMelement.style.minHeight = '100px';
+    this.panel.DOMelement.style.cursor = 'pointer';
+    
+    this.label = new TFLabel(this.panel, 1, 1, '75%','75%', { caption: params.label || 'Datei(en) hierher ziehen oder klicken' });
+    this.label.textAlign = 'center';
 
-  this.uploader.style.display = 'none';
-      button.callBack_onClick = ()=>{console.log('uploader.click()');this.uploader.click()}
-      document.body.appendChild(this.uploader);
-      
-      // Event Listener hinzufügen, um die ausgewählten Dateien zu ggf verarbeiten / vorschauen / ...
-      this.uploader.addEventListener('change', function() { this.onChange( this.uploader.files ); }.bind(this) ); 
+    this.destDir = params.destDir || '';
+
+    // Upload-Logik
+    this.accept = params.accept || '*/*';
+    this.onUpload = params.onUpload || ((file, serverResponse) => alert('Upload fertig:' + utils.JSONstringify(serverResponse)));
+                           
+    // Versteckter File-Input
+    this.input = document.createElement("input");
+    this.input.type = "file";
+    this.input.multiple = params.multiple || false;
+    this.input.accept = this.accept;
+    this.input.style.display = "none";
+    document.body.appendChild(this.input);
+
+    // Button-Click → öffnet Datei-Dialog
+    this.panel.callBack_onClick = () => this.input.click();
+
+    // Datei über Dialog ausgewählt
+    this.input.addEventListener("change", () => this.__handleFiles(this.input.files));
+
+    // Drag-and-drop Events
+    this.panel.DOMelement.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      this.panel.DOMelement.classList.add("hover");
+    });
+
+    this.panel.DOMelement.addEventListener("dragleave", () => {
+      this.panel.DOMelement.classList.remove("hover");
+    });
+
+    this.panel.DOMelement.addEventListener("drop", (e) => {
+      e.preventDefault();
+      this.panel.DOMelement.classList.remove("hover");
+      const files = e.dataTransfer.files;
+      if (files.length > 0) this.__handleFiles(files);
+    });
+  }
+
+  __handleFiles(fileList) 
+  {
+    for (let file of fileList) 
+    {
+      const fileName = globals.session.userName + '_' + utils.buildRandomID();
+      utils.uploadFileToServer(file, fileName, (result) =>{this.onUpload(result)} , {destDir:this.destDir} );
+    }
+  }
 }
 
-
-async upload( pathName )
-{
-  const files = this.uploader.files;
-  for (let i = 0; i < files.length; i++) utils.uploadFileToServer(files[i], globals.session.userName+'_' + utils.buildRandomID(1), ()=>{console.log('uploaded ... ' + files[i] )} ) 
-}
-}
 
 //---------------------------------------------------------------------------
 
@@ -1502,10 +1608,12 @@ export class TFCheckBox extends TFObject
     this.input.setAttribute('type' , 'checkbox');
     this.input.style.justifySelf = 'start';
     this.appendChild(  this.input ); 
-    
-    if(this.callBack_onChange) this.input.onchange = this.callBack_onChange;
-    if(this.callBack_onClick)  this.input.onclick  = this.callBack_onClick;
-    
+
+    this.input.addEventListener('change', function(event) 
+    {
+      if(this.callBack_onChange) this.callBack_onChange(this.checked);
+    }.bind(this) );
+
   } 
 
   get checked()
@@ -1812,7 +1920,7 @@ if(gridTemplate.apx)
      if(this.params.editLength) 
       {
         if(this.params.editLength != 'auto') this.input.style.width = this.params.editLength+'em';
-        else                                 this.input.style.width = '100%'; 
+        else                                 this.input.style.width = '99%'; 
 
         if(this.params.justifyEditField =='left') this.input.style.justifySelf = 'start';
         else                                      this.input.style.justifySelf = 'end'; 
@@ -1848,19 +1956,6 @@ if(gridTemplate.apx)
   {
     return this.input.value;
   }
-
-
-  set inpFieldFontWeight(f)
-  {
-    this.input.style.fontWeight = f;
-  }
-
-
-  get inpFieldFontWeight()
-  {
-    return this.input.style.fontWeight;
-  }
-
 
 
   setDateTime( dt )
@@ -1920,12 +2015,10 @@ export class TFComboBox extends TFEdit
     
     if(this.params.items) this.setItems (this.params.items);
     this.combobox = this.input;  // nur aus Gründen der besseren Lesbarkeit / Anwendbarkeit
-    this.__render(); 
-    this.item = this.params.value;
-
+    this.__render();
     this.combobox.addEventListener('change',  function() { 
       if(this.callBack_onChange)
-      {  
+      {
        var v = this.combobox.value;
        var c = this.items[v];
        this.callBack_onChange( v , c )
@@ -2693,22 +2786,24 @@ export class TFAnalogClock extends TFPanel
 
 export class TFChart extends TFPanel
 {
-  __RGB( color , alpha)
-  {
-    return 'rgba('+color.r+','+color.g+','+color.b+','+alpha+')';
-  }
-
-  __prepareChart()
- { 
-     // Chart type settings
+ __convertColor(color) 
+ {
+  const ctx = this.canvas.getContext('2d');
+  ctx.fillStyle = color;
+  return ctx.fillStyle;
+}
+ 
+ __prepareChart()
+ {  
+   // Chart type settings
    let _chartType = this.params.chartType;
    let _tension   = this.params.tension;
    let _radius    = this.params.radius;
 
-   
-   this.chartBackgroundColor    = utils.colorToRGB(this.params.chartBackgroundColor    || this.backgroundColor);
-   this.gridAreaBackgroundColor = utils.colorToRGB(this.params.gridAreaBackgroundColor || this.backgroundColor);
- 
+   this.params.chartPointColor         = this.__convertColor(this.params.chartPointColor);
+   this.params.chartBorderColor        = this.__convertColor(this.params.chartBorderColor);
+   this.params.chartSelectedColor      = this.__convertColor(this.params.chartSelectedColor);
+   this.params.chartBackgroundColor    = this.__convertColor(this.params.chartBackgroundColor);
 
    if (this.params.chartType.toUpperCase().indexOf('LINE') > -1) 
     {
@@ -2724,9 +2819,9 @@ export class TFChart extends TFPanel
    
    if (this.params.chartType.toUpperCase().indexOf('SPLINE_NO_POINTS') > -1) 
      {
-        _chartType = 'line';
-        _tension   = 0.4;
-        _radius    = 0;
+         _chartType = 'line';
+         _tension   = 0.4;
+         _radius    = 0;
      }
  
        this.chartOptions.showLines    = this.params.showLines;
@@ -2741,7 +2836,7 @@ export class TFChart extends TFPanel
        this.chartParams.options       =  this.chartOptions;
        this.chartParams.plugins       = [{beforeDraw: function(chart) {
                                                                        const ctx     = chart.ctx;
-                                                                       ctx.fillStyle = this.chartBackgroundColor.rgb;
+                                                                       ctx.fillStyle = this.params.chartBackgroundColor || this.backgroundColor;
                                                                        ctx.fillRect(0, 0, chart.width, chart.height);
                                                                       }.bind(this)
                                          }];
@@ -2768,8 +2863,13 @@ export class TFChart extends TFPanel
     this.params.tension                 = this.params.tension                 || 0;
     this.params.radius                  = this.params.radius                  || 3;
     this.params.showLines               = this.params.showLines               || true;
+    this.params.chartPointColor         = this.params.chartPointColor         || 'rgb(147, 147, 147)';
+    this.params.chartBorderColor        = this.params.chartBorderColor        || 'rgba(2, 10, 70, 0.35)';
     this.params.chartBorderWidth        = this.params.chartBorderWidth        || 1;
-   
+    this.params.chartSelectedColor      = this.params.chartSelectedColor      || 'rgb(255, 0, 0)';
+    this.params.chartBackgroundColor    = this.params.chartBackgroundColor    || this.backgroundColor;
+    this.params.gridAreaBackgroundColor = this.params.gridAreaBackgroundColor || this.backgroundColor;
+ 
     this.__prepareChart();
 
    this.ctx   = this.canvas.getContext('2d');
@@ -2779,41 +2879,41 @@ export class TFChart extends TFPanel
   this.chart.options.onHover = function(event, activeElements) 
   { 
     var c   =this.chart;
+    var self=this.self;
     // Reset all points
-    c.data.datasets.forEach((ds) => { ds.backgroundColor = ds.backgroundColor.map((item) => { return this.__RGB(utils.colorToRGB(item),0.21)}); });
+    c.data.datasets.forEach((ds) => {ds.backgroundColor = ds.backgroundColor.map(() => self.params.chartPointColor); });
 
     // Highlight the current point
     if (activeElements.length > 0) 
     {
       const index        = activeElements[0].index;
       const datasetIndex = activeElements[0].datasetIndex;
-      const color        = c.data.datasets[datasetIndex].backgroundColor[index];
-
-      c.data.datasets[datasetIndex].backgroundColor[index] = this.__RGB( utils.colorToRGB(color),0.77);
+      c.data.datasets[datasetIndex].backgroundColor[index] = self.params.chartSelectedColor;
     }
 
     c.update();
-  }.bind(this); 
+  }.bind({chart:this.chart, self:this}); 
 
 
   this.chart.options.onClick = function(e) 
   {
       var c    = this.chart;
+      var self = this.self;
+                                     
       const clickedPoints = c.getElementsAtEventForMode(e, 'nearest', { intersect: true }, false);
       if (clickedPoints.length > 0) 
          {
            const clickedPoint = clickedPoints[0];
            // Reset all points to original color
-            c.data.datasets[clickedPoint.datasetIndex].backgroundColor = c.data.datasets[clickedPoint.datasetIndex].backgroundColor.map((item) => {return this.__RGB(utils.colorToRGB(item),0.21)});
+           c.data.datasets[clickedPoint.datasetIndex].backgroundColor = c.data.datasets[clickedPoint.datasetIndex].backgroundColor.map(() => self.params.chartPointColor);
            // Mark the clicked point
-           var color = c.data.datasets[clickedPoint.datasetIndex].backgroundColor[clickedPoint.index];
-           c.data.datasets[clickedPoint.datasetIndex].backgroundColor[clickedPoint.index] = this.__RGB( utils.colorToRGB(color),0.77);
+           c.data.datasets[clickedPoint.datasetIndex].backgroundColor[clickedPoint.index] = self.params.chartSelectedColor;
            const label = c.data.labels[clickedPoint.index];
            const value = c.data.datasets[clickedPoint.datasetIndex].data[clickedPoint.index];
-           if(this.onChartClick) {this.onChartClick({chart: c, itemIndex: clickedPoint.index, selectedLabel: label, selectedValue: value });}
+           if(self.onChartClick) self.onChartClick({chart: c, itemIndex: clickedPoint.index, selectedLabel: label, selectedValue: value, hostedObject: hostedObject || {} });
            c.update();
          }
-  }.bind(this);
+  }.bind({chart:this.chart , self:this});
 
  
   if(this.params.chartData.length > 0) 
@@ -2829,16 +2929,16 @@ export class TFChart extends TFPanel
  // Add a new series (dataset) to the chart
  addSeries(seriesName, color) 
  {
-   // Farbe in Form: rgb(rrr, ggg, bbb) bringen
-   color = utils.colorToRGB(color);
-  
+   // Farbein Form: rgb(rrr, ggg, bbb) bringen
+   color = this.__convertColor(color);
+
    var newSeries = {
                      label           : seriesName,
                      data            : [],
-                     borderColor     : this.chartBorderColor,
+                     borderColor     : this.params.chartBorderColor,
                      backgroundColor : [],
                      fill            : false,
-                     seriesColor     : this.__RGB(color, 0.21)
+                     seriesColor     : color
                    };
 
   this.chart.data.datasets.push(newSeries);
@@ -2944,7 +3044,7 @@ export class TForm
   // aAppendix:JSON-Objekt mit den Appendix
   // aExclude: Array mit den auszuschließenden Feldern
   // URLForm:  URL zur Form-Definition (optional) Falls dieses nicht definiert wird buildFormGeneric() aufgerufen
-  {
+  { 
     this.objName            = this.constructor.name;
     this.isTFObject         = false;
     this.parent             = aParent;
@@ -3010,7 +3110,7 @@ export class TForm
 
         this.controls.push({fieldName:key, value:this.data[key], label:lbl, appendix:apx, type: type || "TEXT", enabled:true,  visible:true, editControl:null, params:{} })
 
-      } else  this.controls.push({fieldName:key, value:this.data[key], label:"" , appendix:"" , type:"TEXT", enabled:false, visible:false , params:{} })
+      } // else  this.controls.push({fieldName:key, value:this.data[key], label:"" , appendix:"" , type:"TEXT", enabled:false, visible:false , params:{} })
     }
   }   // else  
 
@@ -3080,6 +3180,16 @@ export class TForm
       ctrl.type = type;
       ctrl.params = params;
     }  
+  }
+
+  setInputLength(key , length)
+  {
+    var ctrl = this.getControlByName(key);
+    if (ctrl!=null)
+    {
+      // {fieldName:key, value:this.data[key], label:null, appendix:null, type:"null", enabled:true,  visible:true, lblControl:null, editControl:el, apxControl:null}
+      ctrl.editControl.width = length;
+    }
   }
 
 
@@ -3160,14 +3270,14 @@ export class TForm
       
         if(ctrl.type.toUpperCase()=='DATETIME')
           ctrl.editControl = new TFEdit(inpContainer,1,1,'99%','3em',{type:"datetime-local",caption:ctrl.label,appendix:ctrl.appendix,value:ctrl.value,captionLength:maxLabel,appendixLength:maxAppendix,justifyEditField:"left"});  
-
-          if(ctrl.type.toUpperCase()=='SELECT')
-         {ctrl.editControl = new TFComboBox(inpContainer,1,1,'99%','3em',{caption:ctrl.label,appendix:ctrl.appendix,value:ctrl.value, items:ctrl.items,captionLength:maxLabel,appendixLength:maxAppendix,justifyEditField:"left", items:ctrl.params.items});  }
+      
+        if(ctrl.type.toUpperCase()=='SELECT')
+         { ctrl.editControl = new TFComboBox(inpContainer,1,1,'99%','3em',{caption:ctrl.label,appendix:ctrl.appendix,value:ctrl.value, items:ctrl.items,captionLength:maxLabel,appendixLength:maxAppendix,justifyEditField:"left", items:ctrl.params.items});  }
       
         if(ctrl.type.toUpperCase()=='RANGE')
           ctrl.editControl = new TFSlider(inpContainer,1,1,'99%','3em',{caption:ctrl.label,appendix:ctrl.appendix,value:ctrl.value,captionLength:maxLabel,appendixLength:maxAppendix,justifyEditField:"left"});
 
-        if(ctrl.type.toUpperCase()=='CHECKBOX')  
+        if(ctrl.type.toUpperCase()=='CHECKBOX')
           ctrl.editControl = new TFCheckBox(inpContainer,1,1,'99%','3em',{caption:ctrl.label,appendix:ctrl.appendix,value:ctrl.value,captionLength:maxLabel,appendixLength:maxAppendix,checkboxLeft:false,captionLength:maxLabel});
       }
     }  
@@ -3181,7 +3291,7 @@ export class TForm
       this.btnOk    = new TFButton( btnContainer ,2,2,1,1,{caption:"OK"});
       this.btnOk.callBack_onClick = function() {if(this.callBack_onOKBtn) { this.callBack_onOKBtn( this.getInputFormValues() )};}.bind(this);
 
-      this.btnAbort = new TFButton( btnContainer,4,2,1,1,{caption:"Abbruch" , css:"cssAbortBtn01"});
+      this.btnAbort = new TFButton( btnContainer,4,2,1,1,{caption:"Abbruch"});
       this.btnAbort.callBack_onClick = function(){if(this.callBack_onESCBtn) this.callBack_onESCBtn();}.bind(this);
     }
 
@@ -3305,6 +3415,197 @@ save()
 }    
 
 }  // end of class TPropertyEditor
+
+
+
+
+export class TFileDialog
+{
+  constructor( params )
+  {
+    this.mask             = params.mask || '*.*';
+    this.showHiddenFiles  = params.showHiddenFiles || false;  
+    this.multiple         = params.multiple || false;
+    this.callBackOnSelect = params.callBackOnSelect || null;
+    this.onSelectionChanged = params.onSelectionChanged || null;
+    this.width            = params.width || '50%';
+    this.height           = params.height || '70%';
+    this.caption          = params.caption || 'Dateiauswahl';
+    this.root             = params.root || './';
+    this.thumbView        = false;
+    this.fullPath         = '';
+    this.dir              = '';
+    this.file             = '';
+    this.node             = null;
+    this.files            = [];
+    this.fileGrid         = null;
+    this.wnd              = new TFWindow( null , this.caption , this.width , this.height , 'CENTER' );
+    this.wnd.buildGridLayout_templateColumns('1fr');
+    this.wnd.buildGridLayout_templateRows('4.2em 1fr 4em');
+    
+    var hlp1               = new TFPanel( this.wnd.hWnd , 1 , 1 , 1 , 1 , {css:'cssContainerPanel'} );
+        hlp1.buildGridLayout_templateColumns('1fr 1fr 4em 3em');
+        hlp1.buildGridLayout_templateRows('1fr');
+    this.editFilePath     = new TFEdit    ( hlp1 , 1 , 1  , 1 , 1 , {caption:"Filename",labelPosition:"TOP" } );
+    this.cbBookmarks      = new TFComboBox( hlp1 , 2 , 1  , 1 , 1 , {caption:"Lesezeichen", items:[], labelPosition:"TOP"  } );   
+    this.editFileExt      = new TFEdit    ( hlp1 , 3 , 1  , 1 , 1 , {caption:"Typ",value:this.mask,labelPosition:"TOP"} );
+    this.editFileExt.callBack_onChange = function() { this.renderFiles() }.bind(this);
+    
+    var hlp2              = new TFPanel( hlp1 , 4 , 1 , 1 , 1 , {css:'cssContainerPanel'} );
+    hlp2.padding          = 0;
+    hlp2.margin           = '4px';
+
+    hlp2.backgroundColor  = "gray";
+    hlp2.buildFlexBoxLayout();
+    this.thumbViewBtn     = new TFButton( hlp2 , 0 , 0  , "100%" , '100%' , {caption:"."} );
+    this.thumbViewBtn.margin = 0;
+    this.thumbViewBtn.alignItems = 'center';
+    this.thumbViewBtn.callBack_onClick = function() { this.thumbView = !this.thumbView; this.renderFiles() }.bind(this);
+  
+    
+
+    var btbPanel = new TFPanel( this.wnd.hWnd , 1 , 3 , 1 , 1 , {} );
+        btbPanel.backgroundColor = "gray";
+        btbPanel.buildGridLayout_templateColumns('1fr 1fr 1fr 1fr 1fr');
+        btbPanel.buildGridLayout_templateRows('1fr');
+    var cbHiddenFiles = new TFCheckBox( btbPanel , 1 , 1 , 1 , 1 , {caption:'hidden'} );
+        cbHiddenFiles.callBack_onChange = function(checked) { this.showHiddenFiles = checked; this.scanDir( this.dir ) }.bind(this);
+
+    var btnOk = new TFButton( btbPanel , 2 , 1 , 1 , 1 , {caption:'OK'} );
+        btnOk.height = 27;
+        btnOk.callBack_onClick = function() { this.callBackOnSelect( this.dir , this.editFilePath.value , this.files ) }.bind(this);
+
+    var btnCancel = new TFButton( btbPanel , 4 , 1 , 1 , 1 , {caption:'Abbruch'} );
+        btnCancel.height = 27;
+        btnCancel.callBack_onClick = function() { this.wnd.destroy() }.bind(this);      
+
+
+    var p = new TFPanel( this.wnd.hWnd , 1 , 2 , 1 , 1 , {css:'cssContainerPanel'} );
+        p.buildGridLayout_templateColumns('1fr 1fr');
+        p.buildGridLayout_templateRows('1fr');
+
+    this.panelPath       = new TFPanel( p , 1 , 1 , 1 , 1 );
+    this.panelFiles      = new TFPanel( p , 2 , 1 , 1 , 1 );
+
+    this.pathTree        = new TFTreeView( this.panelPath , {} );
+
+    this.scanDir( this.root );
+  } 
+
+
+  scanDir( node_or_dir )
+  {
+    
+    this.files = [];
+
+    // String ?
+    if( typeof node_or_dir === 'string') {this.node=null; this.dir=node_or_dir}
+    else
+        {
+          if (node_or_dir.constructor.name=="TFTreeNode") 
+            {
+              var s =[];
+              this.node  = node_or_dir;
+              var p=this.node.getNodePath();
+              p.forEach((aNode,i)=>{s.push(aNode.content.name)});
+              this.dir = utils.pathJoin(this.root , s.join('/') );
+           }
+      }    
+  
+    var response=utils.webApiRequest('scanDir', {dir:this.dir , fileExt:this.editFileExt.value} );
+
+    if(response.error) return false;
+    
+    for(var i=0; i<response.result.length; i++)
+    {
+      var f = response.result[i];
+      if(f.name.startsWith('.') && !this.showHiddenFiles) continue;
+      if(f.isDir) 
+      {
+        if(this.node) var n = this.pathTree.addSubNode( this.node , f.name , f );
+        else          var n = this.pathTree.addNode( f.name , f );
+        n.callBack_onClick = function(selectedNode){ this.scanDir( selectedNode ) }.bind(this);
+      }  
+      if(f.isFile) this.files.push(f);
+    } 
+  
+    this.pathTree.render(); 
+    this.renderFiles();
+    
+  }
+
+  renderFiles()
+  {
+    if(this.thumbView) this.#renderFiles_ThumbView();
+    else               this.#renderFiles_GridView();
+  } 
+
+
+  #renderFiles_ThumbView()
+  {
+    this.panelFiles.innerHTML = '';
+    this.panelFiles.backgroundColor = 'white';
+    this.panelFiles.buildFlexBoxLayout();
+   
+    for (var i=0; i<this.files.length; i++) 
+    {
+      var filePath      = utils.pathJoin(this.dir , this.files[i].name ) 
+      var ext           = this.files[i].ext.toLowerCase();
+      var t             = new TFPanel( this.panelFiles , 1 , 1 , "77px" , "77px" , {dragable:true,draggingData:this.files[i]} );
+          t.dataBinding = {name:this.files[i].name, ext:this.files[i].ext, formatedSize:utils.formatFileSize(this.files[i].size)  ,size:this.files[i].size, path:this.dir};
+               
+          t.margin      = '4px';
+          t.callBack_onClick = function (e, d) 
+          { 
+            this.handleFileSelection( d ) 
+          }.bind(this);
+
+
+      if (utils.isImageFile(ext))
+      {
+       //var img=new TFImage( t, 0,0,'100%','100%');
+      t.imgURL = utils.buildURL('GETIMAGEFILE',{fileName:filePath } );
+      }     
+      else t.innerHTML = '<div style="width:100%;height:100%;background-color:white;">' + this.files[i].name + '</div>'; 
+    }
+  }
+
+  #renderFiles_GridView()
+  {
+    this.panelFiles.innerHTML = '';
+    this.panelFiles.backgroundColor = 'white';
+    this.fileGrid             = null;
+    
+    var f=[];
+    for (var i=0; i<this.files.length; i++) 
+        f.push({name:this.files[i].name, ext:this.files[i].ext, formatedSize:utils.formatFileSize(this.files[i].size)  ,size:this.files[i].size, path:this.dir})
+         
+    if( this.files.length==0) f.push({name:'empty', ext:'', formatedSize:'', size:0 , path:''});
+
+    this.fileGrid  = new THTMLTable( f , ['path','ext','size'] );
+    this.fileGrid.fieldByName('name').caption = 'Dateiname';
+    this.fileGrid.fieldByName('formatedSize').caption = 'Größe';
+    this.fileGrid.fieldByName('formatedSize').columnWidth = '7em';
+    this.fileGrid.onRowClick = function(row , i , jsn )
+                               {
+                                this.handleFileSelection( jsn )
+                              }.bind(this);
+
+    this.fileGrid.build( this.panelFiles  );
+  
+ }
+
+
+ handleFileSelection( file )
+ {
+  var f = utils.pathJoin(file.path , file.name );
+  this.editFilePath.value = f;
+   if(this.onSelectionChanged) this.onSelectionChanged(f);
+ }
+
+
+     
+}
 
 
 
