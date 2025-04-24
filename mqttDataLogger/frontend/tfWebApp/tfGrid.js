@@ -7,8 +7,8 @@ class TFieldDef
 {
  constructor( aFieldName , aCaption , testValue)
  {
-    this.columnWidth             = -1;
-    this.columnHeight            = -1;
+    this.columnWidth             = '';
+    this.columnHeight            = '';
     this.fieldName               = aFieldName;
     this.caption                 = aCaption;
     this.fieldType               = "";
@@ -18,7 +18,7 @@ class TFieldDef
     // Debug 
     console.log("TFieldDef: " + aFieldName + " , " + aCaption + " , " + testValue )
     
-    if( (typeof testValue != 'object') && (testValue) )
+    if( (typeof testValue != 'object') && (typeof testValue != 'function') && (testValue) )
     {
       if(!isNaN(testValue)) 
       { // numerischer Inhalt:
@@ -46,7 +46,6 @@ export class THTMLTable
    this.fields         = [];
    this.jsonData       = null;
    this.onRowClick     = null;
-   this.onRowDblClick  = null;
    this.bindDataset    = null;
    var  isDrawing      = true;
    
@@ -63,7 +62,7 @@ export class THTMLTable
 
        if(isDrawing) this.fields.push( new TFieldDef( key , key , this.jsonData[0][key]));
       }
-   }     
+   }else this.jsonData  = {};        
  }
 
 
@@ -120,36 +119,6 @@ export class THTMLTable
         } 
     }
  }
-
-
- onRowDblClickEvent(event)
- {
-  console.log('onRowDblClick');  
-  var selectedRow = event.currentTarget;
-  var selected    = selectedRow.getAttribute("selected");
-
-  if (event.ctrlKey) { selectedRow.classList.toggle('trSelected'); 
-  {
-    if  (selected=='1') selected='0'
-    else selected= '1';
-
-    selectedRow.setAttribute("selected", selected )}
-  } 
-  else 
-     {
-       // Entfernen der Markierung und des "select-Attribut" von allen anderen Zeilen
-       Array.from(this.table.querySelectorAll('.trSelected')).forEach(function(row) {row.classList.remove('trSelected'); row.setAttribute("selected",false); });
-      // angeklickte Zeile markieren....   
-      selectedRow.classList.add('trSelected');
-      selectedRow.setAttribute("selected",'1');
-
-      if(this.onRowDblClick)
-      {
-        var itemIndex = selectedRow.getAttribute("itemIndex");
-        this.onRowDblClick( selectedRow , itemIndex , this.jsonData[itemIndex] );  
-      } 
-  }
-}
 
 
 getSelectedRows()
@@ -212,11 +181,11 @@ getSelectedRows()
     }
     cell.className    = "tftd"; 
     cell.style.height = '2em';
+    if(this.fields[j].columnWidth!='') cell.style.width = this.fields[j].columnWidth;
     cell.innerHTML    = content[fieldname];
   }
 
-  row.addEventListener("click"   , function(event) { this.onRowClickEvent   ( event , this )}.bind(this) );
-  row.addEventListener("dblclick", function(event) { this.onRowDblClickEvent( event , this )}.bind(this) );
+  row.addEventListener("click", function(event) { this.onRowClickEvent( event , this )}.bind(this) );
   
  }
 
@@ -265,6 +234,7 @@ getSelectedRows()
       var th           = document.createElement("th");
           th.className = "tfth";
           th.innerHTML = this.fields[i].caption;
+          if (this.fields[i].columnWidth!='') th.style.width = this.fields[i].columnWidth;
           headerRow.appendChild(th);
     }
     thead.appendChild(headerRow);

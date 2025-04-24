@@ -101,26 +101,6 @@ export class TFWindow extends TFObject
             this.zIndex = zIndex;
   }  
    
-    this.callBack_onDragStart = ( e )=>{ 
-         // Speichere den Abstand zwischen dem Mauszeiger und der oberen linken Ecke des DIVs
-            console.log('dragStart: x=' +this.leftPx+'   y='+this.topPx); 
-            this.dragOffsetX = e.clientX ;
-            this.dragOffsetY = e.clientY ;
-    }        
-
-    this.callBack_onDragEnd = ( e )=>{ 
-         // Setze die neue Position des DIVs
-        const dx = e.clientX - this.dragOffsetX;
-        const dy = e.clientY - this.dragOffsetY;
-        console.log('dragEnd: dx=' +dx+'   dy='+dy);
-
-        if(dx!=0 || dy!=0) 
-        {    
-         this.leftPx = this.leftPx + dx;
-         this.topPx  = this.topPx + dy;
-        } 
-    }
-     
     // keinen Zugridff übwer die Propertuies, weil diese überladen werden, damit diese Eigenschaften für das Fenster
     // und nicht für den Container gelten
     this.DOMelement.style.backgroundColor = 'black';
@@ -128,9 +108,35 @@ export class TFWindow extends TFObject
     utils.buildGridLayout_templateColumns(this,'1fr',{stretch:true});
     utils.buildGridLayout_templateRows(this,'1.7em 1fr',{stretch:true});
        
-    this.caption  = new TFPanel( this , 1 , 1 , 1 , 1 , {css:"cssWindowCaptionJ4"} );
+    this.caption  = new TFPanel( this , 1 , 1 , 1 , 1 , {css:"cssWindowCaptionJ4" , dragable:true} );
     this.caption.buildGridLayout_templateColumns('1fr 2em 2em 2em');
     this.caption.buildGridLayout_templateRows('1fr');
+
+    this.caption.DOMelement.addEventListener('mousedown', (e) => 
+    {
+      e.preventDefault();
+    
+      // Fenster in den Vordergrund bringen
+      const maxZ = windows.reduce((z, w) => Math.max(z, w.zIndex), zIndexStart);
+      this.zIndex = maxZ + 1;
+    
+      const offsetX = e.clientX - this.leftPx;
+      const offsetY = e.clientY - this.topPx;
+    
+      const onMouseMove = (e) => {
+        this.leftPx = e.clientX - offsetX;
+        this.topPx = e.clientY - offsetY;
+      };
+    
+      const onMouseUp = () => {
+        document.removeEventListener('mousemove', onMouseMove);
+        document.removeEventListener('mouseup', onMouseUp);
+      };
+    
+      document.addEventListener('mousemove', onMouseMove);
+      document.addEventListener('mouseup', onMouseUp);
+    });
+    
   
     //close button
     this.btnClose = new TFPanel( this.caption , 4 , 1 , 1 , 1 , {css:'cssWindowSysButtonJ4'} );
@@ -473,6 +479,11 @@ get opacity()
     
     return url;
     
+  }
+  
+  close()
+  {
+    this.destroy();
   }
 
   destroy()

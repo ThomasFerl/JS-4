@@ -195,7 +195,21 @@ collabse(yesOrNo)
    else                 console.log(utils.tab(this.dept*3)+this.dept+": "+this.caption+"   Content:"+JSON.stringify(this.content)+"   my parent is: NULL");
 
    this.items.forEach( function(node) {node.debugLog();} ) 
-  }         
+  } 
+  
+  
+  getNodePath()
+  {
+    var n =[this];
+    var p = this.parentNode;
+    while(p)
+    {
+      n.push(p);
+      p = p.parentNode;
+    }
+    return n.reverse();
+  }
+
 
 } 
 
@@ -236,6 +250,10 @@ constructor( aParent , params )
     }
   }
 
+  render()
+  {
+    this.buildNodeList();
+  }
 
   buildNodeList()
   {
