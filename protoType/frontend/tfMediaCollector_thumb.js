@@ -31,7 +31,10 @@ export class TFMediaCollector_thumb
     this.thumb            = params.thumb || null;
     this.thumbID          = params.thumbID || null;
     this.popupMenu        = params.popupMenu || null;
+    this.ndx              = params.ndx || -1;
+
     this.callBack_onClick = params.callBack_onClick || null;
+    this.callBack_onDrop  = params.callBack_onDrop || function(){};
 
     if(this.thumb==null) this.thumb = {ID:0, DIR:'', FILENAME:'', FILETYPE:'', FILESIZE:0, THUMBNAIL:'', THUMBNAILFILETYPE:'', THUMBNAILFILESIZE:0, THUMBNAILDIR:''};
 
@@ -46,11 +49,13 @@ export class TFMediaCollector_thumb
    
 
     this.thumbURL     = utils.buildURL('GETIMAGEFILE' , {fileName:this.thumb.fullPath} );
-    this.thumbImg     = new TFPanel(this.parent ,1,1,"150px" , "150px" , {popupMenu:this.popupMenu , dragable:true } );
+    this.thumbImg     = new TFPanel(this.parent ,1,1,"150px" , "150px" , {popupMenu:this.popupMenu , dragable:true , dropTarget:true } );
     //this.thumbImg.DOMelement.setStyle({backgroundImage: `url(${this.thumbURL})`, backgroundSize: "cover"});
-    this.thumbImg.imgURL = this.thumbURL ,
+    this.thumbImg.imgURL = this.thumbURL ;
 
+    this.thumbImg.callBack_onDrop = function(e,d){this.callBack_onDrop(e,d);}.bind(this);
 
+    
     this.thumbImg.callBack_onDragStart = function (e)
                   {
                     e.dataTransfer.setData('application/json', JSON.stringify({thumb:this.thumb, mediaFile:this.mediaFile || {notSet:true} ,mediaSet:this.mediaSet || {notSet:true}}));
@@ -58,17 +63,18 @@ export class TFMediaCollector_thumb
    
     this.thumbImg.callBack_onClick = function (e, d) 
                   { 
-                    this.handleMediaFile(e,d); 
+                    this.handleClickOnMediaFile(e,d); 
                   }.bind(this);
   }
 
    
 
-handleMediaFile(e,d)
+  handleClickOnMediaFile(e,d)
 { 
   if(this.callBack_onClick) this.callBack_onClick(d,e,{mediaFile:this.mediaFile || {notSet:true} , 
                                                        mediaSet :this.mediaSet || {notSet:true} , 
-                                                       thumb    :this.thumb || {notSet:true} });
+                                                       thumb    :this.thumb || {notSet:true} , 
+                                                       ndx      :this.ndx || {notSet:true} });
 }
 
 

@@ -84,18 +84,18 @@ export class TFMediaCollector_editSet
         var response = utils.webApiRequest('LSTHUMBS' , {mediaSet:this.mediaSet.ID} );
         if(!response.error) { for(var i=0; i<response.result.length; i++) this.mediaFiles.push(response.result[i].file); }
       }
-
+      //this.__updateThumbs();
       this.edit();
        
     }
     
     
     __updateThumbs()
-    {
+    { 
         this.mediaListPanel.innerHTML = "";
         this.mediaListPanel.buildBlockLayout();
 
-        var thumb = null;
+        var thumb = this.mediaSet.thumb || null;
             
         for(var i=0; i<this.mediaFiles.length; i++) 
         { 
@@ -131,10 +131,10 @@ export class TFMediaCollector_editSet
         }
 
         if(thumb)
-        {
-          url = utils.buildURL('GETIMAGEFILE',{ fileName:utils.pathJoin(thumb.DIR , thumb.FILENAME) });
-          this.thumbContainer.imgURL = url;          
-        }
+          { 
+            url = utils.buildURL('GETIMAGEFILE',{ fileName:thumb.fullPath });
+            this.thumbContainer.imgURL = url;          
+          }
     }  
           
 dropThumbImage(e,d)      

@@ -192,7 +192,7 @@ async handleBatchCommand( nextJob , enviroment )
   this.webResponse = enviroment.res;
   
   if(nextJob.cmd=='REGISTERMEDIA')        await this.___internal___registerMedia       ( this.param.mediaFile );
-  if(nextJob.cmd=='REGISTERMEDIA_IN_SET') await this.___internal___registerMedia_in_set( this.param.mediaFile , this.param.mediaSet );
+  if(nextJob.cmd=='REGISTERMEDIA_IN_SET') await this.___internal___registerMedia_in_set( this.param.mediaFile , this.param.mediaSet , this.param.position );
                                                      
 
 }
@@ -370,11 +370,11 @@ if(CMD=='LSTHUMBS')
      var result = [];
      var mediaSet = param.mediaSet || 0;
      var orderByHash = param.orderBy=="hash" || false;
-
+     var orderBy     = ' ID';
      var sql = "Select * from thumbs where ID > 0";
-      if(param.ID_FILE) sql = sql + " AND ID_FILE="+param.ID_FILE;
-      if(mediaSet!=0)   sql = sql + " AND ID_FILE in (Select ID_FILE from mediaInSet where ID_MEDIA="+mediaSet+")";
-      sql = sql + " Order by ID";
+      if(param.ID_FILE) {sql = sql + " AND ID_FILE="+param.ID_FILE; orderBy = ' ID';}
+      if(mediaSet!=0)   {sql = sql + " AND ID_FILE in (Select ID_FILE from mediaInSet where ID_MEDIA="+mediaSet+")"; orderBy = ' POSITION';}
+      sql = sql + ' order By' + orderBy;
    
       var response = dbUtils.fetchRecords_from_Query( this.db , sql );
 
@@ -437,21 +437,73 @@ if(CMD=='MOVEMEDIA_IN_SET')
   var mediaFiles  = param.mediaFiles;
   var destination = param.destination;
   var source      = param.source;
+  var p           = 0;
   
   console.log(JSON.stringify(mediaFiles));
 
+  // maximale Position ggf vorhandener Files im Sets ermitteln, so dass deren Positionen nicht überschrieben werden
+  var response = dbUtils.fetchValue_from_Query( this.db , "Select max(POSITION) from mediaInSet where ID_MEDIA="+destination );
+  if(response.error) return response;
+  if(response.result) p = response.result;
+
   for(var i=0; i<mediaFiles.length; i++)
   { 
+    p++;
     if(source.ID) // Move from source to destination Set 
-    dbUtils.runSQL( this.db , 'update mediaInSet set ID_MEDIA='+destination+' where ID_MEDIA='+source+' and ID_FILE='+mediaFiles[i].ID ); 
+    dbUtils.runSQL( this.db , 'update mediaInSet set ID_MEDIA='+destination+', position='+p+' where ID_MEDIA='+source+' and ID_FILE='+mediaFiles[i].ID ); 
     else          // Copy to destination Set
-    dbUtils.insertIntoTable( this.db , 'mediaInSet' , {ID_MEDIA:destination , ID_FILE:mediaFiles[i].ID} );
+    dbUtils.insertIntoTable( this.db , 'mediaInSet' , {ID_MEDIA:destination , ID_FILE:mediaFiles[i].ID , POSITION:p} );
   }
 
   return {error:false, errMsg:"OK", result:{} };
   
 }  
 
+if(CMD=='MEDIA_POSITION') 
+  {
+    console.log('MEDIA_POSITION -> param:' + JSON.stringify(param));
+    var ID_MEDIASET = param.ID_MEDIASET;
+    var ID_FILE     = param.ID_FILE;
+    var orgPOSITION = 0;
+    var orgID_FILE  = 0;
+    var newPOSITION = param.POSITION;
+    
+    // ermittle die aktuelle Position des zu verschiebenden Files
+    var response = dbUtils.fetchRecord_from_Query( this.db , "Select POSITION from mediaInSet where ID_MEDIA="+ID_MEDIASET+" and ID_FILE="+ID_FILE ); 
+    if(response.error) 
+      { // fallback auf die max. Position
+        console.log('MEDIA_POSITION: fetch max. Position for ID_MEDIASET: '+ID_MEDIASET);
+        var r=dbUtils.fetchValue_from_Query( this.db , "Select max(POSITION) from mediaInSet where ID_MEDIA="+ID_MEDIASET );
+        if(r.error) return response;
+        orgPOSITION = response.result; 
+      }  
+    if(response.result) orgPOSITION = response.result.POSITION;
+
+    // sind beide Positionen identisch dann wars das ...
+    if(orgPOSITION==newPOSITION) {console.log('same Position'); return {error:false, errMsg:"OK", result:{} };}
+
+    // zuerst prüfen, ob die Position schon existiert und ermittle den Datensatz für diese Position
+    var response = dbUtils.fetchRecord_from_Query( this.db , "Select * from mediaInSet where ID_MEDIA="+ID_MEDIASET+" and POSITION="+newPOSITION );
+    if(response.result)
+      {
+         orgID_FILE  = response.result.ID_FILE;
+         orgPOSITION = response.result.POSITION;
+      }  
+      
+    console.log('MEDIA_POSITION: orgID_FILE: '+orgID_FILE);
+    console.log('MEDIA_POSITION: orgPOSITION: '+orgPOSITION);
+    console.log('MEDIA_POSITION: newPOSITION: '+newPOSITION);
+    console.log('MEDIA_POSITION: ID_MEDIASET: '+ID_MEDIASET);
+    console.log('MEDIA_POSITION: ID_FILE: '+ID_FILE);
+
+    // jetzt die ID_File der beiden Datensätze tauschen...
+    console.log(dbUtils.runSQL( this.db , 'update mediaInSet set POSITION='+newPOSITION+' where ID_MEDIA='+ID_MEDIASET+' and ID_FILE='+ID_FILE ).errMsg);
+    if(orgID_FILE>0)
+    console.log(dbUtils.runSQL( this.db , 'update mediaInSet set POSITION='+orgPOSITION+' where ID_MEDIA='+ID_MEDIASET+' and ID_FILE='+orgID_FILE ).errMsg);  
+    
+    return {error:false, errMsg:"OK", result:{} };
+    
+  } 
 
 if(CMD=='REGISTERMEDIA_IN_SET') 
 {
@@ -473,7 +525,7 @@ console.log(JSON.stringify(mediaFiles));
   for(var i=0; i<mediaFiles.length; i++)
   { 
       console.log('RegisterMedia: add '+mediaFiles[i]+' to BatchQueue');
-      this.batchQueue.addBatchProc( 'REGISTERMEDIA_IN_SET' , {mediaFile:mediaFiles[i] , mediaSet:mediaSet} , enviroment );
+      this.batchQueue.addBatchProc( 'REGISTERMEDIA_IN_SET' , {mediaFile:mediaFiles[i] , mediaSet:mediaSet , position:i+1} , enviroment );
   }  
     
     return {error:false, errMsg:"OK", result:{queuLength:this.batchQueue.count()} };  
@@ -890,7 +942,7 @@ async ___internal___registerMedia(mediaFile)
 }
 
 
-async ___internal___registerMedia_in_set( mediaFile , mediaSet ) 
+async ___internal___registerMedia_in_set( mediaFile , mediaSet , position ) 
 {
   var response   = await this.___internal___registerMedia( mediaFile );
   
@@ -900,7 +952,7 @@ async ___internal___registerMedia_in_set( mediaFile , mediaSet )
 
   if(!mediaID) return {error:true, errMsg:"no mediaID found", result:{}};
 
-  return dbUtils.insertIntoTable( this.db , 'mediaInSet' , {ID_FILE:mediaID, ID_MEDIA:mediaSet} );
+  return dbUtils.insertIntoTable( this.db , 'mediaInSet' , {ID_FILE:mediaID, ID_MEDIA:mediaSet, POSITION:position} );
 }
 
 

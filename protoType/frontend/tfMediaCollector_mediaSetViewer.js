@@ -31,8 +31,10 @@ export class TFMediaCollector_mediaSetViewer
 {
   constructor( mediaSet )
   {
-    this.mediaFiles     = [];
-    this.creationImgNdx = 0;
+    this.mediaFiles            = [];
+    this.selectedImgNdx        = 0;
+    this.mediaWindow           = null;
+    this.mediaWindow_is_closed = false;
    
     // wird kein mediaSet übergeben, dann wird ein neues angelegt 
     if(!mediaSet)
@@ -104,27 +106,84 @@ __init__()
     
 handleThumbClick( e , d , thumbParams )
 { 
-  if(!thumbParams.mediaFile.notSet)
-  { debugger;
+  this.selectedImgNdx = thumbParams.ndx;
+  this.showMediaFile();
+}
 
-    var mediaFile = thumbParams.mediaFile;
-
+showMediaFile()
+{
+  var mediaFile = this.mediaFiles[this.selectedImgNdx];
+  if(mediaFile)
+  { 
     // File zusammenbauen
     var fn = utils.pathJoin(mediaFile.DIR , mediaFile.FILENAME );
 
+    if((this.mediaWindow==null) || (this.mediaWindow_is_closed))
+    {
+      this.mediaWindow = new TFWindow( null , mediaFile.FILENAME , "80%" , "80%" , "CENTER" );
+      this.mediaWindow.backgroundColor = 'darkgray';
+      this.mediaWindow_is_closed = false;
+      this.mediaWindow.callBack_onClose = function (e)
+      {debugger;
+        this.mediaWindow_is_closed = true;
+      }.bind(this);
+
+      // Taste nach Rechts: Cursor rechts
+      // Taste nach Links: Cursor links
+      this.mediaWindow.callBack_onMouseDown = function (e) 
+      { 
+        if (e.button == 0) 
+        {
+          this.selectedImgNdx++;
+          if(this.selectedImgNdx>=this.mediaFiles.length) this.selectedImgNdx = 0;
+          this.showMediaFile();
+        }
+        if (e.button == 2) 
+        {
+          this.selectedImgNdx--;
+          if(this.selectedImgNdx<0) this.selectedImgNdx = this.mediaFiles.length-1;
+          this.showMediaFile();
+        }
+      }.bind(this)
+
+      this.mediaWindow.callBack_onKeyDown = function (e)  
+      { 
+        globals.KeyboardManager.showKeys();
+       
+        if (e.key === "ArrowRight")
+        {
+          this.selectedImgNdx++;
+          if(this.selectedImgNdx>=this.mediaFiles.length) this.selectedImgNdx = 0;
+          this.showMediaFile();
+        }
+
+        if (e.key === "ArrowLeft")
+        {
+          this.selectedImgNdx--;
+          if(this.selectedImgNdx<0) this.selectedImgNdx = this.mediaFiles.length-1;
+          this.showMediaFile();
+        }
+
+      }.bind(this)
+
+
+
+
+
+    }
+    else this.mediaWindow.innerHTML = "";
+
     if (mediaFile.TYPE == "MOVIE")
     {
-      var w = dialogs.createWindow( null,fn,"80%","80%","CENTER");
       var url = utils.buildURL('GETMOVIEFILE',{fileName:fn} );
-      dialogs.playMovieFile( w.hWnd , url );
+      dialogs.playMovieFile( this.mediaWindow.hWnd , url );
       return;
     }
 
     if (mediaFile.TYPE == "IMAGE")
     {
-      var w   = dialogs.createWindow( null,fn,"80%","80%","CENTER");
       var url = utils.buildURL('GETIMAGEFILE',{fileName:fn} );
-      dialogs.addImage( w.hWnd , '' , 1 , 1 , '100%' , '100%' , url ); 
+      dialogs.addImage( this.mediaWindow.hWnd , '' , 1 , 1 , '100%' , '100%' , url ); 
       return;
     }
   } 
@@ -145,13 +204,28 @@ handleThumbClick( e , d , thumbParams )
       for(var i=0; i<response.result.length; i++) 
       { 
         this.mediaFiles.push(response.result[i].file);
-        new TFMediaCollector_thumb( this.dashboardPanel , {thumb:response.result[i].thumb , mediaFile:response.result[i].file , mediaSet:this.mediaSet , callBack_onClick:this.handleThumbClick} )
+        var t=new TFMediaCollector_thumb( this.dashboardPanel , {thumb:response.result[i].thumb , mediaFile:response.result[i].file , mediaSet:this.mediaSet , ndx:i} )
+        t.callBack_onClick = this.handleThumbClick.bind(this)
+        t.callBack_onDrop = function (e , data)
+        { 
+          if(data.json)
+          this.self.moveMediaFile(data.json.mediaFile.ID , this.thumb.ndx );
+        }.bind({self:this,thumb:t});
       }
     }
      
+    moveMediaFile(ID_File , newPOSITION )
+    { debugger;
+      var params = {ID_MEDIASET:this.mediaSet.ID , ID_FILE:ID_File , POSITION:newPOSITION};   
+      
+      var response = utils.webApiRequest('MEDIA_POSITION' , params );
+      if(response.error) {dialogs.showMessage(response.errMsg); return; }
+      this.updateThumbs();
+    }
+
 
     containingMediafile(mediaFile)
-    { debugger;  // checke die Groß/klein Schreibung ...
+    { 
       var found = false;
       if(mediaFile.ID)
         {
@@ -164,7 +238,7 @@ handleThumbClick( e , d , thumbParams )
       }
       else{
             for(var i=0; i<this.mediaFiles.length; i++)
-            if(this.mediaFiles[i].name == f.name && this.mediaFiles[j].path == f.path)
+            if((this.mediaFiles[i].NAME == mediaFile.NAME) && (this.mediaFiles[i].PATH == mediaFile.PATH))
             {
              found = true;
              break;
@@ -221,7 +295,7 @@ removeMediaFile()
 
 
 diaShow(selected)
-{ debugger;
+{ 
     var imgURLs = [];
 
     for(var i=0; i<this.mediaFiles.length; i++)
@@ -238,12 +312,12 @@ diaShow(selected)
     }
 
     if(imgURLs.length==0) return;
-    const slideShowWindow = window.open( 'tfMediaCollector_diashow.html' , '_blank', 'fullscreen=yes')
+    const slideShowWindow = window.open( 'tfMediaCollector_diashow.html' , '_blank', 'fullscreen=no')
  
    // Warte, bis das neue Fenster geladen ist, und übertrage die Daten
    slideShowWindow.onload = () => {
                                    // Übertrage die Daten an das neue Fenster                                
-                                    slideShowWindow.postMessage({ currentIndex:this.creationImgNdx, slideInterval:4000, imgURLs:imgURLs } , '*' );
+                                    slideShowWindow.postMessage({ currentIndex:this.selectedImgNdx, slideInterval:4000, imgURLs:imgURLs } , '*' );
                                   };
 }
 

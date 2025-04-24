@@ -94,24 +94,58 @@ export function startSession( sessionID , userName , userID , grants , admin )
 export function setSysMenu( s ) { sysMenu = s}
 
 
-document.addEventListener("keydown", function (event) 
-{
-  console.log("keyDown -> " + event.key);
-  
-  let isCTRLpressed  = event.ctrlKey;
-  let isSHIFTpressed = event.shiftKey;
-  let isALTpressed   = event.altKey;
 
-  console.log("CTRL:", isCTRLpressed, "SHIFT:", isSHIFTpressed, "ALT:", isALTpressed);
-});
-
-document.addEventListener('keyup', function(event) 
+export const KeyboardManager = 
 {
-  console.log("keyUp -> " + event.key );
-  if(event.ctrlKey)    isCTRLpressed  = false;
-  if(event.shiftKey)   isSHIFTpressed = false;
-  if(event.altKey)     isALTpressed   = false;
-});
+  keysDown: new Set(),
+
+  init: function () {
+    document.addEventListener('keydown', (e) => {
+      this.keysDown.add(e.key);
+    });
+
+    document.addEventListener('keyup', (e) => {
+      this.keysDown.delete(e.key);
+    });
+  },
+
+  isKeyPressed: function (key) {
+    return this.keysDown.has(key);
+  },
+
+  showKeys: function () {
+    console.log("Pressed keys: " + Array.from(this.keysDown).join(", "));
+  }
+};
+
+// Direkt initialisieren, damit’s läuft, sobald geladen:
+KeyboardManager.init();
+/*
+Anwendungs-Beispiele:
+if (KeyboardManager.isKeyPressed("Control")) {
+  console.log("Control wird gedrückt gehalten.");
+}
+
+Oder als Shortcut-Checker z. B. in einem onKeyDown-Callback:
+
+this.callBack_onKeyDown = function (e) {
+  if (e.key === "s" && KeyboardManager.isKeyPressed("Control")) {
+    e.preventDefault();
+    saveStuff();
+  }
+};
+
+ACHTE auf preventDefault(), wenn die Tastatur-Interaktion nicht weitergegeben werden soll.
+
+
+
+
+
+
+*/
+
+
+
 
 
 export function print_elapsedTime( msg )   

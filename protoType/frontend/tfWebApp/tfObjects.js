@@ -257,7 +257,9 @@ export class TFObject
   render()
   {
     this.DOMelement = document.createElement('DIV'); 
+    this.DOMelement.setAttribute("tabindex", "0");  // wichtig um Keybourd-Events zu bekommen !!!
     this.parent.appendChild( this.DOMelement ); 
+    this.DOMelement.focus();
      
     if(this.params.css) this.DOMelement.className =  this.params.css;
     else                this.DOMelement.className = "cssObject";
@@ -382,11 +384,11 @@ export class TFObject
 
     this.DOMelement.data =  this;   
    
-          this.DOMelement.addEventListener('wheel'      , (e)=>{if( this.callBack_onWheel)       this.callBack_onWheel      (e,this.dataBinding) });
-          this.DOMelement.addEventListener('click'      , (e)=>{if( this.callBack_onClick)       this.callBack_onClick      (e,this.dataBinding) });
-          this.DOMelement.addEventListener('dblclick'   , (e)=>{if( this.callBack_onDblClick)    this.callBack_onDblClick   (e,this.dataBinding) });
-          this.DOMelement.addEventListener('mousemove'  , (e)=>{if( this.callBack_onMouseMove)   this.callBack_onMouseMove  (e,this.dataBinding) });
-          this.DOMelement.addEventListener('mouseleave' , (e)=>{if( this.callBack_onMouseOut )   this.callBack_onMouseOut   (e,this.dataBinding) });
+          this.DOMelement.addEventListener('wheel', function(e) {if (this.callBack_onWheel) this.callBack_onWheel(e, this.dataBinding);}.bind(this));
+          this.DOMelement.addEventListener('click', function(e) {if (this.callBack_onClick) this.callBack_onClick(e, this.dataBinding);}.bind(this));
+          this.DOMelement.addEventListener('dblclick', function(e) {if (this.callBack_onDblClick) this.callBack_onDblClick(e, this.dataBinding);}.bind(this));
+          this.DOMelement.addEventListener('mousemove', function(e) {if (this.callBack_onMouseMove) this.callBack_onMouseMove(e, this.dataBinding);}.bind(this));
+          this.DOMelement.addEventListener('mouseleave', function(e) {if (this.callBack_onMouseOut) this.callBack_onMouseOut(e, this.dataBinding);}.bind(this));
           
           console.log(this.constructor.name+" popup:"+this.popupMenu);
 
@@ -395,13 +397,12 @@ export class TFObject
                                                                      if( this.callBack_onClick) this.callBack_onClick (e,this.dataBinding) 
                                                                     });   
           
-                                                               
-          this.DOMelement.addEventListener('mousedown'  , (e)=>{if( this.callBack_onMouseDown)   this.callBack_onMouseDown  (e,this.dataBinding) });
-          this.DOMelement.addEventListener('mouseup'    , (e)=>{if( this.callBack_onMouseUp  )   this.callBack_onMouseUp    (e,this.dataBinding) });
-          this.DOMelement.addEventListener('contextmenu', (e)=>{if( this.callBack_onContextMenu) this.callBack_onContextMenu(e,this.dataBinding) });
-          this.DOMelement.addEventListener('keydown'    , (e)=>{if( this.callBack_onKeyDown)     this.callBack_onKeyDown    (e,this.dataBinding) });
-          this.DOMelement.addEventListener('keyup'      , (e)=>{if( this.callBack_onKeyUp)       this.callBack_onKeyUp      (e,this.dataBinding) });
-
+                                                                    this.DOMelement.addEventListener('mousedown', function(e) {if (this.callBack_onMouseDown) this.callBack_onMouseDown(e, this.dataBinding);}.bind(this));                                                     
+          this.DOMelement.addEventListener('mouseup', function(e) {if (this.callBack_onMouseUp) this.callBack_onMouseUp(e, this.dataBinding);}.bind(this));                                                     
+          this.DOMelement.addEventListener('contextmenu', function(e) {if (this.callBack_onContextMenu) this.callBack_onContextMenu(e, this.dataBinding);}.bind(this));                                                     
+          
+          this.DOMelement.addEventListener('keydown', function(e) { if (this.callBack_onKeyDown) this.callBack_onKeyDown(e, this.dataBinding);}.bind(this));                                                     
+          this.DOMelement.addEventListener('keyup', function(e) {if (this.callBack_onKeyUp) this.callBack_onKeyUp(e, this.dataBinding);}.bind(this));                                                     
   } 
 
   addPopupMenu(p)

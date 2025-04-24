@@ -237,6 +237,7 @@ var   btn10 = dialogs.addButton( menuContainer , "" , 10 , 1 , 1 , 1 , "ask me" 
       for(var i=0; i<5; i++)
       {
         var p = dialogs.addPanel( testContainer2 , "" , 1 , i+1 , 1 , 1 );
+            p.callBack_onKeyDown = function(e) { if(e.keyCode==13) alert(enter) ; }.bind(p);
             p.borderRadius = '1px';
             p.margin = '0.1em';
             p.buildGridLayout('1x1');

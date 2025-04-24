@@ -85,14 +85,16 @@ export class TFWindow extends TFObject
   {
    super.render();
 
-   this.__rezising = null;
+   this.__rezising       = null;
+   this.callBack_onClose = null;
+
            
     // finde max zIndex in windows
    var zIndex = zIndexStart; 
    for(var i=0;i<windows.length;i++) if(windows[i].zIndex>zIndex) zIndex = windows[i].zIndex;
-   this.zIndex = zIndex + 1;
+   this.zIndex = zIndex;
    windows.push(this);
-
+   
 
    this.callBack_onClick = ( e )=>{
          // bringe das Fenster in den Vordergrund
@@ -488,6 +490,8 @@ get opacity()
 
   destroy()
   {
+    if(this.callBack_onClose) this.callBack_onClose();
+    
     this.hWnd.destroy();
     this.caption.destroy();
     

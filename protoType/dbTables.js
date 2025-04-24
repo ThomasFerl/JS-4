@@ -38,7 +38,8 @@ tables.push(
       {tableName:"mediaInSet",
             tableFields:[
                {fieldName:"ID_FILE"	    , fieldType:"INTEGER" } ,
-               {fieldName:"ID_MEDIA"    , fieldType:"INTEGER" } 
+               {fieldName:"ID_MEDIA"    , fieldType:"INTEGER" } ,
+               {fieldName:"POSITION"    , fieldType:"INTEGER" } 
             ]});
       
 
