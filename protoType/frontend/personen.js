@@ -172,7 +172,7 @@ dropImage( e , data )  // onDrop ( event , data )
      const f = (globals.session.userName || 'developer') + '_' + utils.buildRandomID();
      utils.uploadFileToServer(data.localFile, f, 
            function(result)
-           { 
+           { debugger;
              this.self.PORTRAIT=result.result.savedName; ; 
              this.self.portraitPanel.imgURL=this.self.portraitURL() 
             }.bind({self:this,destDir:this.#destDir}) , {destDir:this.#destDir} );
@@ -276,7 +276,7 @@ export class TPersonList
 
     
     selectedPerson(p)
-    {debugger;
+    {
       this.person            = p;
       this.selected          = p;
       this.imagePanel.imgURL = p.portraitURL();

@@ -72,6 +72,7 @@ function viewMedia(fn)
 
 export function main(capt1,capt2)
 {
+   
     var ws = new TFWorkSpace('mainWS' , capt1,capt2 );
 
     var l  = dialogs.setLayout( ws.handle , {gridCount:27,head:2,left:14} )

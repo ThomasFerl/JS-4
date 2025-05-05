@@ -29,7 +29,8 @@ export class TFMediaCollector
 {
   constructor ( width , height , params ) 
   {
-   this.joblistWnd = null;
+   this.joblistWnd      = null;
+   this.mediaSetThumbs  = [];
 
    this.mainWindow = new TFWindow(globals.webApp.activeWorkspace , 'media' , width , height , 'CENTER' );
    this.mainWindow.buildGridLayout_templateColumns('1fr');
@@ -43,21 +44,16 @@ export class TFMediaCollector
    this.menuPanel.buildGridLayout_templateColumns('1fr 1fr 1fr 1fr 1fr 1fr 1fr');
     this.menuPanel.buildGridLayout_templateRows('1fr');
 
-   this.btnAddVideo = dialogs.addButton(this.menuPanel , '' , 1 , 1 , 1 , 1 , 'Videoclip hinzufügen');
-   this.btnAddVideo.backgroundColor='gray';
-   this.btnAddVideo.height='2em';
-   this.btnAddVideo.callBack_onClick = function(){this.addMediaFile('VIDEO')}.bind(this);
-
-   this.btnAddImage = dialogs.addButton(this.menuPanel , '' , 2 , 1 , 1 , 1 , 'Bild hinzufügen');
-   this.btnAddImage.backgroundColor='gray';
-   this.btnAddImage.height='2em';
-   this.btnAddImage.callBack_onClick = function(){this.addMediaFile('IMAGE')}.bind(this);
-
-   this.btnAddImage = dialogs.addButton(this.menuPanel , '' , 3 , 1 , 1 , 1 , 'Set hinzufügen');
+   this.btnAddImage = dialogs.addButton(this.menuPanel , '' , 1 , 1 , 1 , 1 , 'neues Media-Set');
    this.btnAddImage.height='2em';
    this.btnAddImage.callBack_onClick = function(){this.addMediaSet()}.bind(this);
 
-   this.btnPersonen = dialogs.addButton(this.menuPanel , '' , 4 , 1 , 1 , 1 , 'Personen');
+   this.btnAddImage = dialogs.addButton(this.menuPanel , 'cssAbortBtn01' , 2 , 1 , 1 , 1 , 'Media-Set löschen');
+   this.btnAddImage.height='2em';
+   this.btnAddImage.callBack_onClick = function(){this.delMediaSet()}.bind(this);
+
+
+   this.btnPersonen = dialogs.addButton(this.menuPanel , '' , 3 , 1 , 1 , 1 , 'Personen');
    this.btnPersonen.height='2em';
    this.btnPersonen.callBack_onClick = function(){ new TPersonList(); }.bind(this);
 
@@ -86,6 +82,7 @@ export class TFMediaCollector
  updateThumbs()
   {  
     this.dashboardPanel.innerHTML = "";
+    this.mediaSetThumbs = [];
     this.dashboardPanel.buildFlexBoxLayout();
     this.dashboardPanel.alignItems='flex-start';
     this.dashboardPanel.justifyContent='flex-start';
@@ -94,22 +91,63 @@ export class TFMediaCollector
     if(response.error) {dialogs.showMessage(response.errMsg); return; }
 
     for(var i=0; i<response.result.length; i++)
-    new TFMediaCollector_thumb( this.dashboardPanel , {thumb:response.result[i].thumb , mediaSet:response.result[i] , popupMenu:this.popup , callBack_onClick:this.handleThumbClick} );
+    {
+      var t = new TFMediaCollector_thumb( this.dashboardPanel , {thumb:response.result[i].thumb , mediaSet:response.result[i] , popupMenu:this.popup } )
+          t.callBack_onClick = function( e , d , thumbParams){this.handleThumbClick( e , d , thumbParams)}.bind(this);
+      this.mediaSetThumbs.push(t);
+    }  
   }
 
 
 
   handleThumbClick( e , d , thumbParams )
   { 
-    if(thumbParams.mediaSet.notSet) return;
-    new TFMediaCollector_mediaSetViewer( thumbParams.mediaSet );
+    var mediaSetThumb = thumbParams.self;
+
+    if(mediaSetThumb.selected)
+    {
+      if(mediaSetThumb.mediaSet.notSet) return;
+      new TFMediaCollector_mediaSetViewer( mediaSetThumb.mediaSet );
+    }
+    
+    if (!globals.KeyboardManager.isKeyPressed("Control")) 
+      { // Mehrfachauswahl mit gedrückter Ctrl-Taste
+        for(var i=0; i<this.mediaSetThumbs.length; i++) this.mediaSetThumbs[i].selected = false;
+      }  
+
+    mediaSetThumb.selected = true;
+    
   }
 
 
   addMediaSet()
   {
     new TFMediaCollector_mediaSetViewer();
-    //new TFMediaCollector_fileManager(this.mainWindow.hWnd , {root:'/' } , function(files){this.addMediaFiles(files)}.bind(this)).run();
+    
+  }
+
+ 
+  delMediaSet()
+  { debugger;
+   // zuerst das oder die selektierten MediaSets ermitteln...
+   var found = [];
+   for(var i=0; i<this.mediaSetThumbs.length; i++)
+   {
+     if(this.mediaSetThumbs[i].selected) found.push(this.mediaSetThumbs[i].mediaSet.ID);
+   }
+
+    if(found.length==0) { dialogs.showMessage('kein Media-Set selektiert'); return; } 
+
+    if(found.length>0) { dialogs.ask('mediaSet löschen ...','Sollen die selektierten Media-Sets gelöscht werden ?', 
+      // falls JA
+      function()
+      {
+        utils.webApiRequest('DELMEDIASET' , {mediaSet:found} );
+        this.updateThumbs();   
+      }
+    ); return; }
+
+
   }
 
 

@@ -279,6 +279,10 @@ if(CMD=='SHOWLOG')
   } 
 
 
+  if(CMD=='MIGRATE') 
+    {
+     return dbUtils.migrate(dB,fs,path, param );
+  }  
 
 
 //----------------------------------------------------------------

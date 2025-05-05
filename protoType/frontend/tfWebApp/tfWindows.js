@@ -85,8 +85,11 @@ export class TFWindow extends TFObject
   {
    super.render();
 
-   this.__rezising       = null;
-   this.callBack_onClose = null;
+   this.__rezising             = null;
+   this.resizeTargetWidth      = this.width;
+   this.resizeTargetHeight     = this.height;
+   this.resizeAnimationRunning = false;
+   this.callBack_onClose       = null;
 
            
     // finde max zIndex in windows
@@ -114,30 +117,71 @@ export class TFWindow extends TFObject
     this.caption.buildGridLayout_templateColumns('1fr 2em 2em 2em');
     this.caption.buildGridLayout_templateRows('1fr');
 
-    this.caption.DOMelement.addEventListener('mousedown', (e) => 
+    this.caption.DOMelement.addEventListener('mousedown', function(e)
     {
+        e.preventDefault();
+      
+        // Fenster in den Vordergrund bringen
+        const maxZ = windows.reduce((z, w) => Math.max(z, w.zIndex), zIndexStart);
+        this.zIndex = maxZ + 1;
+      
+        const offsetX = e.clientX - this.leftPx;
+        const offsetY = e.clientY - this.topPx;
+      
+        const onMouseMove = (e) => {
+          this.leftPx = e.clientX - offsetX;
+          this.topPx = e.clientY - offsetY;
+        };
+      
+        const onMouseUp = () => {
+          document.removeEventListener('mousemove', onMouseMove);
+          document.removeEventListener('mouseup', onMouseUp);
+        };
+      
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
+      }.bind(this));
+  
+
+    // scrollen im Header bei gedrückter CTRLtaste .... this.caption.DOMelement.addEventListener()
+    this.caption.DOMelement.addEventListener('wheel', function(e)
+    {
+      if (!e.ctrlKey) return;
+  
       e.preventDefault();
-    
-      // Fenster in den Vordergrund bringen
-      const maxZ = windows.reduce((z, w) => Math.max(z, w.zIndex), zIndexStart);
-      this.zIndex = maxZ + 1;
-    
-      const offsetX = e.clientX - this.leftPx;
-      const offsetY = e.clientY - this.topPx;
-    
-      const onMouseMove = (e) => {
-        this.leftPx = e.clientX - offsetX;
-        this.topPx = e.clientY - offsetY;
-      };
-    
-      const onMouseUp = () => {
-        document.removeEventListener('mousemove', onMouseMove);
-        document.removeEventListener('mouseup', onMouseUp);
-      };
-    
-      document.addEventListener('mousemove', onMouseMove);
-      document.addEventListener('mouseup', onMouseUp);
-    });
+      e.stopPropagation();
+
+      const bounds = this.caption.DOMelement.getBoundingClientRect();
+      const x = e.clientX - bounds.left;
+      const zone = x / bounds.width;
+  
+      const scaleFactor = Math.min(Math.max(Math.abs(e.deltaY) / 100, 1), 5); 
+      const grow = (e.deltaY < 0) ? 1 : -1;
+      const step = 10 * scaleFactor;
+
+      if (zone < 0.3) {
+        // Links: nur Breite
+        this.resizeTargetWidth  += grow * step;
+      } else if (zone > 0.7) {
+        // Rechts: nur Höhe
+        this.resizeTargetHeight += grow * step;
+      } else {
+        // Mitte: beides
+        this.resizeTargetWidth  += grow * step;
+        this.resizeTargetHeight += grow * step;
+      }
+
+      // Grenzen setzen
+      if (this.resizeTargetWidth  < 200) this.resizeTargetWidth  = 200;
+      if (this.resizeTargetHeight < 200) this.resizeTargetHeight = 200;
+  
+      // Nur EIN Resize-Loop soll laufen
+      if (!this.resizeAnimationRunning) {
+          this.resizeAnimationRunning = true;
+          this.__animateResize();
+      }
+  }.bind(this));
+
     
   
     //close button
@@ -162,6 +206,68 @@ export class TFWindow extends TFObject
     this.hWnd                       = new TFPanel( this , 1 , 2 , 1 , 1 , {css:"cssWindowJ4"} );
   
   }
+
+
+// Smooth-Resize Funktion
+__animateResize()
+{
+  const speed             = 0.4; // Sanfte Geschwindigkeit
+  const minSize           = 200; // Kleinste erlaubte Größe
+
+  // Differenzen berechnen
+  const diffW = this.resizeTargetWidth  - this.width;
+  const diffH = this.resizeTargetHeight - this.height;
+
+  // Schrittweise Annäherung
+  this.width  += diffW * speed;
+  this.height += diffH * speed;
+
+  // Prüfen, ob Ziel erreicht
+  if (Math.abs(diffW) > 0.5 || Math.abs(diffH) > 0.5) {
+      requestAnimationFrame(() => this.__animateResize());
+  } else {
+      // Ziel erreicht → Feinjustierung
+      this.width  = this.resizeTargetWidth;
+      this.height = this.resizeTargetHeight;
+     
+      this.resizeAnimationRunning = false;
+
+      // Wenn minimale Größe erreicht wurde → Vibrationseffekt
+      if (this.width <= minSize || this.height <= minSize) {
+          this.__vibrateWindow();
+      }
+  }
+};
+
+// 🌀 Kleine Vibrationsanimation
+__vibrateWindow () 
+{
+  const originalLeft = parseInt(this.DOMelement.style.left || 0);
+  const originalTop  = parseInt(this.DOMelement.style.top  || 0);
+  const shakePixels  = 3; // Wie stark das Zittern ist
+  const shakes       = 7; // Wie oft gezittert wird
+  let count = 0;
+
+  const doShake = () => {
+      if (count >= shakes) {
+          // Wieder auf Ursprungsposition setzen
+          this.DOMelement.style.left = originalLeft + "px";
+          this.DOMelement.style.top  = originalTop + "px";
+          return;
+      }
+
+      const offsetX = (Math.random() - 0.5) * shakePixels * 2;
+      const offsetY = (Math.random() - 0.5) * shakePixels * 2;
+      this.DOMelement.style.left = (originalLeft + offsetX) + "px";
+      this.DOMelement.style.top  = (originalTop  + offsetY) + "px";
+
+      count++;
+      setTimeout(doShake, 30); // Intervall zwischen Zittern
+  };
+
+  doShake();
+};
+
 
 
   normelize()

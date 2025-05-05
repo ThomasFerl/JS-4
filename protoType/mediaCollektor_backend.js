@@ -318,6 +318,66 @@ if(CMD=='CREATEMEDIASET')
                                                                          DESCRIPTION:param.DESCRIPTION} );
   }
 
+if(CMD=='DELMEDIASET') 
+  {
+    var mediaSet = param.mediaSet || 0;
+    if(!mediaSet) return {error:true, errMsg:'mediaSet not found in params !', result:{} };
+
+    // if mediaSet ein array ?
+    if(!Array.isArray(mediaSet)) mediaSet = [mediaSet];
+
+    for(var i=0; i<mediaSet.length; i++)
+    {  
+     console.log('delMediaSet: delete mediaSet mit ID '+mediaSet[i]); 
+     // Lösche alle Einträge in der Tabelle mediaInSet
+     dbUtils.runSQL( this.db , 'update mediaInSet set ID_MEDIA=0 where ID_MEDIA='+mediaSet[i] );
+     // Lösche den Eintrag in der Tabelle mediaSets
+     dbUtils.runSQL( this.db , 'Delete from mediaSets where ID='+mediaSet[i] );
+    } 
+
+    return {error:false, errMsg:'OK', result:mediaSet.length+' mediaSet(s) gelöscht' };
+
+
+  }
+
+  if(CMD=='DELMEDIAFILE_FROM_SET') 
+    {
+      var ID_FILE      = param.ID_FILE;
+      var ID_MEDIASET  = param.ID_MEDIASET || 0;
+
+      // if ID_FILE ein array ?
+      if(!Array.isArray(ID_FILE)) ID_FILE = [ID_FILE];
+  
+      for(var i=0; i<ID_FILE.length; i++)
+      {  
+       console.log('delete mediaFile mit ID '+ID_FILE[i]); 
+       // Lösche alle Einträge in der Tabelle mediaInSet
+       
+       if(ID_MEDIASET>0) dbUtils.runSQL( this.db , 'Update mediaInSet set ID_MEDIA=0 where ID_MEDIA='+ID_MEDIASET+' and ID_FILE='+ID_FILE[i] );
+       else              dbUtils.runSQL( this.db , 'Delete From mediaInSet where ID_MEDIA=0 and ID_FILE='+ID_FILE[i] );
+      } 
+
+      dbUtils.runSQL( this.db , 'Delete From files where ID not in (Select distinct ID_FILE from mediaInSet)');
+      var thumbFiles = dbUtils.fetchRecords_from_Query( this.db , "Select THUMBFILE from thumbs where ID_FILE not in (Select distinct ID from files)" ).result;
+      dbUtils.runSQL( this.db , 'Delete From thumbs where ID_FILE not in (Select distinct ID from files)');
+  
+      if(thumbFiles)
+        if(thumbFiles.length>0)
+        for (var i=0; i<thumbFiles.length; i++) 
+        { 
+        try {
+              var filePath = this.path.join(this.thumbPath, thumbFiles[i].THUMBFILE);
+              this.fs.unlinkSync(filePath);
+              console.log(`✅ Gelöscht: ${filePath}`);
+        } catch (err) {
+          console.error(`❌ Fehler beim Löschen von ${filePath}: ${err.message}`);
+        }
+      } 
+      return {error:false, errMsg:'OK', result:thumbFiles.length+' mediaFiles(s) gelöscht' };
+  
+}
+  
+
 
 if(CMD=='UPDATEMEDIASET') 
 {
@@ -370,12 +430,12 @@ if(CMD=='LSTHUMBS')
      var result = [];
      var mediaSet = param.mediaSet || 0;
      var orderByHash = param.orderBy=="hash" || false;
-     var orderBy     = ' ID';
-     var sql = "Select * from thumbs where ID > 0";
-      if(param.ID_FILE) {sql = sql + " AND ID_FILE="+param.ID_FILE; orderBy = ' ID';}
-      if(mediaSet!=0)   {sql = sql + " AND ID_FILE in (Select ID_FILE from mediaInSet where ID_MEDIA="+mediaSet+")"; orderBy = ' POSITION';}
-      sql = sql + ' order By' + orderBy;
+     
+     var sql = "Select t.*,m.POSITION from thumbs t, mediaInset m where t.ID_FILE = m.ID_FILE ";
+         sql = sql + " AND m.ID_MEDIA="+mediaSet+" order By m.POSITION"
    
+      console.log('SQL: ' + sql);
+
       var response = dbUtils.fetchRecords_from_Query( this.db , sql );
 
       if (response.error)  return response;
@@ -449,7 +509,7 @@ if(CMD=='MOVEMEDIA_IN_SET')
   for(var i=0; i<mediaFiles.length; i++)
   { 
     p++;
-    if(source.ID) // Move from source to destination Set 
+    if(source) // Move from source to destination Set 
     dbUtils.runSQL( this.db , 'update mediaInSet set ID_MEDIA='+destination+', position='+p+' where ID_MEDIA='+source+' and ID_FILE='+mediaFiles[i].ID ); 
     else          // Copy to destination Set
     dbUtils.insertIntoTable( this.db , 'mediaInSet' , {ID_MEDIA:destination , ID_FILE:mediaFiles[i].ID , POSITION:p} );
@@ -464,43 +524,29 @@ if(CMD=='MEDIA_POSITION')
     console.log('MEDIA_POSITION -> param:' + JSON.stringify(param));
     var ID_MEDIASET = param.ID_MEDIASET;
     var ID_FILE     = param.ID_FILE;
-    var orgPOSITION = 0;
-    var orgID_FILE  = 0;
+    // zuerst die ORIGINAL-POSITION des zu bewegenden Files ermitteln
+    var orgPOSITION = dbUtils.fetchValue_from_Query( this.db , "Select POSITION from mediaInSet where ID_MEDIA="+ID_MEDIASET+" and ID_FILE="+ID_FILE ).result;
+    
     var newPOSITION = param.POSITION;
+    var maxPOSITION = dbUtils.fetchValue_from_Query( this.db , "Select max(POSITION) from mediaInSet where ID_MEDIA="+ID_MEDIASET ).result || 0;
     
-    // ermittle die aktuelle Position des zu verschiebenden Files
-    var response = dbUtils.fetchRecord_from_Query( this.db , "Select POSITION from mediaInSet where ID_MEDIA="+ID_MEDIASET+" and ID_FILE="+ID_FILE ); 
-    if(response.error) 
-      { // fallback auf die max. Position
-        console.log('MEDIA_POSITION: fetch max. Position for ID_MEDIASET: '+ID_MEDIASET);
-        var r=dbUtils.fetchValue_from_Query( this.db , "Select max(POSITION) from mediaInSet where ID_MEDIA="+ID_MEDIASET );
-        if(r.error) return response;
-        orgPOSITION = response.result; 
-      }  
-    if(response.result) orgPOSITION = response.result.POSITION;
+    if((newPOSITION<0) || (newPOSITION>maxPOSITION)) newPOSITION = maxPOSITION;
 
-    // sind beide Positionen identisch dann wars das ...
-    if(orgPOSITION==newPOSITION) {console.log('same Position'); return {error:false, errMsg:"OK", result:{} };}
+    // Verschiebung von kleiner Position nach größerer Position -> RECHTS
+    // wenn "newPOSITION" größer als maxPOSITION ist, dann müssen die Positionen der nachfolgenden Files um 1 verringert werden
+    if(newPOSITION>orgPOSITION)
+    {
+      dbUtils.runSQL( this.db , 'update mediaInSet set POSITION=POSITION-1 where ID_MEDIA='+ID_MEDIASET+' and POSITION>='+orgPOSITION+' and POSITION<'+newPOSITION );
+    }
+    // Verschiebung von größerer Position nach kleinerer Position -> LINKS
+    if(newPOSITION<orgPOSITION)
+    {
+      dbUtils.runSQL( this.db , 'update mediaInSet set POSITION=POSITION-1 where ID_MEDIA='+ID_MEDIASET+' and POSITION>'+orgPOSITION+' and POSITION<='+newPOSITION );
+    }  
 
-    // zuerst prüfen, ob die Position schon existiert und ermittle den Datensatz für diese Position
-    var response = dbUtils.fetchRecord_from_Query( this.db , "Select * from mediaInSet where ID_MEDIA="+ID_MEDIASET+" and POSITION="+newPOSITION );
-    if(response.result)
-      {
-         orgID_FILE  = response.result.ID_FILE;
-         orgPOSITION = response.result.POSITION;
-      }  
-      
-    console.log('MEDIA_POSITION: orgID_FILE: '+orgID_FILE);
-    console.log('MEDIA_POSITION: orgPOSITION: '+orgPOSITION);
-    console.log('MEDIA_POSITION: newPOSITION: '+newPOSITION);
-    console.log('MEDIA_POSITION: ID_MEDIASET: '+ID_MEDIASET);
-    console.log('MEDIA_POSITION: ID_FILE: '+ID_FILE);
+    // nun "endlich" erhält "ID_FILE" seine neue Position...
+    dbUtils.runSQL( this.db , 'update mediaInSet set POSITION='+newPOSITION+' where ID_MEDIA='+ID_MEDIASET+' and ID_FILE='+ID_FILE );
 
-    // jetzt die ID_File der beiden Datensätze tauschen...
-    console.log(dbUtils.runSQL( this.db , 'update mediaInSet set POSITION='+newPOSITION+' where ID_MEDIA='+ID_MEDIASET+' and ID_FILE='+ID_FILE ).errMsg);
-    if(orgID_FILE>0)
-    console.log(dbUtils.runSQL( this.db , 'update mediaInSet set POSITION='+orgPOSITION+' where ID_MEDIA='+ID_MEDIASET+' and ID_FILE='+orgID_FILE ).errMsg);  
-    
     return {error:false, errMsg:"OK", result:{} };
     
   } 

@@ -683,29 +683,6 @@ export function closeSplashScreen()
 }
 
 
-export function showImage( url )
-{
-  var w = createWindow( '' , 'pixViewer' , '90%' , '90%' );
-      
-      w.hWnd.style.background = 'black';
-      w.top                   = 35;
-      w.buildGridLayout_templateColumns("1fr");
-      w.buildGridLayout_templateRows("1px 1fr");
-  
-
-  var p = addPanel(w, 'cssHiddenPanel' , 1 , 1 , 1, 1  );  // als Platzhalter für spätere Wünsche ...
-      p.backgroundColor = "gray";
-
-  var screen = addPanel(w, 'cssImageContainer' , 1 , 2 , 1 , 1 );       
-     
-  //----------------------------------------------------------------------
-  
-  var img = createImage(screen , url );  
-  
-  
-}
-
-
 export function newPropertyEditor( aParent , properties , btnSave , callBack_onSave  )
 {
   var pe = new TPropertyEditor( aParent , properties , btnSave , callBack_onSave );
@@ -831,12 +808,16 @@ export function fileDialog( rootPath, mask , multiple , callBackOnSelect , onSel
 }
 
 
-export function playMovieFile(container, fileName)  // fileName kann auch ein Array sein ... 
-{
+export function playMovieFile(container, url , caption )  // fileName kann auch ein Array sein ... 
+{debugger;
+  if(!container){
+    container = new TFWindow( null , caption || "Video" , "77%" , "77%" , "CENTER" ).hWnd;
+  }
+  
   // Falls `fileName` ein String ist, in ein Array umwandeln
   var fileList=[];
-  if(Array.isArray(fileName)) fileList = fileName
-  else                        fileList = [fileName];
+  if(Array.isArray(url)) fileList = url
+  else                   fileList = [url];
   
   const speeds     = [0.1,0.12,0.17,0.25,0.5,0.75,0.9,1,1.25,1.5,1.75,2]; // Verschiedene Geschwindigkeiten
   var   speedIndex = 2;
@@ -846,25 +827,36 @@ export function playMovieFile(container, fileName)  // fileName kann auch ein Ar
   // Vorherige Inhalte entfernen
   container.innerHTML = "";
   container.backgroundColor = "rgb(35,35,35)";
-  utils.buildGridLayout_templateColumns(container, "1fr");
-  utils.buildGridLayout_templateRows(container, "1em 1fr 3em");  
+  container.buildGridLayout_templateColumns("1fr");
+  container.buildGridLayout_templateRows("1fr 3em");  
+  var videoContainer = addPanel(container, "cssContainerPanel", 1, 1, 1, 1); // cssContainerPanel
+  var controls       = addPanel(container, "cssContainerPanel", 1, 2, 1, 1);
 
-  var videoContainer = addPanel(container, "cssContainerPanel", 1, 2, 1, 1);
+  
+  // Video-Element im VideoContainer erstellen
+var video = document.createElement("video");
+video.controls = true;          // Eigene Steuerung
+video.autoplay = true;          // Autoplay aktiviert
+video.style.maxWidth = "100%";  // Breite maximal wie das Parent
+video.style.maxHeight = "100%"; // Höhe maximal wie das Parent
+video.style.width = "100%";     // Automatisch, um Seitenverhältnis zu bewahren
+video.style.height = "100%";    // Gilt ebenfalls dem Seitenverhältnis
+video.style.objectFit = "contain"; // Lässt es vollständig sichtbar mit evtl. Letterboxing
+video.style.margin = "auto";    // Zentrierung im Flex-Parent
+video.style.display = "block";  // Verhindert unerwünschten Inline-Space
+video.style.borderRadius = "7px";
+video.style.filter = "brightness(1)"; // Standard-Helligkeit
+video.style.transition = "filter 0.3s ease"; // Sanfter Übergang bei Helligkeitsänderung
+video.src = fileList[currentIndex]; // Setze die Quelle des Videos
+// Optional: sicherstellen, dass das Parent Flexbox-Zentrierung verwendet
+videoContainer.buildFlexBoxLayout();
+videoContainer.alignItems     = "center";
+videoContainer.justifyContent = "center";
+videoContainer.appendChild(video);
 
-  // Video-Element erstellen
-  var video = document.createElement("video");
-  video.src = fileList[currentIndex];
-  video.controls = true; // Eigene Steuerung
-  video.autoplay = true; // Autoplay aktiviert
-  video.style.width = "100%";
-  video.style.borderRadius = "7px";
-  video.style.filter = "brightness(1)"; // Standard-Helligkeit
-  videoContainer.appendChild(video);
-
-  // Steuerungselemente erstellen
-  var controls = addPanel(container, "", 1, 3, 1, 1);
-      controls.buildGridLayout_templateColumns("1fr 1fr 1fr 1fr 1fr 1fr 1fr");
-      controls.buildGridLayout_templateRows("1fr");
+// Steuerungselemente erstellen
+controls.buildGridLayout_templateColumns("1fr 1fr 1fr 1fr 1fr 1fr 1fr");
+controls.buildGridLayout_templateRows("1fr");
 
   var btnHeight = "2em";
   var btnColor  = "gray";
@@ -952,7 +944,41 @@ export function playMovieFile(container, fileName)  // fileName kann auch ein Ar
   
   }
   
+export function showImage( url , caption )
+  { 
+    var w = new TFWindow( null , caption || 'pixViewer' , "77%" , "77%" , "CENTER" );
+      
+        w.hWnd.backgroundColor  = 'black';
+        w.buildGridLayout_templateColumns("1fr");
+        w.buildGridLayout_templateRows("2em 1fr");
+        w.hide();
+    
+  
+    var p = addPanel(w.hWnd, '' , 1 , 1 , 1, 1  );  // als Platzhalter für spätere Wünsche ...
+         
+    var img = addPanel(w.hWnd, '' , 1 , 2 , 1 , 1 );      
+    img.imgURL = url; 
+   
+  // Automatische Größenanpassung, sobald das Bild geladen wurde
+  const imgObj    = new Image();
+  imgObj.onload   = function()
+               { 
+                 const imgRatio = this.img.naturalWidth / this.img.naturalHeight;
+                 const h        = this.wnd.heightPx;
+                // Höhe bleibt fix – Breite wird auf Bildformat angepasst
+                 const w = h * imgRatio;
+                 this.wnd.widthPx = w;
+                 this.wnd.show();
+               }.bind({img:imgObj,wnd:w});
 
+  imgObj.src = url;
+
+
+
+
+     
+  }
+  
 
   export function diaShow( parent , imageUrls , interval )
   {

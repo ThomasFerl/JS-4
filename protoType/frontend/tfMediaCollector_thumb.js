@@ -31,7 +31,8 @@ export class TFMediaCollector_thumb
     this.thumb            = params.thumb || null;
     this.thumbID          = params.thumbID || null;
     this.popupMenu        = params.popupMenu || null;
-    this.ndx              = params.ndx || -1;
+    this.ndx              = params.ndx;
+    this.___selected      = false;
 
     this.callBack_onClick = params.callBack_onClick || null;
     this.callBack_onDrop  = params.callBack_onDrop || function(){};
@@ -67,16 +68,43 @@ export class TFMediaCollector_thumb
                   }.bind(this);
   }
 
-   
+  
+  set selected(v)
+  { 
+    this.___selected = v;
+    if(v) this.thumbImg.borderWidth = '4px';
+    else  this.thumbImg.borderWidth = '1px';
+  }
+
+  get selected()
+  { 
+    return this.___selected;
+  }
+
+
+
 
   handleClickOnMediaFile(e,d)
-{ 
-  if(this.callBack_onClick) this.callBack_onClick(d,e,{mediaFile:this.mediaFile || {notSet:true} , 
+{
+  if(this.callBack_onClick) this.callBack_onClick(e,d,{self     :this , 
+                                                       mediaFile:this.mediaFile || {notSet:true} , 
                                                        mediaSet :this.mediaSet || {notSet:true} , 
                                                        thumb    :this.thumb || {notSet:true} , 
-                                                       ndx      :this.ndx || {notSet:true} });
+                                                       ndx      :this.ndx });
 }
 
+destroy()
+{ 
+  this.thumbImg.destroy();
+  this.thumbImg = null;
+  this.parent   = null;
+  this.params   = null;
+  this.mediaSet = null;
+  this.mediaFile= null;
+  this.thumb    = null;
+  this.thumbID  = null;
+
+}
 
 }
 

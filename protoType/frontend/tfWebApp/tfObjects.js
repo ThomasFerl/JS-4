@@ -1559,7 +1559,7 @@ export class TFileUploadPanel
   }
 
   __handleFiles(fileList) 
-  {
+  {debugger;
     for (let file of fileList) 
     {
       const fileName = globals.session.userName + '_' + utils.buildRandomID();

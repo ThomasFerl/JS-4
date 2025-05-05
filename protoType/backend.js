@@ -110,7 +110,7 @@ if(strRequest)
        } catch(err) { res.send( handleError("JSON.PARAM-parse-Error: " + err.message )); return }
    
        // während des Entwickelns und Debuggens ist die SessioID sehr lästig 
-      if(!globals.ignoreSession)
+      if(!globals.ignoreSession || jsnRequest.cmd.toUpperCase().trim()!='MIGRATE')
       { 
         if(!session.validSession( jsnRequest.session )) { res.send( handleError("invalid Session / Session timout")); return }
       }
@@ -213,7 +213,7 @@ function lsPix( req , res )
 function handleUpload( req , res )
 {
   // Delegation an multer ... mit CallBack ... 
-  var file     = req.body.file;
+  var file     = req.file; // multer speichert die Datei in req.file
   var fileName = req.body.fileName;
   var destDir  = req.body.destDir;
 
