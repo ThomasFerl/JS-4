@@ -14,6 +14,9 @@ client.readProperty( SERVER_IP , { type: 8, instance: 2533870 }, 85, (err, value
 
 
 
+
+
+
 console.log('🚀 Starte BACnet-Testprogramm...');
 
 // **Who-Is gezielt an Gerät senden**
@@ -35,7 +38,7 @@ client.on('iAm', (device) => {
   const ip = device.address.split(':')[0]; // IP-Adresse extrahieren
   console.log(`🔍 Versuche, Objektliste von ${ip} zu lesen...`);
 
-  client.readProperty(ip, { type: 8, instance: 2533870 }, 76, (err, value) => {
+  client.readProperty(ip, { type: 8, instance: 2492222 }, 76, (err, value) => {
     if (err) {
       console.error('❌ Fehler beim Lesen der Objektliste:', err);
     } else {
