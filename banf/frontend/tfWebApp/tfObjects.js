@@ -1831,6 +1831,7 @@ export class TFEdit extends TFObject
         params.editLength       = params.editLength      || "auto";
         params.justifyEditField = params.justifyEdit     || 'right';
         params.type             = params.type            || 'text';
+        params.lookUp           = params.lookUp          || false;
       
     
     super(parent , left , top , width , height , params );
@@ -1840,9 +1841,11 @@ export class TFEdit extends TFObject
   render()
   {
     super.render(); 
-    this.padding = 0;
-    this.overflow = 'hidden';
-    this.fontSize = this.params.fontSize || '1em';
+    this.combobox  = null; 
+    this.lookUp    = null;
+    this.padding   = 0;
+    this.overflow  = 'hidden';
+    this.fontSize  = this.params.fontSize || '1em';
     
     var gridTemplate = {variant:1 , columns:'1fr', rows:'1fr', edit:{left:1,top:1,width:1,height:1} };
 
@@ -1905,15 +1908,22 @@ if(gridTemplate.apx)
      this.input                   = document.createElement('INPUT');
      this.input.className         = "cssEditField";
      this.input.type              = this.params.type;
-     this.combobox                = null; 
     }
-    else {
-           this.input               = document.createElement('SELECT');
-       this.input.className         = "cssComboBox";
-       this.combobox                = this.input; 
-     } 
+    else { 
+           if(!this.params.lookUp)
+           {  // Items als Select-Box nutzen 
+            this.input               = document.createElement('SELECT');
+            this.input.className     = "cssComboBox";
+            this.combobox            = this.input; 
+           } 
+           else {// Items als LookUp nutzen ... vorbereiten
+                 // Input wird als DIV-Element "missbraucht" da das LookUp-Objekt eigenständig in DIESEM Container residiert ..
+                 this.input               = document.createElement('DIV');
+                 this.input.className     = "cssContainerPanel";
+              } 
+        }
 
-     if(this.params.value) this.value = this.params.value;
+     if(this.params.value) this.value  = this.params.value;
 
      this.input.style.gridRowStart     = gridTemplate.edit.top;
      this.input.style.gridRowEnd       = gridTemplate.edit.top+1;
@@ -1930,9 +1940,20 @@ if(gridTemplate.apx)
 
       } 
     
-    this.input.addEventListener('change',  function() { 
-                                                       if(this.callBack_onChange) this.callBack_onChange( this.input.value )
-                                                      }.bind(this));  
+
+      if(this.params.lookUp)
+      { debugger;
+        this.lookUp = new __rawComboBox(this.input , {
+          options : this.params.items,
+          onChange: function() { 
+                                 if(this.callBack_onChange) this.callBack_onChange( this.value )
+                               }.bind(this)
+       });  
+
+      }
+      else this.input.addEventListener('change',  function() { 
+                                                               if(this.callBack_onChange) this.callBack_onChange( this.value )
+                                                             }.bind(this));  
 
     this.appendChild(  this.input ); 
   } 
@@ -1940,24 +1961,28 @@ if(gridTemplate.apx)
 
   set text( txt )
   {
-    this.input.value = txt;
+    if(this.lookUp) this.lookUp.setValue(txt);
+    else                   this.input.value = txt;
   }
 
   get text()
   {
-    return this.input.value;
+    if(this.lookUp) return this.lookUp.getValue();
+    else                   return this.input.value;
   }
 
 
 
   set value( txt )
   {
-    this.input.value = txt;
+    if(this.lookUp) this.lookUp.setValue(txt);
+    else                   this.input.value = txt;
   }
 
   get value()
   {
-    return this.input.value;
+    if(this.lookUp) return this.lookUp.getValue();
+    else                   return this.input.value;
   }
 
 
@@ -1974,25 +1999,27 @@ if(gridTemplate.apx)
    if( type == 'TIME'          ) dtStr = tfDT.formatDateTime('hh:mn');
    if( type == 'DATETIME-LOCAL') dtStr = tfDT.formatDateTime('yyyy-mm-dd hh:mn');
 
-   if (dtStr != '') this.input.value = dtStr;
+   if (dtStr != '') this.value = dtStr;
  }
 
 
   getDateTime()
   {
-    var st   = this.input.value;
+    var st   = this.value;
     var tfdt = new utils.TFDateTime(st);
     return tfdt.unixDateTime();
   }
 
   set enabled( value )
   {
-    this.input.disabled = !value;
+    if(this.lookUp) this.lookUp.enabled = value;
+    else                   this.input.disabled   = !value;
   }
   
   get enabled() 
   {
-    return !this.input.disabled;
+    if(this.lookUp) return this.lookUp.enabled;
+    else                   return !this.input.disabled;
   }
   
 }  //end class ...
@@ -2002,13 +2029,13 @@ if(gridTemplate.apx)
 // Daher wird hier eine EditBox mit einer Liste von Items verwendet.
 // Die Items werden in einer Liste angezeigt, die bei Bedarf eingeblendet wird.
 
-export class selfMadeComboBox 
+class __rawComboBox 
 {
   constructor(aParent , params) 
   {
     this.parent    = aParent;
     this.options   = params.options || [];
-    this.width     = params.width || "200px";
+    this.width     = "100%";
     this.onChange  = params.onChange || function () {};
 
     // === DOM-Struktur erstellen ===
@@ -2016,9 +2043,11 @@ export class selfMadeComboBox
     this.container.style.position = "relative";
     this.container.style.width = this.width;
     this.container.style.display = "flex";
-
+    this.container.style.backgroundColor = "white";
+    
     // Eingabefeld
     this.input = document.createElement("input");
+    this.input.className = "cssEditField";
     this.input.type = "text";
     this.input.placeholder = params.placeholder || "Wähle oder schreibe...";
     this.input.style.flex = "1";
@@ -2026,13 +2055,11 @@ export class selfMadeComboBox
     this.container.appendChild(this.input);
 
     // Button ▼
-    this.button = document.createElement("div");
+    this.button = document.createElement("button");
     this.button.innerHTML = "&#x25BC;"; // ▼
     Object.assign(this.button.style, {
       padding: "5px 10px",
       cursor: "pointer",
-      background: "#eee",
-      borderLeft: "1px solid #ccc",
       display: "flex",
       alignItems: "center",
       userSelect: "none"
@@ -2085,7 +2112,8 @@ export class selfMadeComboBox
     });
   }
 
-  renderOptions(filter = "") {
+  renderOptions(filter = "") 
+  {
     this.dropdown.innerHTML = "";
     this.options.forEach(opt => {
       if (opt.toLowerCase().includes(filter.toLowerCase())) {
@@ -2133,6 +2161,16 @@ export class selfMadeComboBox
     this.input.focus();
   }
 
+  set enabled( value )
+  {
+    this.input.disabled = !value;
+  }
+  
+  get enabled() 
+  {
+    return !this.input.disabled;
+  }
+
   setOptions(list) {
     this.options = list;
     this.renderOptions(this.input.value);
@@ -2160,7 +2198,7 @@ export class TFComboBox extends TFEdit
 
 
   render()
-  {debugger
+  {
     this.items = [];
     super.render();
     
@@ -3334,7 +3372,7 @@ export class TForm
   }
 
   setInputLength(key , length)
-  { debugger;
+  {
     var ctrl = this.getControlByName(key);
     if (ctrl!=null)
     {
@@ -3413,6 +3451,9 @@ export class TForm
         if(ctrl.type.toUpperCase()=='TEXT')
            ctrl.editControl = new TFEdit(inpContainer,1,1,'99%','3em',{caption:ctrl.label,appendix:ctrl.appendix,value:ctrl.value,captionLength:maxLabel,appendixLength:maxAppendix,justifyEdit:"left"});  
        
+        if(ctrl.type.toUpperCase()=='LOOKUP')
+          ctrl.editControl = new TFEdit(inpContainer,1,1,'99%','3em',{lookUp:true,items:ctrl.items,caption:ctrl.label,appendix:ctrl.appendix,value:ctrl.value,captionLength:maxLabel,appendixLength:maxAppendix,justifyEdit:"left"});  
+      
         if(ctrl.type.toUpperCase()=='DATE')
           ctrl.editControl = new TFEdit(inpContainer,1,1,'99%','3em',{type:"date",caption:ctrl.label,appendix:ctrl.appendix,value:ctrl.value,captionLength:maxLabel,appendixLength:maxAppendix,justifyEdit:"left"});  
       
@@ -3757,7 +3798,6 @@ export class TFileDialog
 
      
 }
-
 
 
 

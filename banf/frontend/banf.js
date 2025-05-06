@@ -3,7 +3,6 @@ import * as globals      from "./tfWebApp/globals.js";
 import * as utils        from "./tfWebApp/utils.js";
 import * as dialogs      from "./tfWebApp/tfDialogs.js";
 import { TForm,
-         selfMadeComboBox,
          TFPanel }       from "./tfWebApp/tfObjects.js";
 
 
@@ -113,14 +112,7 @@ edit( callback_if_ready )
   var caption = this.ID ? 'Banf-Vorlage bearbeiten' : 'Banf-Vorlage anlegen';
   var w       =    dialogs.createWindow( null,caption,"50%","77%","CENTER");  
   var _w      =    w.hWnd;
-
-  var c = new selfMadeComboBox(_w.DOMelement , {
-        options: ["Option A", "Option B", "Option C"],
-    placeholder: "Wähle oder tippe...",
-    onChange: (val) => console.log("Gewählt:", val)} )
-
-
-/*  
+  
   this.load_lookUpTables();
   
               // aParent      , aData      , aLabels , aAppendix , aExclude , aInpType , URLForm )
@@ -141,8 +133,8 @@ edit( callback_if_ready )
       inp.setLabel('AUFTRAG','Auftrag'); 
 
       inp.setInputType('LIEFERDATUM','DATE' );
-
-      inp.setInputType("MENGENEINHEIT"        , "select" ,{items:this.lookUp_mengenEinheit});        
+ITEMS sind Undefiniert ???
+      inp.setInputType("MENGENEINHEIT"        , "lookup" ,{items:['xxx','yyy','zzz','aaa']}); //{items:this.lookUp_mengenEinheit});        
       inp.setInputType("WARENGRUPPE"          , "select" ,{items:this.lookUp_warenGruppe});        
       inp.setInputType("LIEFERANT"            , "select" ,{items:this.lookUp_lieferant});        
       inp.setInputType("WERK"                 , "select" ,{items:this});        
@@ -174,6 +166,6 @@ edit( callback_if_ready )
                                                this.wnd.close(); 
                                                if(this.callback) this.callback();
                                              }.bind( {self:this, wnd:w, inp:inp , callback:callback_if_ready} )
-*/}
+ }
 }
 
