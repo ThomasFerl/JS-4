@@ -31,7 +31,7 @@ module.exports.onMessage = (topic, payload) =>
        if (response.error) { console.error('Fehler beim Regisstrieren des Topics:', response.errMsg); return; }
       
        ID_Topic = response.result.lastInsertRowid;
-       utils.log('Topic '+topic+' wurde unter dwer ID:' +ID_Topic+' registriert.');    
+       utils.log('Topic '+topic+' wurde unter der ID:' +ID_Topic+' registriert.');    
     }
     else ID_Topic = response.result;
 

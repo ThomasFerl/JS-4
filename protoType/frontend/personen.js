@@ -128,7 +128,7 @@ edit( callback_if_ready )
  
   this.portraitPanel  = new TFPanel( _w  , 4 , 1 , 1 , 3 , {dropTarget:true} ); 
   this.portraitPanel.imgURL = this.portraitURL();
-  this.portraitPanel.callBack_onDrop = function(e,d) { this.dropImage(e,d) }.bind(this); 
+  this.portraitPanel.callBack_onDrop = function(e,d) {debugger; this.dropImage(e,d) }.bind(this); 
 
   
  // dialogs.addFileUploader  ( p , '*.*' , true , 'mediaCache/persons' , (selectedFiles) => { this.PORTRAIT=selectedFiles.result.savedName});
