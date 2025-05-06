@@ -1,0 +1,1297 @@
+
+html, body {
+   height   : 100%;
+   margin   : 0px;
+   padding  : 0px;
+}
+
+*,*::before, *::after{box-sizing: border-box}
+
+* { font-family    : Arial, Helvetica, sans-serif;
+   font-size       : 1em;
+   box-sizing      : border-box }
+
+/* ein DIV-Container als oberstes Element dierect unterhalb von document.body   */
+.cssScreen 
+{
+   position : absolute;
+   margin   : 0px;
+   padding  : 0px;
+   left     : 0px;
+   top      : 0px;
+   width    : 100%;
+   height   : 100%;
+   overflow : hidden;
+ }
+
+
+ .circle {
+   width: 1em;
+   height: 1em;
+   border-radius: 0.4em;
+   background-color: #080808;
+   color: rgb(255, 255, 255);
+   display: flex;
+   align-items: center;
+   justify-content: center;
+   cursor: pointer;
+  }
+
+.circle:hover {
+   background-color: #105203;
+}
+ 
+
+  /* Stil für das Hintergrundbild mit Blur-Effekt */
+  .cssBackgroundImage 
+  {
+    content  : "";
+    position : absolute;
+    margin   : 0;
+    padding  : 0;
+    top      : 0;
+    left     : 0;
+    width    : 100%;
+    height   : 100%;
+    
+    /* background-image :  url('./res/background.jpg'); /* Hier das Hintergrundbild ersetzen */
+    background-repeat: no-repeat;
+    background-size  : cover;
+    filter           : blur(7px); /* Hier den Unscharfeffekt anpassen */
+    z-index          : -1;
+   }
+  
+
+
+.cssWorkSpaceContainer
+{
+  position        : absolute;
+  height          : 100%;
+  width           : 100%;
+  left            : 0px;
+  top             : 0px;
+  margin          : 0px;
+  padding         : 0px;
+  color           : rgb(255, 255, 255);
+  font-size       : 1em;
+  border          : 0;
+  background-color: rgb(48, 48, 49);	
+  overflow        : hidden;
+  cursor          : pointer;
+
+  display              : grid;
+  grid-template-columns: repeat(7 , 1fr);
+  grid-template-rows   : repeat(14 , 1fr);
+  grid-template-areas  : "c c c c c c c"
+                         "w w w w w w w" 
+                         "w w w w w w w"  
+                         "w w w w w w w"  
+                         "w w w w w w w"  
+                         "w w w w w w w"  
+                         "w w w w w w w" 
+                         "w w w w w w w"  
+                         "w w w w w w w"  
+                         "w w w w w w w"  
+                         "w w w w w w w"  
+                         "w w w w w w w"  
+                         "w w w w w w w"
+                         "w w w w w w w" ;
+}
+
+
+.cssWorkSpaceContainerJ4
+{
+  position        : relative;
+  height          : 100%;
+  width           : 100%;
+  left            : 0px;
+  top             : 0px;
+  margin          : 0px;
+  padding         : 0px;
+  color           : rgb(255, 255, 255);
+  font-size       : 1em;
+  border          : 0;
+  background-color: rgb(48, 48, 49);	
+  overflow        : hidden;
+  cursor          : pointer;
+}
+
+
+
+
+
+
+.cssWorkSpace7x7
+{
+  grid-area       : w; 
+  margin          : 0px;
+  padding         : 0px;
+  color           : black;
+  font-size       : 1em;
+  border          : 1px solid rgb(39, 38, 38);
+  background-color: rgb(121, 111, 111);	
+  overflow        : auto;
+  cursor          : pointer;
+
+  display              : grid;
+  grid-template-columns: repeat(7 , 1fr);
+  grid-template-rows   : repeat(7 , 1fr);
+
+  grid-template-areas  : "m d d d d d d"
+                         "m d d d d d d"  
+                         "m d d d d d d"
+                         "m d d d d d d"
+                         "m d d d d d d"
+                         "m d d d d d d"
+                         "m d d d d d d";
+
+  grid-auto-flow       : row;
+}
+
+.cssWorkSpace
+{
+  grid-area       : w; 
+  margin          : 0px;
+  padding         : 0px;
+  color           : black;
+  font-size       : 1em;
+  border          : 1px solid gray;
+  background-color: rgb(179, 179, 179);	
+  overflow        : auto;
+  cursor          : pointer;
+
+  display              : grid;
+  grid-template-columns: repeat(10 , 1fr);
+  grid-template-rows   : repeat(10 , 1fr);
+  grid-auto-flow       : row;
+}
+
+.cssWorkSpaceJ4
+{
+  margin          : 0px;
+  padding         : 0px;
+  color           : black;
+  font-size       : 1em;
+  border          : 1px solid gray;
+  background-color: rgb(179, 179, 179);	
+  overflow        : auto;
+  cursor          : pointer;
+}
+
+
+
+
+.cssWorkSpaceCaption
+{
+ grid-area        : c;   
+ padding          : 0;
+ border           : none;
+ color            : white;
+ background-color : rgb(0, 0, 0);
+ background-image : linear-gradient(to right,rgb(0, 0, 0) ,rgb(170, 170, 170)	);
+ overflow         : hidden;
+ display              : grid;
+ grid-template-columns: 1fr 4em;
+ grid-template-rows   : 1fr;
+ } 
+
+
+ .cssWorkSpaceCaptionJ4
+ {
+  padding          : 0;
+  margin           : 0;
+  border           : none;
+  color            : white;
+  background-color : rgb(0, 0, 0);
+  background-image : linear-gradient(to right,rgb(0, 0, 0) ,rgb(170, 170, 170)	);
+  overflow         : hidden;
+ }
+
+
+ .sysMenu
+  {
+      grid-area          : headerIcon; 
+      display            : grid;
+      place-items        : center;
+      margin             : 0;
+      padding            : 0;
+      color              : rgb(0, 0, 0); /* Textfarbe festlegen */
+      background-color   : rgb(170, 170, 170);
+      border             : 1px sold rgb(14, 14, 14); 
+      cursor             : pointer; 
+      z-index            : 1000;
+  } 
+
+
+  .sysMenu:hover
+  {
+    background-color   : rgb(140, 140, 140);
+  } 
+
+
+.cssHiddenPanel
+{
+   display:none;
+}
+
+
+.cssCaption1
+{
+   margin         : 0; 
+   padding        : 0; 
+   width          : 100%;
+   font-size      : 1.4em;
+   color          : rgb(247, 241, 241);
+   position       : absolute;
+   left           : 1em;
+   top            : 0.5em;
+}
+
+.cssCaption1J4
+{
+   margin         : 0; 
+   padding        : 0; 
+   font-size      : 1.4em;
+   color          : rgb(247, 241, 241);
+}
+
+.cssCaption2
+{
+   margin         : 0; 
+   padding        : 0; 
+   width          : 100%;
+   font-size      : 1em;
+   color          : lightgray;
+   position       : absolute;
+   left           : 1.3em;
+   top            : 2.5em;
+}
+
+
+.cssCaption2J4
+{
+   margin         : 0; 
+   padding        : 0; 
+   font-size      : 1em;
+   color          : lightgray;
+}
+
+
+.cssWindowContainer
+{
+   position         : relative;
+   left             : 0;
+   top              : 0;
+   width            : 100%;
+   height           : 100%;
+   margin           : 0;
+   padding          : 0;
+   border           : 0;
+   color            : rgb(0, 0, 0);
+   background-color : black;
+   overflow         : hidden;
+
+   display              : grid;
+   grid-template-columns: 1fr;
+   grid-template-rows   : 1.8em 1fr;
+
+   grid-template-areas  : "header"
+                          "wnd";
+}
+
+
+
+.cssBaseWindowContainer
+{
+   position         : absolute;
+  /* transition       : all 1s ease-in-out;              /*opacity 1s ease-in-out;*/
+   margin           : 0;
+   padding          : 0;
+   border           : 0;
+   width            : 50%;
+   height           : 50%;
+   color            : black;
+   background-color : black;
+   box-shadow       : 4px 4px 7px gray;
+   overflow         : hidden;
+   display          : none;
+}
+
+
+.cssWindow
+{
+   grid-area        : wnd; 
+   border           : none;
+   color            : black;
+   background-color : whitesmoke;
+   overflow         : auto;   
+}  
+
+.cssWindowJ4
+{
+   position         : absolute;
+   margin           : 0;
+   padding          : 0;
+   width            : 100%;
+   height           : 100%;
+   border           : none;
+   color            : black;
+   background-color : whitesmoke;
+   overflow         : auto;   
+}  
+   
+.cssWindowCaption
+{
+   grid-area        : header; 
+   color            : white;
+   background-color : rgb(0, 0, 0);
+   background-image : linear-gradient(to right,rgb(0, 0, 0) , rgb(113, 113, 247));
+   margin           : 0;
+   padding          : 0; 
+   
+   overflow         : hidden;
+
+   display              : grid;
+   grid-template-columns: 1fr 2em;
+   grid-template-rows   : 1fr;
+
+   grid-template-areas  : "headerCaption headerIcon";
+}  
+
+.cssWindowCaptionJ4
+{
+   color            : white;
+   background-color : rgb(0, 0, 0);
+   background-image : linear-gradient(to right,rgb(0, 0, 0) , rgb(113, 113, 247));
+   margin           : 0;
+   padding          : 0; 
+   overflow         : hidden;
+}  
+
+
+.cssBaseWindowContainerJ4
+{
+   position         : absolute;
+   margin           : 0;
+   padding          : 1px;
+   border           : 0;
+   color            : rgba(0, 0, 0, 0.7);
+   background-color : rgba(0, 0, 0, 0.7);
+   box-shadow       : 14px 14px 10px rgba(0, 0, 0, 0.7);
+   overflow         : hidden;
+}
+
+.cssWindowIconJ4
+{
+   position         : absolute;
+   width            : 100px;
+   height           : 100px;
+   margin           : 0;
+   padding          : 0;
+   border           : 1px;
+   color            : rgb(20, 20, 57);
+   background-color : rgba(0, 0, 0, 0.7);
+   box-shadow       : 7px 7px 5px rgba(0, 0, 0, 0.49);
+   overflow         : hidden;
+}
+
+.cssWindowContainerJ4
+{
+   height           : calc(100% - 4px);
+   width            : calc(100% - 4px);
+   margin           : 2px;
+   padding          : 0;
+   border           : 0;
+   border-radius    : 0px;
+   color            : rgb(0, 0, 0);
+   background-color : greenyellow;
+   overflow         : auto;
+}
+
+
+
+.cssCaptionJ4
+{
+  padding           : 0px;
+  border            : 1px solid rgb(87, 86, 86);
+  border-Radius     : 4px;
+  color             : white;
+  background-Color  : black;
+  background-image  : linear-gradient(to right,rgb(0, 0, 0) , rgb(113, 113, 247));
+  align-items       : center;
+  justify-content   : left;
+  overflow          : hidden;
+}   
+
+
+.cssWindowCaptionText
+{
+   grid-area       : headerCaption; 
+   background-color: transparent;
+   margin          : 0;
+   padding-left    : 0.1em; 
+   padding-top     : 0.1em; 
+   font-size       : 1.1em;
+ } 
+
+
+ .cssWindowCaptionTextJ4
+ {
+    margin          : 0;
+    margin-left     : 0.5em;
+    padding         : 0;
+    background-color: transparent;
+    color           : white;
+    font-weight     : bold;
+    font-size       : 1.1em;
+  } 
+ 
+
+
+
+
+ .cssWindowSysButton
+ {
+   grid-area          : headerIcon; 
+   margin             : 0;
+   padding            : 0;
+   background-image   : url('./res/close_icon.png'); /* Pfad zum Bild */
+   background-position: center center;
+   background-size    : contain;
+   background-repeat  : no-repeat;
+   color              : rgb(0, 0, 0); /* Textfarbe festlegen */
+   background-color   : rgb(164, 167, 167); 
+   border             : 1px sold rgb(73, 73, 73); 
+   cursor             : pointer; 
+ }
+
+ .cssWindowSysButtonJ4
+ {
+  /* margin-right       : 1px;
+   margin-bottom      : 1px; */
+   margin             : 4px;
+   
+   background-position: center center;
+   background-size    : contain;
+   background-repeat  : no-repeat;
+   color              : rgb(0, 0, 0); /* Textfarbe festlegen */
+   background-color   : rgba(0, 0, 0,0.2); 
+   border             : 1px sold rgb(73, 73, 73); 
+   cursor             : pointer; 
+ }
+
+
+
+ .cssPopup-menu 
+ {
+   position: absolute;
+   display: inline-block;
+   cursor: pointer;
+   color : black;
+   background-color: #fff;
+   border: 1px solid #ccc;
+   box-shadow: 0 7px 7px rgba(0, 0, 0, 0.1);
+   padding: 10px;
+   cursor: pointer; 
+   z-index: 100000;
+ }
+ 
+ .cssMenu-item 
+ {
+   cursor: pointer;
+   margin-bottom: 10px;
+   transition: background-color 0.3s ease ;  /* Füge eine sanfte Übergangsanimation hinzu */
+}
+
+.cssMenu-item:hover {
+   background-color: #000000; /* Ändere die Hintergrundfarbe beim Hovern */
+   color : white;
+ }
+
+/* freies Popup-Menu auf Basis chatGPT - Vorschlag .....*/
+
+/* Style for the popup */
+.popup {
+   display: none; /* Hidden by default */
+   position: fixed; /* Stay in place */
+   z-index: 100000; /* Sit on top */
+   background-color: #fefefe;
+   border: 1px solid #888;
+   box-shadow: 0px 0px 10px rgba(0,0,0,0.1);
+}
+
+/* Popup content */
+.popup-content {
+   padding: 10px;
+}
+
+/* Menu item */
+.menu-item {
+   padding: 8px 12px;
+   cursor: pointer;
+}
+
+.menu-item:hover {
+   background-color: #ddd;
+}
+
+
+/*-------------------------------------------------------*/
+
+
+
+
+
+
+.cssObject
+{
+   color: #000000;
+   font-size: 1em;
+   font-weight: normal;
+   margin: 0;
+   padding: 0;
+   border: none;
+   background-color: #04040452;
+   overflow: hidden;
+   display: flex;
+   flex-direction: column;
+   justify-content: center;
+   align-items: center;
+   cursor: pointer;
+   
+}
+
+.cssCanvas
+{
+   width:75%;
+   height:75%;
+   margin:2.5%
+}
+
+.cssImageContainer
+{
+   position        : relative;
+   left            : 0px;
+   top             : 0px;
+   margin          : 0px;
+   padding         : 0px;
+   color           : black;
+   border          : 0;
+   background-color: transparent;
+   overflow        : hidden;
+   cursor          : pointer;
+ }
+
+ .cssImageContainerImg {
+   position: absolute;
+   top: 0;
+   left: 0;
+   width:100%;
+   height: 100%;
+   opacity: 1;
+   object-fit: cover;
+   transition: opacity 1s ease-in-out;
+}
+
+
+.slideshow-container 
+{
+  position: relative;
+  overflow: hidden;
+ }
+
+
+.slideshow-image {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 1.5s ease-in-out;
+}
+
+.slideshow-image.active {
+  opacity: 1;
+  z-index: 1;
+}
+
+
+
+.cssLabel
+{
+   display        : inline-block;
+   margin         : 0;
+   padding        : 0; 
+   font-size      : 1em;
+   color          : black;
+   width          : auto; /* Die Breite wird automatisch an den übergeordneten Container angepasst */
+   height         : auto; 
+}
+
+.cssBoldLabel
+{
+   display        : inline-block;
+   margin         : 0.5em; 
+   padding        : 0; 
+   font-size      : 1em;
+   font-weight    : bold;
+   color          : black;
+   width          : auto; /* Die Breite wird automatisch an den übergeordneten Container angepasst */
+   height         : auto; 
+}
+
+  .cssButton01 
+  {
+    background-color: #5f8a23;
+    border          : thin solid black;
+    box-shadow      : 0 .2em .4em black;
+    height          : auto;
+    color           : white;
+    margin-left     : 4px;
+    display         : flex;
+    align-items     : center;
+    justify-content : center; 
+    cursor          : pointer; 
+  }
+
+  
+  .cssAbortBtn01 
+  {
+    background-color: #9c0a0a;
+    border          : thin solid black;
+    box-shadow      : 0 .2em .4em black;
+    color           : white;
+    margin-left     : 4px;
+    display         : flex;
+    align-items     : center;
+    justify-content : center; 
+    cursor          : pointer; 
+  }
+  
+
+.cssButtonText
+{
+   font-size         : 0.9em;
+   font-weight       : bold;
+   color             : white;
+}
+
+.cssButtonText:hover
+{
+    color            : yellow;
+}
+
+
+.cssButton01:active
+  {
+     box-shadow: 0 0 0 black ;
+  }
+
+
+ .cssAbortBtn01:active
+   {
+      box-shadow: 0 0 0 black ;
+   }
+ 
+ 
+.cssPanel
+{
+  margin            : 0px;
+  padding           : 7px;
+  border            : 1px solid rgb(87, 86, 86);
+  border-Radius     : 7px;
+  color             : black;
+  background-Color  : rgb(221, 221, 221);	
+  box-Shadow        : 4px 4px 7px rgba(0,0,0,0.7);
+  align-items       : center;
+  justify-content   : left;
+  display           : flex;
+  flex-Flow         : wrap;
+  float             : left;
+  overflow          : auto;
+  
+}    
+
+
+.cssBlackPanel     
+{
+   margin            : 0px;
+   padding           : 0px;
+   border            : none;
+   background-Color  : black;
+   align-items       : center;
+   justify-content   : center;
+   display           : flex;
+   flex-Flow         : wrap;
+   float             : left;
+   overflow          : auto;
+}  
+
+.fileManagerPanel
+{
+  margin            : 0;
+  border-Radius     : 7px;
+  padding           : 0;
+  padding-left      : 1em;
+  border            : white;
+  color             : black;
+  background-Color  : white;
+  overflow          : auto;
+  display           : block;
+  box-Shadow        : 4px 4px 7px gray;
+}      
+
+
+
+.cssMoviePlayerPanel
+{
+  margin            : 0;
+  padding           : 0;
+  border            : 1px solid gray;
+  color             : rgb(94, 93, 93);
+  background-Color  : rgb(94, 93, 93);	
+  overflow          : auto;
+  display           : flex;
+  flex-Flow         : wrap;
+  float             : left;
+}   
+
+.cssMoviePlayerScreen
+{
+   margin            : 0;
+   padding           : 0;
+   border            : 1px solid black;
+   color             : black;
+   background-Color  : rgb(45, 43, 43);
+   overflow          : auto;
+   display           : flex;
+   justify-content   : center; /* Horizontal zentrieren */
+   align-items       : center; /* Vertikal zentrieren */
+}   
+
+
+/*Padding rausnehmen und stattdessen über die margin-top & margin-left -Eigenschaften der Childs die Position steuern...*/
+.cssContainerPanel     
+{
+   margin            : 4px;
+   padding           : 4px;
+   border            : none;
+   background-Color  : inherited;
+   align-items       : center;
+   justify-content   : center;
+   display           : flex;
+   flex-Flow         : wrap;
+   float             : left;
+   overflow          : auto;
+}    
+
+
+.cssHTMLTableContainerPanel     
+{
+   width             : 100%;   
+   height            : 100%;
+   margin            : 4px;
+   padding           : 4px;
+   border            : none;
+   background-Color  : inherited;
+   display           : flex; /* Flexbox-Layout */
+   justify-content   : flex-start; /* Horizontal linksbündig */
+   align-items       : flex-start; /* Vertikal oben ausgerichtet */
+   flex-Flow         : wrap;
+   float             : left;
+   overflow          : auto;
+} 
+
+
+
+.cssWhitePanel
+{
+  margin            : 0;
+  padding           : 0;
+  border            : 1px solid gray;
+  color             : black;
+  background-Color  : white;	
+  overflow          : auto;
+  display           : flex;
+  flex-Flow         : wrap;
+  float             : left;
+} 
+
+
+.cssGrayPanel
+{
+  margin            : 0;
+  padding           : 0;
+  border            : 1px solid gray;
+  color             : black;
+  background-Color  : rgb(177, 177, 177);	
+  overflow          : auto;
+  display           : flex;
+  flex-Flow         : wrap;
+  float             : left;
+} 
+
+.cssRoundWhitePanel
+{
+  margin            : 0px;
+  padding           : 7px;
+  border            : 1px solid gray;
+  border-Radius     : 7px;
+  color             : black;
+  background-Color  : rgb(255, 255, 255);	
+  box-Shadow        : 4px 4px 7px rgba(0,0,0,0.7);
+  align-items       : center;
+  justify-content   : left;
+  display           : flex;
+  flex-Flow         : wrap;
+  float             : left;
+  overflow          : auto;
+  
+} 
+
+
+.overlay 
+{
+   position: fixed;
+   top: 0;
+   left: 0;
+   width: 100%;
+   height: 100%;
+   z-index:1000;
+   background: rgba(0, 0, 0, 0.8);
+   display: flex;
+   overflow: hidden;
+   justify-content: center;
+   align-items: center;
+   visibility: hidden;
+}
+
+.splashContainer
+{
+   position: absolute; /* Absolute Positionierung relativ zum Elternelement */
+   top: 25%;           /* Zentrierung: (100% - 50%) / 2 */
+   left: 25%;          /* Zentrierung: (100% - 50%) / 2 */
+   width: 50%;         /* 50% der Breite des Elternelements */
+   height: 50%;        /* 50% der Höhe des Elternelements */
+   padding: 4em;        /* 50% der Höhe des Elternelements */
+   justify-content: center;
+   align-items: center;
+   display         : block;
+   background-color: #000000; /* Optional: Hintergrundfarbe für Sichtbarkeit */
+}
+
+.splashPanel
+{
+   top: 25%;           /* Zentrierung: (100% - 50%) / 2 */
+   left: 25%;          /* Zentrierung: (100% - 50%) / 2 */
+   width: 100%;         /* 50% der Breite des Elternelements */
+   height: 50%;        /* 50% der Höhe des Elternelements */
+   padding: 2em;        /* 50% der Höhe des Elternelements */
+   font-size      : 2em;
+   font-weight    : bold;
+   color          : white;
+   justify-content: center;
+   align-items: center;
+   display         : block;
+   background-color: #000000; /* Optional: Hintergrundfarbe für Sichtbarkeit */
+}
+
+
+.cssRibbon
+{
+  margin            : 0;
+  padding           : 0;
+  border            : none;
+  color             : white;
+  background-Color  : rgba(0,0,0, 0.05 );	
+  align-items       : center;
+  text-align        : center;
+  overflow          : auto;
+  display           : flex;
+  flex-wrap         : wrap;
+ } 
+
+.cssBlackGradPanel
+{
+   margin            : 0;
+   padding           : 0;
+   border            : 1px solid green;   
+   color             : white;
+   background-image  :linear-gradient( rgb(102, 99, 99) , rgb(0, 0, 0)); 
+   align-items       : center;
+   justify-content   : center;
+   overflow          : auto;
+   display           : flex;
+   flex-Flow         : wrap;
+   float             : left;
+ } 
+
+
+.cssValueListPanel
+{
+   padding           : 0;
+   margin            : 0;
+   border            : 0;
+   width             : 99%;
+   height            : 2em;
+   color             : black;
+   background-Color  : rgb(240, 240, 240);	
+ 
+   justify-content   : left;   /* Horizontal linksbündig */
+   align-items       : center; /* Vertikal zentrieren */    
+   overflow          : hidden;
+   display           : grid;
+   grid-template-columns: 4px 1fr 1fr 4px;
+   grid-template-rows   : 4px 1fr 4px;
+ } 
+
+
+ .cssvalueListPanelJ4
+{
+   padding           : 0;
+   margin            : 0;
+   border            : 0;
+   width             : 99%;
+   height            : 2em;
+   color             : black;
+   background-Color  : rgb(240, 240, 240);	
+ 
+   justify-content   : left;   /* Horizontal linksbündig */
+   align-items       : center; /* Vertikal zentrieren */    
+   overflow          : hidden;
+ } 
+
+ .cssDropZoneJ4 {
+   border: 2px dashed #aaa;
+   border-radius: 8px;
+   background-color: #f9f9f9;
+   transition: background-color 0.2s ease, border-color 0.2s ease;
+   color: #444;
+   font-size: 1em;
+   padding: 1em;
+   text-align: center;
+   user-select: none;
+ }
+ 
+ .cssDropZoneJ4.hover {
+   border-color: #007acc;
+   background-color: #e0f2ff;
+   color: #007acc;
+ }
+
+
+
+
+.cssHidePanel
+{
+  margin            : 0;
+  padding           : 0;
+  color             : black;
+  overflow          : hidden;
+  display           : flex;
+  flex-Flow         : wrap;
+  float             : left;
+}    
+
+.cssBevel
+{
+  margin            : 0;
+  padding           : 0;
+  border            : 1px solid gray; 
+  color             : black;
+  overflow          : hidden;
+  display           : flex;
+  flex-Flow         : wrap;
+  float             : left;
+}   
+
+.cssCheckBox
+{
+   grid-area : checkbox;
+   width     : 1.5em;
+   height    : 1.5em;
+ }  
+
+.cssEditField
+{
+   grid-area    : editField;
+   width        : 4em;
+   padding      : 0px; 
+   padding-left : 0.5em;
+   height       : 1.7em;
+   background   : white;
+   color        : #555;
+   border       : 1px solid gray;
+   border-radius: 4px;
+   margin       : 0;
+}
+
+
+.cssEditField:hover 
+{
+   background  : rgba(221, 245, 185, 0.4);
+   border      : 1px solid rgb(90, 88, 88);
+}
+
+ .cssEditField:focus 
+ {
+   background     : rgb(185, 245, 198);
+   border         : 1px solid black;
+ }
+
+
+.cssLabelForInput
+{
+   grid-area      : editLabel; 
+   font-size      : 0.87em;
+   font-weight    : bold;
+   color          : black;
+   margin-left    : 0.5em;
+   margin-right    :0.5em;
+
+}
+
+
+.cssLabelAppendix
+{
+   grid-area      : editAppendix; 
+   font-size      : 0.87em;
+   margin-left    : 0.5em;
+   color          : black;
+}
+
+.cssPanelForInput
+{
+  margin            : 0;
+  padding           : 0;
+  display           : grid;
+  border            : none;
+  color             : black;
+  background-Color  : inherit;
+  overflow          : hidden;
+  align-items       : center;
+  justify-content   : center;
+ } 
+
+
+ .cssPanelForCbListBox
+ {
+   margin            : 2px;
+   height            : 2em;
+   width             : 99%;
+   margin-left       : 0;
+   padding           : 0;
+   border            : 1 solid gray;
+   color             : black;
+   background-Color  : rgb(250, 250, 250);	
+   overflow          : hidden;
+   display           : flex;
+   align-items       : center; /* Zentriert die Elemente vertikal */
+   justify-content   : start; /* Beginnt die Anordnung am Anfang des Containers */
+   gap               : 10px; /* Fügt einen Abstand zwischen Checkbox und Label ein */
+ }
+
+ .cssPanelForCbListBox:hover 
+{
+   background-color: rgb(166, 239, 209);
+}
+
+ 
+
+.cssComboBox
+{
+   grid-area    : editField;
+   padding      : 0.25em; 
+   height       : 2em;
+   background   : white;
+   color        : #555;
+   border       : 1px solid gray;
+   border-radius: 4px;
+   margin-left  : 0;
+   margin-right : 0;
+   margin-top   : 0;
+}
+
+
+.cssComboBox:hover 
+{
+   background: white;
+   border: 2px solid gray;
+}
+
+ .cssComboBox:focus 
+ {
+   background: rgb(185, 245, 198);
+   border: 2px solid black;
+}
+
+
+/*-------------------------------------------------------*/
+
+.tftable 
+{
+	border-collapse: collapse;
+   table-layout   : fixed !important;
+   width          : 100%;
+}
+
+
+.tfth
+{
+   position        : sticky;
+   top             : 0; /* Fixiert den Kopf am oberen Rand */
+   padding         : 0;
+   border          : 0.5px solid #999a9b;  
+	background-color: #54585d;
+	color           : #ffffff;
+	font-weight     : bold;
+	font-size       : 13px;
+   text-align      : left;
+}
+
+
+.tftd 
+{
+	padding      : 0;
+   border       : 0.5px solid #999a9b;  
+   text-align   : left;
+   white-space  : nowrap; 
+   overflow     : hidden;
+   text-overflow: ellipsis; /* Zeigt "..." bei abgeschnittenem Text */
+}
+
+
+
+.tftr 
+{
+   color           : #000000;
+   font-weight     : normal;
+}  
+
+
+.tftr:nth-child(even) 
+{
+   background-color: #d6d3d3;
+}
+
+.tftr:nth-child(odd) 
+{
+   background-color: #ffffff; 
+}
+
+
+.tftr:hover 
+{
+   background-color: #a9add3;
+}
+
+
+.trSelected 
+{
+   color           : #0459ad;
+   font-weight     : bold;
+   border          : 2px solid black;
+}  
+
+.trMarked 
+{
+   background-color: #7fee5d;
+}  
+
+
+
+
+/* ---------------- treenode & Co. -------------------------- */
+/* https://www.w3schools.com/cssref/playdemo.php?filename=playcss_justify-content */
+
+.cssTreeViewContainer
+{
+   margin            : 0;
+   margin-top        : 2px;
+   padding           : 0;
+   border            : none;
+   background-Color  : inherit;
+   overflow          : auto;
+   display           : block;
+}
+
+
+.treeNodePanel
+{
+   background-color: inherit;
+   border    :none;
+   width     :100%;
+   height    :2.4em;
+   padding   :2px;
+   margin    :0;
+   overflow  :hidden;
+   font-size : 0.8em;
+   display   : grid;
+   grid-template-columns: 1.7em 1fr 1.7em;
+   grid-template-rows   : 0.1em 1fr 0.1em;
+}
+
+.treeNode
+{
+   background-color : rgba(0, 0, 0, 0.05);
+   padding-left     : 0.5em;
+   grid-column-start: 2;
+   grid-column-end  : 3;               
+   grid-row-start   : 2;               
+   grid-row-end     : 3;               
+   border           : 1px solid rgb(209, 208, 208);
+   overflow         : hidden;
+   display          : flex;
+   justify-content  : left;   /* Horizontal linksbündig */
+   align-items      : center; /* Vertikal zentrieren */    
+}
+
+.treeNode:hover 
+{
+   background-color: rgb(200, 233, 219);
+   /*border          : 1px solid black; */
+}
+
+
+.treeNodeSwitch
+{
+   background-color : rgba(0, 0, 0, 0.1);
+   padding          : 0;
+   grid-column-start: 1;
+   grid-column-end  : 2;               
+   grid-row-start   : 2;               
+   grid-row-end     : 3;  
+   font-size        : 2em;
+   display          : flex;
+   justify-content  : center; /* Horizontal zentrieren */
+   align-items      : center; /* Vertikal zentrieren */    
+}
+
+
+.treeNodeOption
+{
+   background-color : rgba(105, 114, 103, 0);
+   color            : rgba(0, 0, 0, 0);
+   padding-left     : 1px;
+   margin-top       : 0px;
+   margin-bottom    : 0px;
+   grid-column-start: 3;
+   grid-column-end  : 4;               
+   grid-row-start   : 2;               
+   grid-row-end     : 3;               
+   border           : none;
+   overflow         : hidden;
+   display          : flex;
+   justify-content  : center; 
+   align-items      : center; 
+}
+
+.treeNodeOption:hover 
+{
+   background-color: rgba(105, 114, 103, 1);
+   color           : rgba(0, 0, 0, 1);
+
+   /*border          : 1px solid black; */
+}
