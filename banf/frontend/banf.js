@@ -133,7 +133,7 @@ edit( callback_if_ready )
       inp.setLabel('AUFTRAG','Auftrag'); 
 
       inp.setInputType('LIEFERDATUM','DATE' );
-ITEMS sind Undefiniert ???
+
       inp.setInputType("MENGENEINHEIT"        , "lookup" ,{items:['xxx','yyy','zzz','aaa']}); //{items:this.lookUp_mengenEinheit});        
       inp.setInputType("WARENGRUPPE"          , "select" ,{items:this.lookUp_warenGruppe});        
       inp.setInputType("LIEFERANT"            , "select" ,{items:this.lookUp_lieferant});        
