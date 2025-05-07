@@ -51,19 +51,36 @@ if( CMD=='TEST')
 
 if( CMD=='LSBANF') 
   {
-    var sql = "SELECT * FROM banf ";
-    if (param.OWNER) sql += " WHERE OWNER = '" + param.OWNER + "'";
+    console.log('run LSBANF stringify(param) => '+ JSON.stringify(param));
+    var sql = "SELECT * FROM banf WHERE ID_HEAD = " + param.ID_HEAD 
     sql += " ORDER BY POSITIONSTEXT ASC";
     return dbUtils,dbUtils.fetchRecords_from_Query(dB,sql);
   }
 
+  if( CMD=='MAXPOS') 
+    {
+      console.log('run MAXPOS stringify(param) => '+ JSON.stringify(param));
+      var sql = "SELECT max(POSITIONSTEXT) FROM banf WHERE ID_HEAD = " + param.ID_HEAD 
+      return dbUtils,dbUtils.fetchValue_from_Query(dB,sql);
+    }  
+
+
 if( CMD=='LSBANFHEAD') 
     {
+      console.log('run LSBANFHEAD stringify(param) => '+ JSON.stringify(param));
       var sql = "SELECT * FROM banfHead ";
       if (param.OWNER) sql += " WHERE OWNER = '" + param.OWNER + "'";
       sql += " ORDER BY ID DESC";
       return dbUtils,dbUtils.fetchRecords_from_Query(dB,sql);
     }
+
+if( CMD=='BANFHEAD') 
+   {
+        console.log('run BANFHEAD stringify(param) => '+ JSON.stringify(param));
+        var sql = "SELECT * FROM banfHead where ID = " + param.ID;
+        return dbUtils,dbUtils.fetchRecord_from_Query(dB,sql);
+   }
+
   
   if( CMD=='SAVEBANFHEAD') 
   {   
@@ -75,6 +92,17 @@ if( CMD=='LSBANFHEAD')
          if (!param.banfHead.ID) return dbUtils.insertIntoTable( dB , 'banfHead' , param.banfHead )
          else                    return dbUtils.updateTable( dB ,'banfHead','ID', param.banfHead.ID , param.banfHead); 
   }
+
+  if( CMD=='DELETEBANFHEAD') 
+    {   
+           console.log('run DELETEBANFHEAD stringify(param) => '+ JSON.stringify(param));
+           console.log('param.ID : '+ param.ID);
+           
+           if(!param.ID)     return {error:true, errMsg:" banfHead-ID not found in params !", result:{} };
+          
+           dbUtils.runSQL( dB , 'Delete from banfHead Where ID='+param.ID );
+           return dbUtils.runSQL( dB , 'Delete from banf Where ID_HEAD not in (Select ID from banfHead)' );
+    }
       
 
   if( CMD=='SAVEBANF') 
@@ -93,6 +121,7 @@ if( CMD=='LSBANFHEAD')
 
   if( CMD=='LOOKUPLIST')
     {
+      console.log('run LOOKUPLIST stringify(param) => '+ JSON.stringify(param));
       var sql = "SELECT * FROM " + param.tableName + " Order by v"
 
       var response = dbUtils.fetchRecords_from_Query(dB,sql);

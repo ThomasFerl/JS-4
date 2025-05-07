@@ -9,6 +9,7 @@ var content = [];
 tables.push( 
    {tableName: "banf",
     tableFields: [
+       {fieldName: "ID_HEAD"            , fieldType: "numeric" },      
        {fieldName: "POSITIONSTEXT"      , fieldType: "Text"    },
        {fieldName: "MENGE"              , fieldType: "numeric" },
        {fieldName: "MENGENEINHEIT"      , fieldType: "Text"    },

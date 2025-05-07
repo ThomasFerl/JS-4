@@ -81,17 +81,19 @@ export function main(capt1,capt2)
       btn3.heightPx = 35;
       btn3.margin   = 4;
 
-      updateViewHead()
-      updateView();
+      updateViewHead();
+      updateView()
 }      
 
 
 function updateView()
 {
   dashBoardBottom.innerHTML = ""; // clear the dashboard
-  var response = utils.webApiRequest('LSBANF' , {} );
+  if(!selectedBanfHead) return;
+
+  var response = utils.webApiRequest('LSBANF' , {ID_HEAD:selectedBanfHead.ID} );
   if(response.error) {dialogs.showMessage(response.errMsg);return; }
-  var grid = dialogs.createTable( dashBoardBottom , response.result , ['ID','OWNER','AUFTRAG','SACHKONTO','ANFORDERER'] , [] );
+  var grid = dialogs.createTable( dashBoardBottom , response.result , ['ID','ID_HEAD','OWNER','AUFTRAG','SACHKONTO','ANFORDERER'] , [] );
   grid.onRowClick=function( selectedRow , itemIndex , jsonData ) { selectBanf(jsonData) };
 }
 
@@ -105,10 +107,10 @@ function updateViewHead()
 }
 
 
-
 function selectBanfHead(p)
 { 
   selectedBanfHead = p;
+  updateView()
 }
 
 function selectBanf(p)
@@ -118,19 +120,29 @@ function selectBanf(p)
 
 function addBanf()
 {
+  if(!selectedBanfHead) {dialogs.showMessage('Bitte zuerst eine BANF-Vorlage erstellen/auswählen !'); return;}
+ 
+  var maxPos = utils.webApiRequest('MAXPOS' , {ID_HEAD:selectedBanfHead.ID} ).result;
+  
+  try { maxPos = parseInt(maxPos); } catch(e) { maxPos = 0; }
+  if(isNaN(maxPos)) { maxPos = 0; }
+  maxPos = maxPos + 10;
+  var maxPosText = maxPos.toString();
+  
   var   aBanf = { 
                  ID	                  : 0,
-                 POSITIONSTEXT        : '10',
+                 ID_HEAD              : selectedBanfHead.ID,
+                 POSITIONSTEXT        : maxPosText,
                  MENGE                : 1,
                  MENGENEINHEIT        : 'Stk',
                  PREIS                :  0,
                  WARENGRUPPE          : '',
-                 LIEFERDATUM          : new TFDateTime().formatDateTime('dd.mm.yyyy'),
+                 LIEFERDATUM          : new TFDateTime().incDay(7).formatDateTime('yyyy-mm-dd'),
                  LIEFERANT            : "",
                  WERK                 : "EMS",
-                 EINKAEUFERGRUPPE     : "",
+                 EINKAEUFERGRUPPE     : "183",
                  EINKAUFSORGANISATION : "",
-                 ANFORDERER           : "",
+                 ANFORDERER           : globals.userName,
                  BEMERKUNG            : "",
                  SACHKONTO            : "",
                  AUFTRAG              : "",
@@ -155,19 +167,18 @@ function delBanf()
 
 
 function addBanfHead()
-{
-  {
+{ 
     var   aBanfHead = { 
                    ID	                  : 0,
                    NAME                 : '',
                    BESCHREIBUNG         : '',
-                   DATUM                : new TFDateTime().formatDateTime('dd.mm.yyyy'),
+                   DATUM                : new TFDateTime().formatDateTime('yyyy-mm-dd'),
                    OWNER                : "",
                  };
   
           var b = new TBanfHead(aBanfHead);
           b.edit( function(){ updateViewHead() } );
-  }
+  
 }
 
 function editBanfHead()
@@ -177,3 +188,17 @@ function editBanfHead()
  var b = new TBanfHead( selectedBanfHead );
      b.edit( function(){ updateViewHead() } );
 } 
+
+function delBanfHead()
+{ 
+  if(!selectedBanfHead) {dialogs.showMessage('Bitte zuerst eine BANF auswählen!'); return;}
+  
+  dialogs.ask('Banf löschen','Wollen Sie die Banf-Vorlage "'+selectedBanfHead.NAME+'"  wirklich löschen?', function yes(){__deleteHead(this)}.bind(selectedBanfHead) ); 
+}
+
+function __deleteHead(banfHead)
+{
+  var response = utils.webApiRequest('DELETEBANFHEAD' , {ID:banfHead.ID} );
+  if(response.error) {dialogs.showMessage(response.errMsg) }
+  updateViewHead();
+}

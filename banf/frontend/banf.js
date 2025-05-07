@@ -30,6 +30,8 @@ export class TBanf
              this.#defineField(field, value || '');
              console.log("THIS->" + utils.JSONstringify(this));
      }
+
+     this.banfHead = utils.webApiRequest('BANFHEAD' , {ID:this.ID_HEAD}).result;
     }  
   
    
@@ -108,14 +110,33 @@ export class TBanf
 
 edit( callback_if_ready )
 {
-  var caption = this.ID ? 'Banf-Vorlage bearbeiten' : 'Banf-Vorlage anlegen';
-  var w       =    dialogs.createWindow( null,caption,"50%","87%","CENTER");  
-  var _w      =    w.hWnd;
-  
   this.load_lookUpTables();
+
+  var caption = this.ID ? 'Banf-Position bearbeiten' : 'Banf-Position anlegen';
+  var w       =    dialogs.createWindow( null,caption,"50%","94%","CENTER");  
+  var _w      =    w.hWnd;
+
+  _w.buildGridLayout_templateColumns('1fr');
+  _w.buildGridLayout_templateRows   ('4em 1fr');
+
+  var c = dialogs.addPanel( _w ,'',1,1,1,1 );
+  c.buildGridLayout_templateColumns('1fr');
+  c.buildGridLayout_templateRows   ('1fr 1fr 1fr');
+  var l1 = dialogs.addLabel(c , '' , 1,1,1,2, this.banfHead.NAME );
+  l1.fontSize = '1.5em';
+  l1.fontWeight = 'bold';
+  l1.justifyContent = 'left';
+
+  var l2 = dialogs.addLabel(c , '' , 1,3,1,1, this.banfHead.BESCHREIBUNG );
+  l2.fontSize = '0.77em';
+  l2.justifyContent = 'left';
   
-              // aParent      , aData      , aLabels , aAppendix , aExclude , aInpType , URLForm )
-  var inp = new TForm( _w     , this.#data , {}      , {}        , ['ID','OWNER']       , {}       , '' );    
+
+  var d = dialogs.addPanel( _w ,'cssContainerPanel',1,2,1,1 );
+
+  
+              // aParent     , aData      , aLabels , aAppendix , aExclude , aInpType , URLForm )
+  var inp = new TForm( d     , this.#data , {}      , {}        , ['ID','ID_HEAD','OWNER']       , {}       , '' );    
       inp.setLabel('POSITIONSTEXT','Position');
       inp.setLabel('MENGE','Menge');
       inp.setLabel('MENGENEINHEIT','Mengen-Einheit');
