@@ -1,4 +1,5 @@
 const { TFLogging }= require('./logging.js');
+const globals      = require('./backendGlobals.js');
 const utils        = require('./nodeUtils.js');
 const batchProc    = require('./batchProc.js');
 const dbUtils      = require('./dbUtils');
@@ -103,6 +104,12 @@ if( CMD=='GETTEXTFILE')     return utils.getTextFile( fs , param.fileName );
 
 if( CMD=='GETIMAGEFILE')    {
                              await utils.getImageFile  ( fs , path , param.fileName , webRequest , webResponse ); // function streamt direkt 
+                             return {isStream:true};
+                            }
+
+if( CMD=='SYMBOL')         {
+                             var p = globals.symbolPath()+'/'+param.symbolName+'.svg';
+                             await utils.getImageFile  ( fs , path , p , webRequest , webResponse ); // function streamt direkt 
                              return {isStream:true};
                             }
 

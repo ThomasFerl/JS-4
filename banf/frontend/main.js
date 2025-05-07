@@ -31,7 +31,7 @@ export function main(capt1,capt2)
     menuContainerTop.buildGridLayout_templateColumns('14em 1em 14em 1em 14em 1fr');
     menuContainerTop.buildGridLayout_templateRows('1fr');
 
-    var btn11 = dialogs.addButton( menuContainerTop , "" , 1 , 1 , 1 , 1 , "neue Banf vorbereiten"  )
+    var btn11 = dialogs.addButton( menuContainerTop , "" , 1 , 1 , 1 , 1 , {caption:"neue Banf vorbereiten"}  )
     btn11.callBack_onClick = function() { addBanfHead() };
     btn11.heightPx = 40;
     btn11.marginTop   = 4;

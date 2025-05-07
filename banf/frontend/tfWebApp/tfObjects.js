@@ -1474,22 +1474,47 @@ render()
    this.margin = 0;
    this.padding = 0;
 
-   this.buttonText           = document.createElement('P');
-   this.buttonText.className = "cssButtonText";
-   this.appendChild( this.buttonText );
-   this.caption = this.params.caption;
+   if(this.params.glyph && this.params.caption)
+   {
+     this.buildGridLayout_templateColumns('1fr 1fr');
+     this.buildGridLayout_templateRows('1fr');
+   }
+   
+   if(this.params.glyph && !this.params.caption)
+    {
+      this.buildGridLayout_templateColumns('1fr 1px');
+      this.buildGridLayout_templateRows('1fr');
+    }
+
+    if(!this.params.glyph && this.params.caption)
+      {
+        this.buildGridLayout_templateColumns('1px 1fr');
+        this.buildGridLayout_templateRows('1fr');
+      }
+
+    if(this.params.caption)
+    {
+     var capt = new TFLabel( this , 2 , 1 , 1 , 1 , {caption:this.params.caption,labelPosition:'CENTER',css:"cssButtonText"} );
+      capt.margin = 0;
+      capt.padding = 0;
+    } 
 
    if(this.params.glyph)
     {
-      btn.DOMelement.style.display        = 'grid';
-      btn.DOMelement.style.placeItems     = 'center';
-      btn.DOMelement.style.paddingTop     = '0.4em';
-      btn.DOMelement.innerHTML            = '<center><p style="margin:0;padding:0"><i class="'+this.params.glyph+'"></i>'+this.caption+'</p></center>';
+      var imgPanel = new TFPanel( this , 1 , 1 , 1 , 1 , {css:"cssContainerPanel"} );
+      imgPanel.overflow = 'hidden';
+      imgPanel.padding = 0;
+      imgPanel.margin  = 0;
+      imgPanel.borderWidth = 0;
+      imgPanel.borderColor = 'transparent';
+      imgPanel.imgURL  = utils.buildURL('SYMBOL',{symbolName:this.params.glyph});
     }  
 
  } 
 
-  set caption( txt )
+
+
+ set caption( txt )
  {
    this.buttonText.textContent  = txt;
  }
