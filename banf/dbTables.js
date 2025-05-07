@@ -23,8 +23,18 @@ tables.push(
        {fieldName: "BEMERKUNG"          , fieldType: "Text"    },
        {fieldName: "SACHKONTO"          , fieldType: "Text"    },
        {fieldName: "AUFTRAG"            , fieldType: "Text"    },
-       {fieldName: "OWNER"              , fieldType: "Text"    },
+       {fieldName: "OWNER"              , fieldType: "Text"    }
     ]});
+
+  tables.push( 
+      {tableName: "banfHead",
+       tableFields: [
+          {fieldName: "NAME"               , fieldType: "Text"    },
+          {fieldName: "BESCHREIBUNG"       , fieldType: "Text"    },
+          {fieldName: "DATUM"              , fieldType: "numeric" },
+          {fieldName: "OWNER"              , fieldType: "Text"    },
+       ]});
+        
  
 
 tables.push( 

@@ -6,27 +6,27 @@ import { TForm,
          TFPanel }       from "./tfWebApp/tfObjects.js";
 
 
-export class TBanf 
+export class TBanfHead 
 {
     #data          = {};
     #original      = {};
     #dirtyFields   = new Set();
 
     
-    constructor(dbBanf = {}) 
+    constructor(dbBanfHead = {}) 
     { 
      // Prüfung: enthält dbBanf **nur** das Feld "ID"
-     const keys = Object.keys(dbBanf);
+     const keys = Object.keys(dbBanfHead);
 
      if (keys.length === 1 && keys[0] === "ID") 
      {
-      const response = this.load_from_dB(dbBanf.ID);
+      const response = this.load_from_dB(dbBanfHead.ID);
       if (!response.error) dbBanf = response.result;
      }
        
-     for (const field in dbBanf) 
+     for (const field in dbBanfHead) 
      {
-             const value = dbBanf[field];
+             const value = dbBanfHead[field];
              this.#defineField(field, value || '');
              console.log("THIS->" + utils.JSONstringify(this));
      }
@@ -64,22 +64,10 @@ export class TBanf
   
     load_from_dB(id) 
     {
-      return  utils.webApiRequest('BANF',{ID:id} );
+      return  utils.webApiRequest('BANFHEAD',{ID:id} );
     }
 
-    load_lookUpTables()
-    {
-      this.lookUp_mengenEinheit        = utils.webApiRequest('LOOKUPLIST',{tableName:'MENGENEINHEIT' , asStringList:true} ).result;
-      this.lookUp_warenGruppe          = utils.webApiRequest('LOOKUPLIST',{tableName:'WARENGRUPPE' , asStringList:true} ).result;
-      this.lookUp_einkaeuferGruppe     = utils.webApiRequest('LOOKUPLIST',{tableName:'EINKAUFSGRUPPE' , asStringList:true} ).result;    
-      this.lookUp_einkaufsOrganisation = utils.webApiRequest('LOOKUPLIST',{tableName:'EINKAUFSORGANISATION' , asStringList:true} ).result;
-      this.lookUp_werk                 = utils.webApiRequest('LOOKUPLIST',{tableName:'WERK' , asStringList:true} ).result;
-      this.lookUp_lieferant            = utils.webApiRequest('LOOKUPLIST',{tableName:'LIEFERANT' , asStringList:true} ).result;
-      this.lookUp_sachkonto            = utils.webApiRequest('LOOKUPLIST',{tableName:'SACHKONTO' , asStringList:true} ).result;
-      this.lookUp_auftrag              = utils.webApiRequest('LOOKUPLIST',{tableName:'AUFTRAG' , asStringList:true} ).result;
-    }
-    
-
+   
     load(id) 
     {
        var response = this.load_from_dB(id); 
@@ -93,7 +81,7 @@ export class TBanf
   
     save() 
     { 
-      var response = utils.webApiRequest('SAVEBANF',{banf:this.#data} );
+      var response = utils.webApiRequest('SAVEBANFHEAD',{banfHead:this.#data} );
       if(response.error)
       {
         dialogs.showMessage(response.errMsg);
@@ -109,52 +97,21 @@ export class TBanf
 edit( callback_if_ready )
 {
   var caption = this.ID ? 'Banf-Vorlage bearbeiten' : 'Banf-Vorlage anlegen';
-  var w       =    dialogs.createWindow( null,caption,"50%","87%","CENTER");  
+  var w       =    dialogs.createWindow( null,caption,"50%","30%","CENTER");  
   var _w      =    w.hWnd;
-  
-  this.load_lookUpTables();
   
               // aParent      , aData      , aLabels , aAppendix , aExclude , aInpType , URLForm )
   var inp = new TForm( _w     , this.#data , {}      , {}        , ['ID','OWNER']       , {}       , '' );    
-      inp.setLabel('POSITIONSTEXT','Position');
-      inp.setLabel('MENGE','Menge');
-      inp.setLabel('MENGENEINHEIT','Mengen-Einheit');
-      inp.setLabel('PREIS','Preis[€]');
-      inp.setLabel('WARENGRUPPE','Warengruppe');
-      inp.setLabel('LIEFERDATUM','Lieferdatum');
-      inp.setLabel('LIEFERANT','Lieferant');
-      inp.setLabel('WERK','Werk');
-      inp.setLabel('EINKAEUFERGRUPPE','Einkäufer-Gruppe');
-      inp.setLabel('EINKAUFSORGANISATION','Einkaufs-Organisation');
-      inp.setLabel('ANFORDERER','Anforder');
-      inp.setLabel('BEMERKUNG','Bemerkungen/Kommentare');
-      inp.setLabel('SACHKONTO','Sachkonto');  
-      inp.setLabel('AUFTRAG','Auftrag'); 
+      inp.setLabel('NAME','Name');
+      inp.setLabel('BESCHREIBUNG','Beschreibung');
+      inp.setLabel('DATUM','Datum');
+      inp.setInputType('DATUM','DATE' );
 
-      inp.setInputType('LIEFERDATUM','DATE' );
-
-      inp.setInputType("MENGENEINHEIT"        , "lookup" ,{items:this.lookUp_mengenEinheit}   );        
-      inp.setInputType("WARENGRUPPE"          , "lookup" ,{items:this.lookUp_warenGruppe}     );        
-      inp.setInputType("LIEFERANT"            , "lookup" ,{items:this.lookUp_lieferant}       );        
-      inp.setInputType("WERK"                 , "lookup" ,{items:this.lookUp_werk}            );        
-      inp.setInputType("EINKAEUFERGRUPPE"     , "lookup" ,{items:this.lookUp_einkaeuferGruppe}); 
-      inp.setInputType("EINKAUFSORGANISATION" , "lookup" ,{items:this.lookUp_einkaufsOrganisation}); 
-      inp.setInputType("SACHKONTO"            , "lookup" ,{items:this.lookUp_sachkonto}       ); 
-      inp.setInputType("AUFTRAG"              , "lookup" ,{items:this.lookUp_auftrag}         ); 
-      
       inp.render( true ); 
 
       //Eigenschaften, die das Control--Element betreffen können erst nach dem Rendern aufgerufen werden...
-      inp.setInputLength('POSITIONSTEXT', '4em');
-      inp.setInputLength('MENGE', '4em');
-      inp.setInputLength('MENGENEINHEIT', '21em');
-      inp.setInputLength('PREIS', '10em');
-      inp.setInputLength('LIEFERDATUM', '10em');
-      inp.setInputLength('WERK', '20em');
-      inp.setInputLength('EINKAEUFERGRUPPE', '20em');
-      inp.setInputLength('EINKAUFSORGANISATION', '20em');
-      inp.setInputLength('ANFORDERER', '20em');
-            
+      inp.setInputLength('NAME', '20em');
+      inp.setInputLength('DATUM', '10em');
 
       inp.callBack_onESCBtn = function() { this.wnd.close(); }.bind( {self:this, wnd:w} )
       inp.callBack_onOKBtn  = function(values) {

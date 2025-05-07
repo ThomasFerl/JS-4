@@ -1923,8 +1923,6 @@ if(gridTemplate.apx)
               } 
         }
 
-     if(this.params.value) this.value  = this.params.value;
-
      this.input.style.gridRowStart     = gridTemplate.edit.top;
      this.input.style.gridRowEnd       = gridTemplate.edit.top+1;
      this.input.style.gridColumnStart  = gridTemplate.edit.left;
@@ -1954,7 +1952,8 @@ if(gridTemplate.apx)
       else this.input.addEventListener('change',  function() { 
                                                                if(this.callBack_onChange) this.callBack_onChange( this.value )
                                                              }.bind(this));  
-
+    if(this.params.value) this.value  = this.params.value;
+ 
     this.appendChild(  this.input ); 
   } 
   
@@ -2043,46 +2042,48 @@ class __rawComboBox
     this.container.style.position = "relative";
     this.container.style.width = this.width;
     this.container.style.display = "flex";
-    this.container.style.backgroundColor = "white";
-    
+    this.container.style.alignItems= "center";
+    this.container.style.justifyContent = "space-between";
+       
     // Eingabefeld
     this.input = document.createElement("input");
     this.input.className = "cssEditField";
     this.input.type = "text";
-    this.input.placeholder = params.placeholder || "Wähle oder schreibe...";
     this.input.style.flex = "1";
     this.input.style.boxSizing = "border-box";
     this.container.appendChild(this.input);
 
     // Button ▼
     this.button = document.createElement("button");
+    this.button.className = "cssButton01";
+    this.button.style.boxShadow = "0 2px 3px gray";
+    this.button.style.border = "1px solid rgb(87, 86, 86)";
+    this.button.style.borderRadius="4px";
+    this.button.style.backgroundColor = "darkgray";
+    this.button.style.color = "rgb(87, 86, 86)";
     this.button.innerHTML = "&#x25BC;"; // ▼
-    Object.assign(this.button.style, {
-      padding: "5px 10px",
-      cursor: "pointer",
-      display: "flex",
-      alignItems: "center",
-      userSelect: "none"
-    });
+    this.button.style.width = "1.5em";
+    this.button.style.height = "1.6em";
+    this.button.style.margin = "1px";
+    this.button.style.cursor = "pointer";
     this.container.appendChild(this.button);
 
     // Dropdown
-    this.dropdown = document.createElement("div");
-    Object.assign(this.dropdown.style, {
-      position: "absolute",
-      top: "100%",
-      left: "0px",
-      background: "white",
-      border: "1px solid #ccc",
-      maxHeight: "150px",
-      overflowY: "auto",
-      width: "100%",
-      zIndex: 100,
-      display: "none"
-    });
-    this.container.appendChild(this.dropdown);
+  this.dropdown = document.createElement("div");
+  Object.assign(this.dropdown.style, {
+  position: "absolute",
+  background: "white",
+  border: "1px solid #ccc",
+  maxHeight: "150px",
+  overflowY: "auto",
+  width: this.width,
+  zIndex: 1000,
+  display: "none"
+});
 
-    this.parent.appendChild(this.container);
+document.body.appendChild(this.dropdown);
+
+this.parent.appendChild(this.container);
 
     // === Event-Handling ===
     this.input.addEventListener("input", () => {
@@ -2136,6 +2137,10 @@ class __rawComboBox
   }
 
   showDropdown() {
+    const rect = this.input.getBoundingClientRect();
+    this.dropdown.style.left = rect.left + "px";
+    this.dropdown.style.top = (rect.bottom + window.scrollY) + "px";
+    this.dropdown.style.width = rect.width + "px";
     this.dropdown.style.display = "block";
   }
 
@@ -3444,7 +3449,7 @@ export class TForm
     inpContainer.buildBlockLayout();  
 
     for(var i=0; i<this.controls.length; i++)
-    { 
+    { debugger;
       var ctrl = this.controls[i];
       if (ctrl.visible)
       {
