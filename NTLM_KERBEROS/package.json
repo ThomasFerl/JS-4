@@ -1,0 +1,16 @@
+{
+  "name": "ntlm_kerberos",
+  "version": "1.0.0",
+  "description": "Test der automatiischen Anmeldung in Windowes-Umgebungen ....",
+  "main": "backend.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "tferl",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^5.1.0",
+    "express-ntlm": "^2.7.0",
+    "path": "^0.12.7"
+  }
+}

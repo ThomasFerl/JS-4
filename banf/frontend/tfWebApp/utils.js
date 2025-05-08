@@ -84,6 +84,45 @@ export function JSONstringify(obj)
   });
 }
 
+// sorgt dafür, ein SVG als Text in den DOM einzuhängen 
+// Benötigt wird das speziell für Button und Icons. 
+export function prepareSVG(svg, parentContainer, color) 
+{
+  if (!svg) return;
+
+  // Größe entfernen und auf 100% setzen
+  svg.removeAttribute('width');
+  svg.removeAttribute('height');
+  svg.setAttribute('width', '100%');
+  svg.setAttribute('height', '100%');
+
+  // viewBox ergänzen, falls nicht vorhanden
+  if (!svg.hasAttribute('viewBox')) {
+    const w = svg.getAttribute('width') || parentContainer.width || 35;
+    const h = svg.getAttribute('height') || parentContainer.height || 35;
+    svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
+  }
+
+  // Optional: Farbe setzen
+  if (color) {
+    const elements = svg.querySelectorAll('*');
+    elements.forEach(el => {
+      const tag = el.tagName.toLowerCase();
+      if (['path', 'rect', 'circle', 'ellipse', 'polygon', 'line', 'polyline', 'g', 'use'].includes(tag)) {
+        el.setAttribute('fill', color);
+        // Optional: Linienfarbe auch setzen
+        if (el.hasAttribute('stroke')) el.setAttribute('stroke', color);
+      }
+    });
+  }
+
+  // Sicherheitshalber SVG auf volle Größe strecken
+  svg.style.width = '77%';
+  svg.style.height = '77%';
+}
+
+
+
 
 export function evaluate( exp )
 {

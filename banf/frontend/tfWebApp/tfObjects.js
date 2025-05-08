@@ -2,12 +2,10 @@ import * as globals  from "./globals.js";
 import * as utils    from "./utils.js";
 import * as graphics from "./tfGrafics.js";
 import * as chartJS  from "./chart.js";
-import { TFWindow }  from "./tfWindows.js"; 
-import { TFTreeView }from "./tfTreeView.js"; 
+
+import { TFWindow   } from "./tfWindows.js"; 
+import { TFTreeView  }from "./tfTreeView.js"; 
 import { THTMLTable } from "./tfGrid.js";
-
-
-var screen = null;
 
 
 function assignMouseEventData( e , obj )
@@ -1461,7 +1459,7 @@ export class TFButton extends TFObject
     if(!params) params = {css:"cssButton01", caption:"Ok" , stretch:true};
     else    params.css = params.css || "cssButton01";
 
-    params.caption = params.caption || "Ok";  
+    params.caption = params.caption || "";  
 
   super(parent , left , top , width , height , params );
   }
@@ -1473,10 +1471,11 @@ render()
 
    this.margin = 0;
    this.padding = 0;
+   var h = this.heightPx + 'px';
 
    if(this.params.glyph && this.params.caption)
    {
-     this.buildGridLayout_templateColumns('1fr 1fr');
+     this.buildGridLayout_templateColumns(h + ' 1fr');
      this.buildGridLayout_templateRows('1fr');
    }
    
@@ -1502,12 +1501,19 @@ render()
    if(this.params.glyph)
     {
       var imgPanel = new TFPanel( this , 1 , 1 , 1 , 1 , {css:"cssContainerPanel"} );
-      imgPanel.overflow = 'hidden';
-      imgPanel.padding = 0;
-      imgPanel.margin  = 0;
-      imgPanel.borderWidth = 0;
-      imgPanel.borderColor = 'transparent';
-      imgPanel.imgURL  = utils.buildURL('SYMBOL',{symbolName:this.params.glyph});
+      var svgFile  = utils.webApiRequest('SYMBOL',{symbolName:this.params.glyph});
+      if (svgFile.error) console.error('Error loading SVG:', svgFile.error);
+      else{
+            imgPanel.overflow = 'hidden';
+            imgPanel.padding = 0;
+            imgPanel.margin  = 0;
+            imgPanel.borderWidth = 0;
+            imgPanel.borderColor = 'transparent';
+            imgPanel.DOMelement.innerHTML  = svgFile.result;
+            imgPanel.DOMelement.innerHTML = svgFile.result;
+            var svg = imgPanel.DOMelement.querySelector('svg');
+            if (svg) utils.prepareSVG(svg, imgPanel, this.color || "white");
+      } 
     }  
 
  } 
@@ -1965,7 +1971,7 @@ if(gridTemplate.apx)
     
 
       if(this.params.lookUp)
-      { debugger;
+      {
         this.lookUp = new __rawComboBox(this.input , {
           options : this.params.items,
           onChange: function() { 
@@ -2373,34 +2379,52 @@ get item()
 
 //---------------------------------------------------------------------------
 
-export class Screen extends TFObject
+export class TFScreen 
 {
   constructor()
   {
-    document.body.style.margin   = 0;
-    document.body.style.padding  = 0;
-    document.body.style.overflow = 'hidden';
-    super(document.body , 0 , 0 , '100%' , '100%' , {css:"cssScreen" , preventGrid:true , fixit:true } );
+    this.body =  document.body;
+    this.body.className = 'cssScreen';
+    this.body.style.overflow = 'hidden';
+    this.body.style.backgroundColor = 'black';
+
+    this.render();
   }
   
   render()
   {
-    super.render();
     this.id = 'SCREEN_' + utils.buildRandomID(1);
-    this.overflow = 'hidden';
-    screen = this;
-   
+    this.body.setAttribute('id', this.id);
+    return this;
   } 
   
   
   setBackgroundImage( path )
   {
-    this.imgURL = path;
+    const img = document.createElement('img');
+    img.src = path;
+    img.style.width = '100%';
+    img.style.height = '100%';
+    img.style.objectFit = 'cover';
+    img.style.filter = 'blur(7px)';
+    img.style.position = 'absolute';
+    img.style.top = '0';
+    img.style.left = '0';
+    img.style.zIndex = '-1';
+    
+    this.body.appendChild(img);
   }
 
 
-  set HTML( st ) {this.innerHTML = st;}
-  get HTML() { return this.innerHTML;}
+  set HTML( st ) {this.body.innerHTML = st;}
+  get HTML() { return this.body.innerHTML;}
+
+
+  appendChild( child )
+  {
+    if (child instanceof HTMLElement) this.body.appendChild(child);
+    if (child instanceof TFObject)    this.body.appendChild(child.DOMelement);
+  }
 
 }
 
@@ -2413,9 +2437,9 @@ export class TFWorkSpace extends TFObject
   constructor( ID , caption1 , caption2 )  
   {
      // vorsichtshalber ...
-     if (screen==null) screen = new Screen() ;
+     if (globals.Screen==null) globals.setScreen( new TFScreen() ) ;
     
-    super(screen , 1 , 1 , '100%' , '100%' , {css:"cssWorkSpaceJ4" , preventGrid:true , fixit:true, ID:ID, caption1:caption1, caption2:caption2 } );
+    super(globals.Screen , 1 , 1 , '100%' , '100%' , {css:"cssWorkSpaceJ4" , preventGrid:true , fixit:true, ID:ID, caption1:caption1, caption2:caption2 } );
     this.self = null;
     if(!globals.webApp.activeWorkspace) globals.webApp.activeWorkspace = this;
   }
@@ -3474,7 +3498,7 @@ export class TForm
     inpContainer.buildBlockLayout();  
 
     for(var i=0; i<this.controls.length; i++)
-    { debugger;
+    { 
       var ctrl = this.controls[i];
       if (ctrl.visible)
       {

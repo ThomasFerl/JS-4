@@ -3,11 +3,16 @@
 import * as globals      from "./tfWebApp/globals.js";
 import * as utils        from "./tfWebApp/utils.js";    
 import * as dialogs      from "./tfWebApp/tfDialogs.js";
+import * as app          from "./tfWebApp/tfWebApp.js"; 
+import { TFScreen    }   from "./tfWebApp/tfObjects.js";
 import { TFWorkSpace }   from "./tfWebApp/tfObjects.js";
-import { TFWindow    }   from "./tfWebApp/tfWindows.js"; 
 import { TBanf       }   from "./banf.js";
 import { TBanfHead   }   from "./banfHead.js";
-import { TFDateTime }    from "./tfWebApp/utils.js";    
+import { TFDateTime  }   from "./tfWebApp/utils.js";    
+
+var caption1  = '';
+var caption2  = '';
+var mainSpace = {};
 
 var menuContainerTop    = null;
 var menuContainerBottom = null;
@@ -18,10 +23,23 @@ var selectedBanf        = null;
 var selectedBanfHead    = null;
 
 
+
 export function main(capt1,capt2)
 {
+  caption1 = capt1;
+  caption2 = capt2;
+  
+  app.login( run );
+  //run();
+}  
+
+
+
+
+export function run()
+{
    
-    var ws = new TFWorkSpace('mainWS' , capt1,capt2 );
+    var ws = new TFWorkSpace('mainWS' , caption1,caption2 );
 
     var l  = dialogs.setLayout( ws.handle , {gridCount:27,head:2} )
   
@@ -31,17 +49,17 @@ export function main(capt1,capt2)
     menuContainerTop.buildGridLayout_templateColumns('14em 1em 14em 1em 14em 1fr');
     menuContainerTop.buildGridLayout_templateRows('1fr');
 
-    var btn11 = dialogs.addButton( menuContainerTop , "" , 1 , 1 , 1 , 1 , {caption:"neue Banf vorbereiten"}  )
+    var btn11 = dialogs.addButton( menuContainerTop , "" , 1 , 1 , 1 , 1 , {caption:"neue Banf vorbereiten",glyph:"circle-plus"}  )
     btn11.callBack_onClick = function() { addBanfHead() };
     btn11.heightPx = 40;
     btn11.marginTop   = 4;
 
-    var btn21 = dialogs.addButton( menuContainerTop , "" , 3 , 1 , 1 , 1 , "Banf bearbeiten"  )
+    var btn21 = dialogs.addButton( menuContainerTop , "" , 3 , 1 , 1 , 1 , {caption:"Banf bearbeiten",glyph:"pencil"}  )
     btn21.callBack_onClick = function() { editBanfHead() };
     btn21.heightPx = 40;
     btn21.margin   = 4;
 
-    var btn31 = dialogs.addButton( menuContainerTop , "cssAbortBtn01" , 5 , 1 , 1 , 1 , "Banf löschen"  )
+    var btn31 = dialogs.addButton( menuContainerTop , "cssAbortBtn01" , 5 , 1 , 1 , 1 , {caption:"Banf löschen",glyph:"circle-minus"}  )
     btn31.callBack_onClick = function() { delBanfHead() };
     btn31.heightPx = 40;
     btn31.margin   = 4;
@@ -61,25 +79,28 @@ export function main(capt1,capt2)
     h2.buildGridLayout_templateRows('4em 1fr'); 
     menuContainerBottom = dialogs.addPanel( h2 , "cssContainerPanel" , 1 , 1 , 1 , 1 );
     menuContainerBottom.backgroundColor = 'gray';
-    menuContainerBottom.buildGridLayout_templateColumns('10em 1em 10em 1em 10em 1fr');
+    menuContainerBottom.buildGridLayout_templateColumns('4em 0.4em 4em 0.4em 4em 1fr');
     menuContainerBottom.buildGridLayout_templateRows('1fr');
 
     dashBoardBottom    = dialogs.addPanel( h2 , "" , 1 , 2 , 1 , 1 );
    
-  var btn1 = dialogs.addButton( menuContainerBottom , "" , 1 , 1 , 1 , 1 , "+"  )
+  var btn1 = dialogs.addButton( menuContainerBottom , "" , 1 , 1 , 1 , 1 , {glyph:"plus"}  )
       btn1.callBack_onClick = function() { addBanf() };
-      btn1.heightPx = 35;
-      btn1.marginTop   = 4;
+      btn1.heightPx = 44;
+      btn1.widthPx  = 47;
+      
 
-  var btn2 = dialogs.addButton( menuContainerBottom , "" , 3 , 1 , 1 , 1 , "e"  )
+  var btn2 = dialogs.addButton( menuContainerBottom , "" , 3 , 1 , 1 , 1 , {glyph:"pen-to-square"} )
       btn2.callBack_onClick = function() { editBanf() };
-      btn2.heightPx = 35;
-      btn2.margin   = 4;
+      btn2.heightPx = 44;
+      btn2.widthPx  = 47;
+    
 
-  var btn3 = dialogs.addButton( menuContainerBottom , "cssAbortBtn01" , 5 , 1 , 1 , 1 , "-"  )
+  var btn3 = dialogs.addButton( menuContainerBottom , "cssAbortBtn01" , 5 , 1 , 1 , 1 , {glyph:"minus"}   )
       btn3.callBack_onClick = function() { delBanf() };
-      btn3.heightPx = 35;
-      btn3.margin   = 4;
+      btn3.heightPx = 44;
+      btn3.widthPx  = 47;
+     
 
       updateViewHead();
       updateView()
@@ -95,15 +116,17 @@ function updateView()
   if(response.error) {dialogs.showMessage(response.errMsg);return; }
   var grid = dialogs.createTable( dashBoardBottom , response.result , ['ID','ID_HEAD','OWNER','AUFTRAG','SACHKONTO','ANFORDERER'] , [] );
   grid.onRowClick=function( selectedRow , itemIndex , jsonData ) { selectBanf(jsonData) };
+  grid.onRowDblClick=function( selectedRow , itemIndex , jsonData ) { editBanf(jsonData) };
 }
 
 function updateViewHead()
-{
+{ debugger;
   dashBoardTop.innerHTML = ""; // clear the dashboard
   var response = utils.webApiRequest('LSBANFHEAD' , {} );
   if(response.error) {dialogs.showMessage(response.errMsg);return; }
   var grid = dialogs.createTable( dashBoardTop , response.result , ['ID','OWNER'] , [] );
   grid.onRowClick=function( selectedRow , itemIndex , jsonData ) { selectBanfHead(jsonData) };
+  grid.onRowDblClick=function( selectedRow , itemIndex , jsonData ) { editBanfHead(jsonData) };
 }
 
 
@@ -134,7 +157,7 @@ function addBanf()
                  ID_HEAD              : selectedBanfHead.ID,
                  POSITIONSTEXT        : maxPosText,
                  MENGE                : 1,
-                 MENGENEINHEIT        : 'Stk',
+                 MENGENEINHEIT        : '',
                  PREIS                :  0,
                  WARENGRUPPE          : '',
                  LIEFERDATUM          : new TFDateTime().incDay(7).formatDateTime('yyyy-mm-dd'),

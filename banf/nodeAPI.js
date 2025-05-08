@@ -109,9 +109,8 @@ if( CMD=='GETIMAGEFILE')    {
 
 if( CMD=='SYMBOL')         {
                              var p = globals.symbolPath()+'/'+param.symbolName+'.svg';
-                             await utils.getImageFile  ( fs , path , p , webRequest , webResponse ); // function streamt direkt 
-                             return {isStream:true};
-                            }
+                             return utils.getTextFile( fs , p );
+                           }
 
 if( CMD=='GETMOVIEFILE')    {
                              await utils.getMovieFile  ( fs , path , param.fileName , webRequest , webResponse ); // function streamt direkt 

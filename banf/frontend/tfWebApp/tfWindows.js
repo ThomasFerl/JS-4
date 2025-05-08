@@ -298,6 +298,7 @@ __vibrateWindow ()
       this.hide();
       this.icon = new TFPanel( this.parent , this.leftPx+'px' , (this.topPx+this.heightPx)+'px' , '100px' , '100px' , {css:"cssWindowIconJ4",dragable:true,preventGrid: true} );
       this.icon.callBack_onClick = ()=>{this.show(); this.icon.destroy();}
+      this.icon.zIndex = 100000;
 
       this.icon.callBack_onDragStart = ( e )=>{ 
         // Speichere den Abstand zwischen dem Mauszeiger und der oberen linken Ecke des DIVs
