@@ -41,7 +41,7 @@ import { TFCheckBox,
          TFEdit,
          TFComboBox,
          TFButton,
-         TForm,
+         TFMenu,
          TPropertyEditor,
          TFileDialog,
          TFListCheckbox } from "./tfObjects.js";
@@ -1005,7 +1005,35 @@ export function showImage( url , caption )
   }
 
 
+  export async function browseSymbols()
+  {  debugger;
+    var w            = new TFWindow( null , 'Symbol-Browser' , '80%' , '80%' , 'CENTER' );
+    var svgContainer = w.hWnd;
+
+   var svgs = utils.webApiRequest('LSSYMBOLS' , {} ).result;
+  
+   for(var i=0; i<svgs.length; i++)
+   { 
+     var p = addImage( svgContainer , "" , 1 , 1 , "77px" , "77px" );
+     
+     var svg = utils.webApiRequest('SYMBOL',{symbolName:svgs[i]} ); 
+
+        if (!svg.error) 
+          {
+            p.svgContent = svg.result;
+            p.dataBinding = {svg:svg.result , name:svgs[i]};
+            p.callBack_onClick = function(e, d ) { var wnd = new TFWindow( svgContainer , d.name  , '25%' , '25%' , 'CENTER' ); 
+                                                   var img = addImage( wnd.hWnd ,  '' , 1, 1, '100%' , '100%' );                                       
+                                                       img.svgContent = d.svg;
+                                                 };
+          }
+          await utils.processMessages();    
+    }      
+  }
 
 
-
-
+  export function createMenu( menuItems)
+  {
+     result = new TFMenu( menuItems );
+     return result;
+  }

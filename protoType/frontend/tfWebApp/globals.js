@@ -2,9 +2,10 @@ const useHTTPS                = false;
 
 export var debug              = false;
 export var webApp             = {activeWorkspace:null};
+export var Screen             = null;   // wird von der App gesetzt
 
 
-export var backgroundImage    = null;   // wen null dann delault lt. stylesheet
+export var backgroundImage    = './tfWebApp/res/background.jpg';   
 export var loginEndpoint      = '/userLoginx/'; 
 
 export var sysMenu            = [];
@@ -66,9 +67,18 @@ export function URL_webAppRequest()     {return getServer()+'/x?x='}
 export function URL_webAppPOSTrequest() {return getServer()+'/xpost'}
 export function URL_static() {return  ' '+getServer()+'/'}
 
-export function setScreen( s ) { Screen = s}
+export function setScreen( s ) 
+{ 
+  Screen = s ; 
+  if(backgroundImage) Screen.setBackgroundImage(backgroundImage);
+}  
 
-export function setBackgroundImage( img ) { backgroundImage = img}
+
+export function setBackgroundImage( img ) 
+{ 
+  backgroundImage = img;
+  if(Screen) Screen.setBackgroundImage(backgroundImage);
+}
 
 export function initWebApp( w ) { webApp = w}
 
