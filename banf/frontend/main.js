@@ -4,49 +4,73 @@ import * as globals      from "./tfWebApp/globals.js";
 import * as utils        from "./tfWebApp/utils.js";    
 import * as dialogs      from "./tfWebApp/tfDialogs.js";
 import * as app          from "./tfWebApp/tfWebApp.js"; 
-import { TFScreen    }   from "./tfWebApp/tfObjects.js";
-import { TFWorkSpace }   from "./tfWebApp/tfObjects.js";
 import { TBanf       }   from "./banf.js";
 import { TBanfHead   }   from "./banfHead.js";
 import { TFDateTime  }   from "./tfWebApp/utils.js";    
+import { TFEdit } from "./tfWebApp/tfObjects.js";
 
 var caption1  = '';
 var caption2  = '';
-var mainSpace = {};
+
 
 var menuContainerTop    = null;
 var menuContainerBottom = null;
 var dashBoardTop        = null;
 var dashBoardBottom     = null;
+var userSelection       = null;
 
 var selectedBanf        = null;
 var selectedBanfHead    = null;
+var selectedUser        = '';
 
 
 
-export function main(capt1,capt2)
+export function main(capt1)
 {
   caption1 = capt1;
-  caption2 = capt2;
+  caption2 = '';
   
-  app.login( run );
-  //run();
+  globals.sysMenu.push( {caption:'Benutzer' , action:function(){alert('Benutzerverwaltung')} } );
+  globals.sysMenu.push( {caption:'Berechtigungen' , action:function(){alert('Berechtigungen')} } );
+  globals.sysMenu.push( {caption:'Info' , action:function(){app.sysInfo()} } );
+  globals.sysMenu.push( {caption:'Symbol-Bibliothek (nur in der Entwicklungsphase)' , action:function(){dialogs.browseSymbols()} } );
+  globals.sysMenu.push( {caption:'Abbrechen' , action:function(){} } );
+  
+  // Zuerst anfragen, ob User in NT-Domäne ist und wir seinen Namen verwenden können
+  // über /ntlm werden die Daten des Users abgerufen .....
+  // und in globals.userName gespeichert
+  var usrName  = '';
+  var response = utils.webRequest( globals.getServer() + '/ntlm' );
+  if(!response.error) usrName = response.result.username; 
+
+  // Wenn Username gesetzt, dann nahtlos fortsetzen ohne Login-Dialog
+  if (usrName) 
+    { 
+      globals.startSession( 0 , usrName , usrName , [] , false ) ;
+      caption2 = 'Willkommen ' + usrName;
+       run();
+      return;
+    }
+
+  // andernfalls erfolgt ein Login-Dialog  
+  app.login( ()=>{  caption2 = 'Willkommen ' + globals.session.userName ; run() });
+
 }  
 
 
 
 
 export function run()
-{
-   
-    var ws = new TFWorkSpace('mainWS' , caption1,caption2 );
+{ 
+  debugger;  
+    var ws = app.startWebApp(caption1,caption2).activeWorkspace;
 
     var l  = dialogs.setLayout( ws.handle , {gridCount:27,head:2} )
   
     menuContainerTop                 = l.head;
 
     menuContainerTop.backgroundColor = 'gray';
-    menuContainerTop.buildGridLayout_templateColumns('14em 1em 14em 1em 14em 1fr');
+    menuContainerTop.buildGridLayout_templateColumns('14em 1em 14em 1em 14em 14em 21em 2em 1fr');
     menuContainerTop.buildGridLayout_templateRows('1fr');
 
     var btn11 = dialogs.addButton( menuContainerTop , "" , 1 , 1 , 1 , 1 , {caption:"neue Banf vorbereiten",glyph:"circle-plus"}  )
@@ -63,9 +87,23 @@ export function run()
     btn31.callBack_onClick = function() { delBanfHead() };
     btn31.heightPx = 40;
     btn31.margin   = 4;
-    
 
+    if(globals.session.admin)
+    {  
+      var response = utils.webApiRequest('LSBANFUSER' , {} );
+      response.result.unshift("alle Benutzer");
+      userSelection = new TFEdit( menuContainerTop ,  7 , 1 , 1 , 1 , {caption:"Benutzer" , labelPosition:"top" , lookUp:true , items:response.result} );
+      userSelection.callBack_onChange = function( v ) {  };
 
+      var btn41 = dialogs.addButton( menuContainerTop , "" , 8 , 1 , 1 , 1 , {glyph:"check"}  );
+      btn41.height ="2em";
+      btn41.marginTop = "1em";
+      btn41.callBack_onClick = function() { debugger;
+                                            selectedUser = userSelection.value || ""; 
+                                            if(selectedUser.toUpperCase() == 'ALLE BENUTZER') { selectedUser = "" }
+                                            updateViewHead();
+                                         }  
+      }
 
     // Dashboad horizontal aufteilen: 1/3 für Kopf-Datensätze und 2/3 für Banf-Datensätze
     var h1          = l.dashBoard;
@@ -122,7 +160,13 @@ function updateView()
 function updateViewHead()
 { debugger;
   dashBoardTop.innerHTML = ""; // clear the dashboard
-  var response = utils.webApiRequest('LSBANFHEAD' , {} );
+  var param = {};
+  
+  // falls normaler User, dann nur meine eigenen BANFs
+  if (userSelection==null) param.OWNER = globals.session.userName;
+  else if(selectedUser) param.OWNER = selectedUser;
+      
+  var response = utils.webApiRequest('LSBANFHEAD' ,param );
   if(response.error) {dialogs.showMessage(response.errMsg);return; }
   var grid = dialogs.createTable( dashBoardTop , response.result , ['ID','OWNER'] , [] );
   grid.onRowClick=function( selectedRow , itemIndex , jsonData ) { selectBanfHead(jsonData) };
@@ -169,7 +213,7 @@ function addBanf()
                  BEMERKUNG            : "",
                  SACHKONTO            : "",
                  AUFTRAG              : "",
-                 OWNER                : "",
+                 OWNER                : globals.session.userName
                };
 
         var b = new TBanf(aBanf);
@@ -196,7 +240,7 @@ function addBanfHead()
                    NAME                 : '',
                    BESCHREIBUNG         : '',
                    DATUM                : new TFDateTime().formatDateTime('yyyy-mm-dd'),
-                   OWNER                : "",
+                   OWNER                : globals.session.userName
                  };
   
           var b = new TBanfHead(aBanfHead);

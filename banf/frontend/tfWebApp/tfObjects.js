@@ -95,6 +95,111 @@ export class TFPopUpMenu
   }
 }
 
+
+
+export class TFMenu 
+{
+  constructor(menuItems) 
+  {
+    this.menuItems               = menuItems;
+    this.menu                    = document.createElement('div');
+    this.menu.style.position     = 'absolute';
+    this.menu.style.background   = '#fff';
+    this.menu.style.border       = '1px solid #ccc';
+    this.menu.style.borderRadius = '6px';
+    this.menu.style.boxShadow    = '0 4px 8px rgba(0,0,0,0.2)';
+    this.menu.style.padding      = '5px 0';
+    this.menu.style.zIndex       = 9999;
+    this.menu.style.display      = 'none';
+    this.menu.style.minWidth     = '150px';
+    this.menu.style.fontFamily   = 'sans-serif';
+
+    this.buildMenuItems();
+    document.body.appendChild(this.menu);
+  }
+
+  buildMenuItems() 
+  {
+    this.menu.innerHTML = '';
+    this.menuItems.forEach(item => 
+      {
+        const entry         = document.createElement('div');
+        entry.textContent   = item.caption;
+        entry.style.padding = '8px 16px';
+        entry.style.cursor  = 'pointer';
+
+        entry.addEventListener('click', function(e) {
+                                                       e.stopPropagation();
+                                                       this.hide();
+                                                       item.action();
+                                                 }.bind(this));
+
+        entry.addEventListener('mouseover', () => { entry.style.background = '#f0f0f0'; });
+        entry.addEventListener('mouseout',  () => { entry.style.background = 'transparent';});
+
+        this.menu.appendChild(entry);
+    });
+  }
+
+ 
+  run(event) {
+    event.preventDefault();
+  
+    // Menü sichtbar machen
+    this.menu.style.display = 'block';
+    this.menu.style.left = '0px';
+    this.menu.style.top = '0px';
+  
+    const menuRect = this.menu.getBoundingClientRect();
+    const pageWidth = document.documentElement.clientWidth;
+    const pageHeight = document.documentElement.clientHeight;
+  
+    let x = event.pageX;
+    let y = event.pageY;
+  
+    if ((x + menuRect.width) > pageWidth) {
+      x = pageWidth - menuRect.width - 5;
+    }
+  
+    if ((y + menuRect.height) > pageHeight) {
+      y = pageHeight - menuRect.height - 5;
+    }
+  
+    this.menu.style.left = `${x}px`;
+    this.menu.style.top = `${y}px`;
+  
+    // Bestehenden Schließ-Handler entfernen (falls mehrfach geöffnet)
+    if (this._closeHandler) {
+      document.removeEventListener('click', this._closeHandler);
+      this._closeHandler = null;
+    }
+  
+    // Klick außerhalb schließt das Menü
+    this._closeHandler = (e) => {
+      if (!this.menu.contains(e.target)) {
+        this.hide();
+        document.removeEventListener('click', this._closeHandler);
+        this._closeHandler = null;
+      }
+    };
+  
+    setTimeout(() => document.addEventListener('click', this._closeHandler), 0);
+  }
+  
+
+  hide() 
+  {
+    this.menu.style.display = 'none';
+  }
+
+  destroy() 
+  {
+    this.menu.remove();
+  }
+}
+
+
+
 //------------------------------------------------------------------------
 //------------------------------------------------------------------------
 //------------------------------------------------------------------------
@@ -1501,23 +1606,10 @@ render()
    if(this.params.glyph)
     {
       var imgPanel = new TFPanel( this , 1 , 1 , 1 , 1 , {css:"cssContainerPanel"} );
-      var svgFile  = utils.webApiRequest('SYMBOL',{symbolName:this.params.glyph});
-      if (svgFile.error) console.error('Error loading SVG:', svgFile.error);
-      else{
-            imgPanel.overflow = 'hidden';
-            imgPanel.padding = 0;
-            imgPanel.margin  = 0;
-            imgPanel.borderWidth = 0;
-            imgPanel.borderColor = 'transparent';
-            imgPanel.DOMelement.innerHTML  = svgFile.result;
-            imgPanel.DOMelement.innerHTML = svgFile.result;
-            var svg = imgPanel.DOMelement.querySelector('svg');
-            if (svg) utils.prepareSVG(svg, imgPanel, this.color || "white");
-      } 
+      utils.drawSymbol( this.params.glyph , imgPanel , this.color || "white" , "77%");
     }  
 
  } 
-
 
 
  set caption( txt )
@@ -1971,7 +2063,7 @@ if(gridTemplate.apx)
     
 
       if(this.params.lookUp)
-      {
+      { 
         this.lookUp = new __rawComboBox(this.input , {
           options : this.params.items,
           onChange: function() { 
@@ -2476,24 +2568,13 @@ export class TFWorkSpace extends TFObject
           
        this.sysMenu   = new TFPanel(this.caption , 3 , 1 , 1 , 2 , {} ); 
        this.sysMenu.backgroundColor = 'rgba( 255, 255, 255, 0.25)';
-       if(globals.session.admin)
-       {  
-           this.sysMenu.DOMelement.style.color = 'rgb(135, 0, 0)';
-           this.sysMenu.DOMelement.innerHTML   = '<center><i class="fa-solid fa-screwdriver-wrench fa-2xl"></i></center>';
-       }
-       else {
-              this.sysMenu.DOMelement.style.color = 'rgb( 77, 77, 77)';
-              this.sysMenu.DOMelement.innerHTML   = '<center><i class="fa-solid fa-user fa-2xl"></i></center>';
-       }    
-           
-       this.sysMenu.callBack_onClick       = ( ev )=>{ 
-                                                    var htmlElement = ev.target;
-                                                    var rect        = htmlElement.getBoundingClientRect();
-                                                    var x           = rect.left;
-                                                    var y           = rect.top;  
-                                                    dialogs.popUpMenu( x , y ) 
-                                                   };
-                                             
+       utils.drawSymbol( "whmcs" , this.sysMenu , "black" , "77%");
+       
+       if(globals.sysMenu.length>0) 
+        { 
+          this.sysMenu.dataBinding = new TFMenu(globals.sysMenu);
+          this.sysMenu.callBack_onClick = function( ev ){ this.sysMenu.dataBinding.run( ev ) }.bind(this);
+        }                                         
                                                   
     } 
     else 

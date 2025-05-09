@@ -5,6 +5,7 @@ const http        = require('http');
 const https       = require('https');
 
 const express     = require('express');
+const ntlm        = require('express-ntlm');
 const multer      = require('multer');
 const bodyParser  = require('body-parser');
 
@@ -40,8 +41,12 @@ dbTables.buildTables( dB );
 
 
 const webApp       = express();
+
 globals.staticPath = path.join (__dirname, 'frontend' );
 utils.log("static Path: " + globals.staticPath );
+
+// NTLM-Middleware aktivieren
+
 
 
 uploadPath  = path.join (__dirname, 'tmpUploads' );
@@ -254,6 +259,29 @@ function handleUpload( req , res )
 }
 
 
+function handleNTLM( req , res )
+{
+   var result  = {};
+  result.username             = req.ntlm ? req.ntlm.UserName : '-';
+  result.domain               = req.ntlm ? req.ntlm.DomainName : '-';
+  result.workstation          = req.ntlm ? req.ntlm.Workstation : '-';
+  result.authType             = req.ntlm ? req.ntlm.AuthType : '-';
+  result.userIP               = req.connection.remoteAddress;
+  result.userAgent            = req.headers['user-agent'] || '-';
+
+  result.userHost             = req.headers['host'] || '-';
+  result.userAccept           = req.headers['accept'] || '-';
+  result.userAcceptEncoding   = req.headers['accept-encoding'] || '-';
+  result.userAcceptLanguage   = req.headers['accept-language'] || '-';
+  result.userConnection       = req.headers['connection'] || '-';
+  result.userCacheControl     = req.headers['cache-control'] || '-';
+  result.userPragma           = req.headers['pragma'] || '-';
+  result.userUpgradeInsecureRequests = req.headers['upgrade-insecure-requests'] || '-';
+  res.send( JSON.stringify(result) );
+}
+
+
+
 function handle_backDoor_Request( reqStr , res)
 {
   res.send( "no_Way" );
@@ -265,6 +293,7 @@ webAPI.setup( dB , etc );
 // Erhöhen der Größenbeschränkung
 webApp.use(bodyParser.json      ({ limit: '50mb'                 }));  // Für JSON-Anfragen
 webApp.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));  // Für URL-kodierte Anfragen
+webApp.use(ntlm());
 
      
 webApp.use( ( req , res , next ) =>
@@ -301,7 +330,10 @@ webApp.use( express.static( globals.staticPath  ) );
 webApp.get('/userLogin'                    ,  userLogin );
 webApp.get('/userLoginx/:username/:passwd' ,  userLoginx );
 webApp.get('/DEBUG'                        ,  handleDebug );
+webApp.get('/ntlm'                         ,  handleNTLM );
 webApp.get('/x'                            ,  handleRequest );
+
+
 webApp.post('/xpost'                       ,  handleRequest );
 webApp.post('/upload', upload.single('file'), handleUpload );
   
@@ -315,3 +347,8 @@ webServer.listen( port , () => {console.log('Server listening on Port ' + port )
 
 setInterval( webAPI.run          , 60000 ); // jede Minute prüfen, ob etwas im BATCH wartet ...
 setInterval( session.ctrlSession , 1000 ); 
+
+
+
+
+

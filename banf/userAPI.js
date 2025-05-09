@@ -138,4 +138,19 @@ if( CMD=='BANFHEAD')
     }
 
 
+    if( CMD=='LSBANFUSER')
+      {
+        console.log('run LSBanfUser ');
+        var sql = "SELECT Distinct(owner) as OWNER FROM banfHead Order by Owner";
+  
+        var response = dbUtils.fetchRecords_from_Query(dB,sql);
+        if (response.error) return response;
+        var lookUp = [];
+        for (var i = 0; i < response.result.length; i++) lookUp.push( response.result[i].OWNER )
+       
+        return {error:false,errMsg:"OK",result:lookUp};
+        
+      }  
+
+
 }

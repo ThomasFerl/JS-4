@@ -1,4 +1,5 @@
 const { TFLogging }= require('./logging.js');
+const globals      = require('./backendGlobals.js');
 const utils        = require('./nodeUtils.js');
 const batchProc    = require('./batchProc.js');
 const dbUtils      = require('./dbUtils');
@@ -97,6 +98,16 @@ if( CMD=='KEEPALIVE')       return session.keepAlive(sessionID)
 
 if( CMD=='SCANDIR')         return utils.scanDir ( fs , path , param.dir , param.fileExt);
 
+if( CMD=='LSSYMBOLS')       {
+                              var response = utils.scanDir ( fs , path , globals.symbolPath() , '*.*');
+                              if (response.error) return response;
+                              var sym = [];  
+                              for (var i=0; i<response.result.length; i++) sym.push( path.basename(response.result[i].name, '.svg')); 
+                              return {error:false, errMsg:"", result:sym};  
+                            }
+
+                              
+
 if( CMD=='GETFILE')         return utils.getTextFile( fs , param.fileName );
 
 if( CMD=='GETTEXTFILE')     return utils.getTextFile( fs , param.fileName );
@@ -110,6 +121,11 @@ if( CMD=='GETMOVIEFILE')    {
                              await utils.getMovieFile  ( fs , path , param.fileName , webRequest , webResponse ); // function streamt direkt 
                              return {isStream:true};
                             }
+
+if( CMD=='SYMBOL')         {
+                             var p = globals.symbolPath()+'/'+param.symbolName+'.svg';
+                             return utils.getTextFile( fs , p );
+                           }                            
 
 
 

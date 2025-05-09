@@ -16,6 +16,7 @@
     "console": "^0.7.2",
     "exceljs": "^4.4.0",
     "express": "^4.19.2",
+    "express-ntlm": "^2.7.0",
     "fs-extra": "^11.1.1",
     "hamming-distance": "^1.0.0",
     "image-hash": "^5.3.2",

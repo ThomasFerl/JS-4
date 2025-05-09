@@ -84,9 +84,28 @@ export function JSONstringify(obj)
   });
 }
 
+
+
+export function drawSymbol( symbolName , container , color , size )
+{ 
+  var svgFile = webApiRequest('SYMBOL',{symbolName:symbolName});
+  if (svgFile.error) {console.error('Error loading SVG:', svgFile.error); return }
+  
+  container.overflow = 'hidden';
+  container.padding = 0;
+  container.margin  = 0;
+  container.borderWidth = 0;
+  container.borderColor = 'transparent';
+  container.DOMelement.innerHTML  = svgFile.result;
+  var svg = container.DOMelement.querySelector('svg');
+  if (svg) prepareSVG(svg, container, color || "white" , size || "77%" );
+} 
+
+
+
 // sorgt dafür, ein SVG als Text in den DOM einzuhängen 
 // Benötigt wird das speziell für Button und Icons. 
-export function prepareSVG(svg, parentContainer, color) 
+export function prepareSVG(svg, container, color , size) 
 {
   if (!svg) return;
 
@@ -98,8 +117,8 @@ export function prepareSVG(svg, parentContainer, color)
 
   // viewBox ergänzen, falls nicht vorhanden
   if (!svg.hasAttribute('viewBox')) {
-    const w = svg.getAttribute('width') || parentContainer.width || 35;
-    const h = svg.getAttribute('height') || parentContainer.height || 35;
+    const w = svg.getAttribute('width') || container.width || 35;
+    const h = svg.getAttribute('height') || container.height || 35;
     svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
   }
 
@@ -117,8 +136,9 @@ export function prepareSVG(svg, parentContainer, color)
   }
 
   // Sicherheitshalber SVG auf volle Größe strecken
-  svg.style.width = '77%';
-  svg.style.height = '77%';
+  svg.style.width =  size;
+  svg.style.height = size;
+
 }
 
 

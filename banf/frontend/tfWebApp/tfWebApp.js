@@ -121,6 +121,12 @@ export function login( callBackIfOK , bypass )
 }
 
 
+export function startWebApp(caption1,caption2)
+{
+   return new TFWebApp(caption1,caption2)
+}
+
+
 export function logout()
 {
    var response = utils.webApiRequest( 'USERLOGOUT' , JSON.stringify({noParam:0}) );
@@ -128,57 +134,64 @@ export function logout()
 }
 
  
-
-
 export function sysInfo() 
 {
-  var w=dialogs.createWindow( null , "SystemInfo" , "70%" , "70%" , "CENTER" );
+  var w=dialogs.createWindow( null , "SystemInfo" , "70%" , "70%" , "CENTER" ).hWnd;
      
-  utils.buildGridLayout_templateColumns( w , "1fr");
-  utils.buildGridLayout_templateRows   ( w , ".5em 5em 0.1em 1fr 0.1em 3.7em 0.4em");
+  w.buildGridLayout_templateColumns( "1fr");
+  w.buildGridLayout_templateRows   ( "1px 5em 0.1em 1fr 0.1em 3.7em 0.4em");
+
   var c=dialogs.addPanel(w,"",1,2,1,1);
       c.margin    = '7px';
       c.innerHTML = "<H2>Benutzername : " + globals.session.userName + "( id:"+globals.session.userID+" )    Session: " + globals.session.ID +"</H2>";
 
-  var h=dialogs.addPanel(w,"cssContainerPanel",1,4,1,1);
-      utils.buildGridLayout_templateColumns( h , "1fr 1fr");
-      utils.buildGridLayout_templateRows   ( h , "1fr");
+  var h=dialogs.addPanel(w,"",1,4,1,1);
+      h.buildGridLayout_templateColumns( "1fr 1fr");
+      h.buildGridLayout_templateRows   ( "1fr");
      
-  var d=dialogs.addPanel(h,"",1,1,1,1);    
+  var d=dialogs.addPanel(h,"cssContainerPanel",1,1,1,1);    
       d.margin = '7px';
-      utils.buildBlockLayout(d);
-      dialogs.addRibbon(d , "2em" , "black").innerHTML = '_Berechtigungen ...';
+      d.buildBlockLayout();
+  var p = dialogs.addPanel(d , "cssBlackPanel" , 1 , 1 , "99%" , "2em" );
+      p.overflow = 'hidden';
+      dialogs.addLabel(p,"cssBoldLabel",1,1,"100%","100%","Zugriffsrechte ...").color = 'white';
+
       for(var i=0; i<globals.session.grants.length;i++)
       {
         var g = globals.session.grants[i]
         var b = '[zugriff erlaubt]';
         if (!g.access) b='[Zugriff verboten]';
         
-        var r = dialogs.addPanel(d,"cssWhitePanel",1,1,"97%","3em");
-                r.margin = '2px';   
-                utils.buildGridLayout_templateColumns( r , "3em 1fr 10em" );
-                utils.buildGridLayout_templateRows   ( r , "1fr" );
+        var r = dialogs.addPanel(d,"cssWhitePanel",1,1,"99%","3em");
+            r.margin = '2px';   
+            r.buildGridLayout_templateColumns("3em 1fr 10em" );
+            r.buildGridLayout_templateRows   ("1fr" );
 
-                dialogs.addLabel(r,"cssLabel",1,1,i);
-                dialogs.addLabel(r,"cssBoldLabel",2,1,g.caption);
+            dialogs.addLabel(r,"cssLabel",1,1,1,1,i);
+            dialogs.addLabel(r,"cssBoldLabel",2,1,1,1,g.caption);
 
-        var l = dialogs.addLabel(r,"cssLabel",3,1,b);
+        var l = dialogs.addLabel(r,"cssLabel",3,1,1,1,b);
                 if(g.access) l.color = 'green';
                 else         l.color = 'red';
       }  
 
-  var s=dialogs.addPanel(h,"",2,1,1,1);    
-      s.margin = '7px';
-      utils.buildBlockLayout(s);
-      dialogs.addRibbon(s , "2em" , "black").innerHTML = '_Session-Variablen ...';
-
-  var sh=dialogs.addPanel(s,"cssWhitePanel",1,1,'100%','1fr');    
-      var response = utils.webApiRequest( 'GETVARS' , '');
-      sh.innerHTML = utils.printJSON(response.result);
   
+      var s=dialogs.addPanel(h,"cssContainerPanel",2,1,1,1);    
+      s.margin = '7px';
+      s.buildGridLayout_templateColumns('1fr');
+      s.buildGridLayout_templateRows('2em 1fr ' );
+      var p = dialogs.addPanel(s , "cssBlackPanel" , 1 , 1 ,1 , 1 );
+      dialogs.addLabel(p,"cssBoldLabel",1,1,"100%","100%","Session-Variablen ...").color = 'white';
+
+      var sh=dialogs.addPanel(s,"cssWhitePanel",1,2,1,1);    
+          sh.overflow = 'auto';
+      var response = utils.webApiRequest( 'GETVARS' , '');
+      sh.innerHTML = utils.printJSON(response.result  );
+        
   var sb = dialogs.addPanel(w,"cssContainerPanel",1,6,1,1);
-      utils.buildGridLayout_templateColumns( sb , "1fr 7em 1fr" );
-      utils.buildGridLayout_templateRows   ( sb , "1fr" );
+      sb.buildGridLayout_templateColumns( "1fr 7em 1fr" );
+      sb.buildGridLayout_templateRows( "1fr" );
+
   var b=dialogs.addButton(sb,"",2,1,1,1,"OK");
       b.callBack_onClick = function(){this.wnd.closeWindow()}.bind({wnd:w})
 } 
@@ -222,30 +235,31 @@ export function help(url)
 
 
 
-export class tfWebApp
+export class TFWebApp
 {
   constructor(caption1,caption2)
   {
-    this.isTFObject      = true;
-    this.body            = globals.Screen.DOMelement;
-    
-   if(caption1) this.caption1 = caption1;
-   else         this.caption1 = "";
+    if(caption1) this.caption1 = caption1;
+    else         this.caption1 = "";
+ 
+    if(caption2) this.caption2 = caption2;
+    else         this.caption2 = "";
 
-   if(caption2) this.caption2 = caption2;
-   else         this.caption2 = "";
+    this.isTFObject      = true;
+
+    // initiale Arbeitsfläche
+    this.workSpaces      = [];
+    this.newWorkSpace("main" , caption1 , caption2 );
    
-   this.activeWorkspace = undefined;
-   this.workSpaces      = [];
+    this.body  = globals.Screen.body;
+   
    this.windows         = [];
    this.zIndex          =  0;
    this.clientWidth     =  globals.Screen.width;
    this.clientHeight    =  globals.Screen.height;
    this.active          =  true;
 
-   // initiale Arbeitsfläche
-   this.newWorkSpace("main" , caption1 , caption2 );
-
+   
    window.addEventListener('focus', function() { utils.log('Focus') ; this.active = true; }.bind(this) );
    window.addEventListener('blur' , function() { utils.log('Blur')  ; this.active = false; }.bind(this) );
 

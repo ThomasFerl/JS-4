@@ -107,6 +107,17 @@ if( CMD=='GETIMAGEFILE')    {
                              return {isStream:true};
                             }
 
+
+if( CMD=='LSSYMBOLS')       {
+                              var response = utils.scanDir ( fs , path , globals.symbolPath() , '*.*');
+                              if (response.error) return response;
+                              var sym = [];  
+                              for (var i=0; i<response.result.length; i++) sym.push( path.basename(response.result[i].name, '.svg')); 
+                              return {error:false, errMsg:"", result:sym};  
+                            }
+
+
+
 if( CMD=='SYMBOL')         {
                              var p = globals.symbolPath()+'/'+param.symbolName+'.svg';
                              return utils.getTextFile( fs , p );
