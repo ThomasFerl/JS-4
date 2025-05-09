@@ -1,4 +1,4 @@
-module.exports.__Port_webSocket     =  4444;
-module.exports.ignoreSession        = true;
-module.exports.maxAgePayloadHistory = 1;  // Tage
-
+module.exports.staticPath        = '';
+module.exports.symbolPath        = () => {return this.staticPath + '/tfWebApp/symbols';};
+module.exports.ignoreSession     = true;
+module.exports.isMediaCollector  = true;

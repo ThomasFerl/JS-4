@@ -1,6 +1,5 @@
 import * as globals   from "./globals.js";
 
-
 const debug              = globals.debug;
 
 function mod(a,b) { if(b!=0) return Math.floor(a/b); else return NaN;}
@@ -84,6 +83,65 @@ export function JSONstringify(obj)
     return value;
   });
 }
+
+
+
+export function drawSymbol( symbolName , container , color , size )
+{ 
+  var svgFile = webApiRequest('SYMBOL',{symbolName:symbolName});
+  if (svgFile.error) {console.error('Error loading SVG:', svgFile.error); return }
+  
+  container.overflow = 'hidden';
+  container.padding = 0;
+  container.margin  = 0;
+  container.borderWidth = 0;
+  container.borderColor = 'transparent';
+  container.DOMelement.innerHTML  = svgFile.result;
+  var svg = container.DOMelement.querySelector('svg');
+  if (svg) prepareSVG(svg, container, color || "white" , size || "77%" );
+} 
+
+
+
+// sorgt dafür, ein SVG als Text in den DOM einzuhängen 
+// Benötigt wird das speziell für Button und Icons. 
+export function prepareSVG(svg, container, color , size) 
+{
+  if (!svg) return;
+
+  // Größe entfernen und auf 100% setzen
+  svg.removeAttribute('width');
+  svg.removeAttribute('height');
+  svg.setAttribute('width', '100%');
+  svg.setAttribute('height', '100%');
+
+  // viewBox ergänzen, falls nicht vorhanden
+  if (!svg.hasAttribute('viewBox')) {
+    const w = svg.getAttribute('width') || container.width || 35;
+    const h = svg.getAttribute('height') || container.height || 35;
+    svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
+  }
+
+  // Optional: Farbe setzen
+  if (color) {
+    const elements = svg.querySelectorAll('*');
+    elements.forEach(el => {
+      const tag = el.tagName.toLowerCase();
+      if (['path', 'rect', 'circle', 'ellipse', 'polygon', 'line', 'polyline', 'g', 'use'].includes(tag)) {
+        el.setAttribute('fill', color);
+        // Optional: Linienfarbe auch setzen
+        if (el.hasAttribute('stroke')) el.setAttribute('stroke', color);
+      }
+    });
+  }
+
+  // Sicherheitshalber SVG auf volle Größe strecken
+  svg.style.width =  size;
+  svg.style.height = size;
+
+}
+
+
 
 
 export function evaluate( exp )
@@ -1396,7 +1454,7 @@ export function findEntryByField( array , fieldName , value )
 
 
 export function uploadFileToServer(file, fileName , callBackAfterUpload , params  ) 
-{ 
+{ debugger;
   console.log('uploadFileToServer...');
   console.log('  - file     :'+ file.name);
   console.log('  - fileName :'+fileName);
@@ -1590,7 +1648,7 @@ export function buildBlockLayout( parent )
     parent.style.gridTemplateColumns = "none";
     parent.style.gridTemplateRows    = "none";
     parent.style.gridTemplateAreas   = "none";
-    parent.style.gridAutoFlow        = "row";
+    //parent.style.gridAutoFlow        = "row";
     return;
   }
   parent.isGridLayout                         = false;

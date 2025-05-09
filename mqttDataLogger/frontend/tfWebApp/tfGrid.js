@@ -46,6 +46,7 @@ export class THTMLTable
    this.fields         = [];
    this.jsonData       = null;
    this.onRowClick     = null;
+   this.onRowDblClick  = null;
    this.bindDataset    = null;
    var  isDrawing      = true;
    
@@ -62,7 +63,7 @@ export class THTMLTable
 
        if(isDrawing) this.fields.push( new TFieldDef( key , key , this.jsonData[0][key]));
       }
-   }else this.jsonData  = {};        
+   }     
  }
 
 
@@ -89,6 +90,35 @@ export class THTMLTable
     }      
   }
  } 
+
+
+ selectAll() 
+ {
+  const rows = this.table.getElementsByTagName('tr');
+  for (let i = 1; i < rows.length; i++) { // i=1 => Header überspringen
+    rows[i].classList.add('trSelected');
+    rows[i].setAttribute('selected', '1');
+  }
+}
+
+selectNothing() 
+{
+  const rows = this.table.getElementsByTagName('tr');
+  for (let i = 1; i < rows.length; i++) {
+    rows[i].classList.remove('trSelected');
+    rows[i].setAttribute('selected', '0');
+  }
+}
+
+selectReverse() 
+{
+  const rows = this.table.getElementsByTagName('tr');
+  for (let i = 1; i < rows.length; i++) {
+    const isSelected = rows[i].getAttribute('selected') === '1';
+    rows[i].classList.toggle('trSelected');
+    rows[i].setAttribute('selected', isSelected ? '0' : '1');
+  }
+}
 
 
  onRowClickEvent(event)
@@ -121,28 +151,37 @@ export class THTMLTable
  }
 
 
-getSelectedRows()
-{
-  var rows   = this.table.getElementsByTagName('tr'); 
-  var result = [];
-  console.log("getSelectedRows()"); 
-  for(var i=0; i<rows.length; i++)
-  {
-    var row = rows[i];
-    if(row.getAttribute("selected")=='1')
+ onRowDblClickEvent(event)
+ { debugger;
+    console.log('onRowDblClick');  
+    var selectedRow = event.currentTarget;
+    
+    if(this.onRowDblClick)
     {
-      console.log("row "+i+" -> HTMLObj: " + JSON.stringify(this.jsonData[i-1]) + " selected: " + row.getAttribute("selected") ); 
-      result.push( this.jsonData[i-1] );
-    }  
-    if(row.getAttribute("selected")=='1')
-    {
-      console.log("row "+i+" -> HTMLObj: " + JSON.stringify(this.jsonData[i-1]) + " selected: " + row.getAttribute("selected") ); 
-      result.push( this.jsonData[i-1] );
-    }  
-  } 
-   return result;
-}
+          var itemIndex = selectedRow.getAttribute("itemIndex");
+          this.onRowDblClick( selectedRow , itemIndex , this.jsonData[itemIndex] );  
+     } 
+    
+ }
 
+
+
+ getSelectedRows()
+ {
+   var rows   = this.table.getElementsByTagName('tr'); 
+   var result = [];
+   console.log("getSelectedRows()"); 
+   for(var i=0; i<rows.length; i++)
+   {
+     var row = rows[i];
+     if(row.getAttribute("selected")=='1')
+     {
+       console.log("row "+i+" -> HTMLObj: " + JSON.stringify(this.jsonData[i-1]) + " selected: " + row.getAttribute("selected") ); 
+       result.push( this.jsonData[i-1] );
+     }  
+   } 
+    return result;
+ }
 
 
  fieldByName(fieldName)
@@ -186,6 +225,7 @@ getSelectedRows()
   }
 
   row.addEventListener("click", function(event) { this.onRowClickEvent( event , this )}.bind(this) );
+  row.addEventListener("dblclick", function(event) { this.onRowDblClickEvent( event , this )}.bind(this) );
   
  }
 

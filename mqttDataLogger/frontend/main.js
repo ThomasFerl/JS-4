@@ -1,6 +1,5 @@
 
-
-import { TFWorkSpace    }   from "./tfWebApp/tfObjects.js";
+import * as app          from "./tfWebApp/tfWebApp.js";
 import { TFDistributor  }   from "./tfWebApp/tfMQTT.js";
 import { TFMQTTExplorer }   from "./tfMQTTExplorer.js";
 import * as utils           from "./tfWebApp/utils.js";    
@@ -21,8 +20,8 @@ var devices         = [];
 var selectedDevice  = null;
 
 export function main(capt1,capt2)
-{
-    var ws  = new TFWorkSpace('mainWS' , capt1,capt2 );
+{debugger;
+    var ws  = app.startWebApp(capt1,capt2).activeWorkspace;
    
     //build GUI
     var l          = dialogs.setLayout( ws.handle , {gridCount:27,head:2} )
