@@ -15,14 +15,26 @@ export class TFUser
     
     constructor(dbUser = {}) 
     { 
+      this.userGrants = []; 
      // Prüfung: enthält dbUser **nur** das Feld "ID"
      const keys = Object.keys(dbUser);
 
      if (keys.length === 1 && keys[0] === "ID") 
      {
-      const response = this.load_from_dB(dbUser.ID);
+      var response = this.load_from_dB(dbUser.ID);
       if (!response.error) dbUser = response.result;
+
+      response = utils.webApiRequest('getUserGrants' , JSON.stringify({userName:dbUser.username}));
+      if(!response.error) this.userGrants = response.result;
      }
+     else
+         {
+           if (this.userGrants.length==0)
+           {
+            var response = utils.webApiRequest('getUserGrants' , JSON.stringify({userName:dbUser.username}));
+            if(!response.error) this.userGrants = response.result;
+           }
+         }
        
      for (const field in dbUser) 
      {
@@ -55,6 +67,16 @@ export class TFUser
     
   
     getChangedFields() {return Array.from(this.#dirtyFields);}
+
+    hasAccess(grantName)
+    {
+      for(var i=0; i<this.userGrants.length; i++)
+      {
+        var g = this.userGrants[i];
+        if(g.grantName == grantName) return true;
+      }
+      return false;
+    } 
     
   
     markClean() 
@@ -79,20 +101,23 @@ export class TFUser
       return true;
     }
   
-    save() 
-    { 
+    save() // ggf werden Berechtigungen mitgeliefert ...
+    {  debugger;
       if(!this.ID || this.ID==0 || this.ID=='')
       { 
-         var response = utils.webApiRequest('ADDUSER',this );
+         var response = utils.webApiRequest('ADDUSER',this.#data );
          if(response.error)
          {
            dialogs.showMessage(response.errMsg);
            return false;
          }
          this.ID = response.result.lastInsertRowid;
-      }   
-      else utils.webApiRequest('EDITUSER',this );
-      return true;
+      } 
+      
+       utils.webApiRequest('EDITUSER',this.#data );
+      
+       if(this.userGrants.length>0)
+        utils.webApiRequest('setUserGrants' , JSON.stringify( {ID_user:this.ID , grants:this.userGrants} ) );
     }
    
 
@@ -120,7 +145,7 @@ edit( callback_if_ready )
 
 
   if(globals.session.admin)
-  { debugger;
+  {   // Falls Admin -> Berechtigungen einblenden ...
       var grantDiv = dialogs.addPanel( _w , "cssContainerPanel" ,  2 , 1 , 1 , 1 );
       grantDiv.margin = '1em';
       grantDiv.buildGridLayout_templateColumns('1fr');
@@ -136,21 +161,30 @@ edit( callback_if_ready )
       for(var i=0; i<globals.session.grants.length; i++) 
       {
          var g = globals.session.grants[i];
-         cbItems.push({text:g.caption, checked:false , name:g.name , id_grant:g.ID});
+         cbItems.push({text:g.caption || g.name, checked:this.hasAccess(g.name) , name:g.name , id_grant:g.ID});
       }
       var grants   = dialogs.addPanel( grantDiv , "cssWhitePanel" ,  1 , 2 , 1 , 1 );
       var cb       = dialogs.addListCheckbox(grants , cbItems);
+    }    
  
-      inp.callBack_onESCBtn = function() { this.wnd.close(); }.bind( {self:this, wnd:w} )
-      inp.callBack_onOKBtn  = function(values) {
-                                               for(var i=0; i<values.length; i++) 
-                                               { this.self.#data[values[i].field] = values[i].value }
+    inp.callBack_onESCBtn = function() { this.wnd.close(); }.bind( {self:this, wnd:w} )
+    inp.callBack_onOKBtn  = function(values) { debugger;
+                                               for(var i=0; i<values.length; i++) this.self.#data[values[i].field] = values[i].value 
+                                               
+                                               if(this.cbGrant!=null)
+                                                {
+                                                  var userGrants = {ID_user:this.self.ID,grants:[]};
+                                                  for(var i=0; i<this.cbGrant.items.length; i++)
+                                                  {
+                                                    var item = this.cbGrant.items[i];
+                                                    if(item.checked) userGrants.grants.push({ID:item.id_grant, name:item.text || item.caption ,  access:item.checked } ); 
+                                                  }
+                                                }
                                                this.self.save();  
                                                this.wnd.close(); 
                                                if(this.callback) this.callback();
-                                             }.bind( {self:this, wnd:w, inp:inp , callback:callback_if_ready} )
+                                             }.bind( {self:this, wnd:w, inp:inp , cbGrant:cb || null ,  callback:callback_if_ready} )
   }
- }
 }
 
 
@@ -214,13 +248,19 @@ export class TFUserList
     updateView_user()
     { 
         this.userListGridView.innerHTML = '';
-        var g = dialogs.createTable(this.userListGridView , this.userList , ['ID'] , [] );
+        var g = dialogs.createTable(this.userListGridView , this.userList , ['ID' , 'passwd'] , [] );
         g.onRowClick=function( selectedRow , itemIndex , jsonData ) { this.selectedUser(jsonData) }.bind(this);
     } 
     
     
     newUser()
     {
+    if(!globals.session.admin) 
+      {
+        dialogs.showMessage('Nur Administratoren dürfen neue Benutzer anlegen!'); 
+        return;
+      }  
+
     var aUser = {
         ID           : 0,
         username     : '',
@@ -239,6 +279,12 @@ export class TFUserList
     editUser()
     { 
      if(!this.selected) {dialogs.showMessage('Bitte zuerst einen Benutzer auswählen!'); return;}
+
+    if((!globals.session.admin) && (this.selected.username != globals.session.userName) )
+      {
+        dialogs.showMessage('Als "Nicht-Administrator dürfen Sie nur Ihren eigen Datensatz bearbeitenn !');
+        return;
+      }  
 
      this.selected.edit(function(){this.updateView_user()}.bind(this));
     } 
@@ -324,7 +370,7 @@ export class TFGrant
     { 
       if(!this.ID || this.ID==0 || this.ID=='')
       { 
-         var response = utils.webApiRequest('ADDGRANT',this );
+         var response = utils.webApiRequest('ADDGRANT',this.#data );
          if(response.error)
          {
            dialogs.showMessage(response.errMsg);
@@ -332,7 +378,7 @@ export class TFGrant
          }
          this.ID = response.result.lastInsertRowid;
       }   
-      else utils.webApiRequest('EDITGRAND',this );
+      else utils.webApiRequest('EDITGRAND',this.#data );
       return true;
     }
    
@@ -401,11 +447,6 @@ export class TFGrantList
       this.filterPanel      = dialogs.addPanel(hlpContainer,'',1,1,1,1);
       this.userListGridView = dialogs.addPanel(hlpContainer,'cssContainerPanel',1,2,1,1);
      
-      var response = utils.webApiRequest('LSGRANTS' , {} );
-      if(response.error) {dialogs.showMessage(response.errMsg);return; }
-      
-      for(var i=0; i<response.result.length; i++)  this.grantList.push( new TFGrant(response.result[i]) ); 
-
       this.updateView_grants();
     }
 
@@ -419,6 +460,12 @@ export class TFGrantList
     updateView_grants()
     { 
         this.userListGridView.innerHTML = '';
+        this.grantList                  = [];
+
+        var response = utils.webApiRequest('LSGRANTS' , {} );
+        if(response.error) {dialogs.showMessage(response.errMsg);return; }
+        for(var i=0; i<response.result.length; i++)  this.grantList.push( new TFGrant(response.result[i]) ); 
+  
         var g = dialogs.createTable(this.userListGridView , this.grantList , ['ID'] , [] );
         g.onRowClick=function( selectedRow , itemIndex , jsonData ) { this.selectedGrant(jsonData) }.bind(this);
     } 
@@ -442,7 +489,7 @@ export class TFGrantList
     { 
      if(!this.selected) {dialogs.showMessage('Bitte zuerst einen Benutzer auswählen!'); return;}
 
-     this.selected.edit(function(){this.updateView_grants()}.bind(this));
+     this.selected.edit(function(){ this.updateView_grants()}.bind(this));
     } 
 
     
@@ -457,6 +504,12 @@ export function adminUser()
 
 export function adminGrants()
 {
+  if(!globals.session.admin)
+  {
+    dialogs.showMessage('Nur Administratoren dürfen Berechtigungs-Objekte anlegen oder bearbeiten!'); 
+    return;
+  } 
+
   new TFGrantList();
 }
 // ------------------------------------------------------------------------------------------------------------------#

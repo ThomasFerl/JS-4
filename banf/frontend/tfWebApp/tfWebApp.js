@@ -167,10 +167,13 @@ export function sysInfo()
             r.buildGridLayout_templateColumns("3em 1fr 10em" );
             r.buildGridLayout_templateRows   ("1fr" );
 
-            dialogs.addLabel(r,"cssLabel",1,1,1,1,i);
-            dialogs.addLabel(r,"cssBoldLabel",2,1,1,1,g.caption);
+        var l=dialogs.addLabel(r,"cssLabel",1,1,1,1,g.ID);
+            l.color = 'gray';
+             
+            l=dialogs.addLabel(r,"cssBoldLabel",2,1,1,1,g.caption || g.name);
+            l.textAlign = 'left';
 
-        var l = dialogs.addLabel(r,"cssLabel",3,1,1,1,b);
+            l = dialogs.addLabel(r,"cssLabel",3,1,1,1,b);
                 if(g.access) l.color = 'green';
                 else         l.color = 'red';
       }  

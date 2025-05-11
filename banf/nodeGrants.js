@@ -32,7 +32,9 @@ module.exports.isGrantObj = ( grantName ) =>
 
 module.exports.addGrant = ( db , grant ) =>
 {
-  var response = this.idGrant( db , grantName );
+  // ist frant bereits eine ID ?
+  if(!isNaN(grant)) return {error:false, errMsg:"alredy ID", result:grant }
+  var response = this.idGrant( db , grant.name );
     
   if(!response.error)
   {
@@ -54,10 +56,10 @@ module.exports.addGrant = ( db , grant ) =>
 }
 
 
-module.exports.editGrant = ( db , grantName ) =>
+module.exports.editGrant = ( db , grant ) =>
   {
     
-    return dbUtils.updateTable( db , 'grantObj' , {name:grant.name,caption:grant.captiontName,kind:grant.kind} );
+    return dbUtils.updateTable( db , 'grantObj' , 'ID' , grant.ID , {name:grant.name,caption:grant.caption,kind:grant.kind} );
   
   }
 
@@ -66,10 +68,11 @@ module.exports.editGrant = ( db , grantName ) =>
 
 module.exports.idGrant = ( db , grantName ) =>
 {
+  console.log("idGrant(grantName:"+grantName+") ");
   if(!isNaN(grantName)) return {error:false, errMsg:"alredy ID", result:grantName }  
 
   var response = dbUtils.fetchValue_from_Query( db , "select ID from grantObj Where name='"+grantName+"'" );
-  console.log("idGrant(grantName:"+grantName+") -> " + JSON.stringify(response));
+  console.log("Result => " + JSON.stringify(response));
   return response;
 }
 
@@ -87,7 +90,7 @@ module.exports.idUser = ( db , userName ) =>
 module.exports.resetUserGrant = ( db , userName ) =>
 {
   if(isNaN(userName)) var response = dbUtils.runSQL( db , "Delete from userGrants Where ID_user in (select ID from user Where username='"+userName+"'");
-  else              var response = dbUtils.runSQL( db , "Delete from userGrants Where ID_user = "+userName );           
+  else                var response = dbUtils.runSQL( db , "Delete from userGrants Where ID_user = "+userName );           
   
   return response;
 }
@@ -110,26 +113,26 @@ module.exports.addUserGrant = ( db , userName , grantName  ) =>
 module.exports.setUserGrants = ( db , params ) =>
 {
   var errResponse = [];
+  console.log("setUserGrants("+JSON.stringify(params));
 
   this.resetUserGrant( db , params.ID_user );
-
+  
   for(var i=0; i<params.grants.length; i++)
   {
     var grant    = params.grants[i];
-    console.log('')
-    var response = this.addGrant( db , grant.grantName );
-
-    console.log("response from addGrant(grantmame:"+ grant.grantName + ") => " + JSON.stringify(response));
-
-    if(response.error) errResponse.push(response.errMsg)
-    else
-        {
-          if(grant.access)
-          {
-            response = this.addUserGrant( db , params.ID_user , response.result );
-            if(response.error) errResponse.push(response.errMsg)
-          }  
-        }  
+    if(grant.access)
+    {
+      var response = this.addUserGrant( db , params.ID_user , grant.ID );
+      if (response.error)
+      {
+        errResponse.push("Error: "+response.errMsg);
+        console.log("Error: "+response.errMsg);
+      }
+      else
+         {
+            console.log("User "+params.ID_user+" granted "+response.grant.ID);
+      }
+    }  
   }
 
   if(errResponse.length>0) return {error:true,errMsg:errResponse.join(" / "),result:0}
@@ -140,22 +143,22 @@ module.exports.setUserGrants = ( db , params ) =>
 
 module.exports.getUserGrants = ( db , userName) =>
 {
-  var response = this.idUser( db , userName);
-  if (response.error) return response;
-  var idUser   = response.result;
-
+  var idUser = 0;
+  // ist userName eine ID ?
+  if(!isNaN(userName)) idUser = userName;
+  else
+  {
+    // ist userName ein Name ?
+    var response = this.idUser( db , userName);
+    if (response.error) return response;
+    idUser = response.result;
+  }
+  
   response = dbUtils.fetchRecords_from_Query( db ,"Select g.ID,g.name,g.caption,g.kind,(select count(*) from userGrants where ID_grant=g.ID and ID_user="+idUser+") as access from grantObj g order by g.ID");
   if (response.error) return response;
 
   // aus 0, 1, 2... true oder false machen
   for(var i=0; i<response.result.length; i++) response.result[i].access=(response.result[i].access>0) 
-
-
-
-
-
-
-
 
   return response;
   

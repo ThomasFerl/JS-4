@@ -154,7 +154,9 @@ function _runSQL ( db , statement , params )
        if(utils.debug)console.log('SQL - OK');
        return {error:false, errMsg:'OK', result:res};
      }  
-  catch(err) { return {error:true, errMsg:err.message, result:{} };}   
+  catch(err) { console.log('SQL - ERROR: ' + err.message);
+               return {error:true, errMsg:err.message, result:{} };
+             }   
 }
 
 

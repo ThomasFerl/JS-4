@@ -42,8 +42,7 @@ export function main(capt1)
   // wird ein Benutzer gefunden, soll dieser sofort starten, ohne sich erneut anmelden zu müssen. 
   // Damit die Session und Grant :ogik funktioniert, muss der UserName auch lokal hinterlegt sein
   // Dieser hat jedoch kein Passwort und soll sich auf normalem Wege nicht anmelden können
-  
-debugger;
+
 
   // Zuerst anfragen, ob User in NT-Domäne ist und wir seinen Namen verwenden können
   // über /ntlm werden die Daten des Users abgerufen .....

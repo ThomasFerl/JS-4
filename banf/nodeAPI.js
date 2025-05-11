@@ -196,6 +196,7 @@ if( CMD=='USER')            return dbUtils.fetchRecord_from_Query( etc , 'Select
 
 if( CMD=='ADDUSER') 
 {
+ console.log('ADDUSER: params()->'+JSON.stringify(param))   
  var sql    = "insert into user( username , firstName , lastName , jobFunction , passwd , birthdate) values(?,?,?,?,?,?)";
  var params = [ param.username , param.firstname , param.lastname , param.jobfunction , param.passwd , param.birthdate ];
  return dbUtils.runSQL( etc , sql , params );
@@ -203,8 +204,9 @@ if( CMD=='ADDUSER')
 
 if( CMD=='EDITUSER') 
 {
- var sql    = "update user set username=? , firstName=? , lastName=? , jobFunction=? , passwd=? , birthdate=? where id=?";
- var params = [ param.username , param.firstname , param.lastname , param.jobfunction , param.passwd , param.birthdate , param.ID ];
+ console.log('EDITUSER: params()->'+JSON.stringify(param))   
+ var sql    = "update user set username=? , firstName=?     , lastName=?     , jobFunction=?     , passwd=?     , email=?       where id=?";
+ var params =          [ param.username   , param.firstname , param.lastname , param.jobfunction , param.passwd , param.email , param.ID ];
  return dbUtils.runSQL( etc , sql , params );
 }
 
@@ -217,18 +219,21 @@ if( CMD=='GRANT')
 
 if( CMD=='LSGRANTS' ) 
 {
+  console.log('LSGRANTS: params()->'+JSON.stringify(param))  
  return grants.lsGrants( etc );
 }
 
 
 if( CMD=='ADDGRANT' ) 
 {
+ console.log('AddGrant: params()->'+JSON.stringify(param)) 
  return grants.addGrant( etc , param );
 }
 
 
 if( CMD=='EDITGRAND' ) 
   {
+    console.log('EDITGRAND: params()->'+JSON.stringify(param))  
    return grants.editGrant( etc , param );
   }
 
@@ -236,6 +241,7 @@ if( CMD=='EDITGRAND' )
 
 if( CMD=='IDGRANT' ) 
 {
+  console.log('IDGRANT: params()->'+JSON.stringify(param))   
  return grants.idGrant( etc , param.grantName );
 }
 
