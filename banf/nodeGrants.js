@@ -30,7 +30,7 @@ module.exports.isGrantObj = ( grantName ) =>
 
 
 
-module.exports.addGrant = ( db , grantName ) =>
+module.exports.addGrant = ( db , grant ) =>
 {
   var response = this.idGrant( db , grantName );
     
@@ -42,7 +42,7 @@ module.exports.addGrant = ( db , grantName ) =>
     }  
   }
   
-  response = dbUtils.insertIntoTable( db , 'grantObj' , {name:grantName,caption:grantName,kind:"sys"} );
+  response = dbUtils.insertIntoTable( db , 'grantObj' , {name:grant.name,caption:grant.captiontName,kind:grant.kind} );
 
   if(response.error) return response;
 
@@ -52,6 +52,16 @@ module.exports.addGrant = ( db , grantName ) =>
  
   return response;
 }
+
+
+module.exports.editGrant = ( db , grantName ) =>
+  {
+    
+    return dbUtils.updateTable( db , 'grantObj' , {name:grant.name,caption:grant.captiontName,kind:grant.kind} );
+  
+  }
+
+
 
 
 module.exports.idGrant = ( db , grantName ) =>

@@ -4,6 +4,7 @@ import * as globals      from "./tfWebApp/globals.js";
 import * as utils        from "./tfWebApp/utils.js";    
 import * as dialogs      from "./tfWebApp/tfDialogs.js";
 import * as app          from "./tfWebApp/tfWebApp.js"; 
+import * as sysadmin     from "./tfWebApp/tfSysAdmin.js";
 import { TBanf       }   from "./banf.js";
 import { TBanfHead   }   from "./banfHead.js";
 import { TFDateTime  }   from "./tfWebApp/utils.js";    
@@ -30,12 +31,20 @@ export function main(capt1)
   caption1 = capt1;
   caption2 = '';
   
-  globals.sysMenu.push( {caption:'Benutzer' , action:function(){alert('Benutzerverwaltung')} } );
-  globals.sysMenu.push( {caption:'Berechtigungen' , action:function(){alert('Berechtigungen')} } );
+  globals.sysMenu.push( {caption:'Benutzer' , action:function(){sysadmin.adminUser()} } );
+  globals.sysMenu.push( {caption:'Berechtigungen' , action:function(){sysadmin.adminGrants()} } );
   globals.sysMenu.push( {caption:'Info' , action:function(){app.sysInfo()} } );
   globals.sysMenu.push( {caption:'Symbol-Bibliothek (nur in der Entwicklungsphase)' , action:function(){dialogs.browseSymbols()} } );
   globals.sysMenu.push( {caption:'Abbrechen' , action:function(){} } );
   
+  // Die Anmeldung ist ein Alptraum...
+  // Es wird zunächst versucht, den angemeldeten System-User zu ermitteln
+  // wird ein Benutzer gefunden, soll dieser sofort starten, ohne sich erneut anmelden zu müssen. 
+  // Damit die Session und Grant :ogik funktioniert, muss der UserName auch lokal hinterlegt sein
+  // Dieser hat jedoch kein Passwort und soll sich auf normalem Wege nicht anmelden können
+  
+debugger;
+
   // Zuerst anfragen, ob User in NT-Domäne ist und wir seinen Namen verwenden können
   // über /ntlm werden die Daten des Users abgerufen .....
   // und in globals.userName gespeichert
@@ -45,12 +54,25 @@ export function main(capt1)
 
   // Wenn Username gesetzt, dann nahtlos fortsetzen ohne Login-Dialog
   if (usrName) 
-    { 
-      globals.startSession( 0 , usrName , usrName , [] , false ) ;
-      caption2 = 'Willkommen ' + usrName;
-       run();
-      return;
-    }
+  { 
+    // ntlm-Anmeldung am Server um Session zu erhalten...
+    var url      = globals.getServer()+'/ntlmLogin/'+usrName;
+    var response = utils.webRequest( url );
+    if(!response.error)
+      if(!response.result.error)
+       {
+         globals.startSession( response.result.session ,
+                               usrName ,
+                               response.result.userID ,
+                               response.result.grants , 
+                               response.result.user.admin
+                            );
+    }                  
+    caption2 = 'Willkommen ' + usrName;
+    globals.session.admin = true; // für den Fall, dass wir im Test-Modus sind
+    run();
+    return;
+  }
 
   // andernfalls erfolgt ein Login-Dialog  
   app.login( ()=>{  caption2 = 'Willkommen ' + globals.session.userName ; run() });
@@ -62,7 +84,6 @@ export function main(capt1)
 
 export function run()
 { 
-  debugger;  
     var ws = app.startWebApp(caption1,caption2).activeWorkspace;
 
     var l  = dialogs.setLayout( ws.handle , {gridCount:27,head:2} )
@@ -98,7 +119,7 @@ export function run()
       var btn41 = dialogs.addButton( menuContainerTop , "" , 8 , 1 , 1 , 1 , {glyph:"check"}  );
       btn41.height ="2em";
       btn41.marginTop = "1em";
-      btn41.callBack_onClick = function() { debugger;
+      btn41.callBack_onClick = function() {
                                             selectedUser = userSelection.value || ""; 
                                             if(selectedUser.toUpperCase() == 'ALLE BENUTZER') { selectedUser = "" }
                                             updateViewHead();
@@ -158,7 +179,7 @@ function updateView()
 }
 
 function updateViewHead()
-{ debugger;
+{
   dashBoardTop.innerHTML = ""; // clear the dashboard
   var param = {};
   

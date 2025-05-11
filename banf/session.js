@@ -11,7 +11,7 @@ const utils        = require('./nodeUtils');
 const dbUtils      = require('./dbUtils');
 const grants       = require('./nodeGrants');
 
-module.exports.userLogin=function( etcDB , remoteIP , userName , passwd )
+module.exports.userLogin=function( etcDB , remoteIP , userName , passwd , ntlmLogin )
 { 
   console.log("login from (user) :" + userName + " from remote IP: " + remoteIP);
 
@@ -21,15 +21,30 @@ module.exports.userLogin=function( etcDB , remoteIP , userName , passwd )
   if (response.error)
   {
     console.log('ubekannter Benutzer');
-    return {error:true, errMsg:"unknwon user", session:{}, grants:[]}
-  }
 
-  usr=response.result;
+    //wenn wir uns im ntlm-Modus befinden, wird der User angelegt....
+    if(ntlmLogin)
+    {
+      console.log('create new user: ' + userName);
+      response = dbUtils.insertIntoTable( etc , "user" , {username:userName,passwd:'mtlmLogin'} );
+      if (response.error) return response;
+      usr.ID         = response.result.lastInsertRowid; 
+      usr.username   = userName;
+      usr.passwd     = 'mtlmLogin';
+    }
+    else
+    {
+      console.log('unknwon user');
+      return {error:true, errMsg:"unknwon user", session:{}, grants:[]}
+    }
+  }
+  else usr=response.result;
   
-  if(passwd!=usr.passwd)
-  {
-    console.log('wrong password');
-    return {error:true, errMsg:"wrong password", session:{}, grants:[]}
+  if(!ntlmLogin)
+    if(passwd!=usr.passwd)
+    {
+      console.log('wrong password');
+      return {error:true, errMsg:"wrong password", session:{}, grants:[]}
   }  
 
   return newSession( usr , remoteIP );

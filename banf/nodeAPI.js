@@ -191,6 +191,9 @@ if( CMD=='AST' )            return dbUtils.extractTableNames( param.sql );
 
 if( CMD=='LSUSER')          return dbUtils.fetchRecords_from_Query( etc , 'Select * from user' );
 
+if( CMD=='USER')            return dbUtils.fetchRecord_from_Query( etc , 'Select * from user Where ID='+param.userID );
+
+
 if( CMD=='ADDUSER') 
 {
  var sql    = "insert into user( username , firstName , lastName , jobFunction , passwd , birthdate) values(?,?,?,?,?,?)";
@@ -205,6 +208,13 @@ if( CMD=='EDITUSER')
  return dbUtils.runSQL( etc , sql , params );
 }
 
+if( CMD=='GRANT')
+{
+ return dbUtils.runSQL( etc , sql , params );
+  return dbUtils.fetchRecord_from_Query(etc, "Select * from grantObj Where ID="+param.grantID );
+}
+
+
 if( CMD=='LSGRANTS' ) 
 {
  return grants.lsGrants( etc );
@@ -213,8 +223,15 @@ if( CMD=='LSGRANTS' )
 
 if( CMD=='ADDGRANT' ) 
 {
- return grants.addGrant( etc , param.grantName );
+ return grants.addGrant( etc , param );
 }
+
+
+if( CMD=='EDITGRAND' ) 
+  {
+   return grants.editGrant( etc , param );
+  }
+
 
 
 if( CMD=='IDGRANT' ) 

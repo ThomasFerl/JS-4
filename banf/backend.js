@@ -200,6 +200,20 @@ function userLoginx( req , res )
 
 
 
+function ntlmLogin( req , res )
+{
+  var userName  = req.params.username;
+  var remoteIP  = req.connection.remoteAddress;
+  var passwd    = 'ntlmLogin'; 
+
+  console.log("ntlmLogin -> " + userName);
+
+  var h         = JSON.stringify(session.userLogin(etc , remoteIP , userName , passwd , true ));  //ntlmLogin=true
+    console.log("return from login: " + h)
+    res.send( h );
+} 
+
+
 
 function handleUpload( req , res )
 {
@@ -329,6 +343,8 @@ webApp.use( express.static( globals.staticPath  ) );
 
 webApp.get('/userLogin'                    ,  userLogin );
 webApp.get('/userLoginx/:username/:passwd' ,  userLoginx );
+webApp.get('/ntlmLogin/:username'          ,  ntlmLogin );
+
 webApp.get('/DEBUG'                        ,  handleDebug );
 webApp.get('/ntlm'                         ,  handleNTLM );
 webApp.get('/x'                            ,  handleRequest );
