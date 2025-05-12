@@ -249,7 +249,7 @@ function addBanf()
                  WERK                 : "EMS",
                  EINKAEUFERGRUPPE     : "183",
                  EINKAUFSORGANISATION : "",
-                 ANFORDERER           : globals.userName,
+                 ANFORDERER           : globals.session.userName,
                  BEMERKUNG            : "",
                  SACHKONTO            : "",
                  AUFTRAG              : "",
@@ -262,14 +262,28 @@ function addBanf()
 
 function editBanf()
 { 
- if(!selectedBanf) {dialogs.showMessage('Bitte zuerst eine BANF auswählen!'); return;}
+ if(!selectedBanf) {dialogs.showMessage('Bitte zuerst eine Banf-Position auswählen!'); return;}
  
  var b = new TBanf( selectedBanf );
      b.edit( function(){ updateView() } );
 } 
 
+
+function __deleteBanfPosition(banf)
+{
+  var response = utils.webApiRequest('DELETEBANF' , {ID:banf.ID} );
+  if(response.error) {dialogs.showMessage(response.errMsg) }
+  updateView();
+}
+
+
+
 function delBanf()
-{}
+{
+  if(!selectedBanf) {dialogs.showMessage('Bitte zuerst die zu löschende Position auswählen!'); return;}
+ 
+  dialogs.ask('Banf-Position löschen','Wollen Sie die Banf-Position: "'+selectedBanf.POSITIONSTEXT+'"  wirklich löschen?', function yes(){__deleteBanfPosition(this)}.bind(selectedBanf) );
+}
 
 
 

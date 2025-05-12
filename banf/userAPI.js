@@ -57,6 +57,15 @@ if( CMD=='LSBANF')
     return dbUtils,dbUtils.fetchRecords_from_Query(dB,sql);
   }
 
+  if( CMD=='DELBANF') 
+    {
+      console.log('run DELBANF stringify(param) => '+ JSON.stringify(param));
+      var sql = "DELETE * FROM banf WHERE ID = " + param.ID 
+     
+      return dbUtils,dbUtils.runSQL(dB,sql);
+    }
+
+
   if( CMD=='MAXPOS') 
     {
       console.log('run MAXPOS stringify(param) => '+ JSON.stringify(param));
