@@ -46,6 +46,7 @@ export class THTMLTable
    this.fields         = [];
    this.jsonData       = null;
    this.onRowClick     = null;
+   this.onRowDblClick  = null;
    this.bindDataset    = null;
    var  isDrawing      = true;
    
@@ -150,6 +151,21 @@ selectReverse()
  }
 
 
+ onRowDblClickEvent(event)
+ { debugger;
+    console.log('onRowDblClick');  
+    var selectedRow = event.currentTarget;
+    
+    if(this.onRowDblClick)
+    {
+          var itemIndex = selectedRow.getAttribute("itemIndex");
+          this.onRowDblClick( selectedRow , itemIndex , this.jsonData[itemIndex] );  
+     } 
+    
+ }
+
+
+
  getSelectedRows()
  {
    var rows   = this.table.getElementsByTagName('tr'); 
@@ -209,6 +225,7 @@ selectReverse()
   }
 
   row.addEventListener("click", function(event) { this.onRowClickEvent( event , this )}.bind(this) );
+  row.addEventListener("dblclick", function(event) { this.onRowDblClickEvent( event , this )}.bind(this) );
   
  }
 

@@ -316,6 +316,7 @@ function _updateTable(db , tableName , ID_field , ID_value , fields )
   
   sql= sql + " where "+ID_field+" = '"+ID_value+"'";
   
+  console.log("updateTable: " + sql);
   return  _runSQL( db , sql );
 }
 
@@ -356,6 +357,73 @@ function _existRecord( db , tableName , fieldName , value )
 module.exports.existRecord = ( db , tableName , fieldName , value ) =>
 {
   return _existRecord( db , tableName , fieldName , value );
+}
+
+
+module.exports.migrate = ( db , fs , path , param ) =>
+{
+  console.log("");
+  console.log("dbUtils.migrate() -> param: " + JSON.stringify(param));
+
+  var tableName      = param.tableName;     // Name der Tabelle
+  var fields         = param.fields;        // Felder: {fieldName1:fieldValue1, fieldName2:fieldValue2, ...}
+  var checkUpFields  = param.checkUpFields; // Felder, die auf Existenz geprüft werden sollen [FeldName1,FeldName2,...]
+  var mapping        = param.mapping;       // Mapping der Felder: {fieldName1:mappedFieldName1, fieldName2:mappedFieldName2, ...}
+  var destFields     = {};                  // resultierende Felder unter Berücksichtigung des Mappings
+  var idFieldName    = param.idFieldName;   // ID-Feldname
+  var fileAttachment = param.fileAttachment;// Dateianhang: {fileName:"thumb123.png", fileDir:"/.../",linkedFieldName:"thumb"}
+  
+  var sql            = param.sql;
+
+// {fieldNames.push(fieldName) , fieldValues.push(fields[fieldName]) };
+  // destFields unter Berücksichtigung des Mappings erstellen
+  for(var fn in fields ) 
+ {
+  if(fn!=idFieldName) 
+  {
+     if(mapping[fn]) destFields[mapping[fn]] = fields[fn];
+     else            destFields[fn]          = fields[fn];
+  }
+ }
+ 
+ // Datensatz einfügen...
+ var response = _insertIntoTable_if_not_exist( db , tableName , destFields , checkUpFields);
+
+ if(response.error) return response;
+
+  // ID des eingefügten Datensatzes abrufen
+  var id = response.result.lastInsertRowid;
+
+  // Dateianhang verarbeiten
+  if(fileAttachment)
+  {
+    var sourceFile      = fileAttachment.sourceFile;
+    var extension       = path.extname(sourceFile);
+    // Nur der Dateiname ohne Extension
+    var destFileName    = path.basename(sourceFile, extension);
+        destFileName    = destFileName + '_' + id + extension;
+    var destPath        = path.join(fileAttachment.destPath, destFileName );
+    var linkedFieldName = fileAttachment.linkedFieldName;
+
+    if (!fs.existsSync(fileAttachment.destPath))
+    {
+      console.log('migrate Attachment: ('+fileAttachment.destPath+') not found - create this ...');
+      fs.mkdirSync(fileAttachment.destPath, { recursive: true });
+    } 
+    
+    try {
+      fs.copyFileSync(sourceFile, destPath);
+    }
+    catch (err) {
+      console.error('Error copying file:', err);
+      return {error:true, errMsg:'Error copying file: ' + err.message, result:{} };
+    }
+    
+    // Datentabelle aktualisieren
+    return _runSQL(db, "Update " + tableName + " set " + linkedFieldName + "='" +destFileName+"' Where " + idFieldName + "=" + id);
+  }
+
+
 }
 
 

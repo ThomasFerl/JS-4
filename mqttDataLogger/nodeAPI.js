@@ -1,5 +1,6 @@
 const { TFLogging }= require('./logging.js');
-const utils        = require('./nodeUtils');
+const globals      = require('./backendGlobals.js');
+const utils        = require('./nodeUtils.js');
 const batchProc    = require('./batchProc.js');
 const dbUtils      = require('./dbUtils');
 const grants       = require('./nodeGrants');
@@ -95,7 +96,7 @@ if( CMD=='WAIT')            {setTimeout(()=>{return{error:false, errMsg:"10 Seku
 
 if( CMD=='KEEPALIVE')       return session.keepAlive(sessionID)
 
-if( CMD=='SCANDIR')         return utils.scanDir ( fs , path , param.dir );
+if( CMD=='SCANDIR')         return utils.scanDir ( fs , path , param.dir , param.fileExt);
 
 if( CMD=='GETFILE')         return utils.getTextFile( fs , param.fileName );
 
@@ -105,6 +106,22 @@ if( CMD=='GETIMAGEFILE')    {
                              await utils.getImageFile  ( fs , path , param.fileName , webRequest , webResponse ); // function streamt direkt 
                              return {isStream:true};
                             }
+
+
+if( CMD=='LSSYMBOLS')       {
+                              var response = utils.scanDir ( fs , path , globals.symbolPath() , '*.*');
+                              if (response.error) return response;
+                              var sym = [];  
+                              for (var i=0; i<response.result.length; i++) sym.push( path.basename(response.result[i].name, '.svg')); 
+                              return {error:false, errMsg:"", result:sym};  
+                            }
+
+
+
+if( CMD=='SYMBOL')         {
+                             var p = globals.symbolPath()+'/'+param.symbolName+'.svg';
+                             return utils.getTextFile( fs , p );
+                           }
 
 if( CMD=='GETMOVIEFILE')    {
                              await utils.getMovieFile  ( fs , path , param.fileName , webRequest , webResponse ); // function streamt direkt 
@@ -169,9 +186,7 @@ if( CMD=='STRUCTURE')
   }
 }
 
-
-if( CMD=='SCHEMA')          return dbUtils.schema( dB , param.tableName )
-    
+  
 if( CMD=='AST' )            return dbUtils.extractTableNames( param.sql );
 
 if( CMD=='LSUSER')          return dbUtils.fetchRecords_from_Query( etc , 'Select * from user' );
@@ -232,6 +247,12 @@ if(CMD=='GETUSERGRANTS')
 } 
 
 
+if(CMD=='SYMBOLPATH') 
+  {
+    return utils.getSymbolPath(param.symbol);
+  } 
+  
+
 
 if(CMD=='GETVAR') 
 {
@@ -275,11 +296,15 @@ if(CMD=='SHOWLOG')
   } 
 
 
+  if(CMD=='MIGRATE') 
+    {
+     return dbUtils.migrate(dB,fs,path, param );
+  }  
 
 
 //----------------------------------------------------------------
 if(CMD=='ADD_BATCHPROC')  // Befehl an den Batch-Process-Manager weiterleiten   
-// Dieser Endpunkt sorgt dafür, dass der in den parametern angegebene Befehl param.patchCmd mit den Parametern param.batchParam in die Warteschlange eingereiht wird... 
+// Dieser Endpunkt sorgt dafür, dass der in den parametern angegebene Befehl param.batchCmd mit den Parametern param.batchParam in die Warteschlange eingereiht wird... 
 // Wenn dieser dann im Rahmen der internen Batch-Verarbeitung an die Reihe kommt, wird dieser Befehl an die "normale" handleCommand()-Prozedur weitergeleitet, so dass
 // dieser wie ein "Web-Request" abgearbeitet wird...
 // Session, path und fs werden später vom batchProcess-Manager als "enviroment" übergeben und werden hier im Rahmen des Aufrufs von addBatchProc() ermittelt...
@@ -304,31 +329,3 @@ return  await userAPI.handleCommand( sessionID , cmd , param , req ,  res , fs ,
 }   
 
 
-/*
-
-scanDir
-{"dir":"/home/tferl/GIT"}
-
-
-CreateTable
-{"tableName":"sqare", "fieldDefs":[{"fieldName":"x","fieldType":"real"} , {"fieldName":"y","fieldType":"real"} ]  }
-
-
-insertIntoTable  
-{"tableName":"sqare" ,  "fields":{"X":"1","Y":"1"} }
-
-
-fetchRecords
-{"sql":"select * from sqare"}
-bzw.
-fetchRecord
-{"sql":"select * from sqare where x=3"}
-
-
-updateTable
-{"tableName":"sqare" , "ID_field":"ID" , "ID_value":"2" ,  "fields":{"x":"7" , "y":"77"} }
-
-
-
-
-*/

@@ -16,6 +16,7 @@
     "console": "^0.7.2",
     "exceljs": "^4.4.0",
     "express": "^4.19.2",
+    "express-ntlm": "^2.7.0",
     "fs-extra": "^11.1.1",
     "influxdb-client": "^0.0.1",
     "mqtt": "^5.10.3",

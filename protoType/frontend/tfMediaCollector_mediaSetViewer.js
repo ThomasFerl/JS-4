@@ -26,13 +26,24 @@ import { TFMediaCollector_editSet }        from "./tfMediaCollector_editSet.js";
 
 const validExtensions = mcGlobals.videoExtensions.concat(mcGlobals.imageExtensions);
 
+// ein ganz wilder Hack, um die Drop-Kollision von Thumb und Container zu verhindern
+// e.stopPropagation() klappt in meiner tfObject-Architektur leider nicht
+// das zuerst getriggerte Event gewinnt. Um zu verhindern, dass das Container-Event auch triggert
+// wird eine "Drop_Event-Refraktärzeit" gesetzt, in der Drops ignoriert werden
+const dropEventRefractoryTime = 1000; // in ms
+let lastDropEventTime         = 0;
+
 
 export class TFMediaCollector_mediaSetViewer
 {
   constructor( mediaSet )
   {
-    this.mediaFiles     = [];
-    this.creationImgNdx = 0;
+    this.mediaFiles              = [];
+    this.mediaThumbs             = [];
+    this.selectedImgNdx          = 0;
+    this.diaShowWindow           = null;
+    this.diaShowWindow_is_closed = false;
+   
    
     // wird kein mediaSet übergeben, dann wird ein neues angelegt 
     if(!mediaSet)
@@ -60,42 +71,60 @@ __init__()
     this.mediaViewer       = null;
     
     this.workSpace.backgroundColor = 'darkgray';
-    this.workSpace.buildGridLayout('10x10');
+    this.workSpace.buildGridLayout('20x20');
         
-     this.menuPanel        = dialogs.addPanel ( this.workSpace , '' , 1 , 1 , 10 , 1 );
+     this.menuPanel        = dialogs.addPanel ( this.workSpace , 'cssVontainerPanel' , 1 , 1 , 20 , 1 );
      this.menuPanel.buildGridLayout_templateColumns('7em 7em 7em 7em 7em 7em 1fr');
      this.menuPanel.buildGridLayout_templateRows('1fr');
+     this.menuPanel.overflow = 'hidden';
 
      var  b=dialogs.addButton( this.menuPanel ,'', 1 , 1 , 1 , 1 ,'+' );
           b.backgroundColor = 'gray';
-          b.margin = '7px';
+          b.marginLeft = '7px';
+          b.marginTop  = '4px';
+          b.height = '1.4em';
           b.callBack_onClick = function(){this.add2MediaSet()}.bind(this);
           
           b=dialogs.addButton( this.menuPanel ,'', 2 , 1 , 1 , 1 ,'-' );
           b.backgroundColor = 'gray';
-          b.margin = '7px';
+          b.marginLeft = '4px';
+          b.marginTop  = '4px';
+          b.height = '1.4em';
           b.callBack_onClick = function(){this.removeMediaFile()}.bind(this);
 
           b=dialogs.addButton( this.menuPanel ,'', 4 , 1 , 1 , 1 ,'diaShow' );
           b.backgroundColor = 'gray';
-          b.margin = '7px';
+          b.marginLeft = '4px';
+          b.marginTop  = '4px';
+          b.height = '1.4em';
           b.callBack_onClick = function(){this.diaShow()}.bind(this);
 
           b=dialogs.addButton( this.menuPanel ,'', 3 , 1 , 1 , 1 ,'edit' );
           b.backgroundColor = 'gray';
-          b.margin = '7px';
+          b.marginLeft = '4px';
+          b.marginTop  = '4px';
+          b.height = '1.4em';
           b.callBack_onClick = function(){
                                            var es = new TFMediaCollector_editSet(this.mediaSet); 
-                                           es.callback_if_ready = function(mediaSet){ 
+                                               es.callback_if_ready = function(mediaSet){ 
                                                     this.mediaSet = mediaSet; 
                                                     this.__init__(); 
                                                    }.bind(this);
         }.bind(this);
 
-     this.dashboardPanel   = new TFPanel( this.workSpace ,  1 , 2 , 10 , 9 ,{css:'cssContainerPanel',dropTarget:true} );
+     this.dashboardPanel   = new TFPanel( this.workSpace ,  1 , 2 , 20 , 19 ,{css:'cssContainerPanel',dropTarget:true} );
      this.dashboardPanel.callBack_onDrop = function (e , data)
                                            { 
-                                             this.___dropImage( e , data ); 
+                                              if (data.json)
+                                              {
+                                                // Wenn die Drop-Ereignis-Refraktärzeit abgelaufen ist
+                                                if (Date.now() - lastDropEventTime > dropEventRefractoryTime) {
+                                                  // Setze die Zeit des letzten Drop-Ereignisses
+                                                  lastDropEventTime = Date.now();
+                                                  // Führe die Drop-Operation aus
+                                                  this.___dropImage( e , data ); 
+                                                }
+                                              } 
                                            }.bind(this);
        
    this.updateThumbs();  
@@ -103,37 +132,129 @@ __init__()
 
     
 handleThumbClick( e , d , thumbParams )
+{
+  var mediaThumb      = thumbParams.self;
+  this.selectedImgNdx = thumbParams.ndx;
+ 
+     if(mediaThumb.selected)
+     {
+      this.showMediaFile();
+      mediaThumb.selected = false;
+      return;
+     }
+     
+     if (!globals.KeyboardManager.isKeyPressed("Control")) 
+       { // Mehrfachauswahl mit gedrückter Ctrl-Taste
+         for(var i=0; i<this.mediaThumbs.length; i++) this.mediaThumbs[i].selected = false;
+       }  
+ 
+  mediaThumb.selected = true;
+  
+}
+
+
+showMediaFile()
 { 
-  if(!thumbParams.mediaFile.notSet)
-  { debugger;
-
-    var mediaFile = thumbParams.mediaFile;
-
+  var mediaFile = this.mediaFiles[this.selectedImgNdx];
+  if(mediaFile)
+  { 
     // File zusammenbauen
     var fn = utils.pathJoin(mediaFile.DIR , mediaFile.FILENAME );
 
+    if(mediaFile.TYPE == "MOVIE") dialogs.playMovieFile( null , utils.buildURL('GETMOVIEFILE',{fileName:fn} ));
+    if(mediaFile.TYPE == "IMAGE") dialogs.showImage    (        utils.buildURL('GETIMAGEFILE',{fileName:fn} ) , mediaFile.NAME);
+  }
+}
+
+
+/*
+    if((this.mediaWindow==null) || (this.mediaWindow_is_closed))
+    {
+      this.mediaWindow = new TFWindow( null , mediaFile.FILENAME , "80%" , "80%" , "CENTER" );
+      this.mediaWindow.backgroundColor = 'darkgray';
+      this.mediaWindow_is_closed = false;
+      this.mediaWindow.callBack_onClose = function (e)
+      { 
+        this.mediaWindow_is_closed = true;
+      }.bind(this);
+
+      // Taste nach Rechts: Cursor rechts
+      // Taste nach Links: Cursor links
+      this.mediaWindow.callBack_onMouseDown = function (e) 
+      { 
+        if (e.button == 0) 
+        {
+          this.selectedImgNdx++;
+          if(this.selectedImgNdx>=this.mediaFiles.length) this.selectedImgNdx = 0;
+          this.showMediaFile();
+        }
+        if (e.button == 2) 
+        {
+          this.selectedImgNdx--;
+          if(this.selectedImgNdx<0) this.selectedImgNdx = this.mediaFiles.length-1;
+          this.showMediaFile();
+        }
+      }.bind(this)
+
+      this.mediaWindow.callBack_onKeyDown = function (e)  
+      { debugger;
+        globals.KeyboardManager.showKeys();
+       
+        if (e.key === "ArrowRight")
+        {
+          this.selectedImgNdx++;
+          if(this.selectedImgNdx>=this.mediaFiles.length) this.selectedImgNdx = 0;
+          this.showMediaFile();
+        }
+
+        if (e.key === "ArrowLeft")
+        {
+          this.selectedImgNdx--;
+          if(this.selectedImgNdx<0) this.selectedImgNdx = this.mediaFiles.length-1;
+          this.showMediaFile();
+        }
+       
+        if (e.key === " ")
+          {debugger;
+            setInterval( function() {
+                                      this.selectedImgNdx++;
+                                      if(this.selectedImgNdx>=this.mediaFiles.length) this.selectedImgNdx = 0;
+                                      this.showMediaFile();
+                                    }.bind(this) , 4000);
+          }
+
+      }.bind(this)
+
+
+
+
+
+    }
+    else this.mediaWindow.innerHTML = "";
+
     if (mediaFile.TYPE == "MOVIE")
     {
-      var w = dialogs.createWindow( null,fn,"80%","80%","CENTER");
       var url = utils.buildURL('GETMOVIEFILE',{fileName:fn} );
-      dialogs.playMovieFile( w.hWnd , url );
+      dialogs.playMovieFile( this.mediaWindow.hWnd , url );
       return;
     }
 
     if (mediaFile.TYPE == "IMAGE")
     {
-      var w   = dialogs.createWindow( null,fn,"80%","80%","CENTER");
       var url = utils.buildURL('GETIMAGEFILE',{fileName:fn} );
-      dialogs.addImage( w.hWnd , '' , 1 , 1 , '100%' , '100%' , url ); 
+      dialogs.addImage( this.mediaWindow.hWnd , '' , 1 , 1 , '100%' , '100%' , url ); 
       return;
     }
   } 
 } 
 
+*/
 
-  updateThumbs()
-    { 
+
+updateThumbs()
+{ 
       this.mediaFiles = [];
+      this.mediaThumbs  = [];
       this.dashboardPanel.innerHTML = "";
       this.dashboardPanel.buildFlexBoxLayout();
       this.dashboardPanel.alignItems='flex-start';
@@ -145,18 +266,44 @@ handleThumbClick( e , d , thumbParams )
       for(var i=0; i<response.result.length; i++) 
       { 
         this.mediaFiles.push(response.result[i].file);
-        new TFMediaCollector_thumb( this.dashboardPanel , {thumb:response.result[i].thumb , mediaFile:response.result[i].file , mediaSet:this.mediaSet , callBack_onClick:this.handleThumbClick} )
+        var t=new TFMediaCollector_thumb( this.dashboardPanel , {thumb:response.result[i].thumb , mediaFile:response.result[i].file , mediaSet:this.mediaSet , ndx:i} )
+        t.callBack_onClick = this.handleThumbClick.bind(this)
+        t.callBack_onDrop = function (e , data)
+        { 
+          if(data.json)
+          {
+            // Wenn der Drop-Ereignis-Refraktärzeit abgelaufen ist
+            if (Date.now() - lastDropEventTime > dropEventRefractoryTime) {
+              // Setze die Zeit des letzten Drop-Ereignisses
+              lastDropEventTime = Date.now();
+              // Führe die Drop-Operation aus
+             this.self.moveMediaFile(data.json.mediaFile.ID , this.thumb.ndx+1 );
+          }
+         } 
+        }.bind({self:this,thumb:t});
+        this.mediaThumbs.push(t);
       }
-    }
+}
      
+moveMediaFile(ID_File , newPOSITION )
+{
+      console.log('moveMediaFile: ' + ID_File + ' to ' + newPOSITION);
 
-    containingMediafile(mediaFile)
-    { debugger;  // checke die Groß/klein Schreibung ...
+      var params = {ID_MEDIASET:this.mediaSet.ID , ID_FILE:ID_File , POSITION:newPOSITION};   
+      
+      var response = utils.webApiRequest('MEDIA_POSITION' , params );
+      if(response.error) {dialogs.showMessage(response.errMsg); return; }
+      this.updateThumbs();
+}
+
+
+containingMediafile(mediaFile)
+{ 
       var found = false;
-      if(mediaFile.ID)
+      if(mediaFile.ID || mediaFile.id)
         {
             for(var i=0; i<this.mediaFiles.length; i++)
-            if(this.mediaFiles[i].ID == mediaFile.ID)
+            if(this.mediaFiles[i].ID == (mediaFile.ID || mediaFile.id))
             {
             found = true;
             break;
@@ -164,18 +311,18 @@ handleThumbClick( e , d , thumbParams )
       }
       else{
             for(var i=0; i<this.mediaFiles.length; i++)
-            if(this.mediaFiles[i].name == f.name && this.mediaFiles[j].path == f.path)
+            if((this.mediaFiles[i].NAME == (mediaFile.NAME || mediaFile.name)) && (this.mediaFiles[i].PATH == (mediaFile.PATH || mediaFile.path)))
             {
              found = true;
              break;
             }  
      }  
-      return found;   
-    }      
+      return found;       
+}      
 
 
   ___addMediaFiles(files)
-  {
+  { debugger;
       if (!files) return;
       if (files.length == 0) return;
   
@@ -186,16 +333,39 @@ handleThumbClick( e , d , thumbParams )
       {
         if(!this.containingMediafile(files[i])) this.mediaFiles.push(files[i]);
       }
-  }     
-    
-    
+  }
+ 
+  ___addMediaFilesDirect(_files)
+  { debugger;
+      var f = [];
+      // füge NUR diese Dateien hinzu, die noch NICHT in this.mediaFiles[] enthalten sind
+      for(var i=0; i<_files.length; i++)
+         if(!this.containingMediafile(_files[i]))
+          f.push( utils.pathJoin(_files[i].path , _files[i].name) );
+
+    if(f.length>0)
+    {
+      utils.webApiRequest('REGISTERMEDIA_IN_SET' , {mediaFiles:f , mediaSet:this.mediaSet.ID} , 'POST');
+      this.updateThumbs();
+    }  
+}
+
+
  ___dropImage( e , data )  // onDrop ( event , data )
-   {   
+   {  
      if (data.json) 
      {
        var _thumb = data.json.thumb;
        var _file  = data.json.mediaFile;   
        var _setID = data.json.mediaSet.ID || 0;
+
+       // wurde ein thumb des "eigenen Sets" gedroppt, wird es ganz nach hinten verschoben
+       if(_setID == this.mediaSet.ID)
+        {
+            //this.moveMediaFile(_file.ID , -1);
+            console('this.moveMediaFile hätte nicht feuern dürfen');
+            return;
+        }
 
        if(_file) 
           if(!this.containingMediafile(_file)) 
@@ -210,18 +380,45 @@ handleThumbClick( e , d , thumbParams )
      
 add2MediaSet()
 {
-  new TFMediaCollector_fileManager( null, {root:this.mediaSet.DESCRIPTION } , function(files){this.___addMediaFiles(files)}.bind(this)).run();
+  new TFMediaCollector_fileManager( null, {root:this.mediaSet.DESCRIPTION } , function(files){this.___addMediaFilesDirect(files)}.bind(this)).run();
 }
 
  
 removeMediaFile() 
-{
+{ 
+   // zuerst das oder die selektierten MediaFiles ermitteln...
+   var found           = [];
+   var deletedThumbs   = [];
+   for(var i=0; i<this.mediaThumbs.length; i++)
+   {
+     if(this.mediaThumbs[i].selected) 
+      {
+        found.push(this.mediaThumbs[i].mediaFile.ID);
+        deletedThumbs.push({mediaThumb:this.mediaThumbs[i],index:i});
+      }  
+   }
 
+    if(found.length==0) { dialogs.showMessage('kein Media-File selektiert'); return; } 
+
+    if(found.length>0) { dialogs.ask('Media löschen ...','Sollen die selektierten Media-Files gelöscht werden ? (Die Datei selber bleibt unberührt)', 
+      // falls JA
+      function()
+      {
+        utils.webApiRequest( 'DELMEDIAFILE_FROM_SET' , {ID_FILE:found, ID_MEDIASET:this.self.mediaSet.ID} );
+        for(var j=0; j<this.deletedThumbs.length; j++)
+        {
+          this.self.mediaFiles.splice(this.deletedThumbs[j].index,1);
+          this.deletedThumbs[j].mediaThumb.destroy();
+        }
+        
+      }.bind({self:this,deletedThumbs:deletedThumbs}));
+      return; 
+    }
 }
 
 
 diaShow(selected)
-{ debugger;
+{ 
     var imgURLs = [];
 
     for(var i=0; i<this.mediaFiles.length; i++)
@@ -238,12 +435,12 @@ diaShow(selected)
     }
 
     if(imgURLs.length==0) return;
-    const slideShowWindow = window.open( 'tfMediaCollector_diashow.html' , '_blank', 'fullscreen=yes')
+    const slideShowWindow = window.open( 'tfMediaCollector_diashow.html' , '_blank', 'fullscreen=no')
  
    // Warte, bis das neue Fenster geladen ist, und übertrage die Daten
    slideShowWindow.onload = () => {
                                    // Übertrage die Daten an das neue Fenster                                
-                                    slideShowWindow.postMessage({ currentIndex:this.creationImgNdx, slideInterval:4000, imgURLs:imgURLs } , '*' );
+                                    slideShowWindow.postMessage({ currentIndex:this.selectedImgNdx, slideInterval:4000, imgURLs:imgURLs } , '*' );
                                   };
 }
 

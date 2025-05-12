@@ -1,5 +1,5 @@
 const bacnet      = require('bacstack');
-const SERVER_IP   = '10.102.118.8';
+const SERVER_IP   = '10.102.111.200';
 const SERVER_PORT = 47808;
 
 // BACnet-Client starten
@@ -7,13 +7,10 @@ const client = new bacnet();
 
 console.log("Read Property");
 
-client.readProperty( SERVER_IP , { type: 8, instance: 2492222 }, 85, (err, value) => {
+client.readProperty( SERVER_IP , { type: 8, instance: 2533870 }, 85, (err, value) => {
     if (err) return console.error('Fehler:', err);
     console.log('Antwort:', value);
 });
-
-
-
 
 
 
@@ -38,7 +35,7 @@ client.on('iAm', (device) => {
   const ip = device.address.split(':')[0]; // IP-Adresse extrahieren
   console.log(`🔍 Versuche, Objektliste von ${ip} zu lesen...`);
 
-  client.readProperty(ip, { type: 8, instance: 2492222 }, 76, (err, value) => {
+  client.readProperty(ip, { type: 8, instance: 2533870 }, 76, (err, value) => {
     if (err) {
       console.error('❌ Fehler beim Lesen der Objektliste:', err);
     } else {

@@ -1,35 +1,23 @@
 const useHTTPS          = false;
-const port              = '4001';
-
-const MQTT_BROKER_URL   = 'mqtt://10.102.13.99:4701'; 
-
-const globals           = require('./backendGlobals');
+const port              = '4040';
 
 const http        = require('http');
 const https       = require('https');
 
 const express     = require('express');
+const ntlm        = require('express-ntlm');
 const multer      = require('multer');
 const bodyParser  = require('body-parser');
 
 const Database    = require('better-sqlite3');
 const fs          = require('fs-extra');
 const path        = require('path');
-const mqtt        = require('mqtt');
-const mqttHandler = require('./mqttHandler');
-
-
+const globals     = require('./backendGlobals');
 const utils       = require('./nodeUtils');
 const webAPI      = require('./nodeAPI');
 const userAPI     = require('./userAPI');
 const session     = require('./session');
-const dbUtils     = require('./dbUtils');
 const dbTables    = require('./dbTables');
-
-
-const {TMQTTDistributor}    = require('./mqttDistributor');
-const { networkInterfaces } = require('os');
-const { Console }           = require('console');
 
 const sslOptions  = {
     key : fs.readFileSync('./SSL/privateKex.pem'  , 'utf8' ),     // Pfad zum privaten Schlüssel
@@ -40,7 +28,7 @@ const dBetc       = './etc.db';
 const etc         = new Database( dBetc  , { verbose: utils.log } );
       utils.log("etc-dB: "+etc.constructor.name);
 
-const dBName      = './mqtt_registry.db';
+const dBName      = './workingBase.db';
 const dB          = new Database( dBName  , { verbose: utils.log ,  readonly: false } );
       utils.log("working-dB: "+dB.constructor.name);
 
@@ -48,63 +36,31 @@ const dB          = new Database( dBName  , { verbose: utils.log ,  readonly: fa
 // Datenstruktur lt. dBTables erzeugen ....
 dbTables.buildTables( dB );
 
+// Datenstruktur auf ggf. vorhandene Änderungen prüfen ....
+// dbTables.checkdbTableStructure();
 
-//-----------------------------------------------------------------------------------------
-//-----------------------------------------------------------------------------------------
-// MQTT - Client starten und zum Mosquitto-Server Verbindung aufnehmen
-//-----------------------------------------------------------------------------------------
-//-----------------------------------------------------------------------------------------
 
-const defaultTopic = '#';
+const webApp       = express();
 
-mqttHandler.setup( dB );
+globals.staticPath = path.join (__dirname, 'frontend' );
+utils.log("static Path: " + globals.staticPath );
 
-const mqttClient = mqtt.connect(MQTT_BROKER_URL);
-
-mqttClient.on('connect', () => {
-                                  console.log('✅ Verbunden mit Mosquitto-Broker');
-                                  mqttClient.subscribe( defaultTopic , (err) => {
-                                                                       if (err) console.error('❌ Fehler beim Abonnieren des Topics: ' + defaultTopic , err);
-                                                                       else     console.log('📡 Abonniert: ' + defaultTopic );
-                                                                     });
-                                });                                      
-
-// Nachricht empfangen und in DB speichern
-mqttClient.on('message', async (topic, payload) => { mqttHandler.onMessage(topic, payload); });
- 
-// Fehlerbehandlung
-mqttClient.on('error', (err) => { console.error('❌ MQTT-Fehler:', err); });
+// NTLM-Middleware aktivieren
 
 
 
-//-----------------------------------------------------------------------------------------
-//-----------------------------------------------------------------------------------------
-// MQTT - Distributor starten und mqtt-Topics zum Frontend zu senden
-//-----------------------------------------------------------------------------------------
-//-----------------------------------------------------------------------------------------
+uploadPath  = path.join (__dirname, 'tmpUploads' );
 
-// MQTT - Distributor starten
-mqttDist = new TMQTTDistributor({ mqttBroker: MQTT_BROKER_URL,
-                                  topic     : defaultTopic 
-                                })
-
-mqttDist.start();
-
-
-//-----------------------------------------------------------------------------------------
-//-----------------------------------------------------------------------------------------
-//-----------------------------------------------------------------------------------------
-
-
-
-const webApp      = express();
-  var staticPath  = path.join (__dirname, 'frontend' );
-      utils.log("static Path: " + staticPath );
-
+ // existiet der Pfad tmpUploads ?
+if(!fs.existsSync(uploadPath))
+{
+  fs.mkdirSync(uploadPath , { recursive: true });
+  utils.log( uploadPath + " created");
+}
 
  // Konfiguriere Multer, für fileUpload
 const storage = multer.diskStorage({
-  destination: function (req, file, cb) { cb(null, 'tmp/'); }, // Zielverzeichnis für uploads 
+  destination: function (req, file, cb ) { cb(null, uploadPath ); }, // Zielverzeichnis für uploads 
   
   // Hier kannst du den Dateinamen dynamisch basierend auf den Formulardaten anpassen
   filename   : function (req, file, cb) { const fileName = req.body.fileName || '~'+utils.generateRandomString(49); 
@@ -159,7 +115,7 @@ if(strRequest)
        } catch(err) { res.send( handleError("JSON.PARAM-parse-Error: " + err.message )); return }
    
        // während des Entwickelns und Debuggens ist die SessioID sehr lästig 
-      if(!globals.ignoreSession)
+      if(!globals.ignoreSession || jsnRequest.cmd.toUpperCase().trim()!='MIGRATE')
       { 
         if(!session.validSession( jsnRequest.session )) { res.send( handleError("invalid Session / Session timout")); return }
       }
@@ -185,7 +141,7 @@ if(strRequest)
        }
        catch{}
 
-    // utils.log('return from webAPI-Handler : ' + response );
+    utils.log('return from webAPI-Handler : ' + response );
   
     res.send(  response );
   }
@@ -243,83 +199,93 @@ function userLoginx( req , res )
 }  
 
 
+
+
+function handleUpload( req , res )
+{
+  // Delegation an multer ... mit CallBack ... 
+  var file     = req.file; // multer speichert die Datei in req.file
+  var fileName = req.body.fileName;
+  var destDir  = req.body.destDir;
+
+  console.log("handleUpload -> " + file);
+  console.log("             -> " + fileName);
+  console.log("             -> " + destDir);
+
+    if (!file) return res.send(handleError('no uploadfile found !'));
+  
+    if (destDir) 
+    {  
+      const baseName = path.basename(fileName); // nur der Dateiname
+  
+      // Zielpfad bauen
+      const targetDir  = path.join(__dirname, destDir); // z. B. ./uploads/bilder/personen/avatars
+      const targetPath = path.join(targetDir, baseName);
+  
+      // Verzeichnis anlegen, falls nicht vorhanden
+      fs.mkdirSync(targetDir, { recursive: true });
+  
+      // Datei verschieben
+      fs.rename(file.path, targetPath, (err) => {
+      if (err) return res.send(handleError('Fehler beim Verschieben der Datei: ' + err.message));
+  
+      utils.log(`Upload & verschoben → ${targetPath}`);
+  
+      res.send(JSON.stringify({
+        error: false,
+        errMsg: "OK",
+        result: {
+          originalName: file.originalname,
+          savedName: baseName,
+          savedPath: targetPath,
+          destination: destDir
+        }
+      }));
+    });
+  }
+  else
+  {
+    // Wenn kein Zielverzeichnis angegeben ist, wird die Datei im temporären Verzeichnis gespeichert
+    res.send(JSON.stringify({
+      error: false,
+      errMsg: "OK",
+      result: {
+        originalName: req.file.originalname,
+        savedName: req.file.filename,
+        savedPath: req.file.path
+      }
+    }));
+  }  
+}
+
+
+function handleNTLM( req , res )
+{
+   var result  = {};
+  result.username             = req.ntlm ? req.ntlm.UserName : '-';
+  result.domain               = req.ntlm ? req.ntlm.DomainName : '-';
+  result.workstation          = req.ntlm ? req.ntlm.Workstation : '-';
+  result.authType             = req.ntlm ? req.ntlm.AuthType : '-';
+  result.userIP               = req.connection.remoteAddress;
+  result.userAgent            = req.headers['user-agent'] || '-';
+
+  result.userHost             = req.headers['host'] || '-';
+  result.userAccept           = req.headers['accept'] || '-';
+  result.userAcceptEncoding   = req.headers['accept-encoding'] || '-';
+  result.userAcceptLanguage   = req.headers['accept-language'] || '-';
+  result.userConnection       = req.headers['connection'] || '-';
+  result.userCacheControl     = req.headers['cache-control'] || '-';
+  result.userPragma           = req.headers['pragma'] || '-';
+  result.userUpgradeInsecureRequests = req.headers['upgrade-insecure-requests'] || '-';
+  res.send( JSON.stringify(result) );
+}
+
+
+
 function handle_backDoor_Request( reqStr , res)
 {
   res.send( "no_Way" );
 }
-
-
-function handleSyncForce( req , res )
-{
-  mqttHandler.synchronize();   
-  mqttHandler.aggregateHourly();   
-  mqttHandler.aggregateDaily();   
-  mqttHandler.cleanUp_old_payLoads(); 
-  res.send("Synchronisation außerhalb des Scheduler ausgeführt ...");
-}  
-
-
-function handleMQTT( req , res )
-{
-  for(var i=0; i<0; i++) console.log(".");
-
-  const url       = req.originalUrl;
-  const parts     = url.split("/mqtt/");
-  const topicPath = parts[1]; 
-  console.log("TOPIC " + topicPath);
-
-  // Paylods zum Topic ermitteln....
-  var response = dbUtils.fetchRecords_from_Query( dB , "Select ID from mqttTopics Where topic like '"+topicPath+"%'" );
-  if ((response.error) || (response.result.lengtt==0))return res.send( handleError("mqttTopic not found: " + topicPath ));
-
-  result = ['<?xml version="1.0"?>']
-  result.push('<PV>');
-
-  for(var i=0; i<response.result.length; i++)
-  {
-    var ID_topic = response.result[i].ID;
-
-    console.log("("+i+") ID_topic: " + ID_topic);
-
-    var payload = dbUtils.fetchRecord_from_Query( dB , "Select * from mqttPayloads Where ID_Topic="+ID_topic+" order by ID desc limit 1" );
-
-   if (!payload.error) 
-    {
-      try {
-            var pl = payload.result.payload;
-            console.log("("+i+") payload:" + pl );
-
-            var jsn = JSON.parse(pl); 
-            var n=jsn.name;
-            var v=jsn.value;
-            
-            console.log("("+i+") payload: Name=" + n + "  Value: " + v );
-            // entferne leerzeichen aus dem Namen:
-            n = n.replace(/\s+/g, '');
-            result.push('  <'+n+' _="' + v + '"/>');
-          }
-      catch(e) {  console.log("Fehler: " + e.message); jsn = {} }
-    }  
-  }  
-
-  result.push('</PV>');
-
-  console.log("result: " + result.join('\n'));
-
-  if ((result.length==0)) res.send( handleError("mqttPayload not found: " + topicPath ));
-  else 
-  {
-    var r = '';
-    for(var i=0; i<result.length; i++) r += result[i]+'\n'; 
-    
-     res.setHeader('Content-Type', 'application/xml');
-     res.send(r);
-  }  
-
-}  
-
-
-
 
 webAPI.setup( dB , etc );
 
@@ -327,6 +293,7 @@ webAPI.setup( dB , etc );
 // Erhöhen der Größenbeschränkung
 webApp.use(bodyParser.json      ({ limit: '50mb'                 }));  // Für JSON-Anfragen
 webApp.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));  // Für URL-kodierte Anfragen
+webApp.use(ntlm());
 
      
 webApp.use( ( req , res , next ) =>
@@ -358,28 +325,19 @@ webApp.use( ( req , res , next ) =>
       });
       
       
-webApp.use( express.static( staticPath  ) );
+webApp.use( express.static( globals.staticPath  ) );
 
 webApp.get('/userLogin'                    ,  userLogin );
 webApp.get('/userLoginx/:username/:passwd' ,  userLoginx );
 webApp.get('/DEBUG'                        ,  handleDebug );
+webApp.get('/ntlm'                         ,  handleNTLM );
 webApp.get('/x'                            ,  handleRequest );
-webApp.get('/syncForce'                    ,  handleSyncForce );
+
+
 webApp.post('/xpost'                       ,  handleRequest );
-webApp.get('/mqtt/*'                         ,  handleMQTT );
-webApp.post('/upload', upload.single('file'), (req, res) => {
-                                                              if (!req.file) return res.send(handleError('no uploadfile found !'));
-                                                              
-                                                              // Datei wurde erfolgreich hochgeladen und ist über req.file zugänglich
-                                                              res.send(JSON.stringify({error:false, errMsg:"OK", result:req.file}))
-                                                              utils.log('Datei hochgeladen:', req.file);
+webApp.post('/upload', upload.single('file'), handleUpload );
   
-                                                              // Weitere Verarbeitung oder Antwort hier...
-                                                            });  // Ende UPLOAD
-
-
-
-
+ 
 var webServer = {};
 
 if(useHTTPS) webServer  = https.createServer( sslOptions , webApp );
@@ -387,32 +345,10 @@ else         webServer  = http.createServer (              webApp );
 
 webServer.listen( port , () => {console.log('Server listening on Port ' + port )});
 
-// interne Session-Steuerung
+setInterval( webAPI.run          , 60000 ); // jede Minute prüfen, ob etwas im BATCH wartet ...
 setInterval( session.ctrlSession , 1000 ); 
 
-// jede Minute prüfen, ob etwas im BATCH wartet ...
-setInterval( webAPI.run          , 60000 ); 
-
-// Prüft jede Minute ob neue RAW-Payloads vorliegen ung kopiert die Daten ggf in "Measurements"...
-setInterval(() => {
-                   mqttHandler.synchronize();   
-                  } , 60 * 1000); 
-
-// Prüft jede Stunde ob neue Daten in "Measurements" vorliegen und aggregiert diese zu Stundenwerten
-setInterval(() => {
-                   mqttHandler.aggregateHourly();   
-                  } , 60 * 60 * 1000); 
 
 
-// Prüft bei jedem Tageswechsel ob neue Daten in "hourly_Measurements" vorliegen und aggregiert diese zu Tageswerten
-setInterval(() => {
-                    // liegt ein Tageswechsel vor ?
-                    var d = new utils.TFDateTime();
-                    if(d.hour=1) mqttHandler.aggregateDaily();   
-                  } , 60 * 60 * 1000); 
 
 
-// Prüft jede Stunde(60 sekunden*60), was an RAW-Payloads gelöscht werden kann... (Daten wurden in Measurements gespeichert und sind älter als "maxAgePayloadHistory")
-setInterval(() => {
-                    mqttHandler.cleanUp_old_payLoads(); 
-                  } , 60*60 * 1000);

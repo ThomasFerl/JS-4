@@ -2,9 +2,10 @@ const useHTTPS                = false;
 
 export var debug              = false;
 export var webApp             = {activeWorkspace:null};
+export var Screen             = null;   // wird von der App gesetzt
 
 
-export var backgroundImage    = null;   // wen null dann delault lt. stylesheet
+export var backgroundImage    = './tfWebApp/res/background.jpg';   
 export var loginEndpoint      = '/userLoginx/'; 
 
 export var sysMenu            = [];
@@ -66,9 +67,18 @@ export function URL_webAppRequest()     {return getServer()+'/x?x='}
 export function URL_webAppPOSTrequest() {return getServer()+'/xpost'}
 export function URL_static() {return  ' '+getServer()+'/'}
 
-export function setScreen( s ) { Screen = s}
+export function setScreen( s ) 
+{ 
+  Screen = s ; 
+  if(backgroundImage) Screen.setBackgroundImage(backgroundImage);
+}  
 
-export function setBackgroundImage( img ) { backgroundImage = img}
+
+export function setBackgroundImage( img ) 
+{ 
+  backgroundImage = img;
+  if(Screen) Screen.setBackgroundImage(backgroundImage);
+}
 
 export function initWebApp( w ) { webApp = w}
 
@@ -94,24 +104,58 @@ export function startSession( sessionID , userName , userID , grants , admin )
 export function setSysMenu( s ) { sysMenu = s}
 
 
-document.addEventListener("keydown", function (event) 
-{
-  console.log("keyDown -> " + event.key);
-  
-  let isCTRLpressed  = event.ctrlKey;
-  let isSHIFTpressed = event.shiftKey;
-  let isALTpressed   = event.altKey;
 
-  console.log("CTRL:", isCTRLpressed, "SHIFT:", isSHIFTpressed, "ALT:", isALTpressed);
-});
-
-document.addEventListener('keyup', function(event) 
+export const KeyboardManager = 
 {
-  console.log("keyUp -> " + event.key );
-  if(event.ctrlKey)    isCTRLpressed  = false;
-  if(event.shiftKey)   isSHIFTpressed = false;
-  if(event.altKey)     isALTpressed   = false;
-});
+  keysDown: new Set(),
+
+  init: function () {
+    document.addEventListener('keydown', (e) => {
+      this.keysDown.add(e.key);
+    });
+
+    document.addEventListener('keyup', (e) => {
+      this.keysDown.delete(e.key);
+    });
+  },
+
+  isKeyPressed: function (key) {
+    return this.keysDown.has(key);
+  },
+
+  showKeys: function () {
+    console.log("Pressed keys: " + Array.from(this.keysDown).join(", "));
+  }
+};
+
+// Direkt initialisieren, damit’s läuft, sobald geladen:
+KeyboardManager.init();
+/*
+Anwendungs-Beispiele:
+if (KeyboardManager.isKeyPressed("Control")) {
+  console.log("Control wird gedrückt gehalten.");
+}
+
+Oder als Shortcut-Checker z. B. in einem onKeyDown-Callback:
+
+this.callBack_onKeyDown = function (e) {
+  if (e.key === "s" && KeyboardManager.isKeyPressed("Control")) {
+    e.preventDefault();
+    saveStuff();
+  }
+};
+
+ACHTE auf preventDefault(), wenn die Tastatur-Interaktion nicht weitergegeben werden soll.
+
+
+
+
+
+
+*/
+
+
+
 
 
 export function print_elapsedTime( msg )   

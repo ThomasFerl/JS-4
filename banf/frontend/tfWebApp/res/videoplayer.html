@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+ <head>
+  <title>VideoPlayer</title>
+
+  <script>
+       function  changePlaybackRate( step )             
+       {   
+           console.log("changePlaybackRate");                
+           var clip = document.getElementById("clipperVideo");                 
+           var rate = clip.playbackRate;     
+           if (rate<0.2) step=step/10          
+           rate = rate+step;               
+           if(rate>10) rate=10;               
+           if(rate<0.07) rate=0.07;               
+           clip.playbackRate=rate;                
+           console.log("rate: " + (Math.round(1000*rate)/10) + " %");               
+           document.getElementById("frameRate").innerHTML = (Math.round(100*rate))+"%"; 
+         }            
+         
+         function  changePosition( jump )             
+         {               
+           if(jump!=0)               
+           {                
+             var clip = document.getElementById("clipperVideo");                  
+             var pos = clip.currentTime;                    
+             pos = pos+jump;                
+             if(pos>clip.duration) pos=clip.duration-4;                
+             if(pos<1) pos=1;                
+             clip.currentTime = pos;                
+           }             
+         }          
+             
+         function  showPosition()              
+         {               
+           var clip = document.getElementById("clipperVideo");   
+           var t=clip.currentTime;
+           var d=clip.duration;
+           var p = Math.round(t/d*10000)/100 + ' %';
+           document.getElementById("position").innerHTML = p;               
+                      
+         }  
+         
+       </script>   
+         
+
+
+</head>
+<body style="background-color:black;"">            
+
+   <div style="background-image:linear-gradient( rgb(73, 72, 72) , rgb(0, 0, 0)); 
+               margin:0; 
+               padding:0.1em; 
+               width:100%; 
+               height:100%; 
+               overflow:auto; 
+               float:left;
+               border:2px red" >
+  
+  <button onclick="changePlaybackRate(-0.1)" 
+          style="background-color: #5a9900; 
+                 border: thin solid black;  
+                 box-shadow: 0 .2em .4em black;  
+                 width: 7em;  
+                 height:2em; 
+                 color: white;
+                 margin:0.25em;">--</button>
+
+
+<button  onclick="changePlaybackRate(+0.1)"
+        style="background-color: #5a9900; 
+                 border: thin solid black;  
+                 box-shadow: 0 .2em .4em black;  
+                 width: 7em;  
+                 height:2em; 
+                 color: white;
+                 margin:0.25em;">++</button>
+
+
+<button ID="frameRate" 
+       style=   "background-color: #335207; 
+                 border: thin solid black;  
+                 box-shadow: 0 .2em .4em black;  
+                 width: 7em;  
+                 height:2em; 
+                 color: white;
+                 margin:0.25em;">100%</button>
+
+
+<button onclick="changePosition(30)" 
+style="background-color: #5a9900; 
+      border: thin solid black;  
+      box-shadow: 0 .2em .4em black;  
+      width: 7em;  
+      height:2em; 
+      color: white;
+      margin:0.25em;">+30sek.</button>
+
+
+<button onclick="changePosition(-30)" 
+style="background-color: #5a9900; 
+      border: thin solid black;  
+      box-shadow: 0 .2em .4em black;  
+      width: 7em;  
+      height:2em; 
+      color: white;
+      margin:0.25em;">-30sek.</button>
+
+<button ID="position" 
+       style=   "background-color: #335207; 
+                 border: thin solid black;  
+                 box-shadow: 0 .2em .4em black;  
+                 width: 7em;  
+                 height:2em; 
+                 color: white;
+                 margin:0.25em;">...</button>
+
+
+  </div> 
+
+
+
+
+
+
+
+
+
+</body>
+</html>

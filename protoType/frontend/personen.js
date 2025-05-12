@@ -128,7 +128,7 @@ edit( callback_if_ready )
  
   this.portraitPanel  = new TFPanel( _w  , 4 , 1 , 1 , 3 , {dropTarget:true} ); 
   this.portraitPanel.imgURL = this.portraitURL();
-  this.portraitPanel.callBack_onDrop = function(e,d) { this.dropImage(e,d) }.bind(this); 
+  this.portraitPanel.callBack_onDrop = function(e,d) {debugger; this.dropImage(e,d) }.bind(this); 
 
   
  // dialogs.addFileUploader  ( p , '*.*' , true , 'mediaCache/persons' , (selectedFiles) => { this.PORTRAIT=selectedFiles.result.savedName});
@@ -172,7 +172,7 @@ dropImage( e , data )  // onDrop ( event , data )
      const f = (globals.session.userName || 'developer') + '_' + utils.buildRandomID();
      utils.uploadFileToServer(data.localFile, f, 
            function(result)
-           { 
+           { debugger;
              this.self.PORTRAIT=result.result.savedName; ; 
              this.self.portraitPanel.imgURL=this.self.portraitURL() 
             }.bind({self:this,destDir:this.#destDir}) , {destDir:this.#destDir} );
@@ -276,7 +276,7 @@ export class TPersonList
 
     
     selectedPerson(p)
-    {debugger;
+    {
       this.person            = p;
       this.selected          = p;
       this.imagePanel.imgURL = p.portraitURL();

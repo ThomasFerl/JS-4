@@ -19,7 +19,7 @@ import { TFDateTime }    from "./tfWebApp/utils.js";
 import { TFMediaCollector } from "./tfMediaCollector.js";
 
 
-const svgPath = '/GIT/JS-3/tfWebApp/fontAwsome/svgs/';  // '/home/tferl/GIT/JS-3/tfWebApp/fontAwsome/svgs/';
+const svgPath = '/GIT/JS-4/banf/tfWebApp/symbols/'; 
 const imgPath = '/home/tferl/GIT/JS-3/prodia/uploads/';
 
 var svgContainer   = null;
@@ -72,6 +72,7 @@ function viewMedia(fn)
 
 export function main(capt1,capt2)
 {
+   
     var ws = new TFWorkSpace('mainWS' , capt1,capt2 );
 
     var l  = dialogs.setLayout( ws.handle , {gridCount:27,head:2,left:14} )
@@ -93,19 +94,11 @@ export function main(capt1,capt2)
       menuContainer.buildGridLayout_templateRows('1fr');
 
 
-  var btn1 = dialogs.addButton( menuContainer , "" , 1 , 1 , 1 , 1 , "regular"  )
-      btn1.callBack_onClick = function() { showSVGs('regular') };
+  var btn1 = dialogs.addButton( menuContainer , "" , 1 , 1 , 1 , 1 , "Symbols"  )
+      btn1.callBack_onClick = function() { showSVGs() };
       btn1.heightPx = 35;
 
-  var btn2 = dialogs.addButton( menuContainer , "" , 2 , 1 , 1 , 1 , "solid"  )
-      btn2.callBack_onClick = function() { showSVGs('solid') };
-      btn2.heightPx = 35;
-
-  var btn3 = dialogs.addButton( menuContainer , "" , 3 , 1 , 1 , 1 , "brands"  )
-      btn3.callBack_onClick = function() { ; showIMGs(editPath.value || imgPath) };
-      btn3.callBack_onClick = function() { showIMGs(editPath.value || imgPath) };
-      btn3.heightPx = 35;
-
+ 
   var btn4 = dialogs.addButton( menuContainer , "" , 4 , 1 , 1 , 1 , "Grid-Test"  )
       btn4.callBack_onClick = function() { 
                                            var g = dialogs.createTable( svgContainer , [{Name:"Ferl",Vorname:"Thomas",gebDatum:"29.10.1966"},
@@ -237,6 +230,7 @@ var   btn10 = dialogs.addButton( menuContainer , "" , 10 , 1 , 1 , 1 , "ask me" 
       for(var i=0; i<5; i++)
       {
         var p = dialogs.addPanel( testContainer2 , "" , 1 , i+1 , 1 , 1 );
+            p.callBack_onKeyDown = function(e) { if(e.keyCode==13) alert(enter) ; }.bind(p);
             p.borderRadius = '1px';
             p.margin = '0.1em';
             p.buildGridLayout('1x1');
@@ -352,8 +346,8 @@ panels[12].animation(
 } 
     
      
-async function showSVGs(type)
-{ 
+async function showSVGs()
+{ debugger;
    //load all SVG's
    svgContainer.innerHTML = '';
    svgContainer.buildFlexBoxLayout();
@@ -363,12 +357,8 @@ async function showSVGs(type)
        progress.backgroundColor = 'rgba(0,0,0,0.25)';
        progress.color = 'white';
 
-   var response = utils.webApiRequest('SCANDIR' , {dir:svgPath+type} )
-   var svgs     = [];
-
-   for (var i=0; i<response.result.length; i++)
-       if(response.result[i].isFile) svgs.push( response.result[i].name );
-
+   var svgs = utils.webApiRequest('LSSYMBOLS' , {} ).result;
+  
    for(var i=0; i<svgs.length; i++)
    { 
     progress.caption = 'loading ' + i + ' of ' + svgs.length + '  (' + Math.round(i/svgs.length*100) + '%)';
@@ -378,7 +368,7 @@ async function showSVGs(type)
 
      var p = dialogs.addImage( svgContainer , "" , 1 , 1 , "77px" , "77px" );
      
-     var svg = utils.webApiRequest('GETFILE',{fileName:svgPath + type + '/' + svgs[i]} ); 
+     var svg = utils.webApiRequest('SYMBOL',{symbolName:svgs[i]} ); 
 
         if (!svg.error) 
           {

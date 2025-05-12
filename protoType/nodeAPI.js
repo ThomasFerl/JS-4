@@ -1,4 +1,5 @@
 const { TFLogging }= require('./logging.js');
+const globals      = require('./backendGlobals.js');
 const utils        = require('./nodeUtils.js');
 const batchProc    = require('./batchProc.js');
 const dbUtils      = require('./dbUtils');
@@ -105,6 +106,22 @@ if( CMD=='GETIMAGEFILE')    {
                              await utils.getImageFile  ( fs , path , param.fileName , webRequest , webResponse ); // function streamt direkt 
                              return {isStream:true};
                             }
+
+
+if( CMD=='LSSYMBOLS')       {
+                              var response = utils.scanDir ( fs , path , globals.symbolPath() , '*.*');
+                              if (response.error) return response;
+                              var sym = [];  
+                              for (var i=0; i<response.result.length; i++) sym.push( path.basename(response.result[i].name, '.svg')); 
+                              return {error:false, errMsg:"", result:sym};  
+                            }
+
+
+
+if( CMD=='SYMBOL')         {
+                             var p = globals.symbolPath()+'/'+param.symbolName+'.svg';
+                             return utils.getTextFile( fs , p );
+                           }
 
 if( CMD=='GETMOVIEFILE')    {
                              await utils.getMovieFile  ( fs , path , param.fileName , webRequest , webResponse ); // function streamt direkt 
@@ -279,6 +296,10 @@ if(CMD=='SHOWLOG')
   } 
 
 
+  if(CMD=='MIGRATE') 
+    {
+     return dbUtils.migrate(dB,fs,path, param );
+  }  
 
 
 //----------------------------------------------------------------
