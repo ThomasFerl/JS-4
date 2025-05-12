@@ -1,0 +1,249 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\GIT\\JS-4\\banf\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\GIT\\JS-4\\banf\\frontend\\main.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:frontend\\main.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\GIT\\JS-4\\banf\\frontend\\tfWebApp\\style.css||{A5401142-F49D-43DB-90B1-F57BA349E55C}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:frontend\\tfWebApp\\style.css||{A5401142-F49D-43DB-90B1-F57BA349E55C}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\GIT\\JS-4\\banf\\frontend\\tfWebApp\\globals.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:frontend\\tfWebApp\\globals.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\GIT\\JS-4\\banf\\session.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:session.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\GIT\\JS-4\\banf\\backend.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:backend.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\GIT\\JS-4\\banf\\nodeAPI.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:nodeAPI.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\GIT\\JS-4\\banf\\frontend\\tfWebApp\\tfObjects.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:frontend\\tfWebApp\\tfObjects.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\GIT\\JS-4\\banf\\frontend\\tfWebApp\\tfSysAdmin.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:frontend\\tfWebApp\\tfSysAdmin.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\GIT\\JS-4\\banf\\frontend\\tfWebApp\\tfDialogs.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:frontend\\tfWebApp\\tfDialogs.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\GIT\\JS-4\\banf\\frontend\\tfWebApp\\utils.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:frontend\\tfWebApp\\utils.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\GIT\\JS-4\\banf\\frontend\\tfWebApp\\tfGrid.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:frontend\\tfWebApp\\tfGrid.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\GIT\\JS-4\\banf\\frontend\\tfWebApp\\tfWindows.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:frontend\\tfWebApp\\tfWindows.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\GIT\\JS-4\\banf\\frontend\\tfWebApp\\tfWebApp.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:frontend\\tfWebApp\\tfWebApp.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 15,
+          "Children": [
+            {
+              "$type": "Bookmark",
+              "Name": "ST:129:0:{1fc202d4-d401-403c-9834-5b218574bb67}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:128:0:{116d2292-e37d-41cd-a077-ebacac4c8cc4}"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "session.js",
+              "DocumentMoniker": "C:\\GIT\\JS-4\\banf\\session.js",
+              "RelativeDocumentMoniker": "session.js",
+              "ToolTip": "C:\\GIT\\JS-4\\banf\\session.js",
+              "RelativeToolTip": "session.js",
+              "ViewState": "AgIAACQAAAAAAAAAAAAAAA0AAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001646|",
+              "WhenOpened": "2025-05-12T11:52:52.603Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "backend.js",
+              "DocumentMoniker": "C:\\GIT\\JS-4\\banf\\backend.js",
+              "RelativeDocumentMoniker": "backend.js",
+              "ToolTip": "C:\\GIT\\JS-4\\banf\\backend.js",
+              "RelativeToolTip": "backend.js",
+              "ViewState": "AgIAALoAAAAAAAAAAAAAANIAAAAkAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001646|",
+              "WhenOpened": "2025-05-12T11:51:32.41Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "globals.js",
+              "DocumentMoniker": "C:\\GIT\\JS-4\\banf\\frontend\\tfWebApp\\globals.js",
+              "RelativeDocumentMoniker": "frontend\\tfWebApp\\globals.js",
+              "ToolTip": "C:\\GIT\\JS-4\\banf\\frontend\\tfWebApp\\globals.js",
+              "RelativeToolTip": "frontend\\tfWebApp\\globals.js",
+              "ViewState": "AgIAAEYAAAAAAAAAAAASwG4AAAAvAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001646|",
+              "WhenOpened": "2025-05-12T11:36:41.576Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "tfObjects.js",
+              "DocumentMoniker": "C:\\GIT\\JS-4\\banf\\frontend\\tfWebApp\\tfObjects.js",
+              "RelativeDocumentMoniker": "frontend\\tfWebApp\\tfObjects.js",
+              "ToolTip": "C:\\GIT\\JS-4\\banf\\frontend\\tfWebApp\\tfObjects.js",
+              "RelativeToolTip": "frontend\\tfWebApp\\tfObjects.js",
+              "ViewState": "AgIAAOcGAAAAAAAAAAASwPMGAAApAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001646|",
+              "WhenOpened": "2025-05-12T09:34:52.292Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "style.css",
+              "DocumentMoniker": "C:\\GIT\\JS-4\\banf\\frontend\\tfWebApp\\style.css",
+              "RelativeDocumentMoniker": "frontend\\tfWebApp\\style.css",
+              "ToolTip": "C:\\GIT\\JS-4\\banf\\frontend\\tfWebApp\\style.css",
+              "RelativeToolTip": "frontend\\tfWebApp\\style.css",
+              "ViewState": "AgIAAN0EAAAAAAAAAAAnwBEFAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003000|",
+              "WhenOpened": "2025-05-12T09:25:21.063Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 9,
+              "Title": "utils.js",
+              "DocumentMoniker": "C:\\GIT\\JS-4\\banf\\frontend\\tfWebApp\\utils.js",
+              "RelativeDocumentMoniker": "frontend\\tfWebApp\\utils.js",
+              "ToolTip": "C:\\GIT\\JS-4\\banf\\frontend\\tfWebApp\\utils.js",
+              "RelativeToolTip": "frontend\\tfWebApp\\utils.js",
+              "ViewState": "AgIAAKQFAAAAAAAAAAAAALAFAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001646|",
+              "WhenOpened": "2025-05-12T09:20:39.816Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 10,
+              "Title": "tfGrid.js",
+              "DocumentMoniker": "C:\\GIT\\JS-4\\banf\\frontend\\tfWebApp\\tfGrid.js",
+              "RelativeDocumentMoniker": "frontend\\tfWebApp\\tfGrid.js",
+              "ToolTip": "C:\\GIT\\JS-4\\banf\\frontend\\tfWebApp\\tfGrid.js",
+              "RelativeToolTip": "frontend\\tfWebApp\\tfGrid.js",
+              "ViewState": "AgIAAIcAAAAAAAAAAAASwJoAAAADAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001646|",
+              "WhenOpened": "2025-05-12T09:20:07.901Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 11,
+              "Title": "tfWindows.js",
+              "DocumentMoniker": "C:\\GIT\\JS-4\\banf\\frontend\\tfWebApp\\tfWindows.js",
+              "RelativeDocumentMoniker": "frontend\\tfWebApp\\tfWindows.js",
+              "ToolTip": "C:\\GIT\\JS-4\\banf\\frontend\\tfWebApp\\tfWindows.js",
+              "RelativeToolTip": "frontend\\tfWebApp\\tfWindows.js",
+              "ViewState": "AgIAAD4CAAAAAAAAAAASwEkCAAAbAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001646|",
+              "WhenOpened": "2025-05-12T09:14:55.597Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 12,
+              "Title": "tfWebApp.js",
+              "DocumentMoniker": "C:\\GIT\\JS-4\\banf\\frontend\\tfWebApp\\tfWebApp.js",
+              "RelativeDocumentMoniker": "frontend\\tfWebApp\\tfWebApp.js",
+              "ToolTip": "C:\\GIT\\JS-4\\banf\\frontend\\tfWebApp\\tfWebApp.js",
+              "RelativeToolTip": "frontend\\tfWebApp\\tfWebApp.js",
+              "ViewState": "AgIAAHsAAAAAAAAAAAAAAIsAAAAOAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001646|",
+              "WhenOpened": "2025-05-12T09:06:42.449Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 8,
+              "Title": "tfDialogs.js",
+              "DocumentMoniker": "C:\\GIT\\JS-4\\banf\\frontend\\tfWebApp\\tfDialogs.js",
+              "RelativeDocumentMoniker": "frontend\\tfWebApp\\tfDialogs.js",
+              "ToolTip": "C:\\GIT\\JS-4\\banf\\frontend\\tfWebApp\\tfDialogs.js",
+              "RelativeToolTip": "frontend\\tfWebApp\\tfDialogs.js",
+              "ViewState": "AgIAABEBAAAAAAAAAAASwCsBAAAcAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001646|",
+              "WhenOpened": "2025-05-12T08:32:05.134Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "nodeAPI.js",
+              "DocumentMoniker": "C:\\GIT\\JS-4\\banf\\nodeAPI.js",
+              "RelativeDocumentMoniker": "nodeAPI.js",
+              "ToolTip": "C:\\GIT\\JS-4\\banf\\nodeAPI.js",
+              "RelativeToolTip": "nodeAPI.js",
+              "ViewState": "AgIAAO8AAAAAAAAAAAASwAYBAAAWAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001646|",
+              "WhenOpened": "2025-05-12T07:55:10.829Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 7,
+              "Title": "tfSysAdmin.js",
+              "DocumentMoniker": "C:\\GIT\\JS-4\\banf\\frontend\\tfWebApp\\tfSysAdmin.js",
+              "RelativeDocumentMoniker": "frontend\\tfWebApp\\tfSysAdmin.js",
+              "ToolTip": "C:\\GIT\\JS-4\\banf\\frontend\\tfWebApp\\tfSysAdmin.js",
+              "RelativeToolTip": "frontend\\tfWebApp\\tfSysAdmin.js",
+              "ViewState": "AgIAAJkAAAAAAAAAAAAAALMAAAAIAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001646|",
+              "WhenOpened": "2025-05-12T06:37:00.435Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "main.js",
+              "DocumentMoniker": "C:\\GIT\\JS-4\\banf\\frontend\\main.js",
+              "RelativeDocumentMoniker": "frontend\\main.js",
+              "ToolTip": "C:\\GIT\\JS-4\\banf\\frontend\\main.js",
+              "RelativeToolTip": "frontend\\main.js",
+              "ViewState": "AgIAALQAAAAAAAAAAAAAANIAAACFAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001646|",
+              "WhenOpened": "2025-05-12T06:22:38.289Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

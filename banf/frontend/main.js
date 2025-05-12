@@ -43,6 +43,13 @@ export function main(capt1)
   // Damit die Session und Grant :ogik funktioniert, muss der UserName auch lokal hinterlegt sein
   // Dieser hat jedoch kein Passwort und soll sich auf normalem Wege nicht anmelden können
 
+  // Falls aber EXPLIZIT ein Login-Dialog gewünscht ist, um z.B. den AdminUser zu aktivieren,
+  // dann muss in der URL hinter dem "/" /?admin=true angehängt werden
+  if (window.location.search.includes('admin=true') || window.location.hash.includes('#admin')) 
+  {
+     app.login( ()=>{  caption2 = 'Willkommen ' + globals.session.userName ; run() });
+     return;
+  }
 
   // Zuerst anfragen, ob User in NT-Domäne ist und wir seinen Namen verwenden können
   // über /ntlm werden die Daten des Users abgerufen .....
@@ -53,7 +60,7 @@ export function main(capt1)
 
   // Wenn Username gesetzt, dann nahtlos fortsetzen ohne Login-Dialog
   if (usrName) 
-  { 
+  { debugger;
     // ntlm-Anmeldung am Server um Session zu erhalten...
     var url      = globals.getServer()+'/ntlmLogin/'+usrName;
     var response = utils.webRequest( url );
@@ -68,7 +75,7 @@ export function main(capt1)
                             );
     }                  
     caption2 = 'Willkommen ' + usrName;
-    globals.session.admin = true; // für den Fall, dass wir im Test-Modus sind
+    
     run();
     return;
   }
@@ -108,7 +115,7 @@ export function run()
     btn31.heightPx = 40;
     btn31.margin   = 4;
 
-    if(globals.session.admin)
+    if(globals.hasAccess('banfAdmin'))
     {  
       var response = utils.webApiRequest('LSBANFUSER' , {} );
       response.result.unshift("alle Benutzer");
@@ -137,7 +144,7 @@ export function run()
     h2.buildGridLayout_templateRows('4em 1fr'); 
     menuContainerBottom = dialogs.addPanel( h2 , "cssContainerPanel" , 1 , 1 , 1 , 1 );
     menuContainerBottom.backgroundColor = 'gray';
-    menuContainerBottom.buildGridLayout_templateColumns('4em 0.4em 4em 0.4em 4em 1fr');
+    menuContainerBottom.buildGridLayout_templateColumns('4em 0.4em 4em 0.4em 4em 1fr 4em 0.4em');
     menuContainerBottom.buildGridLayout_templateRows('1fr');
 
     dashBoardBottom    = dialogs.addPanel( h2 , "" , 1 , 2 , 1 , 1 );
@@ -156,6 +163,11 @@ export function run()
 
   var btn3 = dialogs.addButton( menuContainerBottom , "cssAbortBtn01" , 5 , 1 , 1 , 1 , {glyph:"minus"}   )
       btn3.callBack_onClick = function() { delBanf() };
+      btn3.heightPx = 44;
+      btn3.widthPx  = 47;
+
+  var btn3 = dialogs.addButton( menuContainerBottom , "" , 7 , 1 , 1 , 1 , {caption:"Export" , glyph:"hand-holding"}   )
+      btn3.callBack_onClick = function() { exportBanf() };
       btn3.heightPx = 44;
       btn3.widthPx  = 47;
      
@@ -192,6 +204,14 @@ function updateViewHead()
   grid.onRowClick=function( selectedRow , itemIndex , jsonData ) { selectBanfHead(jsonData) };
   grid.onRowDblClick=function( selectedRow , itemIndex , jsonData ) { editBanfHead(jsonData) };
 }
+
+
+function exportBanf()
+{
+    dialogs.showMessage('Export-Funktion ist noch nicht implementiert! Erst wenn die Feld-Reihenfolge definiert ist, werden die Daten entsprechend in der Zwischenablage aufbereitet.');
+}
+
+
 
 
 function selectBanfHead(p)

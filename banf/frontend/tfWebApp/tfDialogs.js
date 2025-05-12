@@ -809,7 +809,7 @@ export function fileDialog( rootPath, mask , multiple , callBackOnSelect , onSel
 
 
 export function playMovieFile(container, url , caption )  // fileName kann auch ein Array sein ... 
-{debugger;
+{
   if(!container){
     container = new TFWindow( null , caption || "Video" , "77%" , "77%" , "CENTER" ).hWnd;
   }
@@ -1006,7 +1006,7 @@ export function showImage( url , caption )
 
 
   export async function browseSymbols()
-  {  debugger;
+  {  
     var w            = new TFWindow( null , 'Symbol-Browser' , '80%' , '80%' , 'CENTER' );
     var svgContainer = w.hWnd;
 

@@ -136,7 +136,8 @@ export function logout()
  
 export function sysInfo() 
 {
-  var w=dialogs.createWindow( null , "SystemInfo" , "70%" , "70%" , "CENTER" ).hWnd;
+  var wnd=dialogs.createWindow( null , "SystemInfo" , "70%" , "70%" , "CENTER" );
+  var w  = wnd.hWnd;
      
   w.buildGridLayout_templateColumns( "1fr");
   w.buildGridLayout_templateRows   ( "1px 5em 0.1em 1fr 0.1em 3.7em 0.4em");
@@ -196,7 +197,7 @@ export function sysInfo()
       sb.buildGridLayout_templateRows( "1fr" );
 
   var b=dialogs.addButton(sb,"",2,1,1,1,"OK");
-      b.callBack_onClick = function(){this.wnd.closeWindow()}.bind({wnd:w})
+      b.callBack_onClick = function(){this.wnd.close()}.bind({wnd:wnd})
 } 
 
 

@@ -1782,6 +1782,8 @@ export class TFListCheckbox extends TFObject
   
       var  input        = document.createElement("INPUT");
       input.className   = "cssCheckBox";
+      input.style.marginLeft = '1em';
+      input.style.marginTop  = '0.4em';
       input.setAttribute('type' , 'checkbox');
       input.id          = cbID; 
       input.checked     = item.checked;
@@ -1808,7 +1810,8 @@ export class TFListCheckbox extends TFObject
   
   
   render()
-  {
+  { 
+    this.backgroundColor = 'green';
     super.render();
     utils.buildBlockLayout( this );
 
@@ -1816,7 +1819,7 @@ export class TFListCheckbox extends TFObject
     if(this.params.items) this.items = this.params.items;
 
     this.overflow = 'auto';
-    this.backgroundColor = 'gray';
+    this.backgroundColor = 'rgba(0,0,0,0.1)';
    
     this.__render();
  }

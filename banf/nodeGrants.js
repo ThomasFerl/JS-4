@@ -32,8 +32,9 @@ module.exports.isGrantObj = ( grantName ) =>
 
 module.exports.addGrant = ( db , grant ) =>
 {
-  // ist frant bereits eine ID ?
-  if(!isNaN(grant)) return {error:false, errMsg:"alredy ID", result:grant }
+  // ist grant bereits eine ID ?
+  if(!isNaN(grant)) return {error:false, errMsg:"alredy a ID", result:grant }
+  
   var response = this.idGrant( db , grant.name );
     
   if(!response.error)
@@ -44,7 +45,7 @@ module.exports.addGrant = ( db , grant ) =>
     }  
   }
   
-  response = dbUtils.insertIntoTable( db , 'grantObj' , {name:grant.name,caption:grant.captiontName,kind:grant.kind} );
+  response = dbUtils.insertIntoTable( db , 'grantObj' , {name:grant.name,caption:grant.caption,kind:grant.kind} );
 
   if(response.error) return response;
 
@@ -113,13 +114,16 @@ module.exports.addUserGrant = ( db , userName , grantName  ) =>
 module.exports.setUserGrants = ( db , params ) =>
 {
   var errResponse = [];
-  console.log("setUserGrants("+JSON.stringify(params));
+ 
+  console.log("");
+  console.log("setUserGrants");
 
   this.resetUserGrant( db , params.ID_user );
   
   for(var i=0; i<params.grants.length; i++)
   {
     var grant    = params.grants[i];
+    console.log("grant["+i+"]=> "+JSON.stringify(grant));
     if(grant.access)
     {
       var response = this.addUserGrant( db , params.ID_user , grant.ID );
@@ -130,7 +134,7 @@ module.exports.setUserGrants = ( db , params ) =>
       }
       else
          {
-            console.log("User "+params.ID_user+" granted "+response.grant.ID);
+            console.log("User "+params.ID_user+" granted -> "+ grant.name);
       }
     }  
   }

@@ -596,7 +596,7 @@ get opacity()
   }
 
   destroy()
-  {
+  { 
     if(this.callBack_onClose) this.callBack_onClose();
     
     this.hWnd.destroy();
