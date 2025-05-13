@@ -37,5 +37,6 @@ export function main(capt1)
 export function run()
 {
    var ws = app.startWebApp(caption1,caption2).activeWorkspace;
-   new TFMediaCollector('100%' , '100%' , {parent:ws} );
+   dialogs.addButton(ws,"",1,1,100,40,"ok")
+          .callBack_onClick = function(){ new TFMediaCollector('100%' , '100%' , {parent:ws} ) }  ;
 }  
