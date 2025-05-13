@@ -91,6 +91,8 @@ export function main(capt1)
 
 export function run()
 { 
+   //  document.document.requestFullscreen();
+
     var ws = app.startWebApp(caption1,caption2).activeWorkspace;
 
     var l  = dialogs.setLayout( ws.handle , {gridCount:27,head:2} )
@@ -190,6 +192,7 @@ function updateView()
   grid.onRowDblClick=function( selectedRow , itemIndex , jsonData ) { editBanf(jsonData) };
 }
 
+
 function updateViewHead()
 {
   dashBoardTop.innerHTML = ""; // clear the dashboard
@@ -204,6 +207,7 @@ function updateViewHead()
   var grid = dialogs.createTable( dashBoardTop , response.result , ['ID','OWNER'] , [] );
   grid.onRowClick=function( selectedRow , itemIndex , jsonData ) { selectBanfHead(jsonData) };
   grid.onRowDblClick=function( selectedRow , itemIndex , jsonData ) { editBanfHead(jsonData) };
+  updateView();
 }
 
 
@@ -211,8 +215,6 @@ function exportBanf()
 {
     dialogs.showMessage('Export-Funktion ist noch nicht implementiert! Erst wenn die Feld-Reihenfolge definiert ist, werden die Daten entsprechend in der Zwischenablage aufbereitet.');
 }
-
-
 
 
 function selectBanfHead(p)
@@ -274,6 +276,7 @@ function __deleteBanfPosition(banf)
 { 
   var response = utils.webApiRequest('DELETEBANF' , {ID:banf.ID} );
   if(response.error) {dialogs.showMessage(response.errMsg) }
+  selectedBanf = null;
   updateView();
 }
 
@@ -322,5 +325,6 @@ function __deleteHead(banfHead)
 {
   var response = utils.webApiRequest('DELETEBANFHEAD' , {ID:banfHead.ID} );
   if(response.error) {dialogs.showMessage(response.errMsg) }
+  selectedBanfHead = null;
   updateViewHead();
 }
