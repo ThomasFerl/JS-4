@@ -1,7 +1,7 @@
 
 import * as globals         from "./tfWebApp/globals.js";
-import * as app          from "./tfWebApp/tfWebApp.js";
-import * as sysadmin     from "./tfWebApp/tfSysAdmin.js";
+import * as app             from "./tfWebApp/tfWebApp.js";
+import * as sysadmin        from "./tfWebApp/tfSysAdmin.js";
 import { TFDistributor  }   from "./tfWebApp/tfMQTT.js";
 import { TFMQTTExplorer }   from "./tfMQTTExplorer.js";
 import * as utils           from "./tfWebApp/utils.js";    
@@ -24,7 +24,7 @@ var caption1        = '';
 var caption2        = '';
 
 export function main(capt1)
-{
+{ debugger
   caption1 = capt1;
   caption2 = '';
   

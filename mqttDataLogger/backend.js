@@ -1,5 +1,11 @@
 const useHTTPS          = false;
-const port              = '4040';
+const port              = '4000';
+
+
+const MQTT_BROKER_URL   = 'mqtt://10.102.13.99:4701'; 
+
+const globals           = require('./backendGlobals');
+
 
 const http        = require('http');
 const https       = require('https');
@@ -12,12 +18,22 @@ const bodyParser  = require('body-parser');
 const Database    = require('better-sqlite3');
 const fs          = require('fs-extra');
 const path        = require('path');
-const globals     = require('./backendGlobals');
+
+const mqtt        = require('mqtt');
+const mqttHandler = require('./mqttHandler');
+
 const utils       = require('./nodeUtils');
 const webAPI      = require('./nodeAPI');
 const userAPI     = require('./userAPI');
 const session     = require('./session');
+const dbUtils     = require('./dbUtils');
 const dbTables    = require('./dbTables');
+
+const {TMQTTDistributor}    = require('./mqttDistributor');
+const { networkInterfaces } = require('os');
+
+
+
 
 const sslOptions  = {
     key : fs.readFileSync('./SSL/privateKex.pem'  , 'utf8' ),     // Pfad zum privaten Schlüssel
@@ -28,7 +44,7 @@ const dBetc       = './etc.db';
 const etc         = new Database( dBetc  , { verbose: utils.log } );
       utils.log("etc-dB: "+etc.constructor.name);
 
-const dBName      = './workingBase.db';
+const dBName      = './mqtt_registry.db';
 const dB          = new Database( dBName  , { verbose: utils.log ,  readonly: false } );
       utils.log("working-dB: "+dB.constructor.name);
 
@@ -38,6 +54,58 @@ dbTables.buildTables( dB );
 
 // Datenstruktur auf ggf. vorhandene Änderungen prüfen ....
 // dbTables.checkdbTableStructure();
+
+
+
+
+//-----------------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------------------
+// MQTT - Client starten und zum Mosquitto-Server Verbindung aufnehmen
+//-----------------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------------------
+
+const defaultTopic = '#';
+
+mqttHandler.setup( dB );
+
+const mqttClient = mqtt.connect(MQTT_BROKER_URL);
+
+mqttClient.on('connect', () => {
+                                  console.log('✅ Verbunden mit Mosquitto-Broker');
+                                  mqttClient.subscribe( defaultTopic , (err) => {
+                                                                       if (err) console.error('❌ Fehler beim Abonnieren des Topics: ' + defaultTopic , err);
+                                                                       else     console.log('📡 Abonniert: ' + defaultTopic );
+                                                                     });
+                                });                                      
+
+// Nachricht empfangen und in DB speichern
+mqttClient.on('message', async (topic, payload) => { mqttHandler.onMessage(topic, payload); });
+ 
+// Fehlerbehandlung
+mqttClient.on('error', (err) => { console.error('❌ MQTT-Fehler:', err); });
+
+
+
+//-----------------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------------------
+// MQTT - Distributor starten und mqtt-Topics zum Frontend zu senden
+//-----------------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------------------
+
+// MQTT - Distributor starten
+mqttDist = new TMQTTDistributor({ mqttBroker: MQTT_BROKER_URL,
+                                  topic     : defaultTopic 
+                                })
+
+mqttDist.start();
+
+
+//-----------------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------------------
+
+
+
 
 
 const webApp       = express();
@@ -287,6 +355,20 @@ function handle_backDoor_Request( reqStr , res)
   res.send( "no_Way" );
 }
 
+
+function handleSyncForce( req , res )
+{
+  mqttHandler.synchronize();   
+  mqttHandler.aggregateHourly();   
+  mqttHandler.aggregateDaily();   
+  mqttHandler.cleanUp_old_payLoads(); 
+  res.send("Synchronisation außerhalb des Scheduler ausgeführt ...");
+}  
+
+
+
+
+
 webAPI.setup( dB , etc );
 
 
@@ -333,6 +415,7 @@ webApp.get('/DEBUG'                        ,  handleDebug );
 webApp.get('/ntlm'                         ,  handleNTLM );
 webApp.get('/x'                            ,  handleRequest );
 
+webApp.get('/syncForce'                    ,  handleSyncForce );
 
 webApp.post('/xpost'                       ,  handleRequest );
 webApp.post('/upload', upload.single('file'), handleUpload );
