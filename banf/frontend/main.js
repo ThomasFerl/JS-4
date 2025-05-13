@@ -10,6 +10,7 @@ import { TBanfHead   }   from "./banfHead.js";
 import { TFDateTime  }   from "./tfWebApp/utils.js";    
 import { TFEdit } from "./tfWebApp/tfObjects.js";
 
+
 var caption1  = '';
 var caption2  = '';
 
@@ -60,7 +61,7 @@ export function main(capt1)
 
   // Wenn Username gesetzt, dann nahtlos fortsetzen ohne Login-Dialog
   if (usrName) 
-  { debugger;
+  { 
     // ntlm-Anmeldung am Server um Session zu erhalten...
     var url      = globals.getServer()+'/ntlmLogin/'+usrName;
     var response = utils.webRequest( url );
@@ -270,7 +271,7 @@ function editBanf()
 
 
 function __deleteBanfPosition(banf)
-{
+{ 
   var response = utils.webApiRequest('DELETEBANF' , {ID:banf.ID} );
   if(response.error) {dialogs.showMessage(response.errMsg) }
   updateView();

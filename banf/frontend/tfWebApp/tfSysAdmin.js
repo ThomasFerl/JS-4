@@ -152,8 +152,10 @@ edit( callback_if_ready )
 
   
               // aParent     , aData      , aLabels , aAppendix , aExclude , aInpType , URLForm )
-  var inp = new TForm( hlpContainer    , this.#data , {}      , {}        , ['ID']             , {}       , '' );    
+  var inp = new TForm( hlpContainer    , this.#data , {}      , {}        , ['ID']             , {}       , '' );  
+      inp.setInputType('passwd' , "Password" , {} );
       inp.render( true ); 
+      
 
 
   if(globals.session.admin)

@@ -57,10 +57,10 @@ if( CMD=='LSBANF')
     return dbUtils,dbUtils.fetchRecords_from_Query(dB,sql);
   }
 
-  if( CMD=='DELBANF') 
+  if( CMD=='DELETEBANF') 
     {
       console.log('run DELBANF stringify(param) => '+ JSON.stringify(param));
-      var sql = "DELETE * FROM banf WHERE ID = " + param.ID 
+      var sql = "DELETE FROM banf WHERE ID = " + param.ID 
      
       return dbUtils,dbUtils.runSQL(dB,sql);
     }

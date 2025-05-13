@@ -3589,6 +3589,14 @@ export class TForm
         if(ctrl.type.toUpperCase()=='TEXT')
            ctrl.editControl = new TFEdit(inpContainer,1,1,'99%','3em',{caption:ctrl.label,appendix:ctrl.appendix,value:ctrl.value,captionLength:maxLabel,appendixLength:maxAppendix,justifyEdit:"left"});  
        
+
+        if(ctrl.type.toUpperCase()=='PASSWORD')
+        {
+          ctrl.editControl = new TFEdit(inpContainer,1,1,'99%','3em',{lookUp:true,items:ctrl.params.items,caption:ctrl.label,appendix:ctrl.appendix,value:ctrl.value,captionLength:maxLabel,appendixLength:maxAppendix,justifyEdit:"left"});  
+          ctrl.editControl.input.type = 'password';
+        }
+      
+
         if(ctrl.type.toUpperCase()=='LOOKUP')
           ctrl.editControl = new TFEdit(inpContainer,1,1,'99%','3em',{lookUp:true,items:ctrl.params.items,caption:ctrl.label,appendix:ctrl.appendix,value:ctrl.value,captionLength:maxLabel,appendixLength:maxAppendix,justifyEdit:"left"});  
       

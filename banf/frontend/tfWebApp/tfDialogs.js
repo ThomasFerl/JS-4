@@ -578,7 +578,7 @@ export function ask( title , msg , callBackIfYes , callBackIfNo )
 
 
 export function showMessage( msg , options , callBack )
-{ debugger;
+{ 
   var button = [];
   var glyph  = '';
   if(options)
