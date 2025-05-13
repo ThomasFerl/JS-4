@@ -278,8 +278,11 @@ export class TChanelDlg
                                                        // wir brauchen aber den Klartextnamen ....
                                                        var t =this.form.getControlByName("DESC").editControl;  
                                                        var r =this.form.getInputFormValues();
-                                                       utils.findEntryByField(r , 'field' , 'DESC').value = t.text;
-                                                       utils.findEntryByField(r , 'field' , 'ID_TOPIC').value = t.value;
+                                                       var h1 = utils.findEntryByField(r , 'field' , 'DESC');
+                                                       if(h1!=null) h1.value = t.text;
+
+                                                       var h2 = utils.findEntryByField(r , 'field' , 'ID_TOPIC');
+                                                        if(h2!=null) h2.value = t.value;
                                                        
                                                        this.saveChanel(r);
                                                      }.bind(this);  
