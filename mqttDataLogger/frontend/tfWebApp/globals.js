@@ -88,7 +88,7 @@ export function startSession( sessionID , userName , userID , grants , admin )
   session.userName  = userName;
   session.userID    = userID;
   session.grants    = grants;
-  session.admin     = admin;
+  session.admin     = admin ||  hasAccess('admin') ||  hasAccess('sysadmin') ||  hasAccess('root') 
 
   if(   
     (userName.toLocaleUpperCase()=='ROOT')
@@ -100,6 +100,20 @@ export function startSession( sessionID , userName , userID , grants , admin )
     console.log("Start Session: " + JSON.stringify(session));
 
 }
+
+
+
+export function hasAccess(grandName)
+{
+  for(var i=0; i<session.grants.length; i++)
+    {
+       var grant = session.grants[i];
+         if(grant.name==grandName) return grant.access;
+    }
+    return false;
+}
+
+
 
 export function setSysMenu( s ) { sysMenu = s}
 

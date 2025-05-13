@@ -136,7 +136,8 @@ export function logout()
  
 export function sysInfo() 
 {
-  var w=dialogs.createWindow( null , "SystemInfo" , "70%" , "70%" , "CENTER" ).hWnd;
+  var wnd=dialogs.createWindow( null , "SystemInfo" , "70%" , "70%" , "CENTER" );
+  var w  = wnd.hWnd;
      
   w.buildGridLayout_templateColumns( "1fr");
   w.buildGridLayout_templateRows   ( "1px 5em 0.1em 1fr 0.1em 3.7em 0.4em");
@@ -167,10 +168,13 @@ export function sysInfo()
             r.buildGridLayout_templateColumns("3em 1fr 10em" );
             r.buildGridLayout_templateRows   ("1fr" );
 
-            dialogs.addLabel(r,"cssLabel",1,1,1,1,i);
-            dialogs.addLabel(r,"cssBoldLabel",2,1,1,1,g.caption);
+        var l=dialogs.addLabel(r,"cssLabel",1,1,1,1,g.ID);
+            l.color = 'gray';
+             
+            l=dialogs.addLabel(r,"cssBoldLabel",2,1,1,1,g.caption || g.name);
+            l.textAlign = 'left';
 
-        var l = dialogs.addLabel(r,"cssLabel",3,1,1,1,b);
+            l = dialogs.addLabel(r,"cssLabel",3,1,1,1,b);
                 if(g.access) l.color = 'green';
                 else         l.color = 'red';
       }  
@@ -193,7 +197,7 @@ export function sysInfo()
       sb.buildGridLayout_templateRows( "1fr" );
 
   var b=dialogs.addButton(sb,"",2,1,1,1,"OK");
-      b.callBack_onClick = function(){this.wnd.closeWindow()}.bind({wnd:w})
+      b.callBack_onClick = function(){this.wnd.close()}.bind({wnd:wnd})
 } 
 
 

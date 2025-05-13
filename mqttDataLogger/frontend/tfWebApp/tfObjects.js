@@ -1782,6 +1782,8 @@ export class TFListCheckbox extends TFObject
   
       var  input        = document.createElement("INPUT");
       input.className   = "cssCheckBox";
+      input.style.marginLeft = '1em';
+      input.style.marginTop  = '0.4em';
       input.setAttribute('type' , 'checkbox');
       input.id          = cbID; 
       input.checked     = item.checked;
@@ -1808,7 +1810,8 @@ export class TFListCheckbox extends TFObject
   
   
   render()
-  {
+  { 
+    this.backgroundColor = 'green';
     super.render();
     utils.buildBlockLayout( this );
 
@@ -1816,7 +1819,7 @@ export class TFListCheckbox extends TFObject
     if(this.params.items) this.items = this.params.items;
 
     this.overflow = 'auto';
-    this.backgroundColor = 'gray';
+    this.backgroundColor = 'rgba(0,0,0,0.1)';
    
     this.__render();
  }
@@ -3586,6 +3589,14 @@ export class TForm
         if(ctrl.type.toUpperCase()=='TEXT')
            ctrl.editControl = new TFEdit(inpContainer,1,1,'99%','3em',{caption:ctrl.label,appendix:ctrl.appendix,value:ctrl.value,captionLength:maxLabel,appendixLength:maxAppendix,justifyEdit:"left"});  
        
+
+        if(ctrl.type.toUpperCase()=='PASSWORD')
+        {
+          ctrl.editControl = new TFEdit(inpContainer,1,1,'99%','3em',{lookUp:true,items:ctrl.params.items,caption:ctrl.label,appendix:ctrl.appendix,value:ctrl.value,captionLength:maxLabel,appendixLength:maxAppendix,justifyEdit:"left"});  
+          ctrl.editControl.input.type = 'password';
+        }
+      
+
         if(ctrl.type.toUpperCase()=='LOOKUP')
           ctrl.editControl = new TFEdit(inpContainer,1,1,'99%','3em',{lookUp:true,items:ctrl.params.items,caption:ctrl.label,appendix:ctrl.appendix,value:ctrl.value,captionLength:maxLabel,appendixLength:maxAppendix,justifyEdit:"left"});  
       

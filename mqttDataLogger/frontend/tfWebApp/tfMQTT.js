@@ -272,7 +272,7 @@ export class TFMQTTChart extends TFMQTTPanelBase
     }
     else  this.captionPanel = null;
 
-     this.chart = new TFChart( this , 1 , 2 , 1 , 1 , {chartBackgroundColor:'white',chartType:'Spline',maxPoints:50, chartData:params.prefilledData } );
+     this.chart = new TFChart( this , 1 , 2 , 1 , 1 , {chartBackgroundColor:'white',chartType:'Spline',maxPoints:50} );
      this.series = this.chart.addSeries('x','green');
 } 
                                              

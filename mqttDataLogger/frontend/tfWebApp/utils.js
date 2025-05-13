@@ -1454,7 +1454,7 @@ export function findEntryByField( array , fieldName , value )
 
 
 export function uploadFileToServer(file, fileName , callBackAfterUpload , params  ) 
-{ debugger;
+{
   console.log('uploadFileToServer...');
   console.log('  - file     :'+ file.name);
   console.log('  - fileName :'+fileName);

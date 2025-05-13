@@ -152,7 +152,7 @@ selectReverse()
 
 
  onRowDblClickEvent(event)
- { debugger;
+ { 
     console.log('onRowDblClick');  
     var selectedRow = event.currentTarget;
     

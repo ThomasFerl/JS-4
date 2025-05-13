@@ -77,7 +77,7 @@ const __anlagenSchluessel =
 export class TdeviceDlg 
 {
   constructor( device ) 
-  { 
+  { debugger;
       this.error      = false;
       this.errMsg     = ""; 
       this.newDevice  = false;

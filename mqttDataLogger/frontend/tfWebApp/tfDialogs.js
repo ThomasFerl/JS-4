@@ -578,29 +578,32 @@ export function ask( title , msg , callBackIfYes , callBackIfNo )
 
 
 export function showMessage( msg , options , callBack )
-{
+{ 
   var button = [];
-  var glyph  = null;
+  var glyph  = '';
   if(options)
   {
     if(options.button) button = options.button; 
-    if(options.glyph)  glyph  = options.glyph;
+    if(options.glyph)  glyph  = options.glyph ;
   }  
+
+  glyph  = glyph || "circle-info";
 
   if(button.length==0) button.push('OK');
 
   var w = createWindow( null , "Benachrichtigung" , "50%" , "35%" , "CENTER" ).hWnd;
       w.overflow = 'hidden';
    
-  utils.buildGridLayout_templateColumns( w , '1em 1fr 1em');
-  utils.buildGridLayout_templateRows   ( w , '0.7em 1fr 0.7em 4em 0.7em');
+  w.buildGridLayout_templateColumns( '1fr');
+  w.buildGridLayout_templateRows   ( '0.4em 1fr 0.7em 4em 0.4em');
 
-  var div = addPanel( w ,"",2,2,1,1);
-      div.backgroundColor = "rgba(0,0,0,0.04)";
+  var div = addPanel( w ,"",1,2,1,1);
+      div.backgroundColor = "rgba(76, 186, 52, 0.04)";
+      div.margin = '4px';
 
-  if(glyph) utils.buildGridLayout_templateColumns( div , '1fr 7em');
-  else      utils.buildGridLayout_templateColumns( div , '1fr');
-            utils.buildGridLayout_templateRows   ( div , '1fr');
+  if(glyph) div.buildGridLayout_templateColumns('1fr 7em');
+  else      div.buildGridLayout_templateColumns('1fr');
+            div.buildGridLayout_templateRows   ('1fr');
       
   var msgDiv    = addPanel( div ,"cssContainerPanel",1,1,1,1);
       msgDiv.backgroundColor = "rgb(247,244,247)"; 
@@ -609,16 +612,16 @@ export function showMessage( msg , options , callBack )
   if(glyph)
   {
    var imgDiv    = addPanel( div ,"cssContainerPanel",2,1,1,1);
-       imgDiv.DOMelement.innerHTML = '<center><i class="'+glyph+'"></i></center>';
+       utils.drawSymbol( glyph , imgDiv , "gray" , "77%");
   }     
 
-  var btnDiv = addPanel( w ,"cssContainerPanel",2,4,1,1);
+  var btnDiv = addPanel( w ,"cssContainerPanel",1,4,1,1);
       btnDiv.backgroundColor = "rgba(0,0,0,0.14)";
   
     
   for(var i=0; i<button.length; i++) 
   {  
-          var b=addButton(btnDiv,"",1,1,77,35,button[i]);
+          var b=addButton(btnDiv,"",1,1,100,47, {caption:button[i]});
               b.backgroundColor  = "gray";
               b.attachment       = i;
               b.callBack_onClick = function() { this.wnd.destroy();  if(callBack) callBack(this.btn.attachment) }.bind({wnd:w.parent,btn:b});
@@ -809,7 +812,7 @@ export function fileDialog( rootPath, mask , multiple , callBackOnSelect , onSel
 
 
 export function playMovieFile(container, url , caption )  // fileName kann auch ein Array sein ... 
-{debugger;
+{
   if(!container){
     container = new TFWindow( null , caption || "Video" , "77%" , "77%" , "CENTER" ).hWnd;
   }
@@ -1006,7 +1009,7 @@ export function showImage( url , caption )
 
 
   export async function browseSymbols()
-  {  debugger;
+  {  
     var w            = new TFWindow( null , 'Symbol-Browser' , '80%' , '80%' , 'CENTER' );
     var svgContainer = w.hWnd;
 
