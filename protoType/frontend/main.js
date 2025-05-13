@@ -1,10 +1,12 @@
 
-
 import * as globals      from "./tfWebApp/globals.js";
+import * as graphics     from "./tfWebApp/tfGrafics.js";  
 import * as utils        from "./tfWebApp/utils.js";    
 import * as dialogs      from "./tfWebApp/tfDialogs.js";
-import * as graphics     from "./tfWebApp/tfGrafics.js";
+import * as app          from "./tfWebApp/tfWebApp.js"; 
+import * as sysadmin     from "./tfWebApp/tfSysAdmin.js";
 
+// Anwendungsspezifische Einbindungen
 import { TFEdit, 
          TForm,
          TFPopUpMenu,
@@ -16,23 +18,18 @@ import { TFWindow }      from "./tfWebApp/tfWindows.js";
 import { TFChart }       from "./tfWebApp/tfObjects.js";
 import { TFDateTime }    from "./tfWebApp/utils.js";
 
-import { TFMediaCollector } from "./tfMediaCollector.js";
 
+var caption1  = '';
+var caption2  = '';
 
-const svgPath = '/GIT/JS-4/banf/tfWebApp/symbols/'; 
-const imgPath = '/home/tferl/GIT/JS-3/prodia/uploads/';
-
-var svgContainer   = null;
 var testContainer1 = null;
 var testContainer2 = null;
 var testContainer3 = null;
 
-var imgs           = [];
-var imgNdx         = -1;
-
 
 var panels         = [];
 var menuContainer  = null;
+var dashBoard      = null;
 
 var editPath       = null;
 var clock          = null;
@@ -41,41 +38,31 @@ var osziX          = 0;
 var treeView       = null;
 var treeData       = {};
 
-var mediaViewer    = null;
 
 
-function viewMedia(fn)
+export function main(capt1)
 {
- // Dateiendung ermitteln...
-    var ext = fn.split('.').pop().toLowerCase();
-
-    if(mediaViewer==null) 
-          mediaViewer = new TFWindow( svgContainer , fn , '77%' , '77%' , 'CENTER' );
-    else mediaViewer.innerHTML = '';     
+  caption1 = capt1;
+  caption2 = '';
   
-    if(utils.isImageFile(ext))
-    {
-     var url = utils.buildURL('GETIMAGEFILE',{fileName:fn} );
-     dialogs.addImage( mediaViewer.hWnd , '' , 1 , 1 , '100%' , '100%' , url );
-    }
- 
-    if(utils.isMovieFile(ext))
-    {
-      var url = utils.buildURL('GETMOVIEFILE',{fileName:fn} );
-      dialogs.playMovieFile( mediaViewer.hWnd , url );
-    }    
-}
+  globals.sysMenu.push( {caption:'Benutzer' , action:function(){sysadmin.adminUser()} } );
+  globals.sysMenu.push( {caption:'Berechtigungen' , action:function(){sysadmin.adminGrants()} } );
+  globals.sysMenu.push( {caption:'Info' , action:function(){app.sysInfo()} } );
+  globals.sysMenu.push( {caption:'Symbol-Bibliothek (nur in der Entwicklungsphase)' , action:function(){dialogs.browseSymbols()} } );
+  globals.sysMenu.push( {caption:'Abbrechen' , action:function(){} } );
+  
+  app.login( ()=>{  caption2 = 'Willkommen ' + globals.session.userName ; run() });
+  
+}  
 
 
+export function run()
+{ debugger;
+   //  document.document.requestFullscreen();
 
+    var ws = app.startWebApp(caption1,caption2).activeWorkspace;
 
-
-export function main(capt1,capt2)
-{
-   
-    var ws = new TFWorkSpace('mainWS' , capt1,capt2 );
-
-    var l  = dialogs.setLayout( ws.handle , {gridCount:27,head:2,left:14} )
+    var l  = dialogs.setLayout( ws.handle , {gridCount:28,head:3,left:14} )
   
       menuContainer = l.head;
 
@@ -87,21 +74,16 @@ export function main(capt1,capt2)
           testContainer2 = dialogs.addPanel( testContainer , "" , 2 , 1 , 1 , 1 );
           testContainer3 = dialogs.addPanel( testContainer , "" , 3 , 1 , 1 , 1 );
 
-      svgContainer  = l.dashBoard; 
+      dashBoard  = l.dashBoard; 
 
       menuContainer.backgroundColor = 'gray';
       menuContainer.buildGridLayout_templateColumns('10em 10em 10em 10em 10em 10em 10em 10em 10em 10em 10em 1fr ');
       menuContainer.buildGridLayout_templateRows('1fr');
 
-
-  var btn1 = dialogs.addButton( menuContainer , "" , 1 , 1 , 1 , 1 , "Symbols"  )
-      btn1.callBack_onClick = function() { showSVGs() };
-      btn1.heightPx = 35;
-
  
   var btn4 = dialogs.addButton( menuContainer , "" , 4 , 1 , 1 , 1 , "Grid-Test"  )
       btn4.callBack_onClick = function() { 
-                                           var g = dialogs.createTable( svgContainer , [{Name:"Ferl",Vorname:"Thomas",gebDatum:"29.10.1966"},
+                                           var g = dialogs.createTable( dashBoard , [{Name:"Ferl",Vorname:"Thomas",gebDatum:"29.10.1966"},
                                                                                         {Name:"Mustermann",Vorname:"Max",gebDatum:"01.01.2000"},
                                                                                         {Name:"Schmidt",Vorname:"Klaus",gebDatum:"15.03.1975"}] , '' , ''); }
       btn4.heightPx = 35;
@@ -170,7 +152,7 @@ var btn6 = dialogs.addButton( menuContainer , "" , 6 , 1 , 1 , 1 , "Chart-Test" 
                                                           level      : 90,
                                                           online     :true};
                                                                // aParent      , aData    , aLabels , aAppendix , aExclude , aInpType , URLForm )
-                                            var form = new TForm( svgContainer , formData , {}      , {}        , []       , {}       , '' );    
+                                            var form = new TForm( dashBoard , formData , {}      , {}        , []       , {}       , '' );    
                                                 form.setLabel("favFastfood" , "Lieblings-Fastfood")
                                                 form.setInputType("favFastfood" , "select" , {items:["Pizza","Pommes","Döner","HotDog","Sushi"]} );
                                                 form.setInputType("gebDatum" , "date");
@@ -196,7 +178,7 @@ var   btn9 = dialogs.addButton( menuContainer , "" , 9 , 1 , 1 , 1 , "Property-E
                                                         {label:"level",value:"90",type:"range",items:[]},
                                                         {label:"online",value:"true",type:"boolean",items:[]}];
 
-                                                        var p = new TPropertyEditor( svgContainer , data , null , null )
+                                                        var p = new TPropertyEditor( dashBoard , data , null , null )
                                                             p.render();
                                           
                                          }    
@@ -242,9 +224,7 @@ var   btn10 = dialogs.addButton( menuContainer , "" , 10 , 1 , 1 , 1 , "ask me" 
       var l=dialogs.addLabel( panels[0] , '' , 1 , 1 , 1 , 1 , 'irgend ein Text (Label)' );
       
       editPath = dialogs.addInput( panels[1] , 1 , 1 , 10 , 'path' , '' , '' , {} );
-      editPath.callBack_onClick=()=>{mediaViewer=null; dialogs.fileDialog( "/" , "*.*" , true , (d,f,ff)=>{editPath.value=d+'/';} , (fn)=>{viewMedia(fn)} )};
-    
-
+     
       dialogs.addDateTimePicker( panels[2] , 1 , 1 , 'dateTime' , '01.01.2000 17:35' , null , {} );
 
       dialogs.addDatePicker( panels[3] , 1 , 1 , 'date' , '17.01.2013 18:03' , null , {} );
@@ -261,12 +241,14 @@ var   btn10 = dialogs.addButton( menuContainer , "" , 10 , 1 , 1 , 1 , "ask me" 
              
       dialogs.addCheckBox( panels[7], 1,1,'checkBox' , true , {checkboxLeft:false} );
 
-      dialogs.addButton( panels[8] , '' , 1 , 1 , 100 , 32 , 'mediaCollector' )
-             .callBack_onClick = ()=> { new TFMediaCollector( '77%' , '77%' , {} ); };
-
-
-      dialogs.addButton( panels[9] , '' , 1 , 1 , 100 , 32 , 'API-Test' )
+    
+      dialogs.addButton( panels[8] , '' , 1 , 1 , 100 , 32 , 'API-Test' )
              .callBack_onClick = ()=> { apiTest(); };
+
+
+      dialogs.addButton( panels[9] , '' , 1 , 1 , 100 , 32 , 'Datei-Manager' ) 
+             .callBack_onClick=()=>{dialogs.fileDialog( "/" , "*.*" , true , (d,f,ff)=>{editPath.value=d+'/';} , (fn)=>{alert(fn)} )};
+          
 
 
 
@@ -345,120 +327,15 @@ panels[12].animation(
       
 } 
     
-     
-async function showSVGs()
-{ debugger;
-   //load all SVG's
-   svgContainer.innerHTML = '';
-   svgContainer.buildFlexBoxLayout();
-
-   var progress = dialogs.addLabel( svgContainer , "" , 1 , 1 , '100%' , '100%' , "loading ..." );
-       progress.position = 'relative';
-       progress.backgroundColor = 'rgba(0,0,0,0.25)';
-       progress.color = 'white';
-
-   var svgs = utils.webApiRequest('LSSYMBOLS' , {} ).result;
-  
-   for(var i=0; i<svgs.length; i++)
-   { 
-    progress.caption = 'loading ' + i + ' of ' + svgs.length + '  (' + Math.round(i/svgs.length*100) + '%)';
-
-    // Warte kurz, damit der Browser aktualisieren kann
-    await utils.processMessages();
-
-     var p = dialogs.addImage( svgContainer , "" , 1 , 1 , "77px" , "77px" );
-     
-     var svg = utils.webApiRequest('SYMBOL',{symbolName:svgs[i]} ); 
-
-        if (!svg.error) 
-          {
-            p.svgContent = svg.result;
-            p.dataBinding = {svg:svg.result};
-            p.callBack_onClick = function(e, d ) { var wnd = new TFWindow( svgContainer , 'TEST' , '50%' , '70%' , 'CENTER' ); 
-                                                   var img = dialogs.addImage( wnd.hWnd ,  '' , 1, 1, '100%' , '100%' );                                       
-                                                       img.svgContent = d.svg;
-                                                 };
-          }
-    }      
-
-    progress.destroy();
-
- }
-
-
- async function showIMGs(path )
-{ 
-   //load all SVG's
-   svgContainer.innerHTML = '';
-   svgContainer.buildFlexBoxLayout();
-
-   var progress = dialogs.addLabel( svgContainer , "" , 1 , 1 , '100%' , '100%' , "loading ..." );
-       progress.backgroundColor = 'rgba(0,0,0,0.25)';
-       progress.color = 'white';
-
-   var response = utils.webApiRequest('SCANDIR' , {dir:path} )
-   imgs = [];
-
-   for (var i=0; i<Math.min(response.result.length , 2000); i++)
-       if(response.result[i].isFile) imgs.push( utils.buildURL('GETIMAGEFILE',{fileName:path + response.result[i].name }  ));
-
-   for(var i=0; i<imgs.length; i++)
-   { 
-    progress.caption = 'loading ' + i + ' of ' + imgs.length + '  (' + Math.round(i/imgs.length*100) + '%)';
-
-    // Warte kurz, damit der Browser aktualisieren kann
-    await utils.processMessages();
-
-     var p        = dialogs.addImage( svgContainer , "" , 1 , 1 , "77px" , "77px" );
-         p.imgURL = imgs[i];
-         p.dataBinding = {imgURL:p.imgURL, index:i};
-         p.callBack_onClick = function(e, d ) { 
-                                                var wnd        = new TFWindow( svgContainer , 'TEST' , '70%' , '90%' , 'CENTER' ); 
-                                                var img        = dialogs.addImage( wnd.hWnd ,  '' , 1, 1, '100%' , '100%' );                                       
-                                                    img.imgURL = d.imgURL;
-                                                    imgNdx     = d.index;
-                                                    wnd.callBack_onClick = (e)=>{
-                                                                                  if(e.button==0) nextImage(img);
-                                                                                  if(e.button==2) prevImage(img);
-                                                                                  if(globals.isALTpressed) diaShow(img);
-                                                                                 } 
-
-                                                    var popup = new TFPopUpMenu([{caption:'Diashow',value:1} , {caption:'aabrechen',value:2 }]);
-                                                        popup.onClick = function (sender , item ){ if(item.value==1) diaShow(this);}.bind(img);
-                            
-                                                    img.addPopupMenu(popup); 
-                                                 };
-    }
-
-    progress.destroy();
-
- }
-
- function nextImage(img)
- {
-    imgNdx++;
-   if(imgNdx>imgs.length) imgNdx = 0;
-   img.imgURL = imgs[imgNdx]; 
- }  
-
- function prevImage(img)
- {
-    imgNdx--;
-   if(imgNdx<0) imgNdx = imgs.length-1;
-   img.imgURL = imgs[imgNdx]; 
- }  
-
-
- function diaShow(img)
- {
-  setInterval( () => { nextImage(img); }, 4000 ); 
- }
-
+ 
 
  function apiTest()
  {
   var w = new TFWindow( null , 'API-Test' , '70%' , '30%' , 'CENTER' );
-  var cmds = ['SYMBOLPATH','LSPERSON','PERSON','SAVEPERSON','LSFILES','FILE', 'LSTHUMBS' , 'THUMB' , 'CONTENTURL','REGISTERMEDIA','ISREGISTERED','MEDIASCANDIR']; 
+  var cmds = ['LSGRANTS' , 'GETUSERGRANTS' , 'GETVAR' , 'GETVARS' , 'USERLOGOUT' , 'CREATETABLE' , 'FETCHVALUE' , 'FETCHRECORD' , 'FETCHRECORDS',
+              'INSERTINTOTABLE' , 'UPDATETABLE' , 'DROP' , 'EXISTTABLE' , 'STRUCTURE' , 'AST' , 'LSUSER' , 'ADDUSER' ,  'EDITUSER' , 'ADDGRANT' , 'IDGRANT' , 
+              'RESETUSERGRANTS' , 'ADDUSERGRANT' , 'SETUSERGRANTS' , 'GETUSERGRANTS' , 'SETVAR' , 'DELVAR' , 'JSN2EXCEL' ];
+              
   var cbItems = [];
   for(var i=0; i<cmds.length; i++) cbItems.push({caption:cmds[i],value:cmds[i]}); 
 

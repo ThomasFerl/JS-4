@@ -7,80 +7,23 @@ var content = [];
 
 
 tables.push( 
-  {tableName:"files",
+  {tableName:"table1",
    tableFields:[
-      {fieldName:"TYPE"         , fieldType:"Text" } ,
-      {fieldName:"DIR"          , fieldType:"integer" } ,
-      {fieldName:"FILENAME"	    , fieldType:"numeric" } ,
-      {fieldName:"DIMENSION"	  , fieldType:"Text" } ,
-      {fieldName:"FILESIZE"	    , fieldType:"INT" } ,
-      {fieldName:"PLAYTIME"	    , fieldType:"INT" } ,
-      {fieldName:"QUALITY"	    , fieldType:"INT" } ,
-      {fieldName:"RATING"	      , fieldType:"INT" } ,
-      {fieldName:"SOURCE"	      , fieldType:"Text" } ,
-      {fieldName:"KATEGORIE"    , fieldType:"Text" } ,
-      {fieldName:"DESCRIPTION"	, fieldType:"Text" } ,
-      {fieldName:"HASH"       	, fieldType:"Text" } ,
-      {fieldName:"GUID"         , fieldType:"Text" } 
+      {fieldName:"FIELDNAME1"    , fieldType:"Text" } ,
+      {fieldName:"FIELDNAME2"    , fieldType:"integer" } ,
+      {fieldName:"FIELDNAME3"	   , fieldType:"numeric" } ,
+      {fieldName:"FIELDNAME4"	   , fieldType:"real" } 
    ]});
 
    tables.push( 
-      {tableName:"mediaSets",
+      {tableName:"table2",
        tableFields:[
-          {fieldName:"ID_THUMB"     , fieldType:"Text" } ,
-          {fieldName:"TYPE"         , fieldType:"Text" } ,
-          {fieldName:"NAME"	      , fieldType:"Text" } ,
-          {fieldName:"KATEGORIE"    , fieldType:"Text" } ,
-          {fieldName:"DESCRIPTION"	, fieldType:"Text" }           
+         {fieldName:"FIELDNAME1"    , fieldType:"Text" } ,
+         {fieldName:"FIELDNAME2"    , fieldType:"integer" } ,
+         {fieldName:"FIELDNAME3"	   , fieldType:"numeric" } ,
+         {fieldName:"FIELDNAME4"	   , fieldType:"real" } 
        ]}); 
        
-   tables.push( 
-      {tableName:"mediaInSet",
-            tableFields:[
-               {fieldName:"ID_FILE"	    , fieldType:"INTEGER" } ,
-               {fieldName:"ID_MEDIA"    , fieldType:"INTEGER" } ,
-               {fieldName:"POSITION"    , fieldType:"INTEGER" } 
-            ]});
-      
-
-   
-
-tables.push( 
-  {tableName:"thumbs",
-     tableFields:[
-        {fieldName:"ID_FILE"      , fieldType:"integer" } ,
-        {fieldName:"NDX"    	    , fieldType:"numeric" } ,
-        {fieldName:"THUMBFILE"	  , fieldType:"Text" } ,
-        {fieldName:"POSITION"	    , fieldType:"REAL" } 
-     ]});
-
-
-tables.push( 
-  {tableName:"persons",
-     tableFields:[
-        {fieldName:"NAME"    	   , fieldType:"Text" } ,
-        {fieldName:"VORNAME"	   , fieldType:"Text" } ,
-        {fieldName:"ALIAS1"	   , fieldType:"Text" } ,
-        {fieldName:"ALIAS2"	   , fieldType:"Text" } ,
-        {fieldName:"ALIAS3"	   , fieldType:"Text" } ,
-        {fieldName:"GEBURTSJAHR"	, fieldType:"REAL" } ,
-        {fieldName:"HERKUNFT"	   , fieldType:"Text" } ,
-        {fieldName:"BUSINESSTART", fieldType:"REAL" } ,
-        {fieldName:"BUSINESENDE"	, fieldType:"REAL" } ,
-        {fieldName:"RANKING"     , fieldType:"INTEGER" } ,
-        {fieldName:"BEMERKUNGEN"	, fieldType:"Text" } ,
-        {fieldName:"PORTRAIT"    , fieldType:"Text" } , 
-       ]});
-	
-    
-tables.push( 
-        {tableName:"personsInMedia",
-           tableFields:[
-              {fieldName:"ID_FILE"	    , fieldType:"INTEGER" } ,
-              {fieldName:"ID_PERSON"    , fieldType:"INTEGER" } 
-           ]});
-
-
 
 module.exports.buildTables = function( dB )
 {
