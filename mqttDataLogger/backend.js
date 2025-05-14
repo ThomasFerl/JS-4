@@ -85,7 +85,6 @@ mqttClient.on('message', async (topic, payload) => { mqttHandler.onMessage(topic
 mqttClient.on('error', (err) => { console.error('❌ MQTT-Fehler:', err); });
 
 
-
 //-----------------------------------------------------------------------------------------
 //-----------------------------------------------------------------------------------------
 // MQTT - Distributor starten und mqtt-Topics zum Frontend zu senden
@@ -93,8 +92,8 @@ mqttClient.on('error', (err) => { console.error('❌ MQTT-Fehler:', err); });
 //-----------------------------------------------------------------------------------------
 
 // MQTT - Distributor starten
-mqttDist = new TMQTTDistributor({ mqttBroker: MQTT_BROKER_URL,
-                                  topic     : defaultTopic 
+mqttDist = new TMQTTDistributor({ mqttBroker : MQTT_BROKER_URL,
+                                  topic      : defaultTopic 
                                 })
 
 mqttDist.start();
@@ -103,9 +102,6 @@ mqttDist.start();
 //-----------------------------------------------------------------------------------------
 //-----------------------------------------------------------------------------------------
 //-----------------------------------------------------------------------------------------
-
-
-
 
 
 const webApp       = express();

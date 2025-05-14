@@ -86,10 +86,62 @@ t.setDateTime('01.01.2000 12:00')
 
 for (var i=0; i<24; i++) {t.incMinute(15); console.log('Stunde: ' + t.hour() + '  /  Minute: ' + t.minute() + '  -> ' +t.formatDateTime()) }
 
-
-
-
 */
+
+
+class TFDateParser 
+{
+ /*
+     @param {string} dateString - Der Eingabe-Zeitstring
+     @param {object} [options] - Optionen (z. B. { utc: true })
+     @returns {Date|null}
+ */
+  static parse(dateString, options = {utc:true}) 
+  {
+    if (typeof dateString !== 'string') return null;
+
+    let normalized = dateString
+      .trim()
+      .replace(/T/, ' ')
+      .replace(/[\/\.]/g, '-')
+      .replace(/\s+/, ' ');
+
+    const [datePart, timePart = "00:00:00"] = normalized.split(' ');
+
+    const dateParts = datePart.split('-').map(s => s.padStart(2, '0'));
+
+    let year, month, day;
+    if (parseInt(dateParts[0]) > 31) {[year, month, day] = dateParts;} 
+    else if (parseInt(dateParts[2]) > 31) {[day, month, year] = dateParts;} 
+         else {                            [day, month, year] = dateParts;
+               if (year.length === 2) { year = parseInt(year) < 50 ? '20' + year : '19' + year;}
+     }
+
+    const [h = '00', m = '00', s = '00'] = timePart.split(':').map(p => p.padStart(2, '0'));
+
+    const timeString   = `${year}-${month}-${day}T${h}:${m}:${s}`;
+    const isoString    = options.utc ? timeString + 'Z' : timeString;
+
+    const date = new Date(isoString);
+    return isNaN(date) ? null : date;
+  }
+
+  static toISOString(dateString, options = {}) 
+  {
+    const d = this.parse(dateString, options);
+    return d ? d.toISOString() : null;
+  }
+
+  static toLocalString(dateString, locale = 'de-DE', options = {}) 
+  {
+    const d = this.parse(dateString, options);
+    return d ? d.toLocaleString(locale) : null;
+  }
+}
+
+
+
+
 
 class TFDateTime 
 { 
@@ -176,8 +228,6 @@ class TFDateTime
         }
     }
     
-    
-    
     if (typeof input === 'number') 
     {
        // Annahme: Wenn der Input weniger als eine Million Tage seit der Excel-Epoche ist, ist es ein Excel-Timestamp
@@ -185,81 +235,14 @@ class TFDateTime
        if (input < 365205)  this.excelTimestamp = input;  // 1 Million Tage sind etwa 2738 Jahre
        else                 this.excelTimestamp = this.#__unixToExcel(input);
           
-    } else if (typeof input === 'string') 
-           {
-              // UTC Variante 1: 2024-07-23T13:16:12.545Z
-             if (input.includes('-') &&  input.includes('T'))   this.excelTimestamp = this.#__unixToExcel(Date.parse(input));
-             if (input.includes('-') && !input.includes('T')) 
-             {
-                var dParts    = input.split('-');
-                
-                if(dParts[0].length==4)  // beginnend mit Jahr (4stellig)
-                {
-                  var year     = parseInt(dParts[0], 10);
-                  var month    = parseInt(dParts[1], 10);
-                  var day      = parseInt(dParts[2], 10);
-                  var time     =          dParts[3] || '00:00:00';  
-                }
-                else 
-                {
-                  var day      = parseInt(dParts[0], 10);
-                  var month    = parseInt(dParts[1], 10);
-                  var year     = parseInt(dParts[2], 10);
-                  var time     =          dParts[3] || '00:00:00';
-                } 
-
-                var tParts = time.split(':');
-                if(tParts.length>=3)
-                {
-                  var hour     = parseInt(tParts[0], 10);
-                  var minute   = parseInt(tParts[1], 10);
-                  var second   = parseInt(tParts[2], 10);
-                }
-                else
-                {
-                  var hour     = 0;
-                  var minute   = 0;
-                  var second   = 0;
-                }
-
-                var date       = new Date(year, month - 1, day , hour, minute, second );
-                
-                this.excelTimestamp = this.#__unixToExcel(date.getTime());
-                
-              }
-
-
-               // Falls der Input ein Datum im Format "dd.mm.yyyy hh:mn:ss" ist
-               if (input.includes('.') && input.includes(':')) 
-               {
-                    let parts    = input.split(/[. :]/);
-                    if(parts.length>=3)
-                    {  
-                      let day      = parseInt(parts[0], 10);
-                      let month    = parseInt(parts[1], 10);
-                      let year     = parseInt(parts[2], 10);
-                      let hour     = parts.length > 3 ? parseInt(parts[3], 10) : 0;
-                      let minute   = parts.length > 4 ? parseInt(parts[4], 10) : 0;
-                      let second   = parts.length > 5 ? parseInt(parts[5], 10) : 0;
-                      let date     = new Date(Date.UTC(year, month-1, day, hour, minute, second));
-                      this.excelTimestamp = this.#__unixToExcel(date.getTime());
-                    }
-                    else
-                        // UTC Variante 2: 200001010000  -> YYYYMMDDhhmnss
-                        {
-                         let year     = parseInt(input.substring(0, 4), 10);
-                         let month    = parseInt(input.substring(4, 6), 10) - 1; // Monate sind nullbasiert
-                         let day      = parseInt(input.substring(6, 8), 10);
-                         
-                         let hour     = input.length > 8  ? parseInt(input.substring(8, 10), 10)  : 0;
-                         let minute   = input.length > 10 ? parseInt(input.substring(10, 12), 10) : 0;
-                         let second   = input.length > 12 ? parseInt(input.substring(12, 14), 10) : 0; 
-                         let date     = new Date(Date.UTC(year, month, day, hour, minute, second));
-                         this.excelTimestamp = this.#__unixToExcel(date.getTime());
-                       }  
-                  }
-      } else console.err( 'Unsupported input format -> ' + input );  
-
+    } 
+    else if (typeof input === 'string') 
+         {
+                var date   = TFDateParser.parse( input , {utc:true})
+                if(date==null) console.err( 'Unsupported input format -> ' + input );  
+                else this.excelTimestamp = this.#__unixToExcel(date.getTime());
+         }
+ 
       return this;
   }
 

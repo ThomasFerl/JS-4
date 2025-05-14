@@ -3183,6 +3183,7 @@ export class TFChart extends TFPanel
    this.series                          = [];
    this.chartParams                     = {};
    this.chartOptions                    = {}
+   this.hostedObject                    = this.params.hostedObject || {};
    this.maxPoints                       = this.params.maxPoints || -1;
 
     this.params.chartData               = this.params.chartData               || [];
@@ -3237,7 +3238,7 @@ export class TFChart extends TFPanel
            c.data.datasets[clickedPoint.datasetIndex].backgroundColor[clickedPoint.index] = self.params.chartSelectedColor;
            const label = c.data.labels[clickedPoint.index];
            const value = c.data.datasets[clickedPoint.datasetIndex].data[clickedPoint.index];
-           if(self.onChartClick) self.onChartClick({chart: c, itemIndex: clickedPoint.index, selectedLabel: label, selectedValue: value, hostedObject: hostedObject || {} });
+           if(self.onChartClick) self.onChartClick({chart: c, itemIndex: clickedPoint.index, selectedLabel: label, selectedValue: value, hostedObject: this.hostedObject });
            c.update();
          }
   }.bind({chart:this.chart , self:this});

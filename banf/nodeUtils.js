@@ -3,10 +3,9 @@ var axios               = require('axios');
 const excelJS           = require('exceljs');
 var   { spawn }         = require('child_process');
 const { TFLogging }     = require('./logging.js');
-const globals           = require('./backendGlobals.js');
 
 
-module.exports.debug    = false;
+module.exports.debug    = true;
 module.exports.logging  = new TFLogging();
 
 
@@ -15,7 +14,8 @@ module.exports.logging  = new TFLogging();
 
 module.exports.log = (s) =>
 {
-  return this.logging.log(s);
+  if(this.debug) console.log(s);
+  //return this.logging.log(s);
 }
 
 
@@ -77,12 +77,6 @@ module.exports.strDateTimeToExcel = (strDateTime) =>
   return new TFDateTime(strDateTime).dateTime();
 }
 
-module.exports.getSymbolPath = (s) =>
-{
-  return {error:false, errMsg:"", result:globals.symbolPath()+'/'+s+'.svg' }
-}  
-
-
 
 //--------------------------------------------------------------------------------------------
 /*
@@ -92,10 +86,62 @@ t.setDateTime('01.01.2000 12:00')
 
 for (var i=0; i<24; i++) {t.incMinute(15); console.log('Stunde: ' + t.hour() + '  /  Minute: ' + t.minute() + '  -> ' +t.formatDateTime()) }
 
-
-
-
 */
+
+
+class TFDateParser 
+{
+ /*
+     @param {string} dateString - Der Eingabe-Zeitstring
+     @param {object} [options] - Optionen (z. B. { utc: true })
+     @returns {Date|null}
+ */
+  static parse(dateString, options = {utc:true}) 
+  {
+    if (typeof dateString !== 'string') return null;
+
+    let normalized = dateString
+      .trim()
+      .replace(/T/, ' ')
+      .replace(/[\/\.]/g, '-')
+      .replace(/\s+/, ' ');
+
+    const [datePart, timePart = "00:00:00"] = normalized.split(' ');
+
+    const dateParts = datePart.split('-').map(s => s.padStart(2, '0'));
+
+    let year, month, day;
+    if (parseInt(dateParts[0]) > 31) {[year, month, day] = dateParts;} 
+    else if (parseInt(dateParts[2]) > 31) {[day, month, year] = dateParts;} 
+         else {                            [day, month, year] = dateParts;
+               if (year.length === 2) { year = parseInt(year) < 50 ? '20' + year : '19' + year;}
+     }
+
+    const [h = '00', m = '00', s = '00'] = timePart.split(':').map(p => p.padStart(2, '0'));
+
+    const timeString   = `${year}-${month}-${day}T${h}:${m}:${s}`;
+    const isoString    = options.utc ? timeString + 'Z' : timeString;
+
+    const date = new Date(isoString);
+    return isNaN(date) ? null : date;
+  }
+
+  static toISOString(dateString, options = {}) 
+  {
+    const d = this.parse(dateString, options);
+    return d ? d.toISOString() : null;
+  }
+
+  static toLocalString(dateString, locale = 'de-DE', options = {}) 
+  {
+    const d = this.parse(dateString, options);
+    return d ? d.toLocaleString(locale) : null;
+  }
+}
+
+
+
+
 
 class TFDateTime 
 { 
@@ -182,8 +228,6 @@ class TFDateTime
         }
     }
     
-    
-    
     if (typeof input === 'number') 
     {
        // Annahme: Wenn der Input weniger als eine Million Tage seit der Excel-Epoche ist, ist es ein Excel-Timestamp
@@ -191,81 +235,14 @@ class TFDateTime
        if (input < 365205)  this.excelTimestamp = input;  // 1 Million Tage sind etwa 2738 Jahre
        else                 this.excelTimestamp = this.#__unixToExcel(input);
           
-    } else if (typeof input === 'string') 
-           {
-              // UTC Variante 1: 2024-07-23T13:16:12.545Z
-             if (input.includes('-') &&  input.includes('T'))   this.excelTimestamp = this.#__unixToExcel(Date.parse(input));
-             if (input.includes('-') && !input.includes('T')) 
-             {
-                var dParts    = input.split('-');
-                
-                if(dParts[0].length==4)  // beginnend mit Jahr (4stellig)
-                {
-                  var year     = parseInt(dParts[0], 10);
-                  var month    = parseInt(dParts[1], 10);
-                  var day      = parseInt(dParts[2], 10);
-                  var time     =          dParts[3] || '00:00:00';  
-                }
-                else 
-                {
-                  var day      = parseInt(dParts[0], 10);
-                  var month    = parseInt(dParts[1], 10);
-                  var year     = parseInt(dParts[2], 10);
-                  var time     =          dParts[3] || '00:00:00';
-                } 
-
-                var tParts = time.split(':');
-                if(tParts.length>=3)
-                {
-                  var hour     = parseInt(tParts[0], 10);
-                  var minute   = parseInt(tParts[1], 10);
-                  var second   = parseInt(tParts[2], 10);
-                }
-                else
-                {
-                  var hour     = 0;
-                  var minute   = 0;
-                  var second   = 0;
-                }
-
-                var date       = new Date(year, month - 1, day , hour, minute, second );
-                
-                this.excelTimestamp = this.#__unixToExcel(date.getTime());
-                
-              }
-
-
-               // Falls der Input ein Datum im Format "dd.mm.yyyy hh:mn:ss" ist
-               if (input.includes('.') && input.includes(':')) 
-               {
-                    let parts    = input.split(/[. :]/);
-                    if(parts.length>=3)
-                    {  
-                      let day      = parseInt(parts[0], 10);
-                      let month    = parseInt(parts[1], 10);
-                      let year     = parseInt(parts[2], 10);
-                      let hour     = parts.length > 3 ? parseInt(parts[3], 10) : 0;
-                      let minute   = parts.length > 4 ? parseInt(parts[4], 10) : 0;
-                      let second   = parts.length > 5 ? parseInt(parts[5], 10) : 0;
-                      let date     = new Date(Date.UTC(year, month-1, day, hour, minute, second));
-                      this.excelTimestamp = this.#__unixToExcel(date.getTime());
-                    }
-                    else
-                        // UTC Variante 2: 200001010000  -> YYYYMMDDhhmnss
-                        {
-                         let year     = parseInt(input.substring(0, 4), 10);
-                         let month    = parseInt(input.substring(4, 6), 10) - 1; // Monate sind nullbasiert
-                         let day      = parseInt(input.substring(6, 8), 10);
-                         
-                         let hour     = input.length > 8  ? parseInt(input.substring(8, 10), 10)  : 0;
-                         let minute   = input.length > 10 ? parseInt(input.substring(10, 12), 10) : 0;
-                         let second   = input.length > 12 ? parseInt(input.substring(12, 14), 10) : 0; 
-                         let date     = new Date(Date.UTC(year, month, day, hour, minute, second));
-                         this.excelTimestamp = this.#__unixToExcel(date.getTime());
-                       }  
-                  }
-      } else console.err( 'Unsupported input format -> ' + input );  
-
+    } 
+    else if (typeof input === 'string') 
+         {
+                var date   = TFDateParser.parse( input , {utc:true})
+                if(date==null) console.err( 'Unsupported input format -> ' + input );  
+                else this.excelTimestamp = this.#__unixToExcel(date.getTime());
+         }
+ 
       return this;
   }
 
@@ -707,21 +684,15 @@ module.exports.strCompare = (str, rule) =>
 }
 
 
-module.exports.scanDir = (fs , path , dirName , fileMask) =>
+module.exports.scanDir = (fs , path , dirName ) =>
 {
-  if (!dirName) dirName='./';
-
-  if ((!fileMask)||(fileMask=='')) fileMask = ['*.*']
-  
-  // ist fileMast ein String, und enthält ein Komma dann durch "joining" in ein Array umwandeln
-  if(typeof fileMask === 'string' && fileMask.includes(',')) fileMask = fileMask.split(',');
-  if(typeof fileMask === 'string') fileMask = [fileMask];
+  if (!dirName) dirName='/';
 
   this.log('scanDir('+dirName+')');
   
   try {
 
-  var scanResult = fs.readdirSync( dirName , 'utf8');
+  var scanResult = fs.readdirSync( dirName , 'utf8' );
   
   if(scanResult.errno<0)
   { // Fehler ...
@@ -734,29 +705,17 @@ module.exports.scanDir = (fs , path , dirName , fileMask) =>
   const response = [];
   for (var i=0; i<scanResult.length; i++)
   {
-    var ok=false;
     var n=scanResult[i]
     var p=path.join(dirName,n);
         p= path.resolve(path.normalize(p));
 
-    if (fs.existsSync(p) )
+    if (fs.existsSync(p))
     { 
-      // den Punkt am Anfang der Dateiendung  entfernen  (.jpg -> jpg)
-      var e=path.extname(p).toLowerCase();
-      if((e.length>0) && (e.indexOf(".")==0)) e=e.substring(1);
-
+      var e=path.extname(p);   
       var s=fs.statSync(p).size;
       var D=fs.statSync(p).isDirectory();
       var F=fs.statSync(p).isFile();
-            
-      if((fileMask.length>0) && (!D))
-        {    
-          console.log('fileMask: '+fileMask);
-          console.log('e: '+e); 
-          ok =  fileMask.includes(e) || fileMask.includes('*.*');    
-      } else ok=true;    
-
-     if(ok) response.push({ name:n, ext:e, size:s, isDir:D, isFile:F});
+      response.push({ name:n, ext:e, size:s, isDir:D, isFile:F});
     }
   }    
   
@@ -779,16 +738,11 @@ module.exports.getTextFile = function( fs , fileName )
   } catch(err) { return {error:true, errMsg:err.message, result:"" }; } 
 }
 
-// keep in mind:  fs & path sind librarys.... img hätter besser imgPath heissen sollen ...
+
+
 exports.getImageFile = async( fs , path , img , req , res  ) =>
 {
-  // existiert das File ?
-  if (!fs.existsSync(img)) {res.send("missing fileName '"+img+"'"); return; } 
-  
-  // ist img ein Verzeichnis ?
-  if( fs.statSync(img).isDirectory() ) {console.log("is Directory -> abort ... ");res.send(img + " is a directory"); return; } 
-
-  var mime =
+    var mime =
        {
         gif: 'image/gif',
         jpg: 'image/jpeg',
@@ -811,7 +765,6 @@ exports.getImageFile = async( fs , path , img , req , res  ) =>
               };
   }
   
-
   exports.getMovieFile = async( fs , path , movie , req , res  ) =>
     {
       console.log( 'playMovie('+movie+')' );
@@ -880,6 +833,7 @@ exports.getImageFile = async( fs , path , img , req , res  ) =>
       }
     
     }
+    
 
 
 module.exports.httpRequest = async function (url) 
@@ -906,103 +860,6 @@ module.exports.httpRequest = async function (url)
 
   return res;
 }
-
-
-module.exports.buildFileGUID = function( fs , path , fileInfo_or_fileFullName )
-{
-  var name = '';
-  var size = 0;
- 
-  // ist fileInfo_or_fileFullName ein String, dann ist es der Dateiname
-  // ansonsten ist es ein Objekt mit den Datei-Infos
-  if(typeof fileInfo_or_fileFullName === 'string')
-  {
-    console.log("buildFileGUID based on String -> "+fileInfo_or_fileFullName);
-    var mediaFile = fileInfo_or_fileFullName;
-    var fileInfo  = this.analyzeFile( fs , path , mediaFile );
-    if(fileInfo.error) 
-    { console.log('fileInfo.error: '+JSON.stringify(fileInfo)); 
-      return fileInfo; 
-    }
-    console.log('fileInfo : '+JSON.stringify(fileInfo));
-
-    name = fileInfo.result.name;
-    size = fileInfo.result.size;
-  } 
-  else
-  {
-    console.log("buildFileGUID based on Object -> "+JSON.stringify(fileInfo_or_fileFullName));  
-    var fileInfo = fileInfo_or_fileFullName;
-    name = fileInfo.name;
-    size = fileInfo.size;
-  }
-    // wandle den Dateinamen in hexadezimale Zeichen um
-  var hexFileName = Buffer.from(name).toString('hex');
-
-  return {error:false,errMsg:'OK',result:hexFileName + '_' + size};
-}
-
-
-const videoExtensions = [
-  'mp4', 'm4v', 'mov', 'avi', 'wmv', 'flv',
-  'f4v', 'mkv', 'webm', 'ts', 'mpeg', 'mpg',
-  '3gp', 'ogv'
-];
-
-const imageExtensions = [
-  'jpeg', 'jpg', 'png', 'gif', 'bmp', 'webp', 'svg'
-];
-
-
-
-
-
-
-module.exports.analyzeFile=function(fs,path,filePath) 
-{
-  // Unterstützte Formate für Bilder und Videos
-  const videoExtensions = [
-    'mp4', 'm4v', 'mov', 'avi', 'wmv', 'flv',
-    'f4v', 'mkv', 'webm', 'ts', 'mpeg', 'mpg',
-    '3gp', 'ogv'
-  ];
-  
-  const imageExtensions = [
-    'jpeg', 'jpg', 'png', 'gif', 'bmp', 'webp', 'svg'
-  ];
-  
-
-  var result = { path      : '',
-                 name      : '',
-                 ext       : '',
-                 dir       : '',
-                 type      : '',
-                 size      : '' 
-               };
-    try {
-        // Prüfen, ob die Datei existiert
-        if (!fs.existsSync(filePath)) return {error:true,errMsg:'file not exists',result:{}};
-            
-        // Datei-Statistiken abrufen
-        const stats = fs.statSync(filePath);
-
-        // Datei-Pfad, Name und Erweiterung ermitteln
-        result.path     = path.resolve(filePath);
-        result.name     = path.basename(filePath);
-        result.ext      = path.extname(filePath);
-        result.dir      = path.dirname(filePath);
-        result.size     = stats.size;
-
-        // Datei-Typ bestimmen
-        result.type  = 'unknown';
-        e            = result.ext.toLowerCase().substring(1);
-        if      (imageExtensions.includes(e)) result.type = 'IMAGE'
-        else if (videoExtensions.includes(e)) result.type = 'MOVIE';
-       } catch (error) {return { error:true, errMsg:error.message, result:{} };
-    }
-  return {error:false,errMsg:'OK',result:result};  
-}
-
 
 
 /* mit Callback
@@ -1060,55 +917,6 @@ module.exports.findEntryByField = ( array , fieldName , value ) =>
   if(ndx>-1) return array[ndx];
   else       return null; 
 }
-
-
-module.exports.parseToJSON = (inputStr) =>
-  {
-    let result = {};
-    let pairs = inputStr.split(";").map(pair => pair.trim()).filter(pair => pair); // Aufteilen & leere Elemente entfernen
-
-    pairs.forEach(pair => {
-        let [path, value] = pair.split("=").map(part => part.trim());
-        value = value.replace(/^"(.*)"$/, "$1"); // Entfernt optionale Anführungszeichen um Werte
-        
-        if (path.includes(".")) {
-            // Falls ein Punkt existiert → Hierarchie aufbauen
-            let keys = path.split(".");
-            let obj = result;
-
-            keys.forEach((key, index) => {
-                if (index === keys.length - 1) {
-                    obj[key] = value; // Letzter Key → Wert zuweisen
-                } else {
-                    obj[key] = obj[key] || {}; // Neues Objekt erstellen, falls noch nicht vorhanden
-                    obj = obj[key]; // Tiefere Ebene setzen
-                }
-            });
-        } else {
-            // Kein Punkt → Direkt in das JSON-Objekt setzen
-            result[path] = value;
-        }
-    });
-
-    return result;
-}
-
-/*
- ======Test======
-let input = "person.Name=Doe;person.VORNAME=Jon;adresse.Strasse=Hauptstrasse;Alter=30;Land=DE";
-let jsonObj = parseToJSON(input);
-console.log(jsonObj);
-
- 
-======Ergebnis========
-{
-    person: { Name: "Doe", VORNAME: "Jon" },
-    adresse: { Strasse: "Hauptstrasse" },
-    Alter: "30",
-    Land: "DE"
-}
-*/
-
 
 
 module.exports.jsonToCSV=(jsonArray , seperator , withHead , withQ) =>

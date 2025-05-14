@@ -89,7 +89,7 @@ export class TFDataViewer
 
 
 selectChanel( c )
-{
+{ debugger;
   // alle Listeneinträge auf weiss setzen
   for(var i=0; i<this.chanels.length; i++) this.chanels[i].panel.backgroundColor = 'white';
      
@@ -162,7 +162,7 @@ selectChanel( c )
     this.arcChart = new TFChart( this.chartPanel , 1 , 1 , '100%' , '100%' , {chartBackgroundColor:'white',chartType:'bar'} );
     this.arcSeries = this.arcChart.addSeries( c.NAME , 'rgba(54, 162, 235, 0.2)' );                                         
     this.arcChart.addPoint(this.arcSeries , chartData);
-    this.arcChart.onChartClick = (param)=>{this.updateHourChart(param.selectedLabel)};
+    this.arcChart.onChartClick = function (param){this.updateHourChart(param.selectedLabel)}.bind(this);
 
     this.updateHourChart( c.ID , response.result[0].DT);
 }
@@ -174,7 +174,7 @@ updateHourChart(day)
   
     var dtExcelFormat = new TFDateTime(day).dateTime();
       
-    var response = utils.webApiRequest( 'GETVALUES' , {ID_Chanel:this.selectedChanel.ID, resolution:'HOUR', from:dtExcelFormat, to:dtExcelFormat } );
+    var response = utils.webApiRequest( 'GETVALUES' , {ID_Chanel:this.selectedChanel.ID , resolution:'HOUR' , from:dtExcelFormat , to:dtExcelFormat } );
 
     if(response.error)
     {
