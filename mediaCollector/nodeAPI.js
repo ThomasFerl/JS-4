@@ -103,7 +103,7 @@ if( CMD=='GETFILE')         return utils.getTextFile( fs , param.fileName );
 if( CMD=='GETTEXTFILE')     return utils.getTextFile( fs , param.fileName );
 
 if( CMD=='GETIMAGEFILE')    {
-                             await utils.getImageFile  ( fs , path , param.fileName , webRequest , webResponse ); // function streamt direkt 
+                             await utils.getImageFile  ( fs , path , param.fileName || 'noFile.why', webRequest , webResponse ); // function streamt direkt 
                              return {isStream:true};
                             }
 
@@ -124,7 +124,7 @@ if( CMD=='SYMBOL')         {
                            }
 
 if( CMD=='GETMOVIEFILE')    {
-                             await utils.getMovieFile  ( fs , path , param.fileName , webRequest , webResponse ); // function streamt direkt 
+                             await utils.getMovieFile  ( fs , path , param.fileName || 'noFile.why' , webRequest , webResponse ); // function streamt direkt 
                              return {isStream:true};
                             }
 
@@ -193,8 +193,8 @@ if( CMD=='LSUSER')          return dbUtils.fetchRecords_from_Query( etc , 'Selec
 
 if( CMD=='ADDUSER') 
 {
- var sql    = "insert into user( username , firstName , lastName , jobFunction , passwd , email) values(?,?,?,?,?,?)";
- var params = [ param.username , param.firstname , param.lastname , param.jobfunction , param.passwd , param.email ];
+ var sql    = "insert into user( username , firstName , lastName , jobFunction , passwd , birthdate) values(?,?,?,?,?,?)";
+ var params = [ param.username , param.firstname , param.lastname , param.jobfunction , param.passwd , param.birthdate ];
  return dbUtils.runSQL( etc , sql , params );
 }
 
@@ -327,5 +327,4 @@ if(CMD=='ADD_BATCHPROC')  // Befehl an den Batch-Process-Manager weiterleiten
 return  await userAPI.handleCommand( sessionID , cmd , param , req ,  res , fs , path )
                        
 }   
-
 

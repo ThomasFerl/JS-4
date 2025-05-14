@@ -1,3 +1,4 @@
+const globals         = require('./backendGlobals');
 const utils           = require('./nodeUtils');
 const dbUtils         = require('./dbUtils');
 const {TBatchQueue}   = require('./batchProc');
@@ -415,7 +416,7 @@ if(CMD=='LSMEDIASET')
                thumb.fullPath = this.path.join( this.thumbPath , thumb.THUMBFILE );
              m.thumb          = thumb;
         } 
-        else m.thumb          = {ID:0, ID_FILE:'', NDX:-1, THUMBFILE:'file-image' , fullPath:utils.getSymbolPath('file-image').result}; 
+        else m.thumb          = {ID:0, ID_FILE:'', NDX:-1, THUMBFILE:'file-image' , fullPath:globals.symbolPath('file-image').result}; 
         mediaSets.push(m);
     }
 

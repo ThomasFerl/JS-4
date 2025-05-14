@@ -750,6 +750,15 @@ exports.getImageFile = async( fs , path , img , req , res  ) =>
         svg: 'image/svg+xml',
        };
   
+    // existiert das File ? 
+    if( !fs.existsSync(img) )
+    { 
+       res.set('Content-Type', 'text/plain');
+       res.send("missing fileName"); 
+       return;
+    }
+    console.log( 'try to load "' + img +'"');
+
     var type      = mime[path.extname(img).slice(1)] || 'text/plain';
      
     try
