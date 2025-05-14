@@ -3627,10 +3627,11 @@ export class TForm
       btnContainer.buildGridLayout_templateColumns("repeat(5,1fr)  ");
       btnContainer.buildGridLayout_templateRows   ( "0.5em 1fr 0.5em");
   
-      this.btnOk    = new TFButton( btnContainer ,2,2,1,1,{caption:"OK"});
+      this.btnOk    = new TFButton( btnContainer ,2,2,1,1,{caption:"OK",glyph:"circle-check"});
       this.btnOk.callBack_onClick = function() {if(this.callBack_onOKBtn) { this.callBack_onOKBtn( this.getInputFormValues() )};}.bind(this);
 
-      this.btnAbort = new TFButton( btnContainer,4,2,1,1,{caption:"Abbruch"});
+      this.btnAbort = new TFButton( btnContainer,4,2,1,1,{caption:"Abbruch",glyph:'circle-xmark'});
+      this.btnAbort.backgroundColor = 'red';
       this.btnAbort.callBack_onClick = function(){if(this.callBack_onESCBtn) this.callBack_onESCBtn();}.bind(this);
     }
 

@@ -37,7 +37,7 @@ export class TFMediaCollector_editSet
       this.callback_if_ready = null;
 
       var caption = this.mediaSet?.ID ? 'Set bearbeiten' : 'neues Set anlegen';
-      this.wnd    = dialogs.createWindow( null,caption,"50%","50%","CENTER");  
+      this.wnd    = dialogs.createWindow( null,caption,"77%","77%","CENTER");  
       this.hWnd   = this.wnd.hWnd;
       
       this.wnd.buildGridLayout_templateColumns('1fr 1fr 1fr 1fr');
@@ -65,7 +65,7 @@ export class TFMediaCollector_editSet
       var  c = dialogs.addPanel(hlpContainer,'cssRibbon',1,1,1,1);
            c.backgroundColor = 'darkgray';
       
-      var  clpBtn = dialogs.addButton(c,'',1,1,'3em','1.5em','add');
+      var  clpBtn = dialogs.addButton(c,'',1,1,'3em','1.5em',{caption:'',glyph:'circle-plus'});
            clpBtn.backgroundColor = 'gray';
            clpBtn.marginLeft = '10px';
            clpBtn.callBack_onClick = function() { 

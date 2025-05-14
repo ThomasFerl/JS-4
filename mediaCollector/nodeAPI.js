@@ -193,8 +193,8 @@ if( CMD=='LSUSER')          return dbUtils.fetchRecords_from_Query( etc , 'Selec
 
 if( CMD=='ADDUSER') 
 {
- var sql    = "insert into user( username , firstName , lastName , jobFunction , passwd , birthdate) values(?,?,?,?,?,?)";
- var params = [ param.username , param.firstname , param.lastname , param.jobfunction , param.passwd , param.birthdate ];
+ var sql    = "insert into user( username , firstName , lastName , jobFunction , passwd , email) values(?,?,?,?,?,?)";
+ var params = [ param.username , param.firstname , param.lastname , param.jobfunction , param.passwd , param.email ];
  return dbUtils.runSQL( etc , sql , params );
 }
 

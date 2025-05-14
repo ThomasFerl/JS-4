@@ -216,27 +216,27 @@ export class TPersonList
 
       this.personenWnd = dialogs.createWindow( null,'Personen','80%','80%','CENTER');
       this.personenWnd.buildGridLayout_templateColumns('1fr');
-      this.personenWnd.buildGridLayout_templateRows   ('3em 1fr');
+      this.personenWnd.buildGridLayout_templateRows   ('4em 1fr');
 
       // ----------------ButtonPanel + Button-----------------------------------------
       this.menuPanel    = dialogs.addPanel(this.personenWnd.hWnd,'',1,1,1,1);
       this.menuPanel.buildGridLayout_templateColumns('10em 10em 10em 10em 1fr 10em');
       this.menuPanel.buildGridLayout_templateRows   ('1fr');
 
-      this.btnAddPerson    = dialogs.addButton(this.menuPanel,'',1,1,1,1,'neu');
-      this.btnAddPerson.height='2em';
+      this.btnAddPerson    = dialogs.addButton(this.menuPanel,'',1,1,1,1, {caption:'neu',glyph:'person-circle-plus'});
+      this.btnAddPerson.height='3em';
       this.btnAddPerson.callBack_onClick = function(){this.newPerson()}.bind(this);
       
-      this.btnEditPerson   = dialogs.addButton(this.menuPanel,'',2,1,1,1,'bearbeiten');
-      this.btnEditPerson.height='2em';
+      this.btnEditPerson   = dialogs.addButton(this.menuPanel,'',2,1,1,1,{caption:'bearbeiten',glyph:'person-circle-check'});
+      this.btnEditPerson.height='3em';
       this.btnEditPerson.callBack_onClick = function(){this.editPerson()}.bind(this);
 
-      this.btnDeletePerson = dialogs.addButton(this.menuPanel,'',3,1,1,1,'löschen');
-      this.btnDeletePerson.height='2em';
+      this.btnDeletePerson = dialogs.addButton(this.menuPanel,'',3,1,1,1,{caption:'löschen',glyph:'person-circle-minus'});
+      this.btnDeletePerson.height='3em';
 
-      this.btnCloseWnd     = dialogs.addButton(this.menuPanel,'',6,1,1,1,'schließen');
+      this.btnCloseWnd     = dialogs.addButton(this.menuPanel,'',6,1,1,1,{caption:'schließen',glyph:'right-from-bracket'});
       this.btnCloseWnd.callBack_onClick = function(){this.personenWnd.close()}.bind(this);
-      this.btnCloseWnd.height='2em';
+      this.btnCloseWnd.height='3em';
       
       //-------------------------------------------------------------------------------
 

@@ -29,16 +29,16 @@ export function main(capt1)
   globals.sysMenu.push( {caption:'Symbol-Bibliothek (nur in der Entwicklungsphase)' , action:function(){dialogs.browseSymbols()} } );
   globals.sysMenu.push( {caption:'Abbrechen' , action:function(){} } );
   
-  app.login( ()=>{  caption2 = 'Willkommen ' + globals.session.userName ; run() });
-  
+  //app.login( ()=>{  caption2 = 'Willkommen ' + globals.session.userName ; run() });
+  run();
 }  
 
 
 export function run()
 {
    var ws = app.startWebApp(caption1,caption2).activeWorkspace;
-       ws.buildGridLayout_templateColumns = '10em 1fr';
-       ws.buildGridLayout_templateRows    = '3em  1fr';
- //  dialogs.addButton(ws,"",1,1,1,1,"ok")
- //         .callBack_onClick = function(){ new TFMediaCollector('100%' , '100%' , {parent:ws} ) }  ;
+       ws.buildGridLayout("21x21")
+      
+   dialogs.addButton(ws.handle,"cssGrayButton",1,21,2,1,{caption:"Start MC",glyph:"solar-panel"})
+          .callBack_onClick = function(){ new TFMediaCollector('100%' , '100%' , {parent:ws.handle} ) }  ;
 }  

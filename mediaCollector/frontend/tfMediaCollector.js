@@ -34,7 +34,7 @@ export class TFMediaCollector
 
    this.mainWindow = new TFWindow(globals.webApp.activeWorkspace , 'media' , width , height , 'CENTER' );
    this.mainWindow.buildGridLayout_templateColumns('1fr');
-   this.mainWindow.buildGridLayout_templateRows('3em 1fr');
+   this.mainWindow.buildGridLayout_templateRows('4em 1fr');
 
    this.menuPanel= dialogs.addPanel(this.mainWindow.hWnd , '' ,1 ,1 ,1 ,1); 
    this.dashboardPanel= dialogs.addPanel(this.mainWindow.hWnd , 'cssContainerPanel' ,1 ,2 ,1 ,1);
@@ -44,17 +44,17 @@ export class TFMediaCollector
    this.menuPanel.buildGridLayout_templateColumns('1fr 1fr 1fr 1fr 1fr 1fr 1fr');
     this.menuPanel.buildGridLayout_templateRows('1fr');
 
-   this.btnAddImage = dialogs.addButton(this.menuPanel , '' , 1 , 1 , 1 , 1 , 'neues Media-Set');
-   this.btnAddImage.height='2em';
+   this.btnAddImage = dialogs.addButton(this.menuPanel , '' , 1 , 1 , 1 , 1 , {caption:'neues Media-Set',glyph:'circle-plus'});
+   this.btnAddImage.height='3em';
    this.btnAddImage.callBack_onClick = function(){this.addMediaSet()}.bind(this);
 
-   this.btnAddImage = dialogs.addButton(this.menuPanel , 'cssAbortBtn01' , 2 , 1 , 1 , 1 , 'Media-Set löschen');
-   this.btnAddImage.height='2em';
+   this.btnAddImage = dialogs.addButton(this.menuPanel , 'cssAbortBtn01' , 2 , 1 , 1 , 1 , {caption:'Media-Set löschen',glyph:'circle-minus'});
+   this.btnAddImage.height='3em';
    this.btnAddImage.callBack_onClick = function(){this.delMediaSet()}.bind(this);
 
 
-   this.btnPersonen = dialogs.addButton(this.menuPanel , '' , 3 , 1 , 1 , 1 , 'Personen');
-   this.btnPersonen.height='2em';
+   this.btnPersonen = dialogs.addButton(this.menuPanel , '' , 3 , 1 , 1 , 1 , {caption:'Personen',glyph:'children'});
+   this.btnPersonen.height='3em';
    this.btnPersonen.callBack_onClick = function(){ new TPersonList(); }.bind(this);
 
   // temporär - wird später ausgelagert ....

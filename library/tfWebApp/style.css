@@ -670,6 +670,18 @@ html, body {
     cursor          : pointer; 
   }
   
+  .cssGrayButton  {
+    background-color: #2a2d25;
+    border          : thin solid black;
+    box-shadow      : 0 .2em .4em black;
+    height          : auto;
+    color           : rgb(198, 234, 145);
+    margin-left     : 4px;
+    display         : flex;
+    align-items     : center;
+    justify-content : center; 
+    cursor          : pointer; 
+  }
 
 .cssButtonText
 {
