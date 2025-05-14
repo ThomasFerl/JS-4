@@ -118,8 +118,7 @@ module.exports.selectValues = async (params) =>
       {
          console.log("from:"+params.from);   
          dtFrom = new utils.TFDateTime(params.from);
-         console.log("from:"+dtFrom.dateTime()); 
-         
+         console.log("from:"+dtFrom.dateTime());   
       }
    
       if(params.to)
@@ -127,7 +126,6 @@ module.exports.selectValues = async (params) =>
          console.log("to:"+params.to);   
          dtTo = new utils.TFDateTime(params.to);
          console.log("from:"+dtTo.dateTime()); 
-         
       }
 
     if(params.groupBy)
@@ -213,10 +211,12 @@ function ___synchronize( idTopic , idChanel )
              console.log(fnTime+'  : '+p[fnTime]);
              console.log(fnValue+' : '+p[fnValue]);
    
-            var dt = new utils.TFDateTime(p[fnTime]);
+             var dt = new utils.TFDateTime(p[fnTime]);
+
+             console.log("parse dateTime: "+ dt.formatDateTime('dd.mm.yyyy hh:mn:ss') + " -> "+dt.excelTimestamp);
            
-            measure.push({ID_Chanel:idChanel,DT:dt.excelTimestamp  ,Wert:p[fnValue], sync:0}) 
-            update.push ({ID:rec.ID, sync:1}) 
+             measure.push({ID_Chanel:idChanel,DT:dt.excelTimestamp  ,Wert:p[fnValue], sync:0}) 
+             update.push ({ID:rec.ID, sync:1}) 
           } 
          catch(err) {console.log(err.message)} 
     }   
@@ -288,6 +288,10 @@ module.exports.synchronize = () =>
            ___synchronize( idTopic , r.result[i].ID );
         }   
    }
+
+   this.aggregateHourly();
+   this.aggregateDaily();  
+
 }
 
 

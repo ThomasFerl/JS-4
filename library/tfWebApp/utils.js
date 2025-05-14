@@ -228,9 +228,66 @@ export function containing( key , list )
 }
 
 
+// -----------------------------------------------------------------------------------------------------------------------------
+
+
+class TFDateParser 
+{
+ /*
+     @param {string} dateString - Der Eingabe-Zeitstring
+     @param {object} [options] - Optionen (z. B. { utc: true })
+     @returns {Date|null}
+ */
+  static parse(dateString, options = {utc:true}) 
+  {
+    if (typeof dateString !== 'string') return null;
+
+    let normalized = dateString
+      .trim()
+      .replace(/T/, ' ')
+      .replace(/[\/\.]/g, '-')
+      .replace(/\s+/, ' ');
+
+    const [datePart, timePart = "00:00:00"] = normalized.split(' ');
+
+    const dateParts = datePart.split('-').map(s => s.padStart(2, '0'));
+
+    let year, month, day;
+    if (parseInt(dateParts[0]) > 31) {[year, month, day] = dateParts;} 
+    else if (parseInt(dateParts[2]) > 31) {[day, month, year] = dateParts;} 
+         else {                            [day, month, year] = dateParts;
+               if (year.length === 2) { year = parseInt(year) < 50 ? '20' + year : '19' + year;}
+     }
+
+    const [h = '00', m = '00', s = '00'] = timePart.split(':').map(p => p.padStart(2, '0'));
+
+    const timeString   = `${year}-${month}-${day}T${h}:${m}:${s}`;
+    const isoString    = options.utc ? timeString + 'Z' : timeString;
+
+    const date = new Date(isoString);
+    return isNaN(date) ? null : date;
+  }
+
+  static toISOString(dateString, options = {}) 
+  {
+    const d = this.parse(dateString, options);
+    return d ? d.toISOString() : null;
+  }
+
+  static toLocalString(dateString, locale = 'de-DE', options = {}) 
+  {
+    const d = this.parse(dateString, options);
+    return d ? d.toLocaleString(locale) : null;
+  }
+}
+
+
+
+
+
 export class TFDateTime 
 { 
-     // private Methoden:
+   // private Methoden:
    // Methode zur Umwandlung eines Unix-Timestamps in ein Excel-Timestamp
    #__unixToExcel(unixTimestamp) 
    {
@@ -243,8 +300,9 @@ export class TFDateTime
   #__toUnixTimestamp() 
   {
     let unixTimestamp = this.excelEpoch + this.excelTimestamp * this.msPerDay;
-    if (this.excelTimestamp >= 60) unixTimestamp -= this.msPerDay; // Berücksichtige den Excel-Schaltjahr-Bug
-    
+    if (this.excelTimestamp >= 60) {
+        unixTimestamp -= this.msPerDay; // Berücksichtige den Excel-Schaltjahr-Bug
+    }
     return unixTimestamp;
   }
 
@@ -252,16 +310,16 @@ export class TFDateTime
   {
     let   year       = this.year();
     let   month      = this.month();
-    let   date       = new Date(Date.UTC(year, month , 0)); // letzter Tag im Monat
+    let   date       = new Date(Date.UTC( year, month , 0 )); // letzter Tag im Monat
     let   lastSunday = date.getDate() - date.getDay();        // subtrahiere den Wochentag
-          date       = new Date(Date.UTC(year, month - 1, lastSunday));
+          date       = new Date(Date.UTC(year, month-1, lastSunday));
     return new TFDateTime(date);      
   }
   
   
   constructor(input) 
   {
-    this.excelEpoch     = Date.UTC(1899, 11, 31); // Korrigiert: 31. Dezember 1899 als Basis für Excel-Zeit
+    this.excelEpoch     = Date.UTC(1899, 11, 31);
     this.msPerDay       = 1000 * 60 * 60 * 24;
     this.excelTimestamp = -1;
 
@@ -271,23 +329,25 @@ export class TFDateTime
 
   setDateTime(input)
   {
-    if(input == undefined)
+    if(input==undefined)
     {
       var now = new Date();
-      input   = now.toISOString(); // Sicherstellen, dass die Zeit in UTC vorliegt
+      input   = now.toLocaleDateString() + ' ' + now.toLocaleTimeString();
     } 
 
-    if(input.constructor.name.toUpperCase() == 'DATE') 
+    if(input.constructor.name.toUpperCase()=='DATE') 
     {
-       this.excelTimestamp = this.#__unixToExcel(input.getTime());
+       this.excelTimestamp = this.#__unixToExcel( input.getTime() );
        return this;
     }  
 
-    if(input.constructor.name.toUpperCase() == 'TFDATETIME') 
-    {
-       this.excelTimestamp = input.dateTime();
-       return this;
-    }  
+
+    if(input.constructor.name.toUpperCase()=='TFDATETIME') 
+      {
+         this.excelTimestamp = input.dateTime();
+         return this;
+      }  
+
 
     if (typeof input === 'string')
     {
@@ -301,13 +361,13 @@ export class TFDateTime
       }
 
       if (input.toUpperCase().includes('WZU'))
-      {
-        let parts           = input.split('WZU ');
-        let year            = parseInt(parts[1], 10);
-        this.excelTimestamp = new TFDateTime('01.10.'+year+' 00:00:00').excelTimestamp;
-        this.excelTimestamp = this.#__lastSundayOfMonth().excelTimestamp;
-        return this;
-      }
+        {
+          let parts           = input.split('WZU ');
+          let year            = parseInt(parts[1], 10);
+          this.excelTimestamp = new TFDateTime('01.10.'+year+' 00:00:00').excelTimestamp;
+          this.excelTimestamp = this.#__lastSundayOfMonth().excelTimestamp;
+          return this;
+        }
     }
     
     if (typeof input === 'number') 
@@ -316,44 +376,16 @@ export class TFDateTime
        // Sonst ist es ein Unix-Timestamp
        if (input < 365205)  this.excelTimestamp = input;  // 1 Million Tage sind etwa 2738 Jahre
        else                 this.excelTimestamp = this.#__unixToExcel(input);
+          
     } 
     else if (typeof input === 'string') 
-    {
-        // UTC Variante 1: 2024-07-23T13:16:12.545Z
-        if (input.includes('-') || input.includes('T')) { 
-          this.excelTimestamp = this.#__unixToExcel(Date.parse(input)); 
-        }
-        // Falls der Input ein Datum im Format "dd.mm.yyyy hh:mn:ss" ist
-        else {
-          let parts    = input.split(/[. :]/);
-          if(parts.length >= 3)
-          {  
-            let day      = parseInt(parts[0], 10);
-            let month    = parseInt(parts[1], 10);
-            let year     = parseInt(parts[2], 10);
-            let hour     = parts.length > 3 ? parseInt(parts[3], 10) : 0;
-            let minute   = parts.length > 4 ? parseInt(parts[4], 10) : 0;
-            let second   = parts.length > 5 ? parseInt(parts[5], 10) : 0;
-            let date     = new Date(Date.UTC(year, month - 1, day, hour, minute, second));
-            this.excelTimestamp = this.#__unixToExcel(date.getTime());
-          }
-          else
-          {
-            // UTC Variante 2: 200001010000  -> YYYYMMDDhhmnss
-            let year     = parseInt(input.substring(0, 4), 10);
-            let month    = parseInt(input.substring(4, 6), 10) - 1; // Monate sind nullbasiert
-            let day      = parseInt(input.substring(6, 8), 10);
-            let hour     = input.length > 8  ? parseInt(input.substring(8, 10), 10)  : 0;
-            let minute   = input.length > 10 ? parseInt(input.substring(10, 12), 10) : 0;
-            let second   = input.length > 12 ? parseInt(input.substring(12, 14), 10) : 0; 
-            let date     = new Date(Date.UTC(year, month, day, hour, minute, second));
-            this.excelTimestamp = this.#__unixToExcel(date.getTime());
-          }  
-        }
-    } 
-    else console.error('Unsupported input format -> ' + input);  
-
-    return this;
+         {
+                var date   = TFDateParser.parse( input , {utc:true})
+                if(date==null) console.err( 'Unsupported input format -> ' + input );  
+                else this.excelTimestamp = this.#__unixToExcel(date.getTime());
+         }
+ 
+      return this;
   }
 
   setDate( input )
@@ -644,11 +676,9 @@ setMinute(minute) {
 
       let date = new Date(this.#__toUnixTimestamp());
 
-      console.log('formatDateTime -> ' + date);
-
       let dd   = String(date.getUTCDate()).padStart(2, '0');
       let mm   = String(date.getUTCMonth() + 1).padStart(2, '0'); // Monate sind nullbasiert
-      let yyyy = String(date.getUTCFullYear());
+      let yyyy = date.getUTCFullYear();
       let hh   = String(date.getUTCHours()).padStart(2, '0');
       let mn   = String(date.getUTCMinutes()).padStart(2, '0');
       let ss   = String(date.getUTCSeconds()).padStart(2, '0');
@@ -670,6 +700,10 @@ setMinute(minute) {
 
 
 }
+
+
+
+//-------------------------------------------------------------------------------------------------------------------------------
 
 
 export function dayOfWeek( dt )
