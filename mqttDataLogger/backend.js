@@ -1,3 +1,4 @@
+const globals               = require('./backendGlobals');
 const useHTTPS              = false;
 const port                  = '4040';
 const MQTT_BROKER_URL       = 'mqtt://10.102.13.99:4701'; 
@@ -19,9 +20,6 @@ const Database    = require('better-sqlite3');
 const fs          = require('fs-extra');
 const path        = require('path');
 
-const mqtt        = require('mqtt');
-const mqttHandler = require('./mqttHandler');
-
 const utils       = require('./nodeUtils');
 const webAPI      = require('./nodeAPI');
 const userAPI     = require('./userAPI');
@@ -29,8 +27,6 @@ const session     = require('./session');
 const dbUtils     = require('./dbUtils');
 const dbTables    = require('./dbTables');
 
-const {TMQTTDistributor}    = require('./mqttDistributor');
-const { networkInterfaces } = require('os');
 
 
 
