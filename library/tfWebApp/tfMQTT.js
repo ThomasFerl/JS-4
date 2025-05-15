@@ -19,11 +19,12 @@ export class TFDistributor
     this.subscribers = [];
     this.lastError   = '';
 
-    this.ws          = new WebSocket(globals.getWebSocketServerURL('4400'));
+    this.ws          = new WebSocket(globals.getWebSocketServerURL('4444'));
     this.ws.onopen   = () => { console.log('Verbunden mit WebSocket-Server');};
 
     this.ws.onmessage = (event) => {
                                      const data = JSON.parse(event.data);
+                                     console.log('Nachricht empfangen:', JSON.stringify(data));
                                      for( var i=0; i<this.subscribers.length; i++ )
                                         {
                                           var subscriber = this.subscribers[i];

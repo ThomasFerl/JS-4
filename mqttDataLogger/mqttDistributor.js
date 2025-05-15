@@ -27,11 +27,11 @@ class TMQTTDistributor
 
     // WebSocket-Client-Verbindungen verwalten
     this.wsServer.on('connection', (ws) => {
-                                             utils.log('Browser-Client verbunden');
+                                             console.log('Browser-Client verbunden');
                                              this.wsClients.add(ws);
 
                                              ws.on('close', () => {
-                                                                    utils.log('Browser-Client getrennt');
+                                                                    console.log('Browser-Client getrennt');
                                                                     this.wsClients.delete(ws);
                                                                   });
                                             });

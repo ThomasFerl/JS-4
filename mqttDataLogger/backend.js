@@ -1,10 +1,10 @@
-const useHTTPS          = false;
-const port              = '4000';
+const useHTTPS              = false;
+const port                  = '4040';
+const MQTT_BROKER_URL       = 'mqtt://10.102.13.99:4701'; 
+const mqtt                  = require('mqtt');
+const mqttHandler           = require('./mqttHandler');
+const {TMQTTDistributor}    = require('./mqttDistributor');
 
-
-const MQTT_BROKER_URL   = 'mqtt://10.102.13.99:4701'; 
-
-const globals           = require('./backendGlobals');
 
 
 const http        = require('http');
@@ -56,15 +56,13 @@ dbTables.buildTables( dB );
 // dbTables.checkdbTableStructure();
 
 
-
-
 //-----------------------------------------------------------------------------------------
 //-----------------------------------------------------------------------------------------
 // MQTT - Client starten und zum Mosquitto-Server Verbindung aufnehmen
 //-----------------------------------------------------------------------------------------
 //-----------------------------------------------------------------------------------------
 
-const defaultTopic = '#';
+const defaultTopic = 'ems/#';
 
 mqttHandler.setup( dB );
 
@@ -78,11 +76,12 @@ mqttClient.on('connect', () => {
                                                                      });
                                 });                                      
 
-// Nachricht empfangen und in DB speichern
+// Nachricht empfangen und in InfluxDB speichern
 mqttClient.on('message', async (topic, payload) => { mqttHandler.onMessage(topic, payload); });
  
 // Fehlerbehandlung
 mqttClient.on('error', (err) => { console.error('❌ MQTT-Fehler:', err); });
+
 
 
 //-----------------------------------------------------------------------------------------
@@ -92,8 +91,8 @@ mqttClient.on('error', (err) => { console.error('❌ MQTT-Fehler:', err); });
 //-----------------------------------------------------------------------------------------
 
 // MQTT - Distributor starten
-mqttDist = new TMQTTDistributor({ mqttBroker : MQTT_BROKER_URL,
-                                  topic      : defaultTopic 
+mqttDist = new TMQTTDistributor({ mqttBroker: MQTT_BROKER_URL,
+                                  topic     : defaultTopic 
                                 })
 
 mqttDist.start();
@@ -102,6 +101,9 @@ mqttDist.start();
 //-----------------------------------------------------------------------------------------
 //-----------------------------------------------------------------------------------------
 //-----------------------------------------------------------------------------------------
+
+
+
 
 
 const webApp       = express();
