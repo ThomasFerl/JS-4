@@ -23,8 +23,35 @@ var selectedDevice  = null;
 var caption1        = '';
 var caption2        = '';
 
+const apiEndpoints = [
+  "TEST",
+  "LOADDEVICES",
+  "LOADDEVICE",
+  "NEWDEVICE",
+  "UPDATEDEVICE",
+  "LOADCHANELS",
+  "NEWCHANEL",
+  "UPDATECHANEL",
+  "AVAILEABLETOPICS",
+  "LSTOPICS",
+  "GETPAYLOADFIELDS",
+  "MQTTLASTPAYLOAD",
+  "MQTTLASTPAYLOADS",
+  "COUNT",
+  "GETVALUES",
+  "SYNC",
+  "GETLASTVALUES",
+  "CHANELINFO"
+];
+
+
+
+
+
+
+
 export function main(capt1)
-{ debugger
+{ 
   caption1 = capt1;
   caption2 = '';
   
@@ -32,6 +59,7 @@ export function main(capt1)
   globals.sysMenu.push( {caption:'Berechtigungen' , action:function(){sysadmin.adminGrants()} } );
   globals.sysMenu.push( {caption:'Info' , action:function(){app.sysInfo()} } );
   globals.sysMenu.push( {caption:'Symbol-Bibliothek (nur in der Entwicklungsphase)' , action:function(){dialogs.browseSymbols()} } );
+  globals.sysMenu.push( {caption:'API-Test (nur in der Entwicklungsphase)' , action:()=>{app.APItest(apiEndpoints)} } );
   globals.sysMenu.push( {caption:'Abbrechen' , action:function(){} } );
   
   app.login( ()=>{  caption2 = 'Willkommen ' + globals.session.userName ; run() });

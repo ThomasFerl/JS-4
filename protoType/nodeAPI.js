@@ -186,22 +186,24 @@ if( CMD=='STRUCTURE')
   }
 }
 
-  
+
+if( CMD=='SCHEMA')          return dbUtils.schema( dB , param.tableName )
+    
 if( CMD=='AST' )            return dbUtils.extractTableNames( param.sql );
 
 if( CMD=='LSUSER')          return dbUtils.fetchRecords_from_Query( etc , 'Select * from user' );
 
 if( CMD=='ADDUSER') 
 {
- var sql    = "insert into user( username , firstName , lastName , jobFunction , passwd , birthdate) values(?,?,?,?,?,?)";
- var params = [ param.username , param.firstname , param.lastname , param.jobfunction , param.passwd , param.birthdate ];
+ var sql    = "insert into user( username , firstName , lastName , jobFunction , passwd , email) values(?,?,?,?,?,?)";
+ var params = [ param.username , param.firstname , param.lastname , param.jobfunction , param.passwd , param.email ];
  return dbUtils.runSQL( etc , sql , params );
 }
 
 if( CMD=='EDITUSER') 
 {
- var sql    = "update user set username=? , firstName=? , lastName=? , jobFunction=? , passwd=? , birthdate=? where id=?";
- var params = [ param.username , param.firstname , param.lastname , param.jobfunction , param.passwd , param.birthdate , param.ID ];
+ var sql    = "update user set username=? , firstName=? , lastName=? , jobFunction=? , passwd=? , email=? where id=?";
+ var params = [ param.username , param.firstname , param.lastname , param.jobfunction , param.passwd , param.email , param.ID ];
  return dbUtils.runSQL( etc , sql , params );
 }
 

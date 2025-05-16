@@ -17,7 +17,7 @@ import { TFDateTime }      from "./tfWebApp/utils.js";
 import {TdeviceChanelsDlg} from "./deviceChanelsDlg.js";
 
 
-
+const __deviceType        =  ["","Tixi","Wago","Neuberger","EMess","sonstiges"]
 
 const __anlagenSchluessel = 
     [
@@ -77,7 +77,7 @@ const __anlagenSchluessel =
 export class TdeviceDlg 
 {
   constructor( device ) 
-  { debugger;
+  { 
       this.error      = false;
       this.errMsg     = ""; 
       this.newDevice  = false;
@@ -101,13 +101,12 @@ export class TdeviceDlg
              for(var i=0; i<response.result.length; i++) this.device[response.result[i].fieldName] = response.result[i].defaultValue || "";
       }
 
-      var availeableTopics = [];
-
-      if(this.newDevice)
-      {  
-        var r = utils.webApiRequest('availeableTopics' , {} );
-        for(var i=0; i<r.result.length; i++) availeableTopics.push(r.result[i].descr)
-      }      
+      if(!this.device.TOPIC)
+      {
+       var availeableTopics = [];
+       var r = utils.webApiRequest('availeableTopics' , {} );
+       for(var i=0; i<r.result.length; i++) availeableTopics.push(r.result[i].descr)
+      }  
       
       var cpt = this.newDevice ? "neues Gerät hinzufügen" : "Gerät bearbeiten";
           
@@ -144,19 +143,25 @@ export class TdeviceDlg
                                {} ,                             // InpType
                                '' );
 
-      this.form.setInputType("TYP"                , "select" , {items:["","Tixi","Wago","Neuberger","EMess","sonstiges"]} );
-      this.form.setInputType("TOPIC"              , "select" , {items:availeableTopics} );
+      this.form.setInputType("TYP"                , "select" , {items:__deviceType} );
+
+      if(!this.device.TOPIC) this.form.setInputType("TOPIC"              , "select" , {items:availeableTopics} );
+     
       this.form.setInputType("AnlagenSchluessel"  , "select" , {items:getStrList(__anlagenSchluessel)} );
      
       this.form.render(true);
+
+      if(this.device.TOPIC) this.form.disable("TOPIC");
+
       
       // ItemIndex der Combobox auf aktuellen Wert setzen...
-      this.form.getControlByName("AnlagenSchluessel").editControl.itemIndex = findIndex( __anlagenSchluessel , this.device.AnlagenSchluessel )
+      this.form.getControlByName("AnlagenSchluessel").editControl.itemIndex = findIndex( __anlagenSchluessel , this.device.AnlagenSchluessel );
+      this.form.getControlByName("TYP").editControl.itemIndex =  __deviceType.indexOf(this.device.TYP );
        
 
 
 
-      this.form.callBack_onOKBtn  = this.saveDevice.bind(this);
+      this.form.callBack_onOKBtn  = function ( d) {debugger; this.saveDevice(d)}.bind(this);
       this.form.callBack_onESCBtn = function () {this.dlgWnd.destroy() ; if(this.callBack_onDialogAbort!=null) this.callBack_onDialogAbort() }.bind(this);
   }
 
@@ -164,7 +169,7 @@ export class TdeviceDlg
 
 
   saveDevice( deviceData )
-  {
+  { debugger;
     /* daten kommen in der Form: [{"field":"ID","value":""},
                                   {"field":"BEZEICHNUNG","value":""},
                                   {"field":"TYP","value":"Tixi"}, .... {}]

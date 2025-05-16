@@ -32,6 +32,9 @@ export class TFDataViewer
 
       var l                    = dialogs.setLayout( this.mainWnd.hWnd , {gridCount:27,head:2,left:7} )
           this.head            = l.head;
+          this.head.buildGridLayout_templateColumns('1fr,3em');
+          this.head.buildGridLayout_templateRows   ('1fr 1fr');
+ 
           this.dashBoard       = l.dashBoard; 
           this.chanelContainer = l.left;
           this.chanelContainer.buildBlockLayout();
@@ -89,13 +92,21 @@ export class TFDataViewer
 
 
 selectChanel( c )
-{ debugger;
+{ 
   // alle Listeneinträge auf weiss setzen
   for(var i=0; i<this.chanels.length; i++) this.chanels[i].panel.backgroundColor = 'white';
      
   // das ausgewählte Element hervorheben
    this.selectedChanel     = c;
    c.panel.backgroundColor = 'rgb(160, 202, 236)';
+
+   // Caption-Panel leeren
+   this.head.innerHTML = '';
+   var l1=dialogs.addLabel(this.head,'',1,1,1,1,c.BEZEICHNUNG);
+       l1.fontSize = '1.5em';
+       l1.fontWeight = 'bold';
+       l1.color = 'rgb(3, 4, 61)';
+       
 
     // die Chart-Panel leeren
    this.chartPanel.innerHTML = '';

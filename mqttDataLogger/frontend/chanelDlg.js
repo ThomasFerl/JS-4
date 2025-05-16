@@ -184,6 +184,7 @@ export class TChanelDlg
              for(var i=0; i<response.result.length; i++) this.chanel[response.result[i].fieldName] = response.result[i].defaultValue || "";
              this.chanel.ID_Device = this.device.ID;
       }
+        debugger;
         var availeableTopics = [];
         var r = utils.webApiRequest('LSTOPICS' , {ID_Device:device.ID} );
         if(!r.error) 
@@ -276,15 +277,14 @@ export class TChanelDlg
      
            this.form.callBack_onOKBtn  = function () { // im Formular ist die ID des Topic/Descriptor gespeichert
                                                        // wir brauchen aber den Klartextnamen ....
-                                                       var t =this.form.getControlByName("DESC").editControl;  
-                                                       var r =this.form.getInputFormValues();
+                                                       var r  = this.form.getInputFormValues();
                                                        var h1 = utils.findEntryByField(r , 'field' , 'DESC');
-                                                       if(h1!=null) h1.value = t.text;
-
-                                                       var h2 = utils.findEntryByField(r , 'field' , 'ID_TOPIC');
-                                                        if(h2!=null) h2.value = t.value;
-                                                       
-                                                       this.saveChanel(r);
+                                                       if(h1!=null) 
+                                                        {
+                                                          r.push({field:'ID_TOPIC' , value: h1.value});
+                                                          h1.value = '';
+                                                        }  
+                                                        this.saveChanel(r);
                                                      }.bind(this);  
 
                                                      

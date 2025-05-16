@@ -2467,7 +2467,8 @@ set item( item )
 get item() 
 {
   var ndx = this.itemIndex;
-  return this.items[ndx].value; 
+  if (ndx<0) return null;
+  else       return this.items[ndx].value; 
 }
 
 }
@@ -3596,8 +3597,7 @@ export class TForm
           ctrl.editControl = new TFEdit(inpContainer,1,1,'99%','3em',{lookUp:true,items:ctrl.params.items,caption:ctrl.label,appendix:ctrl.appendix,value:ctrl.value,captionLength:maxLabel,appendixLength:maxAppendix,justifyEdit:"left"});  
           ctrl.editControl.input.type = 'password';
         }
-      
-
+       
         if(ctrl.type.toUpperCase()=='LOOKUP')
           ctrl.editControl = new TFEdit(inpContainer,1,1,'99%','3em',{lookUp:true,items:ctrl.params.items,caption:ctrl.label,appendix:ctrl.appendix,value:ctrl.value,captionLength:maxLabel,appendixLength:maxAppendix,justifyEdit:"left"});  
       

@@ -3,6 +3,7 @@ import * as utils       from "./utils.js";
 import * as dialogs     from "./tfDialogs.js";
 import { TFScreen }     from "./tfObjects.js";
 import { TFWorkSpace }  from "./tfObjects.js";
+import { TFWindow   }   from "./tfWindows.js";
 
 
 
@@ -238,6 +239,38 @@ export function help(url)
 }
 
 
+export function APItest( endPoints )
+{
+  var w = new TFWindow( null , 'API-Test' , '70%' , '30%' , 'CENTER' );
+  var cmds = ['LSGRANTS' , 'GETUSERGRANTS' , 'GETVAR' , 'GETVARS' , 'USERLOGOUT' , 'CREATETABLE' , 'FETCHVALUE' , 'FETCHRECORD' , 'FETCHRECORDS',
+              'INSERTINTOTABLE' , 'UPDATETABLE' , 'DROP' , 'EXISTTABLE' , 'STRUCTURE' , 'AST' , 'LSUSER' , 'ADDUSER' ,  'EDITUSER' , 'ADDGRANT' , 'IDGRANT' , 
+              'RESETUSERGRANTS' , 'ADDUSERGRANT' , 'SETUSERGRANTS' , 'GETUSERGRANTS' , 'SETVAR' , 'DELVAR' , 'JSN2EXCEL' ];
+              
+  var cbItems = [];
+  for(var i=0; i<cmds.length; i++) cbItems.push({caption:cmds[i],value:cmds[i]}); 
+
+  if(endPoints)
+    for(var i=0; i<endPoints.length; i++) cbItems.push({caption:endPoints[i],value:endPoints[i]});
+
+
+  w.buildGridLayout_templateColumns('1fr');
+  w.buildGridLayout_templateRows('1fr 1fr 1fr 1fr');
+  var c = dialogs.addCombobox( w.hWnd ,        1 , 1 ,70 , 'Command' , '' , 'TEST' , cbItems , {} );
+  var p = dialogs.addInput ( w.hWnd ,          1 , 2 , 70 , 'params' , '' , '{param:value}' , {} );
+  var l = dialogs.addLabel ( w.hWnd , '' ,     1 , 3 , '100%' , '2em' , 'Parameter in der Form "param1=value1;param2=value2..." angeben !' );
+  var b = dialogs.addButton( w.hWnd , '' ,     1 , 4 , '10em' , '2em' , 'OK' );
+     b.margin = '1em';
+     b.callBack_onClick = function(){ 
+                                      var param = utils.parseToJSON(this.p.value);
+                                      console.log("param =>"+JSON.stringify(param));
+                                      var response = utils.webApiRequest(this.c.value , param);
+                                      console.log(response);
+                                      dialogs.showMessage( JSON.stringify(response) );
+                                    }.bind({c:c,p:p});
+    
+ }
+
+
 
 export class TFWebApp
 {
@@ -306,5 +339,6 @@ export class TFWebApp
   {
     return this.activeWorkspace.container==ID;
   }
+
    
 }
