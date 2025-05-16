@@ -350,18 +350,6 @@ function handle_backDoor_Request( reqStr , res)
 }
 
 
-function handleSyncForce( req , res )
-{
-  mqttHandler.synchronize();   
-  mqttHandler.aggregateHourly();   
-  mqttHandler.aggregateDaily();   
-  mqttHandler.cleanUp_old_payLoads(); 
-  res.send("Synchronisation außerhalb des Scheduler ausgeführt ...");
-}  
-
-
-
-
 
 webAPI.setup( dB , etc );
 
@@ -409,7 +397,7 @@ webApp.get('/DEBUG'                        ,  handleDebug );
 webApp.get('/ntlm'                         ,  handleNTLM );
 webApp.get('/x'                            ,  handleRequest );
 
-webApp.get('/syncForce'                    ,  handleSyncForce );
+webApp.get('/syncForce'                    ,  mqttHandler.handleSyncForce );
 
 webApp.post('/xpost'                       ,  handleRequest );
 webApp.post('/upload', upload.single('file'), handleUpload );
@@ -424,6 +412,35 @@ webServer.listen( port , () => {console.log('Server listening on Port ' + port )
 
 setInterval( webAPI.run          , 60000 ); // jede Minute prüfen, ob etwas im BATCH wartet ...
 setInterval( session.ctrlSession , 1000 ); 
+
+var oneMinute = 60000;
+// jede Minute die MQTT-Payloads mit Measurements synchronisieren und die Daten in die DB schreiben
+setInterval( ()=>{mqttHandler.synchronize();   } , oneMinute ); 
+
+// jede Stunde die measurements zu Stundenwerten aggregieren
+setInterval( ()=>{mqttHandler.aggregateHourly();   } , 60*oneMinute );
+
+// zum Tageswechsel die measurements zu Tageswerten aggregieren und die alten Daten löschen
+setInterval(() => {
+                    const today = new Date();
+                    // Prüft jede Minute, ob es Mitternacht ist
+                    if (today.getHours() === 0 && today.getMinutes() === 0)  
+                    {
+                      mqttHandler.aggregateHourly();
+                      mqttHandler.aggregateDaily();
+                      // Löscht die alten Payloads
+                      mqttHandler.cleanUp_old_payLoads(); 
+                    }  
+                  } , oneMinute ); 
+
+
+
+  
+
+
+
+
+
 
 
 

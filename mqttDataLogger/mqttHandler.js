@@ -1,3 +1,4 @@
+const { error } = require('console');
 const globals              = require('./backendGlobals');
 const dbUtils              = require('./dbUtils');
 const utils                = require('./nodeUtils');
@@ -288,10 +289,6 @@ module.exports.synchronize = () =>
            ___synchronize( idTopic , r.result[i].ID );
         }   
    }
-
-   this.aggregateHourly();
-   this.aggregateDaily();  
-
 }
 
 
@@ -306,6 +303,19 @@ module.exports.cleanUp_old_payLoads = () =>
     dbUtils.runSQL(dB, "DELETE FROM mqttPayloads WHERE sync = 1 AND DT < ?", [cutoffPayload]);
     dbUtils.runSQL(dB, "DELETE FROM Measurements WHERE sync = 1 AND DT < ?", [cutoffMeasurements]);
 }
+
+
+
+
+module.exports.handleSyncForce = ( req , res ) =>
+{
+  this.synchronize();   
+  this.aggregateHourly();   
+  this.aggregateDaily();   
+  this.cleanUp_old_payLoads(); 
+  res.send({error:false,errMsg:"Synchronisation außerhalb des Scheduler ausgeführt ...", result:{}})
+  console.log("Synchronisation abgeschlossen ...");
+}  
 
 
     
