@@ -22,6 +22,7 @@ export class TFMediaCollector_fileManager
     this.rootDir           = params.root || '/';
     this.fileExt           = params.fileExt || validExtensions;
     this.mediaViewer       = null;
+    this.mediaViewerClosed = true;
     this.fileGrid          = null;
     this.callBack_if_ready = callBack_if_ready;
     
@@ -162,8 +163,13 @@ export class TFMediaCollector_fileManager
     
     viewMedia(fn , ext)
     {
-        if(this.mediaViewer==null) this.mediaViewer = new TFWindow( null , fn , '44%' , '44%' , 'CENTER' );
-        else                       this.mediaViewer.innerHTML = '';     
+        if(this.mediaViewer==null  || this.mediaViewerClosed)
+         {
+            this.mediaViewer = new TFWindow( null , fn , '44%' , '44%' , 'CENTER' );
+            this.mediaViewerClosed = false;
+            this.mediaViewer.callBack_onClose = function(){this.mediaViewerClosed = true}.bind(this);
+         }
+        else this.mediaViewer.innerHTML = '';     
       
         if(utils.isImageFile(ext))
         {
@@ -194,7 +200,7 @@ export class TFMediaCollector_fileManager
    
   
     getSelectedFiles() 
-    { debugger;
+    { 
       console.log('getSelectedFiles()');
       var selRows = this.fileGrid.getSelectedRows();
       var result  = [];

@@ -1943,6 +1943,9 @@ export function isMovieFile(ext)
 
 export function isImageFile(ext)
 {
+   // besitzt ext einen vorangestellten Punkt ?
+   if(ext.indexOf('.')==0) ext = ext.substring(1);
+
    for(var i=0; i<globals.imageFileExtensions.length; i++)
    {
      if(ext.toUpperCase()==globals.imageFileExtensions[i].toUpperCase()) return true;
@@ -1953,6 +1956,8 @@ export function isImageFile(ext)
 // parst eine Zeichenkette in ein JSON-Objekt - siehe Beispiel unten
 export function parseToJSON(inputStr)  
   {
+   if(ext.indexOf('.')==0) ext = ext.substring(1);
+
     let result = {};
     let pairs = inputStr.split(";").map(pair => pair.trim()).filter(pair => pair); // Aufteilen & leere Elemente entfernen
 

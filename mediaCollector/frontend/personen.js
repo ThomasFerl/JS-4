@@ -182,7 +182,7 @@ dropImage( e , data )  // onDrop ( event , data )
     if (data.json) 
     {
       debugger
-      var response = utils.webApiRequest('PORTRAITFROMFILE' , {ID_FILE:data.json.ID_FILE , fnPortrait:this.ID+"_"+Date.now() } );
+      var response = utils.webApiRequest('PORTRAITFROMFILE' , {ID_FILE:data.json.mediaFile.ID , fnPortrait:this.ID+"_"+Date.now() } );
       if (response.error) 
       {
         dialogs.showMessage(response.errMsg);

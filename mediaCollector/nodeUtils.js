@@ -871,6 +871,114 @@ module.exports.httpRequest = async function (url)
 }
 
 
+
+module.exports.buildFileGUID = function( fs , path , fileInfo_or_fileFullName )
+{
+  var name = '';
+  var size = 0;
+ 
+  // ist fileInfo_or_fileFullName ein String, dann ist es der Dateiname
+  // ansonsten ist es ein Objekt mit den Datei-Infos
+  if(typeof fileInfo_or_fileFullName === 'string')
+  {
+    console.log("buildFileGUID based on String -> "+fileInfo_or_fileFullName);
+    var mediaFile = fileInfo_or_fileFullName;
+    var fileInfo  = this.analyzeFile( fs , path , mediaFile );
+    if(fileInfo.error) 
+    { console.log('fileInfo.error: '+JSON.stringify(fileInfo)); 
+      return fileInfo; 
+    }
+    console.log('fileInfo : '+JSON.stringify(fileInfo));
+
+    name = fileInfo.result.name;
+    size = fileInfo.result.size;
+  } 
+  else
+  {
+    console.log("buildFileGUID based on Object -> "+JSON.stringify(fileInfo_or_fileFullName));  
+    var fileInfo = fileInfo_or_fileFullName;
+    name = fileInfo.name;
+    size = fileInfo.size;
+  }
+    // wandle den Dateinamen in hexadezimale Zeichen um
+  var hexFileName = Buffer.from(name).toString('hex');
+
+  return {error:false,errMsg:'OK',result:hexFileName + '_' + size};
+}
+
+
+const videoExtensions = [
+  'mp4', 'm4v', 'mov', 'avi', 'wmv', 'flv',
+  'f4v', 'mkv', 'webm', 'ts', 'mpeg', 'mpg',
+  '3gp', 'ogv'
+];
+
+const imageExtensions = [
+  'jpeg', 'jpg', 'png', 'gif', 'bmp', 'webp', 'svg'
+];
+
+
+
+
+
+
+module.exports.analyzeFile=function(fs,path,filePath) 
+{
+  // Unterstützte Formate für Bilder und Videos
+  const videoExtensions = [
+    'mp4', 'm4v', 'mov', 'avi', 'wmv', 'flv',
+    'f4v', 'mkv', 'webm', 'ts', 'mpeg', 'mpg',
+    '3gp', 'ogv'
+  ];
+  
+  const imageExtensions = [
+    'jpeg', 'jpg', 'png', 'gif', 'bmp', 'webp', 'svg'
+  ];
+  
+
+  var result = { path      : '',
+                 name      : '',
+                 ext       : '',
+                 dir       : '',
+                 type      : '',
+                 size      : '' 
+               };
+    try {
+        // Prüfen, ob die Datei existiert
+        if (!fs.existsSync(filePath)) return {error:true,errMsg:'file not exists',result:{}};
+            
+        // Datei-Statistiken abrufen
+        const stats = fs.statSync(filePath);
+
+        // Datei-Pfad, Name und Erweiterung ermitteln
+        result.path     = path.resolve(filePath);
+        result.name     = path.basename(filePath);
+        result.ext      = path.extname(filePath);
+        result.dir      = path.dirname(filePath);
+        result.size     = stats.size;
+
+        // Datei-Typ bestimmen
+        result.type  = 'unknown';
+        e            = result.ext.toLowerCase().substring(1);
+        if      (imageExtensions.includes(e)) result.type = 'IMAGE'
+        else if (videoExtensions.includes(e)) result.type = 'MOVIE';
+       } catch (error) {return { error:true, errMsg:error.message, result:{} };
+    }
+  return {error:false,errMsg:'OK',result:result};  
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
 /* mit Callback
 
 module.exports.httpRequest = function ( url ) 

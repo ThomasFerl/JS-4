@@ -9,6 +9,9 @@ const sharp           = require('sharp');
 const { imageHash }   = require('image-hash');
 const hamming         = require('hamming-distance');  // Ähnlichkeit von Bildern ...
 
+_posterPath    = "/home/tferl/tmp/mediaCollector/mediaCache/poster/";
+_thumbsPath    = "/home/tferl/tmp/mediaCollector/mediaCache/thumbs/";
+_personsPath   = "/home/tferl/tmp/mediaCollector/mediaCache/persons/";
 
 const videoExtensions = [
    'mp4', 'm4v', 'mov', 'avi', 'wmv', 'flv',
@@ -160,9 +163,11 @@ class TFMediaCollektor
     this.etc           = _etc; // lokale Kopie der Konfigurations-Datenbank - wird via startBackend() initialisiert ....   
     this.path          = {};
     this.fs            = {};
-    this.posterPath    = "/home/tferl/GIT/JS-4/protoType/mediaCache/poster/";
-    this.thumbPath     = "/home/tferl/GIT/JS-4/protoType/mediaCache/thumbs/";
-    this.portraitPath  = "/home/tferl/GIT/JS-4/protoType/mediaCache/persons/";
+    this.posterPath    = _posterPath;
+    this.thumbPath     = _thumbsPath;
+    this.portraitPath  = _personsPath;
+
+    
 
     this.numberOfThums = 20;
     this.thumbPosition = 7;  // nach 7 Sekunden wird Movie-Thumb erzeugt

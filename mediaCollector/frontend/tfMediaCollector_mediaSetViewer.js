@@ -71,39 +71,38 @@ __init__()
     this.mediaViewer       = null;
     
     this.workSpace.backgroundColor = 'darkgray';
-    this.workSpace.buildGridLayout('20x20');
+    this.workSpace.buildGridLayout('21x21');
         
-     this.menuPanel        = dialogs.addPanel ( this.workSpace , 'cssVontainerPanel' , 1 , 1 , 20 , 1 );
-     this.menuPanel.buildGridLayout_templateColumns('7em 7em 7em 7em 7em 7em 1fr');
+     this.menuPanel        = dialogs.addPanel ( this.workSpace , '' , 1 , 1 , 21 , 2 );
+     this.menuPanel.buildGridLayout_templateColumns('3em 3em 3em 3em 3em 3em 1fr 3em');
      this.menuPanel.buildGridLayout_templateRows('1fr');
      this.menuPanel.overflow = 'hidden';
+     this.menuPanel.margin = '4px';
 
-     var  b=dialogs.addButton( this.menuPanel ,'', 1 , 1 , 1 , 1 ,'+' );
+     utils.drawSymbol('image',dialogs.addPanel(this.menuPanel , 'cssContainerPanel' , 8 , 1 , 1 , 1 ),'black');
+
+     var  b=dialogs.addButton( this.menuPanel ,'', 1 , 1 , 1 , 1 , {glyph:'circle-plus'} );
           b.backgroundColor = 'gray';
-          b.marginLeft = '7px';
-          b.marginTop  = '4px';
-          b.height = '1.4em';
+          b.margin = '7px';
+          b.height = '1.7em';
           b.callBack_onClick = function(){this.add2MediaSet()}.bind(this);
           
-          b=dialogs.addButton( this.menuPanel ,'', 2 , 1 , 1 , 1 ,'-' );
+          b=dialogs.addButton( this.menuPanel ,'', 2 , 1 , 1 , 1 ,{glyph:'circle-minus'} );
           b.backgroundColor = 'gray';
-          b.marginLeft = '4px';
-          b.marginTop  = '4px';
-          b.height = '1.4em';
+          b.margin = '7px';
+          b.height = '1.7em';
           b.callBack_onClick = function(){this.removeMediaFile()}.bind(this);
 
-          b=dialogs.addButton( this.menuPanel ,'', 4 , 1 , 1 , 1 ,'diaShow' );
+          b=dialogs.addButton( this.menuPanel ,'', 4 , 1 , 1 , 1 ,{glyph:'circle-play'} );
           b.backgroundColor = 'gray';
-          b.marginLeft = '4px';
-          b.marginTop  = '4px';
-          b.height = '1.4em';
+          b.margin = '7px';
+          b.height = '1.7em';
           b.callBack_onClick = function(){this.diaShow()}.bind(this);
 
-          b=dialogs.addButton( this.menuPanel ,'', 3 , 1 , 1 , 1 ,'edit' );
+          b=dialogs.addButton( this.menuPanel ,'', 3 , 1 , 1 , 1 ,{glyph:'pencil'} );
           b.backgroundColor = 'gray';
-          b.marginLeft = '4px';
-          b.marginTop  = '4px';
-          b.height = '1.4em';
+          b.margin = '7px';
+          b.height = '1.7em';
           b.callBack_onClick = function(){
                                            var es = new TFMediaCollector_editSet(this.mediaSet); 
                                                es.callback_if_ready = function(mediaSet){ 
@@ -112,7 +111,7 @@ __init__()
                                                    }.bind(this);
         }.bind(this);
 
-     this.dashboardPanel   = new TFPanel( this.workSpace ,  1 , 2 , 20 , 19 ,{css:'cssContainerPanel',dropTarget:true} );
+     this.dashboardPanel   = new TFPanel( this.workSpace ,  1 , 3 , 21 , 19 ,{css:'cssContainerPanel',dropTarget:true} );
      this.dashboardPanel.callBack_onDrop = function (e , data)
                                            { 
                                               if (data.json)
@@ -379,8 +378,13 @@ containingMediafile(mediaFile)
 
      
 add2MediaSet()
-{
-  new TFMediaCollector_fileManager( null, {root:this.mediaSet.DESCRIPTION } , function(files){this.___addMediaFilesDirect(files)}.bind(this)).run();
+{ debugger;
+  // der Pfad des des ersten Files im mediaSet, wird der Startpunkt (root) des FileManagers
+  // wenn kein File im mediaSet, dann wird der root des FileManagers auf den aktuellen Pfad gesetzt
+  var dir = '';
+  if(this.mediaFiles.length>0) dir = this.mediaFiles[0].DIR;
+  
+  new TFMediaCollector_fileManager( null, {root:dir } , function(files){this.___addMediaFilesDirect(files)}.bind(this)).run();
 }
 
  
