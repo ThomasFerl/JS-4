@@ -190,6 +190,13 @@ if( CMD=='NEWDEVICE' )
     }
 
 
+  if( CMD=='GETRAWVALUES' )
+    {
+      return mqttHandler.selectRawValues( param ); 
+    }
+
+
+
   if( CMD=='CHANELINFO' )
     {
       return mqttHandler.getChanelInfo( param.ID_Chanel ); 

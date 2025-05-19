@@ -148,12 +148,22 @@ selectChanel( c )
 
     var caption                 = dialogs.addPanel(this.lastValuesPanel,'cssContainerPanel',1,1,1,1);
         caption.marginTop       = 0;
+        caption .padding        = 0;
         caption.backgroundColor = 'rgb(3, 4, 61)';
-        dialogs.addLabel(caption             ,'',1,1,"100%",'100%','letzter Messwert').color = 'white';
+        caption.overflow        = 'hidden';
+        caption.buildGridLayout_templateColumns('1fr 2em');
+        caption.buildGridLayout_templateRows('1fr');
+        dialogs.addLabel(caption ,'',1,1,1,1,'letzter Messwert').color = 'white';
+
+    this.btnRawValues = dialogs.addButton(caption,'',2,1,'2em','2m',{glyph:'creative-commons-sampling'});   
+    this.btnRawValues.backgroundColor = 'rgb(77, 77, 77)';
+    this.btnRawValues.margin = 0;
+    this.btnRawValues.callBack_onClick = function(){this.updateRawValues()}.bind(this);
+    this.btnRawValues.hide();
+
         dialogs.addLabel(this.lastValuesPanel,'',1,2,1,1,response.result.lastMeasurement.Wert + ' ' + response.result.chanel.UNIT ).fontWeight = 'bold';    
     var dt = new TFDateTime(response.result.lastMeasurement.DT);    
         dialogs.addLabel(this.lastValuesPanel,'',1,3,1,1,dt.formatDateTime('dd.mm.yyyy hh:mn')).fontSize='0.75em';
-
 
     var response = utils.webApiRequest( 'GETVALUES' , {ID_Chanel:c.ID, resolution:'DAY'} );
 
@@ -162,6 +172,10 @@ selectChanel( c )
         this.chartPanel.innerHTML = 'Fehler beim Abruf der Archive: ' + response.errMsg;
         return;
     } 
+
+    // Wenn sder letzte Tag in der Liste "GESTERN" ist, dann wird der heutige Tag hinzugefügt
+    var yesterday = new TFDateTime().date()-1;
+    if(response.result[response.result.length-1].DT==yesterday) response.result.push({DT:yesterday+1, Wert:response.result[response.result.length-1].Wert});
 
     var chartData = [];
     for(var i=0; i<response.result.length; i++)
@@ -181,10 +195,14 @@ selectChanel( c )
 
 updateHourChart(day)
 {
-  this.hourChartPanel.innerHTML = '';
-  
-    var dtExcelFormat = new TFDateTime(day).dateTime();
-      
+    this.hourChartPanel.innerHTML = '';
+    
+    var dtExcelFormat = new TFDateTime(day).date();
+    var today         = new TFDateTime().date();
+     
+    if(today==dtExcelFormat) this.btnRawValues.show();
+    else this.btnRawValues.hide();
+    
     var response = utils.webApiRequest( 'GETVALUES' , {ID_Chanel:this.selectedChanel.ID , resolution:'HOUR' , from:dtExcelFormat , to:dtExcelFormat } );
 
     if(response.error)
@@ -206,9 +224,29 @@ updateHourChart(day)
 }
 
 
+updateRawValues()
+{ 
+    this.hourChartPanel.innerHTML = '';
 
+    var response = utils.webApiRequest( 'GETRAWVALUES' , {ID_Chanel:this.selectedChanel.ID, day:new TFDateTime().date()} );
 
+    if(response.error)
+    {
+        this.hourChartPanel.innerHTML = 'Fehler beim Abruf der Rohdaten: ' + response.errMsg;
+        return;
+    } 
+
+    var chartData = [];
+    for(var i=0; i<response.result.length; i++)
+    {
+        var dt = new TFDateTime(response.result[i].DT);
+        chartData.push({x:dt.formatDateTime('hh:mn'), y:response.result[i].Wert });
+    }    
+
+    this.hourChart = new TFChart( this.hourChartPanel , 1 , 1 , '100%' , '100%' , {chartBackgroundColor:'white',chartType:'line'} );
+    this.hourSeries = this.hourChart.addSeries( this.selectedChanel.NAME , 'rgba(227, 21, 21, 0.27)' );                                         
+    this.hourChart.addPoint(this.hourSeries , chartData);
 }
 
-
+}
    

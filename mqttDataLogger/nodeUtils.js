@@ -686,7 +686,7 @@ module.exports.strCompare = (str, rule) =>
 
 module.exports.scanDir = (fs , path , dirName ) =>
 {
-  if (!dirName) dirName='/';
+  if (!dirName) dirName='./';
 
   this.log('scanDir('+dirName+')');
   

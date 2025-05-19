@@ -109,7 +109,9 @@ if( CMD=='GETIMAGEFILE')    {
 
 
 if( CMD=='LSSYMBOLS')       {
-                              var response = utils.scanDir ( fs , path , globals.symbolPath() , '*.*');
+                              console.log("LSSYMBOLS -> "+globals.symbolPath());
+                              
+                              var response = utils.scanDir ( fs , path , globals.symbolPath() );
                               if (response.error) return response;
                               var sym = [];  
                               for (var i=0; i<response.result.length; i++) sym.push( path.basename(response.result[i].name, '.svg')); 

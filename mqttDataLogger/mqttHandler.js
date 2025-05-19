@@ -128,21 +128,12 @@ module.exports.selectValues = async (params) =>
          dtTo = new utils.TFDateTime(params.to);
          console.log("from:"+dtTo.dateTime()); 
       }
-
-    if(params.groupBy)
-      {
-          sql = "Select max(DT) , "+aggregation+"(Wert) from "+table+" Where ID_chanel="+params.ID_Chanel+" ";
-          if (dtFrom) sql += " AND CAST(DT as Integer) >= "+dtFrom.dateTime();
-          if (dtTo)   sql += " AND CAST(DT as Integer) <= "+dtTo.dateTime();   
-                      sql += " Group by "+params.groupBy+" Order by DT";
-      }
-
-    else
-        { sql = "Select DT,Wert from "+table+" Where ID_chanel="+params.ID_Chanel+" ";
+         
+      sql = "Select DT,Wert from "+table+" Where ID_chanel="+params.ID_Chanel+" ";
          if (dtFrom) sql += " AND CAST(DT as Integer) >= "+dtFrom.dateTime();
          if (dtTo)   sql += " AND CAST(DT as Integer) <= "+dtTo.dateTime();
                      sql += " Order by DT";
-     }
+     
       
    return dbUtils.fetchRecords_from_Query(dB , sql ) 
 }
@@ -177,6 +168,27 @@ module.exports.selectLastValues = async (params) =>
 {
    return dbUtils.fetchRecords_from_Query(dB , "Select * from Measurements Where ID_chanel="+params.ID_Chanel+" limit "+ (params.limit || "49") ) 
 }
+
+
+module.exports.selectRawValues = async (params) =>
+{
+   console.log("selectRawValues: "+JSON.stringify(params));
+
+
+   var sql = "SELECT  CAST(DT * 1440 AS INTEGER) / 1440.0 AS DT, "  //  -- 1440 Minuten pro Tag "
+           + "ROUND(AVG(Wert), 1) AS Wert, "
+           +  "COUNT(*) AS n "
+           +  "FROM Measurements "
+           +  "WHERE ID_Chanel = "+params.ID_Chanel+" "  
+           +  "       AND CAST(DT AS INTEGER) = "+params.day+" "
+           +  "GROUP BY CAST(DT * 1440 AS INTEGER) "
+           +  "ORDER BY DT";
+
+   console.log("SQL: "+sql);
+
+   return dbUtils.fetchRecords_from_Query(dB , sql ) 
+}
+
 
 
 

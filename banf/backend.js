@@ -42,8 +42,11 @@ dbTables.buildTables( dB );
 
 const webApp       = express();
 
-globals.staticPath = path.join (__dirname, 'frontend' );
-utils.log("static Path: " + globals.staticPath );
+globals.staticPath( path.join (__dirname, 'frontend' ));
+console.log("static Path: " + globals.staticPath() );
+console.log("symbol Path: " + globals.symbolPath() );
+                                      
+
 
 // NTLM-Middleware aktivieren
 
@@ -339,7 +342,7 @@ webApp.use( ( req , res , next ) =>
       });
       
       
-webApp.use( express.static( globals.staticPath  ) );
+webApp.use( express.static( globals.staticPath()  ) );
 
 webApp.get('/userLogin'                    ,  userLogin );
 webApp.get('/userLoginx/:username/:passwd' ,  userLoginx );
