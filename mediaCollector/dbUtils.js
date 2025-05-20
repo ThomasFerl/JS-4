@@ -196,6 +196,8 @@ module.exports.createTable = ( db , tableName , fieldDef ) =>
 
 function _insertIntoTable(db, tableName, fields) 
 {
+ console.log("insertIntoTable: " + tableName + " / " + JSON.stringify(fields));
+
   var fieldNames = [];
   var fieldValues = [];
 
@@ -210,7 +212,12 @@ function _insertIntoTable(db, tableName, fields)
   // SQL-String korrekt zusammenbauen
   var sql = "INSERT INTO " + tableName + " (" + fieldNames.join(", ") + ") VALUES ('" + fieldValues.join("', '") + "')";
 
-  return _runSQL(db, sql);
+  console.log("insertIntoTable: " + sql);
+
+  var response = _runSQL(db, sql);
+  console.log("response: " + JSON.stringify(response));
+
+  return response;
 }
 
 
@@ -272,24 +279,37 @@ module.exports.insertBatchIntoTable = ( db , tableName , batch ) =>
 
 function _insertIntoTable_if_not_exist( db , tableName , fields , checkUpFieldName )
 {
+  console.log("insertIntoTable_if_not_exist: " + tableName + " / " + JSON.stringify(fields) + " / " + checkUpFieldName);
   var f     = true;
   var chk   = [];
   var where = ''
 
-  if( Array.isArray(checkUpFieldName)) chk = checkUpFieldName;
-  else chk.push(checkUpFieldName)       
+  if(checkUpFieldName)
+  {  
+    if( Array.isArray(checkUpFieldName)) chk = checkUpFieldName;
+    else chk.push(checkUpFieldName)       
   
-  for(var i=0; i<chk.length; i++)
-  {
-    if (fields.hasOwnProperty(chk[i])) 
+    for(var i=0; i<chk.length; i++)
     {
-      if(where=='') where  = chk[i] +"= '"+ fields[chk[i]] +"'";
-      else          where  = where + " AND " +  chk[i] +"= '"+ fields[chk[i]]+"'";
+      if (fields.hasOwnProperty(chk[i])) 
+      {
+        if(where=='') where  = chk[i] +"= '"+ fields[chk[i]] +"'";
+        else          where  = where + " AND " +  chk[i] +"= '"+ fields[chk[i]]+"'";
+      }
     }
-  } 
-    
-  var response = _fetchValue_from_Query( db , "Select count(*) from "+tableName+" Where "+ where);
-      if( response.result != 0 ) f=false; 
+  }   
+  
+  var sql = "Select count(*) from "+tableName;
+  
+  if(where != '') sql = sql + " Where "+ where;
+  
+  console.log("CHECK: " + sql);
+
+  var response = _fetchValue_from_Query( db , sql );
+
+  console.log("response: " + JSON.stringify(response));
+  if (response.error) return response;
+  if( response.result != 0 ) f=false; 
   
   if(f) return _insertIntoTable( db , tableName , fields ); 
   else  return {error:true, errMsg:"record already exist", result:{}}

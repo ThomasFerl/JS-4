@@ -4,16 +4,55 @@
   <meta charset="UTF-8">
   <title>Diashow mit Video-Unterstützung</title>
   <style>
-    body { margin: 0; background-color: black; display: flex; justify-content: center; align-items: center; height: 100vh; }
-    #viewer { max-width: 100%; max-height: 100%; }
-    video, img { max-width: 100%; max-height: 100%; display: none; }
+   
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background-color: black;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}
+
+#viewer {
+  position: relative;
+  width:100%;
+  height:100%;
+}
+
+img, video {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  opacity: 0.5;
+  transition: opacity 1s ease-in-out;
+  pointer-events: none;
+}
+
+img.show {
+  opacity: 1;
+  
+}
+
+
+
+
+
   </style>
 </head>
 <body>
   <div id="viewer">
-    <img id="slideImage">
-    <video id="slideVideo" controls></video>
-  </div>
+  <img id="slideImage">
+  <video id="slideVideo" controls></video>
+</div>
 
   <script>
     let mediaList = [];
@@ -36,8 +75,9 @@
       const url = mediaList[index];
       if (isVideo(url)) 
       {
+        imageEl.style.opacity = '0';
+        imageEl.classList.remove("show");
         clearInterval(timer); // Pause Slideshow
-        imageEl.style.display = 'none';
         videoEl.style.display = 'block';
         videoEl.src = url;
         videoEl.play();
@@ -48,12 +88,18 @@
           timer = setInterval(nextMedia, slideInterval); // Fortsetzung Diashow
         };
       } else {
-        videoEl.pause();
-        videoEl.src = '';
-        videoEl.style.display = 'none';
-        imageEl.src = url;
-        imageEl.style.display = 'block';
-      }
+  videoEl.pause();
+  videoEl.src = '';
+  videoEl.style.opacity = '0';
+
+  imageEl.classList.remove("show");
+  void imageEl.offsetWidth; // Reflow erzwingen
+
+  imageEl.src = url;
+
+  // WICHTIG: Kein display setzen!
+  imageEl.classList.add("show");
+}
     }
 
     function nextMedia() {

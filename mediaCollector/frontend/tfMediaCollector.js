@@ -122,8 +122,8 @@ export class TFMediaCollector
 
   addMediaSet()
   {
-    new TFMediaCollector_mediaSetViewer();
-    
+   new TFMediaCollector_mediaSetViewer( null , function(){this.updateThumbs()}.bind(this) );
+
   }
 
  

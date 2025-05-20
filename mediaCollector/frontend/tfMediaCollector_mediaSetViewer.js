@@ -36,10 +36,11 @@ let lastDropEventTime         = 0;
 
 export class TFMediaCollector_mediaSetViewer
 {
-  constructor( mediaSet )
+  constructor( mediaSet , callBack_onChanged )
   {
     this.mediaFiles              = [];
     this.mediaThumbs             = [];
+    this.callBack_onChanged      = callBack_onChanged
     this.selectedImgNdx          = 0;
     this.diaShowWindow           = null;
     this.diaShowWindow_is_closed = false;
@@ -50,10 +51,11 @@ export class TFMediaCollector_mediaSetViewer
     {
       this.mediaSet = { ID:0 , TYPE:'' , NAME:'' , KATEGORIE:'' , DESCRIPTION:'' };
       var es = new TFMediaCollector_editSet(); 
-          es.callback_if_ready = function(mediaSet){ 
+          es.callback_if_ready = function(mediaSet){ debugger;
                                                     this.mediaSet = mediaSet; 
                                                     this.__init__(); 
-                                                   }.bind(this);
+                                                    if(this.callBack_onChanged) this.callBack_onChanged();
+                                                  }.bind(this);
     }
     else
     {
