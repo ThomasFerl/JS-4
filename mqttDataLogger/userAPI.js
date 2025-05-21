@@ -180,7 +180,7 @@ if( CMD=='NEWDEVICE' )
 
    if( CMD=='SYNC') 
    {
-      return mqttHandler.handleSyncForce(webRequest ,  webResponse);
+      return mqttHandler.handleSyncForce(webRequest , null );
    }
   
 

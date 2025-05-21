@@ -325,7 +325,7 @@ module.exports.handleSyncForce = ( req , res ) =>
   this.aggregateHourly();   
   this.aggregateDaily();   
   this.cleanUp_old_payLoads(); 
-  res.send({error:false,errMsg:"Synchronisation außerhalb des Scheduler ausgeführt ...", result:{}})
+  if(res) res.send({error:false,errMsg:"Synchronisation erfolgreich ausgeführt ...", result:{}});
   console.log("Synchronisation abgeschlossen ...");
 }  
 
