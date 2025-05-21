@@ -353,6 +353,67 @@ function handle_backDoor_Request( reqStr , res)
 }
 
 
+function handleMQTT( req , res )
+{
+  for(var i=0; i<0; i++) console.log(".");
+
+  const url       = req.originalUrl;
+  const parts     = url.split("/mqtt/");
+  const topicPath = parts[1]; 
+  console.log("TOPIC " + topicPath);
+
+  // Paylods zum Topic ermitteln....
+  var response = dbUtils.fetchRecords_from_Query( dB , "Select ID from mqttTopics Where topic like '"+topicPath+"%'" );
+  if ((response.error) || (response.result.lengtt==0))return res.send( handleError("mqttTopic not found: " + topicPath ));
+
+  result = ['<?xml version="1.0"?>']
+  result.push('<PV>');
+
+  for(var i=0; i<response.result.length; i++)
+  {
+    var ID_topic = response.result[i].ID;
+
+    console.log("("+i+") ID_topic: " + ID_topic);
+
+    var payload = dbUtils.fetchRecord_from_Query( dB , "Select * from mqttPayloads Where ID_Topic="+ID_topic+" order by ID desc limit 1" );
+
+   if (!payload.error) 
+    {
+      try {
+            var pl = payload.result.payload;
+            console.log("("+i+") payload:" + pl );
+
+            var jsn = JSON.parse(pl); 
+            var n=jsn.name;
+            var v=jsn.value;
+            
+            console.log("("+i+") payload: Name=" + n + "  Value: " + v );
+            // entferne leerzeichen aus dem Namen:
+            n = n.replace(/\s+/g, '');
+            result.push('  <'+n+' _="' + v + '"/>');
+          }
+      catch(e) {  console.log("Fehler: " + e.message); jsn = {} }
+    }  
+  }  
+
+  result.push('</PV>');
+
+  console.log("result: " + result.join('\n'));
+
+  if ((result.length==0)) res.send( handleError("mqttPayload not found: " + topicPath ));
+  else 
+  {
+    var r = '';
+    for(var i=0; i<result.length; i++) r += result[i]+'\n'; 
+    
+     res.setHeader('Content-Type', 'application/xml');
+     res.send(r);
+  }  
+
+}  
+
+
+
 
 webAPI.setup( dB , etc );
 
@@ -360,6 +421,8 @@ webAPI.setup( dB , etc );
 // Erhöhen der Größenbeschränkung
 webApp.use(bodyParser.json      ({ limit: '50mb'                 }));  // Für JSON-Anfragen
 webApp.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));  // Für URL-kodierte Anfragen
+
+
 webApp.use(ntlm());
 
      
@@ -401,6 +464,7 @@ webApp.get('/ntlm'                         ,  handleNTLM );
 webApp.get('/x'                            ,  handleRequest );
 
 webApp.get('/syncForce'                    ,  mqttHandler.handleSyncForce );
+webApp.get('/mqtt/*'                       ,  handleMQTT );
 
 webApp.post('/xpost'                       ,  handleRequest );
 webApp.post('/upload', upload.single('file'), handleUpload );
