@@ -314,14 +314,15 @@ if(CMD=='PORTRAITFROMFILE')
 
   }
 
-
+        
 if(CMD=='CREATEMEDIASET') 
 {
-    return dbUtils.insertIntoTable_if_not_exist( this.db , 'mediaSets', {TYPE:param.TYPE, 
+    console.log('----------++++++++++++++++------------------------');
+    return dbUtils.insertIntoTable( this.db , 'mediaSets' , {TYPE:param.TYPE, 
                                                                          ID_THUMB:param.ID_THUMB || 0,
                                                                          NAME:param.NAME, 
                                                                          KATEGORIE:param.KATEGORIE, 
-                                                                         DESCRIPTION:param.DESCRIPTION} );
+                                                                         DESCRIPTION:param.DESCRIPTION}  );
   }
 
 if(CMD=='DELMEDIASET') 

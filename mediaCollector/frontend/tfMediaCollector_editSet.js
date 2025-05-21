@@ -191,11 +191,11 @@ edit()
       
       inp.callBack_onOKBtn = function(values) { 
                                                for(var i=0; i<values.length; i++) 
-                                               { this.self.mediaSet[values[i].field] = values[i].value }
-                                               this.self.save();  
-                                               this.self.wnd.close(); 
-                                               if(this.callback) this.callback(this.self.mediaSet);
-                                             }.bind( {self:this, callback:this.callback_if_ready} )
+                                               { this.mediaSet[values[i].field] = values[i].value }
+                                               this.save();  
+                                               this.wnd.close(); debugger;
+                                               if(this.callback_if_ready) this.callback_if_ready(this.mediaSet);
+                                             }.bind( this )
 
       inp.callBack_onESCBtn = function(values) {
                                                this.wnd.close(); 

@@ -15,18 +15,7 @@ module.exports.setup = function( _dB , _etc )
   utils.log('-------------------userAPI.SETUP-----------------');
   dB  = _dB;
   etc = _etc;
-
-  if(globals.isMediaCollector)
-    {console.log("MediaCollector wird initialisiert...");
-     media = new TFMediaCollektor( dB , etc );
-    }else console.log("MediaCollector wird NICHT initialisiert..."); 
-  
-  utils.log("userAPI.working-dB : " + dB.constructor.name);
-
-  if(etc) utils.log("userAPI.config-dB  : " + etc.constructor.name)
-  else utils.log("userAPI.config-dB  :  not set")
-  // doin your own stuff here for preparing things ...
- 
+  media = new TFMediaCollektor( dB , etc );
 }
 
 
@@ -48,11 +37,8 @@ module.exports.handleCommand = async function( sessionID , cmd , param , webRequ
 //-------------MEDIA Collektor--------------------------------
 //------------------------------------------------------------
 
- if(globals.isMediaCollector)
-  { console.log("MediaCollector.handleCommand("+cmd+")");
-    var r =  media.handleCommand( sessionID , cmd , param , webRequest ,  webResponse , fs , path );
-    if(r!=null) return r;
-  }   
+var r =  media.handleCommand( sessionID , cmd , param , webRequest ,  webResponse , fs , path );
+if(r!=null) return r;
 
 
 //------------------------------------------------------------
