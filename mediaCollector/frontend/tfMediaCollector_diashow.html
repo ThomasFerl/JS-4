@@ -82,10 +82,12 @@ img.show {
         // Es handelt sich m ein video -> Video-Element anzeigen, BildContainer durchsichtig machen
         imgViewer.style.opacity = '0';
         for(var i=0; i<mediaList.length; i++) 
+        if(!mediaList[i].isMovieFile) 
         {
           mediaList[i].image.style.opacity = '0';
           mediaList[i].image.classList.remove("show");
-        }  
+        }
+        
         clearInterval(timer); // Pause Slideshow
 
         clpViewer.style.opacity = '1';
@@ -108,7 +110,7 @@ img.show {
         imgViewer.style.opacity = '1';
         for(var i=0; i<mediaList.length; i++) 
         {
-          if(i != index)  
+          if((i != index) && (!mediaList[i].isMovieFile))
           {
             mediaList[i].image.style.opacity = '0';
             mediaList[i].image.classList.remove("show");
