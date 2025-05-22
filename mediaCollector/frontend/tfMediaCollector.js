@@ -63,18 +63,18 @@ export class TFMediaCollector
                                 {caption:'Metadaten bearbeiten',value:3},
                                 {caption:'Person zuordnen',value:4} ,]);
 
-  this.popup.onClick = (sender , item )=>
+  this.popup.onClick = function(sender , item )
     { 
                if(item.value==1) {}
 
-               if(item.value==2) {}
+               if(item.value==2) { this.diaShow() }
 
                if(item.value==3) {}
 
                if(item.value==4) {}
                 
-    }  ;
-
+    }.bind(this);
+    
    this.updateThumbs(); 
  };
 
@@ -107,7 +107,7 @@ export class TFMediaCollector
     if(mediaSetThumb.selected)
     {
       if(mediaSetThumb.mediaSet.notSet) return;
-      new TFMediaCollector_mediaSetViewer( mediaSetThumb.mediaSet );
+      new TFMediaCollector_mediaSetViewer( mediaSetThumb.mediaSet , function(){this.updateThumbs()}.bind(this) );
     }
     
     if (!globals.KeyboardManager.isKeyPressed("Control")) 
@@ -128,7 +128,7 @@ export class TFMediaCollector
 
  
   delMediaSet()
-  { debugger;
+  { 
    // zuerst das oder die selektierten MediaSets ermitteln...
    var found = [];
    for(var i=0; i<this.mediaSetThumbs.length; i++)
@@ -144,10 +144,59 @@ export class TFMediaCollector
       {
         utils.webApiRequest('DELMEDIASET' , {mediaSet:found} );
         this.updateThumbs();   
-      }
+      }.bind(this) ,
     ); return; }
 
 
+  }
+
+
+  diaShow()
+  { 
+    // zuerst das oder die selektierten MediaSets ermitteln...
+    var found      = [];
+    var mediaFiles = [];
+
+    for(var i=0; i<this.mediaSetThumbs.length; i++)
+    {
+     if(this.mediaSetThumbs[i].selected) found.push(this.mediaSetThumbs[i].mediaSet.ID);
+    }
+
+    if(found.length==0) { dialogs.showMessage('kein Media-Set selektiert'); return; } 
+
+    for(var i=0; i<found.length; i++)
+    {
+      var response = utils.webApiRequest('LSTHUMBS' , {mediaSet:found[i]} );
+      if(!response.error)
+       {
+         for(var i=0; i<response.result.length; i++) mediaFiles.push(response.result[i].file);
+       }
+    } 
+    
+    // nun die Files Vorbereiten und URL ermitteln...
+    var imgURLs = [];
+    for(var i=0; i<mediaFiles.length; i++)
+    {
+      var mediaFile = mediaFiles[i];  
+      var fn        = utils.pathJoin(mediaFile.DIR , mediaFile.FILENAME );
+    
+      if (mediaFile.TYPE == "MOVIE")
+          imgURLs.push( utils.buildURL('GETMOVIEFILE',{fileName:fn} ));
+            
+      if (mediaFile.TYPE == "IMAGE")
+          imgURLs.push( utils.buildURL('GETIMAGEFILE',{fileName:fn} ));
+    }
+
+    if(imgURLs.length==0) return;
+
+    const slideShowWindow = window.open( 'tfMediaCollector_diashow.html' , '_blank', 'fullscreen=no')
+     
+       // Warte, bis das neue Fenster geladen ist, und übertrage die Daten
+       slideShowWindow.onload = () => {
+                                       // Übertrage die Daten an das neue Fenster                                
+                                        slideShowWindow.postMessage({ currentIndex:0, slideInterval:4000, imgURLs:imgURLs } , '*' );
+                                      };
+    
   }
 
 

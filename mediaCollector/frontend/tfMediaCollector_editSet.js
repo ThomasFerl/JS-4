@@ -193,7 +193,7 @@ edit()
                                                for(var i=0; i<values.length; i++) 
                                                { this.mediaSet[values[i].field] = values[i].value }
                                                this.save();  
-                                               this.wnd.close(); debugger;
+                                               this.wnd.close(); 
                                                if(this.callback_if_ready) this.callback_if_ready(this.mediaSet);
                                              }.bind( this )
 

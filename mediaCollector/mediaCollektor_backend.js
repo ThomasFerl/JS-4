@@ -418,11 +418,15 @@ if(CMD=='LSMEDIASET')
       console.log('LSMEDIASET :'+i+'.loop:' + JSON.stringify(m)); 
       if(m.ID_THUMB!="0") 
         {
-           var thumb          = dbUtils.fetchRecord_from_Query( this.db , "Select * from thumbs where ID="+m.ID_THUMB ).result;
-               thumb.fullPath = this.path.join( this.thumbPath , thumb.THUMBFILE );
-             m.thumb          = thumb;
+           var thumb            = dbUtils.fetchRecord_from_Query( this.db , "Select * from thumbs where ID="+m.ID_THUMB ).result;
+             if(thumb.ID)  
+             { 
+               thumb.fullPath   = this.path.join( this.thumbPath , thumb.THUMBFILE );
+               m.thumb          = thumb;
+             }
+             else m.thumb       = {ID:0, ID_FILE:'', NDX:-1, THUMBFILE:'file-image' , fullPath:globals.symbolPath('file-image').result};   
         } 
-        else m.thumb          = {ID:0, ID_FILE:'', NDX:-1, THUMBFILE:'file-image' , fullPath:globals.symbolPath('file-image').result}; 
+        else m.thumb            = {ID:0, ID_FILE:'', NDX:-1, THUMBFILE:'file-image' , fullPath:globals.symbolPath('file-image').result}; 
         mediaSets.push(m);
     }
 

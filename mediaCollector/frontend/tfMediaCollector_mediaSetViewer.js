@@ -51,7 +51,7 @@ export class TFMediaCollector_mediaSetViewer
     {
       this.mediaSet = { ID:0 , TYPE:'' , NAME:'' , KATEGORIE:'' , DESCRIPTION:'' };
       var es = new TFMediaCollector_editSet(); 
-          es.callback_if_ready = function(mediaSet){ debugger;
+          es.callback_if_ready = function(mediaSet){
                                                     this.mediaSet = mediaSet; 
                                                     this.__init__(); 
                                                     if(this.callBack_onChanged) this.callBack_onChanged();
@@ -110,6 +110,7 @@ __init__()
                                                es.callback_if_ready = function(mediaSet){ 
                                                     this.mediaSet = mediaSet; 
                                                     this.__init__(); 
+                                                    if(this.callBack_onChanged) this.callBack_onChanged();
                                                    }.bind(this);
         }.bind(this);
 
@@ -323,7 +324,7 @@ containingMediafile(mediaFile)
 
 
   ___addMediaFiles(files)
-  { debugger;
+  { 
       if (!files) return;
       if (files.length == 0) return;
   
@@ -337,7 +338,7 @@ containingMediafile(mediaFile)
   }
  
   ___addMediaFilesDirect(_files)
-  { debugger;
+  { 
       var f = [];
       // füge NUR diese Dateien hinzu, die noch NICHT in this.mediaFiles[] enthalten sind
       for(var i=0; i<_files.length; i++)
@@ -380,7 +381,7 @@ containingMediafile(mediaFile)
 
      
 add2MediaSet()
-{ debugger;
+{ 
   // der Pfad des des ersten Files im mediaSet, wird der Startpunkt (root) des FileManagers
   // wenn kein File im mediaSet, dann wird der root des FileManagers auf den aktuellen Pfad gesetzt
   var dir = '';

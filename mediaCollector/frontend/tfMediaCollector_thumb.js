@@ -72,8 +72,8 @@ export class TFMediaCollector_thumb
   set selected(v)
   { 
     this.___selected = v;
-    if(v) this.thumbImg.borderWidth = '4px';
-    else  this.thumbImg.borderWidth = '1px';
+    if(v) {this.thumbImg.borderWidth = '7px';this.thumbImg.borderColor = 'blue';}
+    else  {this.thumbImg.borderWidth = '1px';this.thumbImg.borderColor = 'gray';}
   }
 
   get selected()

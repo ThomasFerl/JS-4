@@ -11,7 +11,7 @@
 
 body {
   margin: 0;
-  background-color: black;
+  background-color: rgb(74, 94, 107);
   height: 100vh;
   display: flex;
   justify-content: center;
@@ -19,10 +19,25 @@ body {
   overflow: hidden;
 }
 
-#viewer {
+/* die beiden Container für die Diashow */
+#clpViewer {
   position: relative;
+  top: 0;
+  left: 0;
   width:100%;
   height:100%;
+  opacity: 0;
+  background-color: darkslategrey;
+}
+
+#ImgViewer {
+  position: relative;
+  top: 0;
+  left: 0;
+  width:100%;
+  height:100%;
+  opacity: 0;
+  background-color: rgb(94, 97, 104);
 }
 
 img, video {
@@ -32,84 +47,92 @@ img, video {
   width: 100%;
   height: 100%;
   object-fit: contain;
-  opacity: 0.5;
+  opacity: 0;
   transition: opacity 1s ease-in-out;
   pointer-events: none;
 }
 
 img.show {
   opacity: 1;
-  
 }
 
-
-
-
-
-  </style>
+</style>
 </head>
 <body>
-  <div id="viewer">
-  <img id="slideImage">
-  <video id="slideVideo" controls></video>
-</div>
+  <div id="imgViewer"></div>
+  <div id="clpViewer">
+    <video id="clip" controls></video>    
+  </div>
 
   <script>
-    let mediaList = [];
-    let currentIndex = 0;
+
+    let mediaList     = [];
+    let currentIndex  = 0;
     let slideInterval = 4000;
-    let timer = null;
-    const imageEl = document.getElementById('slideImage');
-    const videoEl = document.getElementById('slideVideo');
-
-    function isVideo(url) 
-    { 
-      // existiert der String "GETMOVIEFILE" in der URL?
-      if (url.includes("GETMOVIEFILE")) {
-        return true;
-      }
-    }
-
+    let timer         = null;
+    let imgViewer     = document.getElementById('imgViewer');
+    let clpViewer     = document.getElementById('clpViewer');
+    let clip          = document.getElementById('clip');
+ 
     function showMedia(index) 
     {
-      const url = mediaList[index];
-      if (isVideo(url)) 
+      const media = mediaList[index];
+      if (media.isMovieFile) 
       {
-        imageEl.style.opacity = '0';
-        imageEl.classList.remove("show");
+        // Es handelt sich m ein video -> Video-Element anzeigen, BildContainer durchsichtig machen
+        imgViewer.style.opacity = '0';
+        for(var i=0; i<mediaList.length; i++) 
+        {
+          mediaList[i].image.style.opacity = '0';
+          mediaList[i].image.classList.remove("show");
+        }  
         clearInterval(timer); // Pause Slideshow
-        videoEl.style.display = 'block';
-        videoEl.src = url;
-        videoEl.play();
 
-        videoEl.onended = () => {
-          videoEl.style.display = 'none';
+        clpViewer.style.opacity = '1';
+        clip.style.opacity = '1';
+        clip.src = media.url;
+        clip.play();
+
+        clip.onended = () => {
+          clip.style.opacity = '0';
+          clpViewer.style.opacity = '0';
           nextMedia(); // Weiter nach Video-Ende
           timer = setInterval(nextMedia, slideInterval); // Fortsetzung Diashow
         };
-      } else {
-  videoEl.pause();
-  videoEl.src = '';
-  videoEl.style.opacity = '0';
+      } 
+      // Es handelt sich um ein Bild -> Bild-Element anzeigen, Video-Element durchsichtig machen
+      else 
+      {
+        clpViewer.style.opacity = '0';
+        clip.style.opacity = '0';
+        imgViewer.style.opacity = '1';
+        for(var i=0; i<mediaList.length; i++) 
+        {
+          if(i != index)  
+          {
+            mediaList[i].image.style.opacity = '0';
+            mediaList[i].image.classList.remove("show");
+          }
+          else 
+              { mediaList[i].image.style.opacity = '1';
+                mediaList[i].image.classList.add("show");
+              }  
+        }
 
-  imageEl.classList.remove("show");
-  void imageEl.offsetWidth; // Reflow erzwingen
-
-  imageEl.src = url;
-
-  // WICHTIG: Kein display setzen!
-  imageEl.classList.add("show");
-}
+      }
+     
     }
 
     function nextMedia() {
-      currentIndex = (currentIndex + 1) % mediaList.length;
+      currentIndex++;
+      if(currentIndex >= mediaList.length) currentIndex = 0;
       showMedia(currentIndex);
     }
 
     //Cursor rechts ?
     function prevMedia() {
-      currentIndex = (currentIndex - 1 + mediaList.length) % mediaList.length;
+      currentIndex--;
+      if(currentIndex<0) currentIndex = mediaList.length - 1;
       showMedia(currentIndex);
     }
     //Cursor links ?
@@ -133,16 +156,29 @@ img.show {
     });
     // Event-Listener für Nachrichten vom Hauptfenster
 
-    window.addEventListener('message', (event) => {
-      mediaList = event.data.imgURLs || [];
-      currentIndex = event.data.currentIndex || 0;
+    // Übergabe  der URLs und Parameter
+    window.addEventListener('message', (event) => 
+    {
+      var urls      = event.data.imgURLs || [];
+      currentIndex  = event.data.currentIndex || 0;
       slideInterval = event.data.slideInterval || 4000;
 
-      if (mediaList.length > 0) {
-        showMedia(currentIndex);
-        timer = setInterval(nextMedia, slideInterval);
+      for(var i=0; i<urls.length; i++) 
+      {                                      // existiert der String "GETMOVIEFILE" in der URL?
+        var mediaFile = {url:urls[i] , isMovieFile : urls[i].includes("GETMOVIEFILE") , image:{}};
+        if(!mediaFile.isMovieFile) 
+        {
+          mediaFile.image = document.createElement('img');
+          mediaFile.image.src = urls[i];
+          imgViewer.appendChild(mediaFile.image);
+        };
+        mediaList.push(mediaFile);
       }
+
+      showMedia(currentIndex);
+      timer = setInterval(nextMedia, slideInterval);
     });
+
   </script>
 </body>
 </html>
