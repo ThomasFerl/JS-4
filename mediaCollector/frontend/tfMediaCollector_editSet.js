@@ -179,12 +179,22 @@ save()
 edit()
 {
   this.__updateThumbs();
+  var mediaSetTypes      = [];
+  var mediaSetCategories = [];
+
+  var response = utils.fetchRecords("Select  distinct TYPE from mediasets order by TYPE");
+  if(!response.error) for(var i=0; i<response.result.length; i++) mediaSetTypes.push(response.result[i].TYPE);
+
+  response = utils.fetchRecords("Select  distinct KATEGORIE from mediasets order by KATEGORIE");
+  if(!response.error) for(var i=0; i<response.result.length; i++) mediaSetCategories.push(response.result[i].KATEGORIE);
 
   //                   aParent             , aData         , aLabels , aAppendix , aExclude                        , aInpType , URLForm )
   var inp = new TForm( this.formPanel      , this.mediaSet , {}      , {}        , ['ID','ID_thumb','thumb']       , {}       , '' );    
       inp.setLabel('TYPE','Typ/Art');
+      inp.setInputType('TYPE','lookup',{items:mediaSetTypes});
       inp.setLabel('NAME','Bezeichnung');
       inp.setLabel('KATEGORIE','Kategorie');
+      inp.setInputType('KATEGORIE','lookup',{items:mediaSetCategories});
       inp.setLabel('DESCRIPTION','Beschreibung');
       
       inp.render( true);  

@@ -1955,9 +1955,7 @@ export function isImageFile(ext)
 
 // parst eine Zeichenkette in ein JSON-Objekt - siehe Beispiel unten
 export function parseToJSON(inputStr)  
-  {
-   if(ext.indexOf('.')==0) ext = ext.substring(1);
-
+  { debugger;
     let result = {};
     let pairs = inputStr.split(";").map(pair => pair.trim()).filter(pair => pair); // Aufteilen & leere Elemente entfernen
 

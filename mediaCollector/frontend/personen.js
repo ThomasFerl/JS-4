@@ -132,7 +132,12 @@ edit( callback_if_ready )
 
   
  // dialogs.addFileUploader  ( p , '*.*' , true , 'mediaCache/persons' , (selectedFiles) => { this.PORTRAIT=selectedFiles.result.savedName});
-         
+  
+ 
+  var herkunft = [];
+  var response = utils.fetchRecords("Select  distinct HERKUNFT from personen order by HERKUNFT");
+  if(!response.error) for(var i=0; i<response.result.length; i++) herkunft.push(response.result[i].HERKUNFT);
+  
       
   var  c      = dialogs.addPanel(_w,'cssRibbon',4,4,1,1);
   c.backgroundColor = 'gray';
@@ -147,6 +152,9 @@ edit( callback_if_ready )
       inp.setLabel('ALIAS1','Alias #1');
       inp.setLabel('ALIAS2','Alias #2');
       inp.setLabel('ALIAS3','Alias #3');
+      inp.setLabel('HERKUNFT','Herkunft');
+      inp.setInputType('HERKUNFT','lookup',{items:herkunft});
+
       inp.setLabel('GEBURTSJAHR','Geburtsjahr');
       inp.setLabel('BUSINESSTART','Start Busines');
       inp.setLabel('BUSINESENDE','Ende Busines');
