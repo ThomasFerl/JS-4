@@ -6,7 +6,9 @@ import { TForm,
          TFPanel,
          TFImage,
          TPropertyEditor
-       }                 from "./tfWebApp/tfObjects.js";
+       }                        from "./tfWebApp/tfObjects.js";  
+       
+import {TFMediaCollector_thumb} from "./tfMediaCollector_thumb.js";
 
 
 export class TPerson 
@@ -133,7 +135,7 @@ edit( callback_if_ready )
   
  // dialogs.addFileUploader  ( p , '*.*' , true , 'mediaCache/persons' , (selectedFiles) => { this.PORTRAIT=selectedFiles.result.savedName});
   
- 
+ debugger;
   var herkunft = [];
   var response = utils.fetchRecords("Select  distinct HERKUNFT from personen order by HERKUNFT");
   if(!response.error) for(var i=0; i<response.result.length; i++) herkunft.push(response.result[i].HERKUNFT);
@@ -220,6 +222,7 @@ export class TPersonList
     constructor()
     {
       this.personen = [];
+      this.personThums = [];
       this.selected = null;
 
       this.personenWnd = dialogs.createWindow( null,'Personen','80%','80%','CENTER');
@@ -261,6 +264,30 @@ export class TPersonList
       this.filterPanel     = dialogs.addPanel(hlpContainer2,'',1,1,1,1);
       this.personPanel     = dialogs.addPanel(hlpContainer2,'',1,2,1,1);
       //-------------------------------------------------------------------------------
+      this.filterPanel.buildGridLayout_templateColumns('1fr 2em 2em'); 
+      this.filterPanel.buildGridLayout_templateRows   ('1fr');
+      this.filterPanel.overflow = 'hidden';
+      this.filterPanel.padding = '0';
+
+      var btnListView  = dialogs.addButton(this.filterPanel,'',2,1,1,1,{glyph:'align-justify' , glyphColor:'black'});
+          btnListView.backgroundColor = 'gray';
+          btnListView.margin='0';
+          btnListView.marginRight='4px';
+          
+          btnListView.color = 'black';
+          btnListView.callBack_onClick = function(){ 
+                                                    this.personThumbView.hide();
+                                                    this.personGridView.show();
+                                                  }.bind(this);
+      
+      var btnThumbView = dialogs.addButton(this.filterPanel,'',3,1,1,1,{glyph:'users-line' , glyphColor:'black'});
+          btnThumbView.backgroundColor = 'gray';
+          btnThumbView.margin='0';
+          btnThumbView.marginLeft='4px';
+          btnThumbView.callBack_onClick = function(){ 
+                                                    this.personThumbView.show();
+                                                    this.personGridView.hide();
+                                                  }.bind(this);
 
       var hlpContainer3 = dialogs.addPanel(hlpContainer1,'cssContainerPanel',3,1,1,1);
           hlpContainer3.buildGridLayout_templateColumns('1fr');
@@ -270,19 +297,33 @@ export class TPersonList
       this.imagePanel      = dialogs.addPanel(hlpContainer3,'',1,1,1,1);
       this.personMediaPanel= dialogs.addPanel(hlpContainer3,'',1,2,1,1);
       //---------------------------------------------------------------------------
+      // Das personMediaPanel ist ein Container für das listViewPanel und dem thumbViewPanel
+      // die jeweils wechselseitig angezeigt werden. Beide sind überlagert und werden via hide & show gesteuert
+
+      this.personThumbView = dialogs.addPanel(this.personPanel,'cssContainerPanel',1,1,'100%','100%');
+      this.personThumbView.position='relative';
+      this.personThumbView.hide();
 
       this.personGridView = dialogs.addPanel(this.personPanel,'cssContainerPanel',1,1,'100%','100%');
-      this.personGridView.position='absolute';
-
+      this.personGridView.position='relative';
+      
       var response = utils.webApiRequest('LSPERSON' , {} );
       if(response.error) {dialogs.showMessage(response.errMsg);return; }
-      else 
-           for(var i=0; i<response.result.length; i++) { this.personen.push( new TPerson(response.result[i]) ); }
+      else debugger;
+           for(var i=0; i<response.result.length; i++) 
+          { 
+            var p = new TPerson(response.result[i]);
+            var t = new TFMediaCollector_thumb( this.personThumbView , {thumbURL:p.portraitURL() } );
+                t.person = p;
 
-      this.updateView_personen();
+            this.personen.push( p );
+            this.personThums.push( t );
+           }
+
+      this.updateGrid_personen();
     }
 
-    
+   
     selectedPerson(p)
     {
       this.person            = p;
@@ -298,10 +339,10 @@ export class TPersonList
     }
 
     
-    updateView_personen()
+    updateGrid_personen()
     { 
         this.personGridView.innerHTML = '';
-        var g = dialogs.createTable(this.personGridView , this.personen , ['ID','ALIAS1','ALIAS2','ALIAS3','GEBURTSJAHR','BUSINESSTART','BUSINESENDE'] , [] );
+        var g = dialogs.createTable(this.personGridView , this.personen , ['ID','ALIAS1','ALIAS2','ALIAS3','GEBURTSJAHR','BUSINESSTART','BUSINESENDE','BEMERKUNGEN','PORTRAIT','portraitURL'] , [] );
         g.onRowClick=function( selectedRow , itemIndex , jsonData ) { this.selectedPerson(jsonData) }.bind(this);
     } 
     

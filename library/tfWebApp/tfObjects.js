@@ -856,6 +856,19 @@ get gap()
   }
 
 
+  set position(value)
+  {
+    this.DOMelement.style.position = value;  
+  }
+
+
+  get position()
+  {
+    return this.DOMelement.style.position;  
+  }
+
+
+
 set placeItems(value)
   {
     this.DOMelement.style.placeItems = value;
@@ -1606,7 +1619,7 @@ render()
    if(this.params.glyph)
     {
       var imgPanel = new TFPanel( this , 1 , 1 , 1 , 1 , {css:"cssContainerPanel"} );
-      utils.drawSymbol( this.params.glyph , imgPanel , this.color || "white" , "77%");
+      utils.drawSymbol( this.params.glyph , imgPanel , this.params.glyphColor || this.color || "lightgray" , "77%");
     }  
 
  } 

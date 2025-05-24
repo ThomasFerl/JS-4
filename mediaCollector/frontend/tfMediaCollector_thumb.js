@@ -48,8 +48,18 @@ export class TFMediaCollector_thumb
       this.thumb        = response.result.thumb;
     }
    
+    if(params.thumbURL) this.thumbURL = params.thumbURL;
+    else{
+          if(this.thumb.ID) this.thumbURL     = utils.buildURL('GETIMAGEFILE' , {fileName:this.thumb.fullPath} );
+          else
+              {
+               if(this.mediaFile)
+                {
+                  this.thumbURL = utils.buildURL('GETIMAGEFILE' , {fileName:this.mediaFile.fullPath} );
+                }
+             }
+    }
 
-    this.thumbURL     = utils.buildURL('GETIMAGEFILE' , {fileName:this.thumb.fullPath} );
     this.thumbImg     = new TFPanel(this.parent ,1,1,"150px" , "150px" , {popupMenu:this.popupMenu , dragable:true , dropTarget:true } );
     //this.thumbImg.DOMelement.setStyle({backgroundImage: `url(${this.thumbURL})`, backgroundSize: "cover"});
     this.thumbImg.imgURL = this.thumbURL ;
