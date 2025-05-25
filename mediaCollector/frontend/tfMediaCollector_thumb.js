@@ -11,7 +11,8 @@ import { TFEdit,
          TPropertyEditor,
          TFAnalogClock,
          TFPopUpMenu,
-         TFPanel}    from "./tfWebApp/tfObjects.js";
+         TFPanel,
+         TFLabel}    from "./tfWebApp/tfObjects.js";
 
 import { TFMediaCollector_mediaSetViewer } from "./tfMediaCollector_mediaSetViewer.js";         
 
@@ -63,6 +64,32 @@ export class TFMediaCollector_thumb
     this.thumbImg     = new TFPanel(this.parent ,1,1,"150px" , "150px" , {popupMenu:this.popupMenu , dragable:true , dropTarget:true } );
     //this.thumbImg.DOMelement.setStyle({backgroundImage: `url(${this.thumbURL})`, backgroundSize: "cover"});
     this.thumbImg.imgURL = this.thumbURL ;
+    this.thumbImg.padding = '0px';
+
+    if(params.caption)
+    {
+      this.thumbImg.buildGridLayout_templateColumns('1fr');
+      this.thumbImg.buildGridLayout_templateRows('4px 1.4em 1fr');
+      var c = new TFPanel(this.thumbImg,1,2,1,1,{css:"cssContainerPanel" , backgroundColor:'rgba(0,0,0,0.5)'});
+          c.margin = '0px';
+          c.marginLeft = '4px';
+          c.marginRight = '4px';
+          c.padding = '0px';
+          c.overflow = 'hidden';
+      var h = new TFLabel(c,1,1,'100%','100%',{ caption:params.caption });
+          h.textAlign = 'center';
+          h.fontSize = '0.7em';
+          h.fontWeight = 'bold';
+          h.fontFamily = 'Arial';
+          h.padding = '0px';
+          h.margin = '0px';
+          h.marginTop = '2px';
+          h.marginBottom = '2px';
+          h.color = 'white';
+      
+    }
+
+
 
     this.thumbImg.callBack_onDrop = function(e,d){this.callBack_onDrop(e,d);}.bind(this);
 

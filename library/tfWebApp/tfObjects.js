@@ -3544,7 +3544,7 @@ export class TForm
 
   renderForm()  
   {
-    this.parent.HTML( this.htmlForm );
+    this.parent.innerHTML = this.htmlForm ;
 
     // nun die HTML-Elemente mit den Daten verbinden ...
     // dazu werden die Daten durchlaufen und vie key das passende Element gesucht. Falls erfolgreich, wird das HTML-Element. value gesetzt...

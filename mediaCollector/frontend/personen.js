@@ -17,8 +17,9 @@ export class TPerson
     #original      = {};
     #dirtyFields   = new Set();
     #destDir       = 'mediaCache/persons';
+    #portraitPath  = '';
    
-    constructor(dbPerson = {}) 
+    constructor(dbPerson = {} , portraitPath = null) 
     { 
       // enumarable: false macht das Feld „unsichtbar“ für z.B. Object.keys()     
       Object.defineProperty(this, 'portraitPanel', {
@@ -29,6 +30,12 @@ export class TPerson
       });
     // portraitPanel.imgURL = this.portraitURL(); 
 
+    // portraitPath ist optional, wenn nicht angegeben, wird es später ermittelt
+    // Bei Listen - Also dem wiederholtem Initialisieren von TPerson-Objekten, wird der 
+    // srtändige Aufruf maximal redundant, so dass nur das ERSTE Listenelemen den Server abfragt
+    // und alle weireren Objekte bekommen die Info mit auf dem  Weg...
+
+    if(portraitPath) this.#portraitPath = portraitPath;
 
      // Prüfung: enthält dbPerson **nur** das Feld "ID"
      const keys = Object.keys(dbPerson);
@@ -46,13 +53,20 @@ export class TPerson
              console.log("THIS->" + utils.JSONstringify(this));
         }
 
+
       this.portraitURL = ()=>
       {
+        // Um zu verhindern, dass JEDES MAL eine Serveranfrage veranlasst wird, wird der PortraitPath gepuffert ...
         if(this.PORTRAIT) 
         {
-          var response = utils.webApiRequest('portraitURL' , {portrait:this.PORTRAIT} );
-          if(!response.error) return utils.buildURL('GETIMAGEFILE',{fileName:response.result});
-          else return ''; 
+          if(this.#portraitPath  == '')
+          {  
+            var response = utils.webApiRequest('portraitURL' , {portrait:''} );
+            if(response.error) {dialogs.showMessage(response.errMsg); return '';}
+            this.#portraitPath = response.result;
+          }  
+          
+          return utils.buildURL('GETIMAGEFILE',{fileName:this.#portraitPath+this.PORTRAIT});
         }
       }
     }  
@@ -212,6 +226,9 @@ dropImage( e , data )  // onDrop ( event , data )
         }
 }
 
+portraitPath()
+{ return this.#portraitPath}
+
 
 
 }
@@ -221,9 +238,9 @@ export class TPersonList
 {
     constructor()
     {
-      this.personen = [];
+      this.personen    = [];
       this.personThums = [];
-      this.selected = null;
+      this.selected    = null;
 
       this.personenWnd = dialogs.createWindow( null,'Personen','80%','80%','CENTER');
       this.personenWnd.buildGridLayout_templateColumns('1fr');
@@ -276,8 +293,8 @@ export class TPersonList
           
           btnListView.color = 'black';
           btnListView.callBack_onClick = function(){ 
-                                                    this.personThumbView.hide();
-                                                    this.personGridView.show();
+                                                    this.personThumbView.setInvisible();
+                                                    this.personGridView.setVisible();
                                                   }.bind(this);
       
       var btnThumbView = dialogs.addButton(this.filterPanel,'',3,1,1,1,{glyph:'users-line' , glyphColor:'black'});
@@ -285,8 +302,8 @@ export class TPersonList
           btnThumbView.margin='0';
           btnThumbView.marginLeft='4px';
           btnThumbView.callBack_onClick = function(){ 
-                                                    this.personThumbView.show();
-                                                    this.personGridView.hide();
+                                                    this.personThumbView.setVisible();
+                                                    this.personGridView.setInvisible();
                                                   }.bind(this);
 
       var hlpContainer3 = dialogs.addPanel(hlpContainer1,'cssContainerPanel',3,1,1,1);
@@ -300,28 +317,46 @@ export class TPersonList
       // Das personMediaPanel ist ein Container für das listViewPanel und dem thumbViewPanel
       // die jeweils wechselseitig angezeigt werden. Beide sind überlagert und werden via hide & show gesteuert
 
+      this.personPanel.buildBlockLayout();
+      this.personPanel.position='relative';
+      this.personPanel.overflow = 'hidden';
+
       this.personThumbView = dialogs.addPanel(this.personPanel,'cssContainerPanel',1,1,'100%','100%');
       this.personThumbView.position='relative';
-      this.personThumbView.hide();
+      this.personThumbView.setInvisible()
 
       this.personGridView = dialogs.addPanel(this.personPanel,'cssContainerPanel',1,1,'100%','100%');
       this.personGridView.position='relative';
-      
-      var response = utils.webApiRequest('LSPERSON' , {} );
-      if(response.error) {dialogs.showMessage(response.errMsg);return; }
-      else debugger;
-           for(var i=0; i<response.result.length; i++) 
-          { 
-            var p = new TPerson(response.result[i]);
-            var t = new TFMediaCollector_thumb( this.personThumbView , {thumbURL:p.portraitURL() } );
-                t.person = p;
+      this.personGridView.setVisible();
 
-            this.personen.push( p );
-            this.personThums.push( t );
-           }
+      this.loadPersons();
 
       this.updateGrid_personen();
     }
+
+
+
+    loadPersons()
+    { 
+      var portraitPath = null;
+      var response     = utils.webApiRequest('LSPERSON' , {} );
+      if(response.error) {dialogs.showMessage(response.errMsg);return; }
+      else 
+        for(var i=0; i<response.result.length; i++) 
+        { 
+            var p = new TPerson(response.result[i] , portraitPath );
+            
+            var t = new TFMediaCollector_thumb( this.personThumbView , {thumbURL:p.portraitURL() , caption:p.VORNAME+' '+p.NAME} );
+                t.person = p;
+                t.callBack_onClick = function(e,d,h) { this.selectedPerson(h.self.person) }.bind(this);
+
+            // im ersten Durchlauf wird PATH ermittelt -danach wird es nur noch gesetzt
+            if(i==0) portraitPath = p.portraitPath();    
+
+            this.personen.push( p );
+            this.personThums.push( t );
+        }
+      }
 
    
     selectedPerson(p)

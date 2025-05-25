@@ -20,6 +20,7 @@ import { TPerson, TPersonList } from "./personen.js";
 import { TFMediaCollector_thumb }          from "./tfMediaCollector_thumb.js";
 import { TFMediaCollector_fileManager }    from "./tfMediaCollector_fileManager.js";
 import { TFMediaCollector_mediaSetViewer } from "./tfMediaCollector_mediaSetViewer.js";
+import { TFMediaCollector_editSet }        from "./tfMediaCollector_editSet.js";
 
 const videoExtensions = mcGlobals.videoExtensions;
 const imageExtensions = mcGlobals.imageExtensions;
@@ -48,12 +49,17 @@ export class TFMediaCollector
    this.btnAddImage.height='3em';
    this.btnAddImage.callBack_onClick = function(){this.addMediaSet()}.bind(this);
 
-   this.btnAddImage = dialogs.addButton(this.menuPanel , 'cssAbortBtn01' , 2 , 1 , 1 , 1 , {caption:'Media-Set löschen',glyph:'circle-minus'});
+   this.btnAddImage = dialogs.addButton(this.menuPanel , '' , 2 , 1 , 1 , 1 , {caption:'Media-Set bearbeiten',glyph:'pen-to-square'});
+   this.btnAddImage.height='3em';
+   this.btnAddImage.callBack_onClick = function(){this.editMediaSet()}.bind(this);
+
+
+   this.btnAddImage = dialogs.addButton(this.menuPanel , 'cssAbortBtn01' , 3 , 1 , 1 , 1 , {caption:'Media-Set löschen',glyph:'circle-minus'});
    this.btnAddImage.height='3em';
    this.btnAddImage.callBack_onClick = function(){this.delMediaSet()}.bind(this);
 
 
-   this.btnPersonen = dialogs.addButton(this.menuPanel , '' , 3 , 1 , 1 , 1 , {caption:'Personen',glyph:'children'});
+   this.btnPersonen = dialogs.addButton(this.menuPanel , '' , 4 , 1 , 1 , 1 , {caption:'Personen',glyph:'children'});
    this.btnPersonen.height='3em';
    this.btnPersonen.callBack_onClick = function(){ new TPersonList(); }.bind(this);
 
@@ -92,7 +98,7 @@ export class TFMediaCollector
 
     for(var i=0; i<response.result.length; i++)
     {
-      var t = new TFMediaCollector_thumb( this.dashboardPanel , {thumb:response.result[i].thumb , mediaSet:response.result[i] , popupMenu:this.popup } )
+      var t = new TFMediaCollector_thumb( this.dashboardPanel , {thumb:response.result[i].thumb , mediaSet:response.result[i] , popupMenu:this.popup , caption:response.result[i].NAME } )
           t.callBack_onClick = function( e , d , thumbParams){this.handleThumbClick( e , d , thumbParams)}.bind(this);
       this.mediaSetThumbs.push(t);
     }  
@@ -125,6 +131,22 @@ export class TFMediaCollector
    new TFMediaCollector_mediaSetViewer( null , function(){this.updateThumbs()}.bind(this) );
 
   }
+
+  editMediaSet()
+  {
+     // zuerst das oder die selektierten MediaSets ermitteln...
+    var found = [];
+    for(var i=0; i<this.mediaSetThumbs.length; i++)
+    {
+      if(this.mediaSetThumbs[i].selected) found.push(this.mediaSetThumbs[i].mediaSet.ID);
+    }
+
+    if(found.length==0) { dialogs.showMessage('kein Media-Set selektiert'); return; } 
+
+    var e = new TFMediaCollector_editSet( found[0] );
+
+      
+  }  
 
  
   delMediaSet()

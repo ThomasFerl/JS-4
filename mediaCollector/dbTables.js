@@ -80,6 +80,19 @@ tables.push(
               {fieldName:"ID_PERSON"    , fieldType:"INTEGER" } 
            ]});
 
+tables.push( 
+            {tableName:"tags",
+             tableFields:[
+                         {fieldName:"NAME"	      , fieldType:"Text" } 
+                         ]});
+
+
+tables.push( 
+            {tableName:"tagsInMedia",
+             tableFields:[
+                          {fieldName:"ID_TAG"	  , fieldType:"int" } ,
+                          {fieldName:"ID_FILE"	  , fieldType:"int" } 
+                        ]});
 
 
 module.exports.buildTables = function( dB )

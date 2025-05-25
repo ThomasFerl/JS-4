@@ -23,6 +23,7 @@ import { TFCheckBox,
 import { TFMediaCollector_thumb }          from "./tfMediaCollector_thumb.js";
 import { TFMediaCollector_fileManager }    from "./tfMediaCollector_fileManager.js";
 import { TFMediaCollector_editSet }        from "./tfMediaCollector_editSet.js";
+import { TFMediaCollector_editMedia }      from "./tfMediaCollector_editMedia.js";
 
 const validExtensions = mcGlobals.videoExtensions.concat(mcGlobals.imageExtensions);
 
@@ -105,14 +106,8 @@ __init__()
           b.backgroundColor = 'gray';
           b.margin = '7px';
           b.height = '1.7em';
-          b.callBack_onClick = function(){
-                                           var es = new TFMediaCollector_editSet(this.mediaSet); 
-                                               es.callback_if_ready = function(mediaSet){ 
-                                                    this.mediaSet = mediaSet; 
-                                                    this.__init__(); 
-                                                    if(this.callBack_onChanged) this.callBack_onChanged();
-                                                   }.bind(this);
-        }.bind(this);
+          b.callBack_onClick = function(){ this.editMediaFile() }.bind(this);
+       
 
      this.dashboardPanel   = new TFPanel( this.workSpace ,  1 , 3 , 21 , 19 ,{css:'cssContainerPanel',dropTarget:true} );
      this.dashboardPanel.callBack_onDrop = function (e , data)
@@ -131,6 +126,22 @@ __init__()
        
    this.updateThumbs();  
   }
+
+
+
+editMediaFile()
+{  
+   // zuerst das selektierte MediaFile ermitteln...
+   var found           = [];
+   for(var i=0; i<this.mediaThumbs.length; i++)
+      if(this.mediaThumbs[i].selected) found.push(this.mediaThumbs[i].mediaFile.ID);
+   
+    if(found.length==0) { dialogs.showMessage('kein Media-File selektiert'); return; } 
+
+    var es = new TFMediaCollector_editMedia(found[0]); 
+}  
+     
+
 
     
 handleThumbClick( e , d , thumbParams )

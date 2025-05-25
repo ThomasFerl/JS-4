@@ -247,15 +247,15 @@ export function APItest( endPoints )
               'RESETUSERGRANTS' , 'ADDUSERGRANT' , 'SETUSERGRANTS' , 'GETUSERGRANTS' , 'SETVAR' , 'DELVAR' , 'JSN2EXCEL' ];
               
   var cbItems = [];
-  for(var i=0; i<cmds.length; i++) cbItems.push({caption:cmds[i],value:cmds[i]}); 
+  for(var i=0; i<cmds.length; i++) cbItems.push(cmds[i]); 
 
   if(endPoints)
-    for(var i=0; i<endPoints.length; i++) cbItems.push({caption:endPoints[i],value:endPoints[i]});
+    for(var i=0; i<endPoints.length; i++) cbItems.push(endPoints[i]);
 
 
   w.buildGridLayout_templateColumns('1fr');
   w.buildGridLayout_templateRows('1fr 1fr 1fr 1fr');
-  var c = dialogs.addCombobox( w.hWnd ,        1 , 1 ,70 , 'Command' , '' , 'TEST' , cbItems , {} );
+  var c = dialogs.addInput ( w.hWnd ,          1 , 1 , 70 , 'Command', '' , 'TEST'          , {lookUp:true, items:cbItems} );
   var p = dialogs.addInput ( w.hWnd ,          1 , 2 , 70 , 'params' , '' , '{param:value}' , {} );
   var l = dialogs.addLabel ( w.hWnd , '' ,     1 , 3 , '100%' , '2em' , 'Parameter in der Form "param1=value1;param2=value2..." angeben !' );
   var b = dialogs.addButton( w.hWnd , '' ,     1 , 4 , '10em' , '2em' , 'OK' );
