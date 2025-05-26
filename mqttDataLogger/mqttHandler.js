@@ -196,10 +196,10 @@ function ___synchronize( idTopic , idChanel )
 {
     console.log("  Ermittle passende Payload-Fields: ");
     
-    var fnValue = dbUtils.fetchValue_from_Query(dB,"Select payloadField_val from chanels Where ID="+idChanel).result;
+    var fnValue = dbUtils.fetchValue_from_Query(dB,"Select payloadField_val from chanels Where ID="+idChanel).result || 'value'
     if(!fnValue) return;
 
-    var fnTime  = dbUtils.fetchValue_from_Query(dB,"Select payloadField_dt  from chanels Where ID="+idChanel).result;
+    var fnTime  = dbUtils.fetchValue_from_Query(dB,"Select payloadField_dt  from chanels Where ID="+idChanel).result || 'timestamp'
     if(!fnTime)  return;
     
     console.log("fnVale:"+fnValue);
@@ -221,15 +221,17 @@ function ___synchronize( idTopic , idChanel )
 
         try {
              console.log("Ermittle Values aus akt. Payload ...");
-             console.log(fnTime+'  : '+p[fnTime]);
-             console.log(fnValue+' : '+p[fnValue]);
-   
              var dt = new utils.TFDateTime(p[fnTime]);
 
-             console.log("parse dateTime: "+ dt.formatDateTime('dd.mm.yyyy hh:mn:ss') + " -> "+dt.excelTimestamp);
-           
-             measure.push({ID_Chanel:idChanel,DT:dt.excelTimestamp  ,Wert:p[fnValue], sync:0}) 
-             update.push ({ID:rec.ID, sync:1}) 
+             console.log(fnTime+'  : '+p[fnTime]+'   (' + dt.excelTimestamp+')');
+             console.log(fnValue+' : '+p[fnValue]);
+                           
+             if(p[fnValue]!=null)
+             {
+               measure.push({ID_Chanel:idChanel,DT:dt.excelTimestamp  ,Wert:p[fnValue], sync:0}) 
+               update.push ({ID:rec.ID, sync:1}) 
+             } 
+             else console.log("Payload enthält kein Feld mit dem Namen '"+fnValue+"' !"); 
           } 
          catch(err) {console.log(err.message)} 
     }   
@@ -291,13 +293,13 @@ module.exports.synchronize = () =>
      var idTopic = t.result[j].ID_Topic;  
      console.log("Loop"+j+": ID_Topic:"+idTopic)
      
-     // alle Kanäle dieses Topics durchlaufen und synchronisieren ...
-     var r = dbUtils.fetchRecords_from_Query(dB,"Select ID as ID from chanels Where ID_TOPIC = "+idTopic );
+     // alle Kanäle ermitteln, die an dieses Topics gebunden sind. -> diese durchlaufen und synchronisieren ....
+     var r = dbUtils.fetchRecords_from_Query(dB,"Select ID from chanels Where ID_TOPIC = "+idTopic );
      console.log("Ermittlung aller Kanäle, die an die Payloads gebunden sind und zur Synchronisation ausstehen : "+JSON.stringify(r))
 
      for(var i=0; i<r.result.length; i++)  
         {
-           console.log("Loop"+i+": ID_Topic:"+idTopic+" -> "+  r.result[i].ID)
+           console.log("Loop"+i+": ID_Topic:"+idTopic+" ->  ID_Chanel:"+  r.result[i].ID)
            ___synchronize( idTopic , r.result[i].ID );
         }   
    }
