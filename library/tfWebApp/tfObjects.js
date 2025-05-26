@@ -3392,6 +3392,7 @@ export class TForm
     this.parent             = aParent;
     this.data               = aData;
     this.htmlForm           = "";  // String Representanz eines ggf. übergebenen HTML-Formulars
+    this.htmlElements       = null; // Array mit den HTML-Elementen des Formulars 
     this.error              = false;
     this.errMsg             = '';
     
@@ -3468,6 +3469,18 @@ export class TForm
     return null;  
   }
 
+  getHtmlById( ID )
+  {
+    if(this.htmlElements)
+    {  
+      for(var i=0; i<this.htmlElements.length; i++)
+      {
+        var el = this.htmlElements[i];
+        if (el.id==ID) return el;
+      }
+    } 
+    return null;
+  }
 
   
   disable( key )
@@ -3550,15 +3563,19 @@ export class TForm
     // dazu werden die Daten durchlaufen und vie key das passende Element gesucht. Falls erfolgreich, wird das HTML-Element. value gesetzt...
     this.controls = [];
 
+    this.htmlElements = this.parent.DOMelement.querySelectorAll('*');
+
     for(var key in this.data)
     {
-      var el = this.parent.getElementById( key );
+      var el = null;
+      this.htmlElements.forEach(htmlElent => { if (htmlElent.id === key) el = htmlElent; });
+    
       if (el) 
       {
         this.controls.push( {fieldName:key, value:this.data[key], label:null, appendix:null, type:"null", enabled:true,  visible:true, lblControl:null, editControl:el, apxControl:null})
        
         if (el.tagName === 'INPUT' && el.type === 'text') el.value     = this.data[key];
-        if (el.tagName === 'LABEL')                       el.innerHTML = this.data[key];
+        if (el.tagName === 'LABEL')                       el.text      = this.data[key];
         if (el.tagName === 'SELECT') 
         { 
           for (var i = 0; i < el.options.length; i++) 

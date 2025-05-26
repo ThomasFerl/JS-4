@@ -34,17 +34,17 @@ export class TFMediaCollector_editMedia
     if(mediaResponse.error) {dialogs.showMessage("Fehler beim Laden des Media-Objekts: "+mediaResponse.error); return; }
       
       this.media             = mediaResponse.result;
-      this.tags              = [];
-      this.persons           = [];
+      this.media.tags        = [];
+      this.media.persons     = [];
       this.callback_if_ready = null;
 
       
       // welche TAGS und PERSONEN sind im Media-Set enthalten?
       var response = utils.fetchRecords("Select ID,NAME from tags where ID in (Select ID_TAG from tagsInMedia Where ID_FILE="+this.media.ID+") order by NAME");
-      if(!response.error) for(var i=0; i<response.result.length; i++) this.tags.push(response.result[i]);
+      if(!response.error) for(var i=0; i<response.result.length; i++) this.media.tags.push(response.result[i]);
 
       response = utils.fetchRecords("Select ID,(VORNAME + ' ' + NAME) as NAME from persons where ID in (Select ID_PERSON from personsInMedia Where ID_FILE="+this.media.ID+") order by NAME");
-      if(!response.error) for(var i=0; i<response.result.length; i++) this.persons.push(response.result[i]);
+      if(!response.error) for(var i=0; i<response.result.length; i++) this.media.persons.push(response.result[i]);
 
 
       // lookup-Tables initialisieren ....
@@ -81,7 +81,7 @@ save()
    
 
 edit()
-{ debugger;
+{ 
   var form = new TForm(  this.hWnd , this.media , [] , [] , []  , [] , './dlg/clipEdit.html');
           
   // FileSize etwas schöner darstelle:
@@ -95,21 +95,21 @@ edit()
 
    // Nun die statischen Formularfelder des HTLML-Formulars mit den akt. Values füllen:
    // 1. Stichwörter Tags für dieses file:
-   var tagsListbox = form.getInpElement("TAGS");
+   var tagsListbox = form.getControlByName("tags");
    if(tagsListbox)
    {
     tagsListbox.innerHTML = ''; 
-    for(var i=0; i<this.tags.length; i++) 
+    for(var i=0; i<this.media.tags.length; i++) 
     {
      var item       = document.createElement("option");
-         item.text  = this.tags[i].NAME;
-         item.value = this.tags[i].ID;
+         item.text  = this.media.tags[i].NAME;
+         item.value = this.media.tags[i].ID;
          tagsListbox.appendChild(item);
     }
    }  
 
    // ALLE Stichwörter Tags als AUSWAHL in Combobox
-   var allTagsListbox = form.getInpElement("ALLTAGS");
+   var allTagsListbox = form.getHtmlById("ALLTAGS");
    if(allTagsListbox)
    { 
     allTagsListbox.innerHTML = ''; 
