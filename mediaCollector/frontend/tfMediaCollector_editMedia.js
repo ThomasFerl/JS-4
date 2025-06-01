@@ -61,7 +61,7 @@ export class TFMediaCollector_editMedia
 
 
 
-      this.wnd    = dialogs.createWindow( null,'Media bearbeiten',"77%","77%","CENTER");  
+      this.wnd    = dialogs.createWindow( null,'Media bearbeiten',"100%","100%","CENTER");  
       this.hWnd   = this.wnd.hWnd;
       this.edit(); 
     }
@@ -95,7 +95,7 @@ edit()
 
    // Nun die statischen Formularfelder des HTLML-Formulars mit den akt. Values füllen:
    // 1. Stichwörter Tags für dieses file:
-   var tagsListbox = form.getControlByName("tags");
+   var tagsListbox = form.getHtmlById("tags");
    if(tagsListbox)
    {
     tagsListbox.innerHTML = ''; 
@@ -121,19 +121,18 @@ edit()
          allTagsListbox.appendChild(item);
     }
   } 
-/*
+
 // Schaltfläche für add Tag...
-var btn_addTag = form.getInpElement("btn_addTag");
-    console.log("btn_addTag ->" + btn_addTag);
+var btn_addTag = form.getHtmlById("btn_addTag");
     if(btn_addTag) 
        btn_addTag.addEventListener("click", function()
                  {
                   var selectedItem = utils.getSelectedItem( this.allItems );
-                  utils.addItem( this.items , selectedItem.text , selectedItem.value );
+                  if(selectedItem) utils.addItem( this.items , selectedItem.text , selectedItem.value );
                  }.bind({allItems:allTagsListbox, items:tagsListbox}) );
 
 // Schaltfläche für remove Tag...
-var btn_removeTag = form.getInpElement("btn_delTag");
+var btn_removeTag = form.getHtmlById("btn_delTag");
 if(btn_removeTag) 
 btn_removeTag.addEventListener("click", function()
              {
@@ -144,9 +143,9 @@ btn_removeTag.addEventListener("click", function()
 
 
   // ALLE Quellen als AUSWAHL für Source Combobox:
-  response = utils.fetchRecords("Select distinct SOURCE from Clip where Name <> '' order by Source");
+  var response = utils.fetchRecords("Select distinct SOURCE from files where SOURCE <> '' order by Source");
 
-  var sourceCombobox = form.getInpElement("SOURCE");
+  var sourceCombobox = form.getHtmlById("SOURCE");
   if(sourceCombobox)
   { 
     sourceCombobox.innerHTML = ''; 
@@ -161,9 +160,9 @@ btn_removeTag.addEventListener("click", function()
 
 
  // ALLE Quellen als AUSWAHL für Kategorie Combobox
- response = utils.fetchRecords("Select distinct KATEGORIE from Clip where Name <> '' order by KATEGORIE");
+ response = utils.fetchRecords("Select distinct KATEGORIE from files where KATEGORIE <> '' order by KATEGORIE");
 
- var kategorieCombobox = form.getInpElement("KATEGORIE");
+ var kategorieCombobox = form.getHtmlById("KATEGORIE");
  if(kategorieCombobox)
  { 
   kategorieCombobox.innerHTML = ''; 
@@ -177,24 +176,24 @@ btn_removeTag.addEventListener("click", function()
 } 
 
 
-// Actors
-var actorListbox = form.getInpElement("ACTORS");
+// Personen
+var actorListbox = form.getHtmlById("ACTORS");
    if(actorListbox)
    { 
     actorListbox.innerHTML = ''; 
-    for(var i=0; i<this.content.actors.length; i++) 
+    for(var i=0; i<this.media.persons.length; i++) 
     {
      var item       = document.createElement("option");
-         item.text  = this.content.actors[i].name;
-         item.value = this.content.actors[i].id;
+         item.text  = this.media.persons[i].NAME;
+         item.value = this.media.persons[i].ID;
          actorListbox.appendChild(item);
     }
    }  
 
    // ALLE Actors als AUSWAHL für Clip:
-   var response = utils.fetchRecords('Select ID,NAME,VORNAME from actor order by VORNAME , NAME');
+   var response = utils.fetchRecords('Select ID,NAME,VORNAME from persons order by Name , VORNAME');
 
-   var allActorsListbox = form.getInpElement("ALLACTORS");
+   var allActorsListbox = form.getHtmlById("ALLACTORS");
    if(allActorsListbox)
    { 
     allActorsListbox.innerHTML = ''; 
@@ -208,7 +207,7 @@ var actorListbox = form.getInpElement("ACTORS");
   } 
 
 // Schaltfläche für add Actor...
-var btn_addActor = form.getInpElement("btn_addActor");
+var btn_addActor = form.getHtmlById("btn_addActor");
 if(btn_addActor)
 btn_addActor.addEventListener("click", function()
                  {
@@ -217,7 +216,7 @@ btn_addActor.addEventListener("click", function()
                  }.bind({allItems:allActorsListbox, items:actorListbox}) );
 
 // Schaltfläche für remove Tag...
-var btn_removeActor = form.getInpElement("btn_delActor");
+var btn_removeActor = form.getHtmlById("btn_delActor");
 if(btn_removeActor)
 btn_removeActor.addEventListener("click", function()
              {
@@ -227,6 +226,7 @@ btn_removeActor.addEventListener("click", function()
 
 
 // Poster
+/*
 var panelPoster = form.getInpElement("POSTER");
 if(panelPoster) panelPoster.style.backgroundImage ="url('"+ utils.buildURL( 'LOADIMAGE' , JSON.stringify({img:this.content.clip.CAPTURE}))+"')"; 
 

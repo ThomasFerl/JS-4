@@ -137,9 +137,8 @@ export class TFMediaCollector
      // zuerst das oder die selektierten MediaSets ermitteln...
     var found = [];
     for(var i=0; i<this.mediaSetThumbs.length; i++)
-    {
-      if(this.mediaSetThumbs[i].selected) found.push(this.mediaSetThumbs[i].mediaSet.ID);
-    }
+       if(this.mediaSetThumbs[i].selected) found.push(this.mediaSetThumbs[i].mediaSet);
+    
 
     if(found.length==0) { dialogs.showMessage('kein Media-Set selektiert'); return; } 
 

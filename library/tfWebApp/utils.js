@@ -1912,6 +1912,7 @@ export function checkGrant( grantName , grantCondition )
 
     // Wenn die Option noch nicht existiert, hinzufügen
     if (!exists) htmlListElement.add(newOption);
+    else newOption = null;
 }
 
 
