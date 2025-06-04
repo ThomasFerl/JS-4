@@ -58,7 +58,7 @@ export function main(capt1)
 
 
 export function run()
-{ debugger;
+{ 
    //  document.document.requestFullscreen();
 
     var ws = app.startWebApp(caption1,caption2).activeWorkspace;

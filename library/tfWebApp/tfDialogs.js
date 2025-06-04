@@ -183,13 +183,13 @@ export function lineBreak(aParent)
 }
 
 
-export function addPanel( aParent , className , left , top ,width , height , dontRegister )
+export function addPanel( aParent , className , left , top ,width , height , params )
 {
-  var params = {stretch:true};
-  if (className)    params.css           = className;
-  if (!dontRegister) params.dontRegister = false;
-  else params.dontRegister               = true; 
-   
+  if(!params) params = {};
+      params.stretch = true;
+  if (className)  params.css           = className;
+                  params.dontRegister  = params.dontRegister || false; // wenn true, dann wird das Panel nicht in der globalen Liste registriert
+  
   return new TFPanel( aParent , left , top , width , height , params );
 }
 

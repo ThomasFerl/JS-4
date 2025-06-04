@@ -20,19 +20,26 @@ export class TFGuiBuilder
 
     var layout = dialogs.setLayout(  w , {gridCount:10,right:2});
     
-    this.dashBoard                               = layout.dashBoard;
-    this.dashBoard.backgroundColor               = 'white';
-    this.dashBoard.DOMelement.style.borderRadius = '0px';
-    this.dashBoard.DOMelement.addEventListener('dragover', function(e){ this.onDragover(e).bind(this) } ); // Erlaubt das Fallenlassen
-    this.dashBoard.DOMelement.addEventListener('drop'    , function(e){ this.onDrop(e) }.bind(this)     ); // Erlaubt das Fallenlassen    });
+    var dashBoardContainer                       = layout.dashBoard;
+        dashBoardContainer.className             = 'ccContainerPanel';
+        dashBoardContainer.padding               = '0px';
+        dashBoardContainer.margin                = '0px';
 
+    this.dashBoard                               = dialogs.addPanel(dashBoardContainer , '' , 0 , 0 , '100%' , '100%' , {isDragable:true} );
+    this.dashBoard.backgroundColor               = 'white';
+    this.dashBoard.DOMelement.style.borderRadius = '2px';
+
+    this.dashBoard.callBack_onDragOver           = function(e){ this.onDragover(e) }.bind(this);
+    this.dashBoard.callBack_onDrop               = function(e){ this.onDrop(e) }.bind(this);
+   
     this.menuPanel                               = layout.right;
     this.menuPanel.padding                       = '2px';
     this.menuPanel.buildGridLayout( '4x14' );
 
-    this.mouseInfo              = dialogs.addPanel( this.menuPanel , 'cssBlackPanel' , 1 , 1 , 4 , 1);
-    this.mouseInfo.marginBottom = '1em';
-    this.mouseInfo.color        = 'white';
+    this.mouseInfo                 = dialogs.addPanel( this.menuPanel , 'cssBlackPanel' , 1 , 1 , 4 , 1);
+    this.mouseInfo.backgroundColor = 'rgba(0,0,0,0.25)';
+    this.mouseInfo.margin          = '0.4em';
+    this.mouseInfo.color           = 'white';
      
       // Panel für Eingabe der Dimensionierung des Grids:
      var gridCtrlPanel = dialogs.addPanel(  this.menuPanel , '' , 1 , 2 , 4 , 1);   
@@ -119,30 +126,45 @@ addComponent( left , top , elementName )
   {
     var e = null;
 
-    if(elementName == 'BTN')           e = dialogs.addButton  ( this.dashBoard , '' , left , top , 1 , 1 , {caption:'Button'} );
+    if(elementName == 'BTN')           e = dialogs.addButton  ( this.dashBoard , '' , left , top , 1 , 1 , {caption:'Button', dragable:true} );
     
-    if(elementName == 'DIV')           e = dialogs.addPanel   ( this.dashBoard , '' , left , top , 1 , 1 );
+    if(elementName == 'DIV')           e = dialogs.addPanel   ( this.dashBoard , '' , left , top , 1 , 1 , {dragable:true});
 
-    if(elementName == 'INPUT')         e = dialogs.addInput   ( this.dashBoard , left , top , 7 , 'Eingabe' , '');
+    if(elementName == 'INPUT')         e = dialogs.addInput   ( this.dashBoard , left , top , 7 , 'Eingabe' , '' , {dragable:true});
 
-    if(elementName == 'COMBOBOX')      e = dialogs.addCombobox( this.dashBoard , left , top , 7 , 'Eingabe' , '' , ['Option1','Option2','Option3'] ); 
+    if(elementName == 'COMBOBOX')      e = dialogs.addCombobox( this.dashBoard , left , top , 7 , 'Eingabe' , '' , ['Option1','Option2','Option3'] , {dragable:true}); 
 
-    if(elementName == 'LABEL')         e = dialogs.addLabel   ( this.dashBoard , '' , left , top , 7 , 1 );
+    if(elementName == 'LABEL')         e = dialogs.addLabel   ( this.dashBoard , '' , left , top , 7 , 1 , {dragable:true});
 
 
 
     // anklickbar machen...
     if (e != null)
     {
+      e.draggingData         = { id:e.id , type:elementName , left:left , top:top };
+      e.dataBinding          = e; // für Drag&Drop
+      e.callBack_onDragStart = function(event) { this.onDragstart(event , event.target ) }.bind(this);
+      e.callBack_onDragOver  = function(event) { this.onDragover(event) }.bind(this);
+      e.callBack_onDrop      = function(event , dropResult) { this.onDrop(event , dropResult) }.bind(this);
+      e.callBack_onClick     = function(event , dataBinding) { this.onMouseClick(event , dataBinding) }.bind(this);
+
+
+
       // e.DOMelement.addEventListener('mousedown', onMouseButtonDown );
       // e.DOMelement.addEventListener('mousemove', onMouseMove );
       // e.DOMelement.addEventListener('mouseup', onMouseButtonUp );
-
+/*
         e.DOMelement.setAttribute    ('draggable', true);
-        e.DOMelement.addEventListener('dragstart', function(event){this.onDragstart(event)}.bind(this)); 
-        e.DOMelement.addEventListener('dragover' , function(event){this.onDragover(event)}.bind(this));  
-        e.DOMelement.addEventListener('drop'     , function(event){this.onDrop(event)}.bind(this));     
-        e.DOMelement.addEventListener('click'    , function(event){this.onMouseClick(event)}.bind(this)); 
+        e.DOMelement.addEventListener('dragstart', function(event){this.onDragstart(event , event.target || null )}.bind(this)); 
+        e.DOMelement.addEventListener('dragover' , function(event){this.onDragover(event  , event.target.data || null)}.bind(this));  
+        e.DOMelement.addEventListener('drop'     , function(event){this.onDrop(event      , event.target.data || null)}.bind(this));     
+        e.DOMelement.addEventListener('click'    , function(event){this.onMouseClick(event, event.target.data || null)}.bind(this)); 
+*/
+
+
+
+
+
     }
   }   
   
@@ -159,7 +181,7 @@ selectComponent(element)
     // neues Element auswählen und opt. hervorheben
     this.selected.element = element;
     this.selected.border  = element.DOMelement.style.border;
-    this.element.DOMelement.style.border = "3px solid red";
+    this.selected.element.DOMelement.style.border = "3px solid red";
 
     // PropertyEditor anzeigen
     var p = dialogs.getProperties( element );
@@ -201,20 +223,15 @@ ___createToolboxItem( label , type , left , top)
 }
 
 
-onMouseClick(event)
-{
-  var clickedObject = event.target;
-
-  if(utils.isHTMLElement(clickedObject)) clickedObject = clickedObject.data; // falls es ein HTMLElement ist, dann auf das zugehörige Objekt zugreifen
-
-  event.stopPropagation()
+onMouseClick(event , clickedObject)
+{ 
+   event.stopPropagation()
   if(this.selected.element != clickedObject) this.selectComponent(clickedObject);
 }
 
 
-onDragstart(event ) 
+onDragstart(event , dragObject ) 
 { 
-  var dragObject = event.target; // Das Element, das gezogen wird
   if (dragObject.children && dragObject.children.length > 0) 
   {
     // Koordinaten des Mouse-Events verwenden, um das Kind-Element zu finden
