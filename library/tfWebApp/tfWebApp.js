@@ -1,6 +1,7 @@
 import * as globals     from "./globals.js";
 import * as utils       from "./utils.js";
 import * as dialogs     from "./tfDialogs.js";
+import { TFGuiBuilder } from "./tfGuiBuilder.js";
 import { TFScreen }     from "./tfObjects.js";
 import { TFWorkSpace }  from "./tfObjects.js";
 import { TFWindow   }   from "./tfWindows.js";
@@ -217,6 +218,11 @@ export function setVar( varName , value)
   return response.result;
 }
 
+
+export function guiBuilder()
+{
+  new TFGuiBuilder();
+}
 
 export function help(url) 
 {

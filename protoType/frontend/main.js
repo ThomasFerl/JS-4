@@ -49,7 +49,8 @@ export function main(capt1)
   globals.sysMenu.push( {caption:'Berechtigungen' , action:function(){sysadmin.adminGrants()} } );
   globals.sysMenu.push( {caption:'Info' , action:function(){app.sysInfo()} } );
   globals.sysMenu.push( {caption:'Symbol-Bibliothek (nur in der Entwicklungsphase)' , action:function(){dialogs.browseSymbols()} } );
-  globals.sysMenu.push( {caption:'Abbrechen' , action:function(){} } );
+  globals.sysMenu.push( {caption:'GUI Builder (nur in der Entwicklungsphase)' , action:function(){app.guiBuilder()} } );
+    globals.sysMenu.push( {caption:'Abbrechen' , action:function(){} } );
   
   app.login( ()=>{  caption2 = 'Willkommen ' + globals.session.userName ; run() });
   
