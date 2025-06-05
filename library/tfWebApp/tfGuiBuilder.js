@@ -15,7 +15,6 @@ export class TFGuiBuilder
     this.menuPanel                               = null;
     this.gridLayout                              = {numCols:21, numRows:21};
     
-    
     var w = dialogs.createWindow(null, 'tfGuiBuilder', '100%', '100%', 'CENTER').hWnd;
 
     var layout = dialogs.setLayout(  w , {gridCount:10,right:2});
@@ -25,12 +24,11 @@ export class TFGuiBuilder
         dashBoardContainer.padding               = '0px';
         dashBoardContainer.margin                = '0px';
 
-    this.dashBoard                               = dialogs.addPanel(dashBoardContainer , '' , 0 , 0 , '100%' , '100%' , {isDragable:true} );
+    this.dashBoard                               = dialogs.addPanel(dashBoardContainer , '' , 0 , 0 , '100%' , '100%' , {dropTarget:true} );
     this.dashBoard.backgroundColor               = 'white';
     this.dashBoard.DOMelement.style.borderRadius = '2px';
-
-    this.dashBoard.callBack_onDragOver           = function(e){ this.onDragover(e) }.bind(this);
-    this.dashBoard.callBack_onDrop               = function(e){ this.onDrop(e) }.bind(this);
+    this.dashBoard.callBack_onDragOver           = function(e){  this.onDragover(e) }.bind(this);
+    this.dashBoard.callBack_onDrop               = function(e){  this.onDrop(e) }.bind(this);
    
     this.menuPanel                               = layout.right;
     this.menuPanel.padding                       = '2px';
@@ -111,8 +109,6 @@ export class TFGuiBuilder
 }
 
 
-
-
 setGridLayout( numCols , numRows )
 {
   var dest = this.dashBoard;
@@ -138,33 +134,15 @@ addComponent( left , top , elementName )
 
 
 
-    // anklickbar machen...
+    // anklick- und ziehbar machen...
     if (e != null)
     {
-      e.draggingData         = { id:e.id , type:elementName , left:left , top:top };
-      e.dataBinding          = e; // für Drag&Drop
+      this.builderObjects.push(e);
+      e.draggingData         = { id:e.ID , type:elementName , left:left , top:top };
       e.callBack_onDragStart = function(event) { this.onDragstart(event , event.target ) }.bind(this);
       e.callBack_onDragOver  = function(event) { this.onDragover(event) }.bind(this);
       e.callBack_onDrop      = function(event , dropResult) { this.onDrop(event , dropResult) }.bind(this);
-      e.callBack_onClick     = function(event , dataBinding) { this.onMouseClick(event , dataBinding) }.bind(this);
-
-
-
-      // e.DOMelement.addEventListener('mousedown', onMouseButtonDown );
-      // e.DOMelement.addEventListener('mousemove', onMouseMove );
-      // e.DOMelement.addEventListener('mouseup', onMouseButtonUp );
-/*
-        e.DOMelement.setAttribute    ('draggable', true);
-        e.DOMelement.addEventListener('dragstart', function(event){this.onDragstart(event , event.target || null )}.bind(this)); 
-        e.DOMelement.addEventListener('dragover' , function(event){this.onDragover(event  , event.target.data || null)}.bind(this));  
-        e.DOMelement.addEventListener('drop'     , function(event){this.onDrop(event      , event.target.data || null)}.bind(this));     
-        e.DOMelement.addEventListener('click'    , function(event){this.onMouseClick(event, event.target.data || null)}.bind(this)); 
-*/
-
-
-
-
-
+      e.callBack_onClick     = function(event , dataBinding) { this.onMouseClick(event , dataBinding ) }.bind(this);
     }
   }   
   
@@ -201,25 +179,31 @@ selectComponent(element)
   }
 
 
-
-
-
-
-
-
 ___createToolboxItem( label , type , left , top)
 {
-  var item                       = document.createElement('div');
-      item.className             = 'toolboxItem';
-      item.textContent           = label;
+  var item                       = dialogs.addPanel( this.menuPanel , '' , left , top , 1 , 1 , {dragable:true , draggingData: { newObject:type } });
+      item.margin                = '0.4em';
+      item.innerHTML             = '<center>'+label+'</center>';
       item.type                  = type;
-      item.style.gridRowStart    = top;
-      item.style.gridColumnStart = left;
-      this.menuPanel.DOMelement.appendChild(item);
-
-      item.addEventListener('mousedown', function (e){ this.self.addComponent( 1 , 1 , this.item.type.toUpperCase() ) }.bind({self:this,item:item}) );
-       
+      item.callBack_onDrop       = function(event , dropResult) { debugger; this.onDrop(event , dropResult) }.bind(this);
       return item;  
+}
+
+
+___findComponentByHTMLelement( htmlElement )
+{
+  var id = '';
+  if(htmlElement.data && htmlElement.data instanceof Object) id = htmlElement.data.ID;
+  else return null
+
+  for (var i = 0; i < this.builderObjects.length; i++)
+  {
+    if (this.builderObjects[i].ID == id)
+    {
+      return this.builderObjects[i];
+    }
+  }
+  return null; // Element nicht gefunden
 }
 
 
@@ -230,22 +214,25 @@ onMouseClick(event , clickedObject)
 }
 
 
-onDragstart(event , dragObject ) 
+onDragstart(event , dragHTMLObject ) 
 { 
-  if (dragObject.children && dragObject.children.length > 0) 
+  if (dragHTMLObject.children && dragHTMLObject.children.length > 0) 
   {
     // Koordinaten des Mouse-Events verwenden, um das Kind-Element zu finden
     var child = document.elementFromPoint(event.clientX, event.clientY);
 
     // Überprüfen, ob das gefundene Element ein Child von `dragObject` ist
-    if (dragObject.contains(child) && child !== dragObject) {
-      dragObject = child; // `dragObject` auf das spezifische Child setzen
+    if (dragHTMLObject.contains(child) && child !== dragHTMLObject) {
+      dragHTMLObject = child; // `dragObject` auf das spezifische Child setzen
     }
   }
-
+  var dragObject = dragHTMLObject.data || null
+ 
+  if (!dragObject) return;
+  
   event.stopPropagation();
-  event.dataTransfer.setData('text', dragObject.id); // Setzt die ID des gezogenen Elements
-  console.log('dragStart:  ID=' + dragObject.id);
+  event.dataTransfer.setData('text', {objectId:dragObject.ID} ); // Setzt die ID des gezogenen Elements
+  console.log('dragStart:  ID=' + dragObject.ID + ' type=' + dragObject.type );
 }
 
 
@@ -256,13 +243,13 @@ onDragover(event)
   event.preventDefault(); // Erlaubt das Droppen
 
     // Mausposition relativ zum Container berechnen
-    const rect = dropTarget.DOMelement.getBoundingClientRect();
-    const x = event.clientX - rect.left;
-    const y = event.clientY - rect.top;
-
+    const rect = dropTarget.getBoundingClientRect();
+    const x    = event.clientX - rect.left;
+    const y    = event.clientY - rect.top;
+   
     const gInfo = utils.getGridLayoutDimension( dropTarget );
-    var gridPosition_left = Math.floor(x / (dropTarget.width  / gInfo.gridColumnCount)) +1 ;    
-    var gridPosition_top  = Math.floor(y / (dropTarget.height / gInfo.gridRowCount)) +1 ; 
+    var gridPosition_left = Math.floor(x / (rect.width  / gInfo.gridColumnCount)) +1 ;    
+    var gridPosition_top  = Math.floor(y / (rect.height / gInfo.gridRowCount)) +1 ; 
 
 
     // Optional: visuelles Feedback geben, z.B. eine Linie oder einen Platzhalter anzeigen
@@ -270,10 +257,12 @@ onDragover(event)
 };
 
 
-onDrop(event) 
+onDrop(event , dropResult ) 
 {
   var dropTarget = event.target;
   event.stopPropagation()
+
+  if (dropResult) return;
 
   // Mausposition relativ zum Container berechnen
   var rect=null;
@@ -313,7 +302,7 @@ onDrop(event)
 
 
 showGridLines( div )
-{
+{ return;
  if (!div.isGridLayout) {console.log('Element ist kein Grid-Container'); return;}  
 
   var dim = utils.getGridLayoutDimension(div);
@@ -332,6 +321,12 @@ showGridLines( div )
   const cellWidth  = Math.round(divWidth / numColumns);
   const cellHeight = Math.round(divHeight / numRows);
 
+  // altes Raster entfernen
+  const oldGrid = div.DOMelement.querySelector('svg');
+  if (oldGrid) {
+    oldGrid.remove();
+  } 
+
   // Erstelle neues SVG-Element
   const svgNS = "http://www.w3.org/2000/svg";
   const svg = document.createElementNS(svgNS, "svg");
@@ -339,6 +334,7 @@ showGridLines( div )
   svg.setAttribute("width", "100%");
   svg.setAttribute("height", "100%");
   svg.setAttribute("viewBox", `0 0 ${divWidth} ${divHeight}`);
+  svg.style.pointerEvents = 'none'; // Verhindert, dass das SVG-Element die Mausereignisse blockiert
 
   div.DOMelement.appendChild(svg);
 

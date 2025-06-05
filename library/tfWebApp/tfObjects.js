@@ -405,7 +405,6 @@ export class TFObject
     
       this.DOMelement.addEventListener("drop", (e) => {
         e.preventDefault();
-    
         const items = e.dataTransfer.items;
         const dropResult = {};
         let pending = 0;

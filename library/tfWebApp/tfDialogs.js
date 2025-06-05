@@ -208,7 +208,7 @@ export function addInput( aParent , left , top , textLength  , labelText , appen
 }
 
 
-export function addDateTimePicker( aParent , left , top , labelText , preset , dontRegister , params)
+export function addDateTimePicker( aParent , left , top , labelText , preset , params)
 {
  
   if(!params) var params = {};
@@ -226,7 +226,7 @@ export function addDateTimePicker( aParent , left , top , labelText , preset , d
 
 
 
-export function addDatePicker( aParent , left , top , labelText , preset , dontRegister , params)
+export function addDatePicker( aParent , left , top , labelText , preset , params)
 {
  
   if(!params) var params = {};
@@ -242,7 +242,7 @@ export function addDatePicker( aParent , left , top , labelText , preset , dontR
 }
 
 
-export function addTimePicker( aParent , left , top , labelText , preset , dontRegister , params)
+export function addTimePicker( aParent , left , top , labelText , preset , params)
 {
  
   if(!params) var params = {};
