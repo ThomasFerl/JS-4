@@ -518,6 +518,10 @@ export class TFObject
                                                           });   
   } 
 
+  setParent( newParent )
+  {
+    newParent.appendChild(this.DOMelement);
+  }
 
   set id(value)
   {

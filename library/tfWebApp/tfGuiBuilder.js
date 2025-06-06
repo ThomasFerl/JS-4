@@ -28,7 +28,7 @@ export class TFGuiBuilder
     this.dashBoard.backgroundColor               = 'white';
     this.dashBoard.DOMelement.style.borderRadius = '2px';
     this.dashBoard.callBack_onDragOver           = function(e){  this.onDragover(e) }.bind(this);
-    this.dashBoard.callBack_onDrop               = function(e){  this.onDrop(e) }.bind(this);
+    this.dashBoard.callBack_onDrop               = function(e , dropResult){ this.onDrop(e , dropResult) }.bind(this);
    
     this.menuPanel                               = layout.right;
     this.menuPanel.padding                       = '2px';
@@ -119,7 +119,7 @@ setGridLayout( numCols , numRows )
 
 
 addComponent( left , top , elementName ) 
-  {
+{
     var e = null;
 
     if(elementName == 'BTN')           e = dialogs.addButton  ( this.dashBoard , '' , left , top , 1 , 1 , {caption:'Button', dragable:true} );
@@ -132,17 +132,18 @@ addComponent( left , top , elementName )
 
     if(elementName == 'LABEL')         e = dialogs.addLabel   ( this.dashBoard , '' , left , top , 7 , 1 , {dragable:true});
 
-
-
     // anklick- und ziehbar machen...
     if (e != null)
     {
       this.builderObjects.push(e);
-      e.draggingData         = { id:e.ID , type:elementName , left:left , top:top };
+      e.draggingData         = { id:e.ID };
+      e.dataBinding          = e.draggingData;
       e.callBack_onDragStart = function(event) { this.onDragstart(event , event.target ) }.bind(this);
       e.callBack_onDragOver  = function(event) { this.onDragover(event) }.bind(this);
       e.callBack_onDrop      = function(event , dropResult) { this.onDrop(event , dropResult) }.bind(this);
-      e.callBack_onClick     = function(event , dataBinding) { this.onMouseClick(event , dataBinding ) }.bind(this);
+      e.callBack_onClick     = function(event , dataBinding) {this.onMouseClick(event , dataBinding.id ) }.bind(this);
+
+      this.selectComponent(e); // neues Element auswählen
     }
   }   
   
@@ -185,32 +186,27 @@ ___createToolboxItem( label , type , left , top)
       item.margin                = '0.4em';
       item.innerHTML             = '<center>'+label+'</center>';
       item.type                  = type;
-      item.callBack_onDrop       = function(event , dropResult) { debugger; this.onDrop(event , dropResult) }.bind(this);
-      return item;  
+  return item;  
 }
 
 
-___findComponentByHTMLelement( htmlElement )
+___findComponentByID( id )
 {
-  var id = '';
-  if(htmlElement.data && htmlElement.data instanceof Object) id = htmlElement.data.ID;
-  else return null
-
   for (var i = 0; i < this.builderObjects.length; i++)
   {
-    if (this.builderObjects[i].ID == id)
-    {
-      return this.builderObjects[i];
-    }
+    var objId = this.builderObjects[i].ID;
+    if (objId == id) return this.builderObjects[i];
   }
   return null; // Element nicht gefunden
 }
 
 
-onMouseClick(event , clickedObject)
+onMouseClick(event , objId)
 { 
-   event.stopPropagation()
-  if(this.selected.element != clickedObject) this.selectComponent(clickedObject);
+   event.stopPropagation(); 
+   const clickedObject = this.___findComponentByID(objId);
+   if (!clickedObject) return;
+   if(this.selected.element != clickedObject) this.selectComponent(clickedObject);
 }
 
 
@@ -261,13 +257,14 @@ onDrop(event , dropResult )
 {
   var dropTarget = event.target;
   event.stopPropagation()
-
-  if (dropResult) return;
+  this.mouseInfo.innerHTML = "" ;
 
   // Mausposition relativ zum Container berechnen
   var rect=null;
+
   if(utils.isHTMLElement(dropTarget))  rect = dropTarget.getBoundingClientRect();
   else                                 rect = dropTarget.DOMelement.getBoundingClientRect();
+
   const x = event.clientX - rect.left;
   const y = event.clientY - rect.top;
 
@@ -280,30 +277,31 @@ onDrop(event , dropResult )
   const id = event.dataTransfer.getData('text'); // Holt die ID des gezogenen Elements
   console.log('drop:  ID='+ id) ;
 
-  const draggableElement = document.getElementById(id); // Findet das gezogene Element
-  const draggableObject  = draggableElement.data; 
-  
-  if(draggableObject)
+  if (dropResult.json.newObject)
   {
-    draggableObject.setParent(dropTarget);
-    draggableObject.gridLeft = gridPosition_left;
-    draggableObject.gridTop  = gridPosition_top;
+    // Neues Element erstellen
+    this.addComponent( gridPosition_left , gridPosition_top , dropResult.json.newObject );
+    return;
   }
-  if(selected.element == draggableObject) 
-  {
-    // PropertyEditor anzeigen
-    var p = dialogs.getProperties( draggableObject );
-    propertyEditor.setProperties( p );
+ 
+  const droppedObject = this.___findComponentByID(dropResult.json.id); 
+    
+  if(droppedObject)
+  { // Element wurde auf ein anderes Element gezogen
+    droppedObject.setParent(dropTarget);
+    droppedObject.gridLeft = gridPosition_left;
+    droppedObject.gridTop  = gridPosition_top;
   }
-
-  mouseInfo.DOMelement.textContent = '';  
+ 
+  // PropertyEditor anzeigen
+  this.selectComponent( droppedObject );
 };
 
 
 
 showGridLines( div )
-{ return;
- if (!div.isGridLayout) {console.log('Element ist kein Grid-Container'); return;}  
+{ 
+ if (div.layout().toUpperCase() != 'GRID') {console.log('Element ist kein Grid-Container'); return;}  
 
   var dim = utils.getGridLayoutDimension(div);
 
