@@ -225,7 +225,7 @@ constructor( aParent , params )
   this.items     = [];
 
   utils.buildFlexBoxLayout(this.parent);
-  this.treeViewPanel = dialogs.addPanel( this.parent , "cssTreeViewContainer" , 1 , 1 , '97%' , '97%' , true );
+  this.treeViewPanel = dialogs.addPanel( this.parent , "cssTreeViewContainer" , 1 , 1 , '97%' , '97%' , {} );
   this.treeViewPanel.backgroundColor = this.parent.backgroundColor;
   this.content = { dummyContent:42 };
  }  

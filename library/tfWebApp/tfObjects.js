@@ -1782,6 +1782,123 @@ export class TFCheckBox extends TFObject
 }
 
 //---------------------------------------------------------------------------
+export class TFListBox extends TFObject
+{
+  render()
+  {
+    super.render();
+    this.items = [];
+    if(this.params.items) this.items = this.params.items;
+
+    this.listbox           = document.createElement('select');
+    this.listbox.className = 'cssListBox';
+    this.listbox.id        = this.ID+'1'
+    this.listbox.multiple  = true;
+    this.appendChild(this.listbox);
+    this.listbox.addEventListener('change', function(event) 
+    {
+      const htmlElement = event.target;
+      const selectedOptions = Array.from(htmlElement.selectedOptions);
+      const selectedValues = selectedOptions.map(option => option.value);
+      if (this.callBack_onChange) this.callBack_onChange(selectedValues);
+    }.bind(this));
+
+    if(this.params.items) this.addItems(this.params.items);
+  }
+  
+  addItem( item )
+  {
+    this.items.push(item);
+    var option = document.createElement('option');
+    option.value = item.value || item.text || item.caption;
+    option.textContent = item.text || item.caption;
+    option.selected = item.selected || false;
+    this.listbox.appendChild(option);
+  }
+
+  removeItem( item )
+  {
+    var ndx = this.items.indexOf(item);
+    if(ndx>=0)
+    {
+      this.items.splice(ndx, 1);
+      this.listbox.remove(ndx);
+    }
+  }
+
+  addItems( items )
+  {
+    this.items = items;
+    this.listbox.innerHTML = ''; // Clear existing options
+    for (var i = 0; i < this.items.length; i++)
+    {
+      var item = this.items[i];
+      var option = document.createElement('option');
+      option.value = item.value || item.text || item.caption;
+      option.textContent = item.text || item.caption;
+      option.selected = item.selected || false;
+      this.listbox.appendChild(option);
+    }
+  }
+
+  set itemIndex( ndx )
+  {
+    if (ndx < 0 || ndx >= this.items.length) return;
+    this.listbox.selectedIndex = ndx;
+    this.listbox.scrollTop = ndx * this.listbox.options[ndx].offsetHeight; // Scroll to the selected item
+  }
+
+  get itemIndex()
+  {
+    if (this.listbox.selectedIndex < 0 || this.listbox.selectedIndex >= this.items.length) return -1;
+    return this.listbox.selectedIndex;
+  }
+
+  focus( ndx )
+  {
+    if (ndx < 0 || ndx >= this.items.length) return;
+    this.itemIndex = ndx;
+    this.listbox.focus(); // Set focus to the listbox
+    this.listbox.scrollTop = ndx * this.listbox.options[ndx].offsetHeight; // Scroll to the selected item
+  }
+
+  get selectedItems()
+  { 
+    var selectedItems = [];
+    for (var i = 0; i < this.listbox.options.length; i++)
+    {
+      if (this.listbox.options[i].selected)
+      {
+        selectedItems.push(this.items[i]);
+      }
+    }
+    return selectedItems;
+  }
+
+  set selectedItems( items )
+  {
+    this.listbox.selectedIndex = -1; // Deselect all options        
+    for (var i = 0; i < this.listbox.options.length; i++)
+    {
+      this.listbox.options[i].selected = false; // Deselect all options
+      for (var j = 0; j < items.length; j++)
+      {
+        if (this.listbox.options[i].value === items[j].value || this.listbox.options[i].textContent === items[j].text || this.listbox.options[i].textContent === items[j].caption)
+        {   
+          this.listbox.options[i].selected = true; // Select matching options
+          this.listbox.selectedIndex = i; // Set the selected index to the last matched item
+          this.listbox.scrollTop = i * this.listbox.options[i].offsetHeight; // Scroll to the last matched item
+          break; // Exit the inner loop once a match is found
+        }
+      }
+    }
+  }
+
+}
+
+
+
+//---------------------------------------------------------------------------
 export class TFListCheckbox extends TFObject
 {
   __render()

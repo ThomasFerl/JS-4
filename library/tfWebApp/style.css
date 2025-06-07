@@ -1162,7 +1162,18 @@ html, body {
    background-color: rgb(166, 239, 209);
 }
 
- 
+
+.cssListBox
+{
+   width        : 100%;
+   height       : 100%;
+   padding      : 0.25em; 
+   background   : white;
+   color        : #000000;
+   border       : 1px solid gray;
+   border-radius: 4px;
+   margin       : 0;
+}
 
 .cssComboBox
 {

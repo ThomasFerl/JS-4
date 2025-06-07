@@ -44,6 +44,7 @@ import { TFCheckBox,
          TFMenu,
          TPropertyEditor,
          TFileDialog,
+         TFListBox,
          TFListCheckbox } from "./tfObjects.js";
 
 var   splash  = {panel:null, imgPanel:null, msgPanel:null, msg:'...' , activ:false};
@@ -135,9 +136,10 @@ export function setButton( ctrl , settings )
 }
 
 
-export function addLabel( aParent , className , left , top , width , height , text )
+export function addLabel( aParent , className , left , top , width , height , text , params)
 {
-  var params = {caption:text};
+  if(!params) params = {};
+      params.caption = text;
   if (className) params.css = className;
   
   if (width==null) width = (text.length+1)+'em';
@@ -147,7 +149,7 @@ export function addLabel( aParent , className , left , top , width , height , te
 }
 
 
-export function addButton( aParent , className , left , top , width , height , decoration  )
+export function addButton( aParent , className , left , top , width , height , decoration , params )
 {
   var capt  = '';
   var glyph = '';
@@ -158,7 +160,7 @@ export function addButton( aParent , className , left , top , width , height , d
     glyph = decoration.glyph;
   } else capt = decoration;
   
-  var params = {};
+  if(!params) params = {};
   if (className) params.css              = className;     
   if (capt)      params.caption          = capt;
   if (glyph)     params.glyph            = glyph;
@@ -268,7 +270,6 @@ export function addFileUploader( parent , fileTyp , multiple , destDir , onUploa
 export function addCombobox( aParent , left , top , textLength  , labelText , appendix , preset , items , params )
 {
   if(!params) params = {};
-
   if (labelText)  params.caption    = labelText;
   if (textLength) params.editLength = textLength;
   if (appendix)   params.appendix   = appendix;
@@ -289,6 +290,14 @@ export function addCheckBox( aParent , left , top , labelText , preset , params 
 
    return new TFCheckBox( aParent , left , top , 1 , 1 , params );
 }
+
+export function addListBox( aParent , left , top , width , height , items, params )
+{
+  if(!params) params = {};
+  params.items = items || [];
+  return  new TFListBox( aParent , left , top , width , height , params );
+}
+
 
 export function addListCheckbox(aParent , items )
 {
