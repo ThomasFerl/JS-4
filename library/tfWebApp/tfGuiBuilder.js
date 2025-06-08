@@ -2,7 +2,11 @@ import * as globals         from "./globals.js";
 import * as utils           from "./utils.js";
 import * as dialogs         from "./tfDialogs.js";
 
-import {TFAnalogClock }     from "./tfObjects.js";
+import {TFAnalogClock,
+        TFListCheckbox
+ }     from "./tfObjects.js";
+
+const placeHolderImageURL = '/tfWebApp/res/placeHolder.jpg'; // URL für Platzhalter-Bild
 
 
 export class TFGuiBuilder
@@ -90,10 +94,9 @@ export class TFGuiBuilder
          
      // toolbox
       this.___createToolboxItem( 'div'     , 'DIV'     , 1,3)
-      this.___createToolboxItem( 'image'   , 'IMAGE'   , 2,3)
-      this.___createToolboxItem( 'clock'   , 'CLOCK'   , 3,3)
-      this.___createToolboxItem( 'label'   , 'LABEL'   , 4,3)
-
+      this.___createToolboxItem( 'button'  , 'BTN'     , 2,3)
+      this.___createToolboxItem( 'label'   , 'LABEL'   , 3,3)
+      this.___createToolboxItem( 'clock'   , 'CLOCK'   , 4,3)
       this.___createToolboxItem( 'edit'    , 'INPUT'         , 1,4)
       this.___createToolboxItem( 'datetime', 'INPUT_DATETIME', 2,4)
       this.___createToolboxItem( 'date'    , 'INPUT_DATE'    , 3,4)
@@ -105,10 +108,10 @@ export class TFGuiBuilder
       this.___createToolboxItem( 'select'  , 'SELECT'  , 3,5)
       this.___createToolboxItem( 'checkbox', 'CHECKBOX', 4,5)
 
-      this.___createToolboxItem('checklist' , 'CHECKLISTBOX' , 1,6)
-      this.___createToolboxItem('*' , '*' , 2,6)
-      this.___createToolboxItem('*' , '*' , 3,6)
-      this.___createToolboxItem('*' , '*' , 4,6)
+      this.___createToolboxItem('checklist', 'CHECKLISTBOX' , 1,6)
+      this.___createToolboxItem('image'    , 'IMAGE'  , 2,6)
+      this.___createToolboxItem('*' , '*'  , 3,6)
+      this.___createToolboxItem('*' , '*'  , 4,6)
 
       this.setGridLayout( 10 , 10 );
 
@@ -135,37 +138,22 @@ addComponent( parent , left , top , elementName )
       var e = null;
 
     if(elementName == 'BTN')           e = dialogs.addButton  ( parent , '' , left , top , 1 , 1 , {caption:'Button'} , {dragable:true} );
-    
     if(elementName == 'DIV')           e = dialogs.addPanel   ( parent , '' , left , top , 1 , 1 , {dragable:true});
-
-    if(elementName == 'INPUT')         e = dialogs.addInput   ( parent , left , top , 7 , 'Eingabe' , '' , '', {dragable:true});
-
+    if(elementName == 'INPUT')         e = dialogs.addInput         ( parent , left , top , 7 , 'Eingabe'   , '' , ''    , {dragable:true});
+    if(elementName == 'INPUT_DATETIME')e = dialogs.addDateTimePicker( parent , left , top ,'Datum/Urhrzeit' , Date.now() , {dragable:true});
+    if(elementName == 'INPUT_DATE')    e = dialogs.addDatePicker    ( parent , left , top ,'Datum'          , Date.now() , {dragable:true});
+    if(elementName == 'INPUT_TIME')    e = dialogs.addTimePicker    ( parent , left , top ,'Uhrzeit'        , Date.now() , {dragable:true});
     if(elementName == 'COMBOBOX')      e = dialogs.addCombobox( parent , left , top , 7 , 'Eingabe' , '' , '', ['Option1','Option2','Option3'] , {dragable:true}); 
-
     if(elementName == 'SELECT')        e = dialogs.addInput   ( parent , left , top , 7 , 'Eingabe' , '' , '', {dragable:true,lookUp:true,items:['Option1','Option2','Option3']}); 
-    
-    if(elementName == 'LISTBOX')      e = dialogs.addListBox  ( parent , left , top , 1 , 1 , [{caption:'Option1',value:1},{caption:'Option2',value:2},{caption:'Option3',value:3}] , {dragable:true}); 
+    if(elementName == 'LISTBOX')       e = dialogs.addListBox ( parent , left , top , 1 , 1 , [{caption:'Option1',value:1},{caption:'Option2',value:2},{caption:'Option3',value:3}] , {dragable:true}); 
+    if(elementName == 'CHECKBOX')      e = dialogs.addCheckBox( parent , left , top , 'CheckBox' , true , {dragable:true} )
 
-    if(elementName == 'LABEL')        e = dialogs.addLabel    ( parent , '' , left , top , 7 , 1 , 'Label' , {dragable:true});
+    if(elementName == 'CHECKLISTBOX')  e = new TFListCheckbox ( parent , left , top , 1 , 1 , {dragable:true, items:[{caption:'Option1',value:1},{caption:'Option2',value:2},{caption:'Option3',value:3}]} );
+  
+    if(elementName == 'LABEL')         e = dialogs.addLabel    ( parent , '' , left , top , 7 , 1 , 'Label' , {dragable:true});
+    if(elementName == 'CLOCK')         e = new TFAnalogClock   ( parent , left , top , 1 , 1 , {dragable:true} );
+    if(elementName == 'IMAGE')         e = dialogs.addImage    ( parent , left , top , 1 , 1 , placeHolderImageURL , {dragable:true} );
 
-    if(elementName == 'CLOCK')        e = new TFAnalogClock   ( parent , 1 , 1 , '100%' , '100%' , {isDragable:true} );
-
-    
-/*
-      this.___createToolboxItem( 'image'   , 'IMAGE'   , 2,3)
-      this.___createToolboxItem( 'clock'   , 'CLOCK'   , 3,3)
-      this.___createToolboxItem( 'label'   , 'LABEL'   , 4,3)
-
-      this.___createToolboxItem( 'edit'    , 'INPUT'         , 1,4)
-      this.___createToolboxItem( 'datetime', 'INPUT_DATETIME', 2,4)
-      this.___createToolboxItem( 'date'    , 'INPUT_DATE'    , 3,4)
-      this.___createToolboxItem( 'time'    , 'INPUT_TIME'    , 4,4)
-      
-      
-
-      this.___createToolboxItem('checklist' , 'CHECKLISTBOX' , 1,6)
-      
-*/
 
 
     // anklick- und ziehbar machen...

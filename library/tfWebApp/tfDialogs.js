@@ -171,9 +171,11 @@ export function addButton( aParent , className , left , top , width , height , d
 }
 
 
-export function addImage( aParent , className , left , top , width , height , imgURL )
+export function addImage( aParent , left , top , width , height , imgURL , params )
 {
-  return new TFImage( aParent , left , top , width , height , {imgURL:imgURL} );
+  if (!params) params = {};
+  params.imgURL = imgURL || '';
+  return new TFImage( aParent , left , top , width , height , params );
 }   
 
 
@@ -299,9 +301,10 @@ export function addListBox( aParent , left , top , width , height , items, param
 }
 
 
-export function addListCheckbox(aParent , items )
+export function addListCheckbox(aParent , items , params)
 {
-  var params = {items:items};
+  if(!params) params = {};
+  params.items = items;
 
       aParent.buildGridLayout_templateColumns('1fr' , {stretch:true});
       aParent.buildGridLayout_templateRows   ('1fr' , {stretch:true});
