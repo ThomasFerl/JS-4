@@ -535,8 +535,14 @@ export class TFObject
   }
 
 
-  set css(value)
+  getComputedStyleValue(propertyName)
   {
+    return utils.getComputedStyleValue( this.DOMelement , propertyName );
+  }
+
+
+  set css(value)
+  { 
     this.DOMelement.className = value;
   }
 
@@ -621,7 +627,7 @@ export class TFObject
 
   get zIndex()
   {
-    return this.DOMelement.style.zIndex;
+    return this.DOMelement?.style.zIndex || this.getComputedStyleValue('zIndex');
   }
 
 
@@ -748,10 +754,11 @@ export class TFObject
     }
 
   
-get fontSize()
+get fontSize() 
 {
-  return this.DOMelement.style.fontSize;
+  return this.DOMelement?.style.fontSize || this.getComputedStyleValue('fontSize');
 }
+
 
 set fontSize(value) 
 {
@@ -759,10 +766,11 @@ set fontSize(value)
 }
 
 
-get fontWeight()  
+get fontWeight() 
 {
-  return this.DOMelement.style.fontWeight;
+  return this.DOMelement?.style.fontWeight || this.getComputedStyleValue('fontWeight');
 }
+
 
 set fontWeight(value)
 {
@@ -853,9 +861,9 @@ get gap()
   }
 
 
-  get display()
+  get display() 
   {
-    return this.DOMelement.style.display;  
+   return this.DOMelement?.style.display || this.getComputedStyleValue('display');
   }
 
 
@@ -867,7 +875,7 @@ get gap()
 
   get position()
   {
-    return this.DOMelement.style.position;  
+    return this.DOMelement.style.position || this.getComputedStyleValue('position') 
   }
 
 
@@ -880,7 +888,7 @@ set placeItems(value)
 
  get placeItems()
   {
-    return this.DOMelement.style.placeItems;
+    return this.DOMelement.style.placeItems || this.getComputedStyleValue('placeItems');
   }
 
   set justifyContent(value)
@@ -891,7 +899,7 @@ set placeItems(value)
 
   get justifyContent()
   {
-    return this.DOMelement.style.justifyContent;  
+    return this.DOMelement.style.justifyContent || this.getComputedStyleValue('justifyContent');
   }
 
 
@@ -903,7 +911,7 @@ set placeItems(value)
 
   get alignItems()
   {
-    return this.DOMelement.style.alignItems;  
+    return this.DOMelement.style.alignItems || this.getComputedStyleValue('alignItems');  
   }
 
 
@@ -915,13 +923,13 @@ set placeItems(value)
 
   get flexDirection()   
   {
-    return this.DOMelement.style.flexDirection;
+    return this.DOMelement.style.flexDirection || this.getComputedStyleValue('flexDirection');
   }
   
 
   get overflow()  
   {     
-    return this.DOMelement.style.overflow;  
+    return this.DOMelement.style.overflow || this.getComputedStyleValue('overflow');  
   }
 
   set overflow(value) 
@@ -943,7 +951,7 @@ set placeItems(value)
   get backgroundColor()
   {
     var r=undefined;
-    if(this.DOMelement)  r = this.DOMelement.style.backgroundColor;
+    if(this.DOMelement)  r = this.DOMelement.style.backgroundColor || this.getComputedStyleValue('backgroundColor');
     return r;
   } 
 
@@ -955,7 +963,7 @@ set placeItems(value)
   get color()
   {
     var r=undefined;
-    if(this.DOMelement)  r = this.DOMelement.style.color;
+    if(this.DOMelement)  r = this.DOMelement.style.color || this.getComputedStyleValue('color');
     return r;
   } 
 
@@ -968,7 +976,7 @@ set placeItems(value)
 
   get margin()
   {
-    return this.DOMelement.style.margin;
+    return this.DOMelement.style.margin || this.getComputedStyleValue('margin');
   }
 
 
@@ -980,7 +988,7 @@ set placeItems(value)
 
   get marginTop()
   {
-    return this.DOMelement.style.marginTop;
+    return this.DOMelement.style.marginTop || this.getComputedStyleValue('marginTop');
   }
 
   set marginLeft( value ) 
@@ -991,7 +999,7 @@ set placeItems(value)
 
   get marginLeft()
   {
-    return this.DOMelement.style.marginLeft;
+    return this.DOMelement.style.marginLeft || this.getComputedStyleValue('marginLeft');
   }
 
 
@@ -1003,7 +1011,7 @@ set placeItems(value)
 
   get marginRight()
   {
-    return this.DOMelement.style.marginRight;
+    return this.DOMelement.style.marginRight  || this.getComputedStyleValue('marginRight');
   }
 
 
@@ -1015,7 +1023,7 @@ set marginBottom( value )
 
   get marginBottom()
   {
-    return this.DOMelement.style.marginBottom;
+    return this.DOMelement.style.marginBottom || this.getComputedStyleValue('marginBottom');
   }
 
   set padding( value ) 
@@ -1025,7 +1033,7 @@ set marginBottom( value )
 
   get padding()
   {
-    return this.DOMelement.style.padding;
+    return this.DOMelement.style.padding || this.getComputedStyleValue('padding');
   }
 
   set paddingTop( value )   
@@ -1036,7 +1044,7 @@ set marginBottom( value )
 
   get paddingTop()
   {
-    return this.DOMelement.style.paddingTop;
+    return this.DOMelement.style.paddingTop || this.getComputedStyleValue('paddingTop');
   }
 
   set paddingLeft( value )
@@ -1046,7 +1054,7 @@ set marginBottom( value )
 
   get paddingLeft()
   {
-    return this.DOMelement.style.paddingLeft;
+    return this.DOMelement.style.paddingLeft || this.getComputedStyleValue('paddingLeft');
   }
 
   set paddingRight( value )
@@ -1056,7 +1064,7 @@ set marginBottom( value )
 
   get paddingRight()
   {
-    return this.DOMelement.style.paddingRight;
+    return this.DOMelement.style.paddingRight || this.getComputedStyleValue('paddingRight');
   }
 
   set paddingBottom( value )
@@ -1066,7 +1074,7 @@ set marginBottom( value )
 
   get paddingBottom()
   {
-    return this.DOMelement.style.paddingBottom;
+    return this.DOMelement.style.paddingBottom || this.getComputedStyleValue('paddingBottom');
   }
 
   set borderWidth( value )
@@ -1076,7 +1084,7 @@ set marginBottom( value )
 
   get borderWidth()
   {
-    return this.DOMelement.style.borderWidth;
+    return this.DOMelement.style.borderWidth || this.getComputedStyleValue('borderWidth');
   }
 
   set borderColor( value )
@@ -1086,7 +1094,7 @@ set marginBottom( value )
 
   get borderColor()
   {
-    return this.DOMelement.style.borderColor;
+    return this.DOMelement.style.borderColor || this.getComputedStyleValue('borderColor');
   }
 
   set borderRadius(value) 
@@ -1099,7 +1107,7 @@ set marginBottom( value )
 
   get borderRadius()
   {
-    return this.DOMelement.style.borderRadius;
+    return this.DOMelement.style.borderRadius || this.getComputedStyleValue('borderRadius');
   }
 
 
@@ -1110,7 +1118,7 @@ set blur(value)
 
 get blur()
 {
-  return this.DOMelement.style.filter;
+  return this.DOMelement.style.filter || 0;
 }
 
 
@@ -1121,15 +1129,12 @@ set opacity(value)
 
 get opacity()
 {
-  return this.DOMelement.style.opacity;
+  return this.DOMelement.style.opacity || this.getComputedStyleValue('opacity');
 }
 
 
-
-
-
-  set shadow(value) 
-  {
+set shadow(value) 
+{
     this._shadowDepth = value;
 
     if (value === 0) {
@@ -1146,7 +1151,7 @@ get opacity()
 
   get shadow()
   { 
-    return this._shadowDepth; 
+    return this._shadowDepth || 0 
   }  
 
 
@@ -1217,6 +1222,99 @@ get opacity()
                return url;
          }      
   }
+
+
+// alle Properties in einer einzigen JSON-Struktur zurückgeben...
+getProperties()
+{ 
+  var properties = [];
+ 
+  properties.push( {label:'objName',type:'INPUT',value:this.objName} );
+  properties.push( {label:'name',type:'INPUT',value:this.name} );
+  
+  properties.push( {label:'css',type:'SELECT',value:this.css || '' , items:utils.getAvailableCSSClasses() || [] } );
+  
+  properties.push( {label:'backgroundColor',type:'INPUT',value:this.backgroundColor} );
+  properties.push( {label:'color',type:'INPUT',value:this.color} ); 
+  properties.push( {label:'borderColor',type:'INPUT',value:this.borderColor} ); 
+  properties.push( {label:'borderWidth',type:'INPUT',value:this.borderWidth} ); 
+  properties.push( {label:'borderRadius',type:'INPUT',value:this.borderRadius} ); 
+  properties.push( {label:'shadow',type:'INPUT',value:this.shadow} ); 
+  properties.push( {label:'opacity',type:'INPUT',value:this.opacity} ); 
+  properties.push( {label:'blur',type:'INPUT',value:this.blur} ); 
+  
+
+  properties.push( {label:'fontSize',type:'INPUT',value:this.fontSize} ); 
+  properties.push( {label:'fontWeight',type:'INPUT',value:this.fontWeight} ); 
+
+  properties.push( {label:'placeItems',type:'INPUT',value:this.placeItems} ); 
+  properties.push( {label:'justifyContent',type:'INPUT',value:this.justifyContent} ); 
+  properties.push( {label:'alignItems',type:'INPUT',value:this.alignItems} ); 
+ 
+  // Position im GRID-LAYOUT
+  properties.push( {label:'gridLeft',type:'INPUT',value:this.gridLeft} );
+  properties.push( {label:'gridTop',type:'INPUT',value:this.gridTop} );
+  properties.push( {label:'gridWidth',type:'INPUT',value:this.gridWidth} );
+  properties.push( {label:'gridHeight',type:'INPUT',value:this.gridHeight} ); 
+  properties.push( {label:'gap',type:'INPUT',value:this.gap} ); 
+
+  // Nach Initial-Positionierung -> nachträgliche Änderungen der Geometrie
+  properties.push( {label:'left',type:'INPUT',value:this.left} );
+  properties.push( {label:'top',type:'INPUT',value:this.top} );
+  properties.push( {label:'width',type:'INPUT',value:this.width} );
+  properties.push( {label:'height',type:'INPUT',value:this.height} );
+  properties.push( {label:'zIndex',type:'INPUT',value:this.zIndex} );
+
+  properties.push( {label:'margin',type:'INPUT',value:this.margin || '0px'} );
+  properties.push( {label:'marginLeft',type:'INPUT',value:this.marginLeft || '0px'} );
+  properties.push( {label:'marginRight',type:'INPUT',value:this.marginRight || '0px'} );
+  properties.push( {label:'marginTop',type:'INPUT',value:this.marginTop || '0px'} );
+  properties.push( {label:'marginBottom',type:'INPUT',value:this.marginBottom || '0px'} );
+
+  properties.push( {label:'padding',type:'INPUT',value:this.padding || '0px'} );
+  properties.push( {label:'paddingTop',type:'INPUT',value:this.paddingTop || '0px'} );
+  properties.push( {label:'paddingLeft',type:'INPUT',value:this.paddingLeft || '0px'} );
+  properties.push( {label:'paddingRight',type:'INPUT',value:this.paddingRight || '0px'} );
+  properties.push( {label:'paddingBottom',type:'INPUT',value:this.paddingBottom || '0px'} );
+
+  properties.push( {label:'borderWidth',type:'INPUT',value:this.borderWidth || '0px'} );
+  properties.push( {label:'borderColor',type:'INPUT',value:this.borderColor || '0px'} );
+  properties.push( {label:'borderRadius',type:'INPUT',value:this.borderRadius || '0px'} );
+  properties.push( {label:'shadow',type:'INPUT',value:this.shadow} );
+  
+  properties.push( {label:'overflow',type:'SELECT',value:this.overflow, items:["auto","hidden"] || 'auto'} );
+  properties.push( {label:'stretch',type:'SELECT',value:this.stretch, items:["JA","NEIN"] || 'JA'} );
+  properties.push( {label:'visible',type:'SELECT',value:this.visible, items:["JA","NEIN"] || 'JA'} );
+
+  return properties;
+}
+
+setProperties( properties )
+{
+  if (!Array.isArray(properties)) return;
+
+  properties.forEach(prop => {
+    const key = prop.label;
+    const value = prop.value;
+
+    // Bei Bedarf: einfache Typkonvertierung (String -> Zahl, etc.)
+    if (typeof this[key] === 'number') {
+      this[key] = parseFloat(value);
+    } else if (typeof this[key] === 'boolean') {
+      this[key] = (value === 'true' || value === true);
+    } else {
+      this[key] = value;
+    }
+  });
+}
+
+
+
+
+
+
+
+
 
 
 
@@ -2440,11 +2538,6 @@ this.parent.appendChild(this.container);
     this.renderOptions(this.input.value);
   }
 }
-
-
-
-
-
 
 
 //--------------------------------------------------------------------------- 
@@ -3857,7 +3950,7 @@ export class TPropertyEditor
      var l = new TFLabel( p , 2 , 2 , 1, 1 , {css:"cssBoldLabel" , caption:item.label} );
          l.textAlign = 'left';
 
-     if(item.type.toUpperCase()=='TEXT')
+     if((item.type.toUpperCase()=='TEXT') || (item.type.toUpperCase()=='INPUT'))
      { 
         if(select.length > 0) item.control = new TFComboBox( p , 3 , 2 , 1 , 1 , {value:item.value , items:item.items} )
         else                  item.control = new TFEdit    ( p , 3 , 2 , 1 , 1 , {value:item.value} );

@@ -89,7 +89,7 @@ export class TFGuiBuilder
      var b = dialogs.addButton( this.menuPanel , '' , 2 , 14 , 2 , 1 , 'ok' );
          b.margin = '0.7em';
          this.propertyEditor = dialogs.newPropertyEditor(propertiesDiv , [] , b );
-         this.propertyEditor.callBack_onSave = this.saveProperties; 
+         this.propertyEditor.callBack_onSave = function(p){this.saveProperties(p)}.bind(this); 
 
          
      // toolbox

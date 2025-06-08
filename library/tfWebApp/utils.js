@@ -2001,3 +2001,41 @@ console.log(jsonObj);
     Land: "DE"
 }
 */
+
+
+// utils.js
+
+/**
+ * Liefert eine alphabetisch sortierte Liste aller verwendbaren CSS-Klassen
+ * aus den aktuell eingebundenen Stylesheets (sofern zugreifbar).
+ *
+ * Rückgabe:  string[] Array mit CSS-Klassen-Selektoren (z. B. ".myClass")
+ */
+export function getAvailableCSSClasses() 
+{
+  const result = new Set();
+
+  Array.from(document.styleSheets).forEach(sheet => {
+    try {
+      const rules = sheet.cssRules || sheet.rules;
+      for (const rule of rules) {
+        if (rule.selectorText) {
+          rule.selectorText
+            .split(',')
+            .map(sel => sel.trim())
+            .filter(sel => sel.startsWith('.'))
+            .forEach(sel => result.add(sel));
+        }
+      }
+    } catch (err) {
+      console.warn("CSS-Klassen konnten nicht ausgelesen werden (CORS):", sheet.href);
+    }
+  });
+  return Array.from(result).sort();
+};
+
+
+export function getComputedStyleValue(dom, prop) 
+{
+  return window.getComputedStyle(dom)[prop];
+}

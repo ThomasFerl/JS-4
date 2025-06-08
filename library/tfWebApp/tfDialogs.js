@@ -709,112 +709,13 @@ export function newPropertyEditor( aParent , properties , btnSave , callBack_onS
 
 export function getProperties( obj )
 {
-  var properties = [];
-
-  properties.push( {label:'objName',type:'string',value:obj.objName} );
-  properties.push( {label:'name',type:'INPUT',value:obj.name} );
-
-  properties.push( {label:'css',type:'INPUT',value:obj.css || ''} );
-
-
-  // Position im GRID-LAYOUT
-  properties.push( {label:'gridLeft',type:'INPUT',value:obj.gridLeft} );
-  properties.push( {label:'gridTop',type:'INPUT',value:obj.gridTop} );
-  properties.push( {label:'gridWidth',type:'INPUT',value:obj.gridWidth} );
-  properties.push( {label:'gridHeight',type:'INPUT',value:obj.gridHeight} ); 
-
-  // Nach Initial-Positionierung -> nachträgliche Änderungen der Geometrie
-  properties.push( {label:'left',type:'INPUT',value:obj.left} );
-  properties.push( {label:'top',type:'INPUT',value:obj.top} );
-  properties.push( {label:'width',type:'INPUT',value:obj.width} );
-  properties.push( {label:'height',type:'INPUT',value:obj.height} );
-  properties.push( {label:'caption',type:'INPUT',value:obj.caption} ); 
-  properties.push( {label:'value',type:'INPUT',value:obj.value} ); 
-  properties.push( {label:'prompt',type:'INPUT',value:obj.prompt} ); 
-  properties.push( {label:'appendix',type:'INPUT',value:obj.appendix} ); 
-
-
-
-  properties.push( {label:'margin',type:'INPUT',value:obj.margin || '0px'} );
-  properties.push( {label:'marginLeft',type:'INPUT',value:obj.marginLeft || '0px'} );
-  properties.push( {label:'marginRight',type:'INPUT',value:obj.marginRight || '0px'} );
-  properties.push( {label:'marginTop',type:'INPUT',value:obj.marginTop || '0px'} );
-  properties.push( {label:'marginBottom',type:'INPUT',value:obj.marginBottom || '0px'} );
-
-  properties.push( {label:'padding',type:'INPUT',value:obj.padding || '0px'} );
-  properties.push( {label:'paddingTop',type:'INPUT',value:obj.paddingTop || '0px'} );
-  properties.push( {label:'paddingLeft',type:'INPUT',value:obj.paddingLeft || '0px'} );
-  properties.push( {label:'paddingRight',type:'INPUT',value:obj.paddingRight || '0px'} );
-  properties.push( {label:'paddingBottom',type:'INPUT',value:obj.paddingBottom || '0px'} );
-
-  properties.push( {label:'borderWidth',type:'INPUT',value:obj.borderWidth || '0px'} );
-  properties.push( {label:'borderColor',type:'INPUT',value:obj.borderColor || '0px'} );
-  properties.push( {label:'borderRadius',type:'INPUT',value:obj.borderRadius || '0px'} );
-  properties.push( {label:'shadow',type:'INPUT',value:obj.shadow} );
-  
-  properties.push( {label:'overflow',type:'COMBOBOX',value:obj.overflow, items:["auto","hidden"] || 'auto'} );
-  properties.push( {label:'stretch',type:'COMBOBOX',value:obj.stretch, items:["JA","NEIN"] || 'JA'} );
-  properties.push( {label:'visible',type:'COMBOBOX',value:obj.visible, items:["JA","NEIN"] || 'JA'} );
-
-  properties.push( {label:'backgroundColor',type:'INPUT',value:obj.backgroundColor} );
-  properties.push( {label:'color',type:'INPUT',value:obj.color} );  
-
-  return properties;
+  return obj.getProperties();
 }
-
 
 
 export function setProperties( obj , properties )
 {
-  for(var i=0; i<properties.length; i++)
-  {
-    var p = properties[i];
-    if(p.value)
-    {  
-     if(p.label=='name'    ) obj.name = p.value;
-     if(p.label=='caption' ) obj.caption = p.value;
-
-     if(p.label=='value'   ) obj.value = p.value;
-     if(p.label=='prompt'  ) obj.prompt = p.value;
-     if(p.label=='appendix') obj.appendix = p.value;
-
-     if(p.label=='css') obj.css = p.value;
-     
-     if(p.label=='gridLeft') obj.gridLeft = p.value;
-     if(p.label=='gridTop')  obj.gridTop  = p.value;  
-     if(p.label=='gridWidth') obj.gridWidth  = p.value;
-     if(p.label=='gridHeight') obj.gridHeight  = p.value;
-
-     if(p.label=='left') obj.left = p.value;
-     if(p.label=='top') obj.top = p.value;
-     if(p.label=='width') obj.width = p.value;
-     if(p.label=='height') obj.height = p.value;
-
-     if(p.label=='margin') obj.margin = p.value;
-     if(p.label=='marginLeft') obj.marginLeft = p.value;
-     if(p.label=='marginRight') obj.marginRight = p.value;
-     if(p.label=='marginTop') obj.marginTop = p.value;
-     if(p.label=='marginBottom') obj.marginBottom = p.value;
-
-     if(p.label=='padding') obj.padding = p.value;
-     if(p.label=='paddingTop') obj.paddingTop = p.value;
-     if(p.label=='paddingLeft') obj.paddingLeft = p.value;
-     if(p.label=='paddingRight') obj.paddingRight = p.value;
-     if(p.label=='paddingBottom') obj.paddingBottom = p.value;
-
-
-     if(p.label=='borderWidth') obj.borderWidth = p.value;
-     if(p.label=='borderColor') obj.borderColor = p.value;
-     if(p.label=='borderRadius') obj.borderRadius = p.value;
-     if(p.label=='shadow') obj.shadow = p.value;
-
-     if(p.label=='overflow') obj.overflow = p.value;
-     if(p.label=='stretch') obj.params.stretch = p.value;
-     if(p.label=='visible') obj.visible = p.value;
-     if(p.label=='backgroundColor') obj.backgroundColor = p.value;
-     if(p.label=='color') obj.color = p.value;
-    } 
-  }  
+  obj.setProperties(properties);  
 }
 
 export function fileDialog( rootPath, mask , multiple , callBackOnSelect , onSelectionChanged )
