@@ -714,9 +714,20 @@ export function getProperties( obj )
 
 
 export function setProperties( obj , properties )
-{
-  obj.setProperties(properties);  
+{ 
+  // Properties vom PropertyEditor in property-Objekt für TFObject umwandeln
+  var p          = [];
+  for (var i=0; i<properties.length; i++ )
+  {
+    var item = properties[i];
+    p.push( JSON.parse('{"'+item.label+'":"'+item.value+'"}'));
+  } 
+
+  var propObj = Object.assign({}, ...p)
+
+  obj.setProperties(propObj);  
 }
+
 
 export function fileDialog( rootPath, mask , multiple , callBackOnSelect , onSelectionChanged )
 {

@@ -1,6 +1,7 @@
 import * as globals         from "./globals.js";
 import * as utils           from "./utils.js";
 import * as dialogs         from "./tfDialogs.js";
+import * as objects         from "./tfObjects.js";
 
 import {TFAnalogClock,
         TFListCheckbox
@@ -32,7 +33,7 @@ export class TFGuiBuilder
         dashBoardContainer.margin                = '0px';
 
     this.dashBoard                               = dialogs.addPanel(dashBoardContainer , '' , 0 , 0 , '100%' , '100%' , {dropTarget:true} );
-    this.name                                    = 'dashBoard';
+    this.dashBoard.name                          = 'dashBoard';
     this.dashBoard.overflow                      = 'hidden';
     this.dashBoard.backgroundColor               = 'white';
     this.dashBoard.DOMelement.style.borderRadius = '2px';
@@ -44,15 +45,25 @@ export class TFGuiBuilder
     this.menuPanel.padding                       = '2px';
     this.menuPanel.buildGridLayout( '4x14' );
 
-    var saveBtn                    = dialogs.addButton(this.menuPanel , '' , 4 , 1 , 1 , 1 , 'save');
+    var saveBtn                    = dialogs.addButton(this.menuPanel , '' , 3 , 1 , 1 , 1 , 'save');
     saveBtn.margin                 = '1em';
     saveBtn.callBack_onClick       = function()
                                      { 
                                        this.save(); 
                                      }.bind(this);
 
+ var testBtn                       = dialogs.addButton(this.menuPanel , '' , 4 , 1 , 1 , 1 , 'test');
+     testBtn.margin                = '1em';
+     testBtn.backgroundColor       = 'gray';
 
-    this.mouseInfo                 = dialogs.addPanel( this.menuPanel , 'cssBlackPanel' , 1 , 1 , 3 , 1);
+     testBtn.callBack_onClick      = function()
+                                     { 
+                                       this.test(); 
+                                     }.bind(this);
+
+
+
+    this.mouseInfo                 = dialogs.addPanel( this.menuPanel , 'cssBlackPanel' , 1 , 1 , 2 , 1);
     this.mouseInfo.backgroundColor = 'rgba(0,0,0,0.25)';
     this.mouseInfo.margin          = '0.4em';
     this.mouseInfo.color           = 'white';
@@ -207,6 +218,27 @@ save()
   console.log('save: ' + utils.JSONstringify(result) );
   return result;
 }  
+
+
+test()
+{ 
+  // das dashBoard ist das einzige zentrale parent-Element
+  var propArray = this.dashBoard.getConstructionProperties();
+  var board = Object.assign({}, ...propArray);  // mache JSON-Array zu EINEM JSON-Objekt
+  
+  // ein Fenster erzeugen, welches die Dimension und das Gridlayout des Dashboards übernimmt:
+  var w = dialogs.createWindow(null, 'tfGuiBuilderTest', board.width+'px', board.height+'px', 'CENTER');
+      w.hWnd.backgroundColor = board.backgroundColor;
+      w.hWnd.buildGridLayout(board.gridLayout);
+
+  // die Child-Elemente hinzufügen:
+  for (var i = 0; i < board.children.length; i++)
+  {
+    var cmp = board.children[i];
+    objects.addComponent(w.hWnd, Object.assign({}, ...cmp) );
+  }
+} 
+
 
 load( json)
 {

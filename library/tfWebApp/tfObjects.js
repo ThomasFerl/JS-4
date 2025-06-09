@@ -724,7 +724,7 @@ export class TFObject
     {
        this.grid.top = parseInt(g, 10);
        this.DOMelement.style.gridRowStart = this.grid.top;  
-       this.DOMelement.style.gridRowEnd   = this.grid.top + this.grid.height;
+       this.DOMelement.style.gridRowEnd   = this.grid.top + this.gridHeight;
     }           
   
     get gridTop()
@@ -749,14 +749,14 @@ export class TFObject
   
     set gridHeight( g )
     {
-       this.grid.height        = g
+       this.grid.height  = parseInt(g,10)
        this.DOMelement.style.gridRowEnd = this.gridTop + this.grid.height;
     }           
   
     get gridHeight()
     {
-      this.grid.width = this.DOMelement.style.gridRowEnd - this.gridTop;
-      return  this.grid.width;
+      this.grid.height = parseInt(this.DOMelement.style.gridRowEnd,10) - this.gridTop;
+      return  this.grid.height;
     }     
   
 
@@ -1311,9 +1311,18 @@ getProperties()
   properties.push( {level:2, label:'shadow',type:'INPUT',value:this.shadow} );
   
   properties.push( {level:1, label:'overflow',type:'SELECT',value:this.overflow, items:["auto","hidden"] || 'auto'} );
-  properties.push( {level:2, label:'stretch',type:'SELECT',value:this.stretch, items:["JA","NEIN"] || 'JA'} );
-  properties.push( {level:3, label:'visible',type:'SELECT',value:this.visible, items:["JA","NEIN"] || 'JA'} );
+  properties.push( {level:2, label:'stretch',type:'SELECT',value:this.stretch, items:["true","false"] || 'true'} );
+  properties.push( {level:3, label:'visible',type:'SELECT',value:this.visible, items:["true","false"] || 'true'} );
 
+  properties.push( {level:3, label:'visible',type:'SELECT',value:this.visible, items:["true","false"] || 'true'} );
+  properties.push( {level:4, label:'display',type:'SELECT',value:this.display, items:["block","flex","grid","inline-block","none"] || 'grid'} );
+  properties.push( {level:4, label:'position',type:'SELECT',value:this.position, items:["absolute","relative","fixed","sticky"] || 'absolute'} );
+  properties.push( {level:4, label:'flexDirection',type:'SELECT',value:this.flexDirection, items:["row","column","row-reverse","column-reverse"] || 'row'} );
+  
+// Grid-Infos holen
+  var dim = utils.getGridLayoutDimension(this);
+  if(dim) properties.push( {level:4, label:'gridLayout',type:'INPUT',value:dim.gridColumnCount+'x'+dim.gridRowCount} );
+  
   return properties;
 }
 
@@ -1347,26 +1356,18 @@ getConstructionProperties()
 
 setProperties( properties )
 {
-  if (!Array.isArray(properties)) return;
+  var propertyObject = {};
+  
+  if (Array.isArray(properties)) propertyObject = Object.assign({}, ...properties);
+  else propertyObject = properties;
 
-  properties.forEach(prop => {
-    const key = prop.label;
-    const value = prop.value;
-
-    // Bei Bedarf: einfache Typkonvertierung (String -> Zahl, etc.)
-    if (typeof this[key] === 'number') {
-      this[key] = parseFloat(value);
-    } else if (typeof this[key] === 'boolean') {
-      this[key] = (value === 'true' || value === true);
-    } else {
-      this[key] = value;
-    }
-  });
+  for (let key in propertyObject) 
+  if (key in this)
+    { 
+      console.log('set property "'+key+'" to "'+propertyObject[key]+'"');
+      this[key] = propertyObject[key];
+    }    
 }
-
-
-
-
 
 
 
@@ -4270,6 +4271,32 @@ export class TFileDialog
 
 
      
+}
+
+
+export function addComponent(parent , component )
+{ debugger;
+  var compType = (component.objName || '').toUpperCase();
+  var c = null;
+ 
+  if(compType === 'TFPANEL') 
+  { 
+    c = new TFPanel(parent, component.left, component.top, component.width, component.height, {} );
+    c.setProperties(component);
+  }
+
+
+
+
+
+
+  if(c!=null)
+    if(component.hasOwnProperty('children') && Array.isArray(component.children))
+      {
+        component.children.forEach(child => {
+          if(child) addComponent(c, child);
+        });
+      }
 }
 
 
