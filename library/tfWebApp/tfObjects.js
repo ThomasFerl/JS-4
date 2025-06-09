@@ -7,6 +7,13 @@ import { TFWindow   } from "./tfWindows.js";
 import { TFTreeView  }from "./tfTreeView.js"; 
 import { THTMLTable } from "./tfGrid.js";
 
+let objCounter = {};
+function countObj( objName )
+{
+  if(!objCounter[objName]) objCounter[objName] = 0;
+  objCounter[objName]++;
+  return objName + objCounter[objName];
+}
 
 function assignMouseEventData( e , obj )
 {
@@ -260,6 +267,7 @@ export class TFObject
           // damit der Prozess trotzdem funktioniert...
           // Es wird ein "Minimal-Objekt"als Parent erstellt ...
           this.parent               = {isTFObject:false};  // erstellung eines Minimal-Objektes mit den notw. Properties
+          this.parent.name          = 'HTMLelement';
           this.parent.objName       = 'HTMLelement';
           this.parent.layout        = function(){return window.getComputedStyle(this.parent.DOMelement).getPropertyValue("display").toUpperCase()}.bind(this);
   
@@ -304,6 +312,7 @@ export class TFObject
   
     this.isTFObject   = true;
     this.objName      = this.constructor.name;  
+    this.name         = countObj(this.objName);
     this.ID           = this.objName + Date.now()+Math.round(Math.random()*100);
     this.dataBinding  = {};
     this.childList    = [];
@@ -1316,7 +1325,7 @@ getConstructionProperties()
   for (var i=0; i<properties.length; i++ )
   {
     var item = properties[i];
-    p.push( JSON.stringify('{"'+item.label+'":"'+item.value+'"}'));
+    p.push( JSON.parse('{"'+item.label+'":"'+item.value+'"}'));
   } 
   
   var children = [];

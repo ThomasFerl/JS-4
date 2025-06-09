@@ -32,6 +32,7 @@ export class TFGuiBuilder
         dashBoardContainer.margin                = '0px';
 
     this.dashBoard                               = dialogs.addPanel(dashBoardContainer , '' , 0 , 0 , '100%' , '100%' , {dropTarget:true} );
+    this.name                                    = 'dashBoard';
     this.dashBoard.overflow                      = 'hidden';
     this.dashBoard.backgroundColor               = 'white';
     this.dashBoard.DOMelement.style.borderRadius = '2px';
