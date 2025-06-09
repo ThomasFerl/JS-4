@@ -520,7 +520,15 @@ export class TFObject
 
   setParent( newParent )
   {
+    //aus der childListe des Parents entfernen ...
+    if(this.parent && this.parent.childList)
+      {
+        const index = this.parent.childList.indexOf(this);
+        if (index > -1) this.parent.childList.splice(index, 1);
+      } 
     newParent.appendChild(this.DOMelement);
+    newParent.childList.push(this);
+    this.parent = newParent;
   }
 
   set id(value)
@@ -843,6 +851,17 @@ get gap()
     this.DOMelement.style.display = 'block';  
   }
 
+
+  set visible(value)
+  { 
+    if(value) this.show();
+    else this.setInvisible();
+  }
+
+  get visible()
+  {
+    return this.DOMelement.style.display !== 'none' && this.DOMelement.style.visibility !== 'hidden';
+  }
 
   set innerHTML(html)
   {
@@ -1229,64 +1248,92 @@ getProperties()
 { 
   var properties = [];
  
-  properties.push( {label:'objName',type:'INPUT',value:this.objName} );
-  properties.push( {label:'name',type:'INPUT',value:this.name} );
+  properties.push( {level:1, label:'objName',type:'INPUT',value:this.objName} );
+  properties.push( {level:1, label:'name',type:'INPUT',value:this.name} );
   
-  properties.push( {label:'css',type:'SELECT',value:this.css || '' , items:utils.getAvailableCSSClasses() || [] } );
+  properties.push( {level:1, label:'css',type:'SELECT',value:this.css || '' , items:utils.getAvailableCSSClasses() || [] } );
   
-  properties.push( {label:'backgroundColor',type:'INPUT',value:this.backgroundColor} );
-  properties.push( {label:'color',type:'INPUT',value:this.color} ); 
-  properties.push( {label:'borderColor',type:'INPUT',value:this.borderColor} ); 
-  properties.push( {label:'borderWidth',type:'INPUT',value:this.borderWidth} ); 
-  properties.push( {label:'borderRadius',type:'INPUT',value:this.borderRadius} ); 
-  properties.push( {label:'shadow',type:'INPUT',value:this.shadow} ); 
-  properties.push( {label:'opacity',type:'INPUT',value:this.opacity} ); 
-  properties.push( {label:'blur',type:'INPUT',value:this.blur} ); 
+  properties.push( {level:1, label:'backgroundColor',type:'INPUT',value:this.backgroundColor} );
+  properties.push( {level:1, label:'color',type:'INPUT',value:this.color} ); 
+  properties.push( {level:2, label:'borderColor',type:'INPUT',value:this.borderColor} ); 
+  properties.push( {level:2, label:'borderWidth',type:'INPUT',value:this.borderWidth} ); 
+  properties.push( {level:2, label:'borderRadius',type:'INPUT',value:this.borderRadius} ); 
+  properties.push( {level:2, label:'shadow',type:'INPUT',value:this.shadow} ); 
+  properties.push( {level:3, label:'opacity',type:'INPUT',value:this.opacity} ); 
+  properties.push( {level:3, label:'blur',type:'INPUT',value:this.blur} ); 
   
 
-  properties.push( {label:'fontSize',type:'INPUT',value:this.fontSize} ); 
-  properties.push( {label:'fontWeight',type:'INPUT',value:this.fontWeight} ); 
+  properties.push( {level:2, label:'fontSize',type:'INPUT',value:this.fontSize} ); 
+  properties.push( {level:2, label:'fontWeight',type:'INPUT',value:this.fontWeight} ); 
 
-  properties.push( {label:'placeItems',type:'INPUT',value:this.placeItems} ); 
-  properties.push( {label:'justifyContent',type:'INPUT',value:this.justifyContent} ); 
-  properties.push( {label:'alignItems',type:'INPUT',value:this.alignItems} ); 
+  properties.push( {level:3, label:'placeItems',type:'INPUT',value:this.placeItems} ); 
+  properties.push( {level:3, label:'justifyContent',type:'INPUT',value:this.justifyContent} ); 
+  properties.push( {level:3, label:'alignItems',type:'INPUT',value:this.alignItems} ); 
  
   // Position im GRID-LAYOUT
-  properties.push( {label:'gridLeft',type:'INPUT',value:this.gridLeft} );
-  properties.push( {label:'gridTop',type:'INPUT',value:this.gridTop} );
-  properties.push( {label:'gridWidth',type:'INPUT',value:this.gridWidth} );
-  properties.push( {label:'gridHeight',type:'INPUT',value:this.gridHeight} ); 
-  properties.push( {label:'gap',type:'INPUT',value:this.gap} ); 
+  properties.push( {level:1, label:'gridLeft',type:'INPUT',value:this.gridLeft} );
+  properties.push( {level:1, label:'gridTop',type:'INPUT',value:this.gridTop} );
+  properties.push( {level:1, label:'gridWidth',type:'INPUT',value:this.gridWidth} );
+  properties.push( {level:1, label:'gridHeight',type:'INPUT',value:this.gridHeight} ); 
+  properties.push( {level:3, label:'gap',type:'INPUT',value:this.gap} ); 
 
   // Nach Initial-Positionierung -> nachträgliche Änderungen der Geometrie
-  properties.push( {label:'left',type:'INPUT',value:this.left} );
-  properties.push( {label:'top',type:'INPUT',value:this.top} );
-  properties.push( {label:'width',type:'INPUT',value:this.width} );
-  properties.push( {label:'height',type:'INPUT',value:this.height} );
-  properties.push( {label:'zIndex',type:'INPUT',value:this.zIndex} );
+  properties.push( {level:2, label:'left',type:'INPUT',value:this.left} );
+  properties.push( {level:2, label:'top',type:'INPUT',value:this.top} );
+  properties.push( {level:2, label:'width',type:'INPUT',value:this.width} );
+  properties.push( {level:2, label:'height',type:'INPUT',value:this.height} );
+  properties.push( {level:3, label:'zIndex',type:'INPUT',value:this.zIndex} );
 
-  properties.push( {label:'margin',type:'INPUT',value:this.margin || '0px'} );
-  properties.push( {label:'marginLeft',type:'INPUT',value:this.marginLeft || '0px'} );
-  properties.push( {label:'marginRight',type:'INPUT',value:this.marginRight || '0px'} );
-  properties.push( {label:'marginTop',type:'INPUT',value:this.marginTop || '0px'} );
-  properties.push( {label:'marginBottom',type:'INPUT',value:this.marginBottom || '0px'} );
+  properties.push( {level:1, label:'margin',type:'INPUT',value:this.margin || '0px'} );
+  properties.push( {level:2, label:'marginLeft',type:'INPUT',value:this.marginLeft || '0px'} );
+  properties.push( {level:2, label:'marginRight',type:'INPUT',value:this.marginRight || '0px'} );
+  properties.push( {level:2, label:'marginTop',type:'INPUT',value:this.marginTop || '0px'} );
+  properties.push( {level:2, label:'marginBottom',type:'INPUT',value:this.marginBottom || '0px'} );
 
-  properties.push( {label:'padding',type:'INPUT',value:this.padding || '0px'} );
-  properties.push( {label:'paddingTop',type:'INPUT',value:this.paddingTop || '0px'} );
-  properties.push( {label:'paddingLeft',type:'INPUT',value:this.paddingLeft || '0px'} );
-  properties.push( {label:'paddingRight',type:'INPUT',value:this.paddingRight || '0px'} );
-  properties.push( {label:'paddingBottom',type:'INPUT',value:this.paddingBottom || '0px'} );
+  properties.push( {level:1, label:'padding',type:'INPUT',value:this.padding || '0px'} );
+  properties.push( {level:2, label:'paddingTop',type:'INPUT',value:this.paddingTop || '0px'} );
+  properties.push( {level:2, label:'paddingLeft',type:'INPUT',value:this.paddingLeft || '0px'} );
+  properties.push( {level:2, label:'paddingRight',type:'INPUT',value:this.paddingRight || '0px'} );
+  properties.push( {level:2, label:'paddingBottom',type:'INPUT',value:this.paddingBottom || '0px'} );
 
-  properties.push( {label:'borderWidth',type:'INPUT',value:this.borderWidth || '0px'} );
-  properties.push( {label:'borderColor',type:'INPUT',value:this.borderColor || '0px'} );
-  properties.push( {label:'borderRadius',type:'INPUT',value:this.borderRadius || '0px'} );
-  properties.push( {label:'shadow',type:'INPUT',value:this.shadow} );
+  properties.push( {level:2, label:'borderWidth',type:'INPUT',value:this.borderWidth || '0px'} );
+  properties.push( {level:2, label:'borderColor',type:'INPUT',value:this.borderColor || '0px'} );
+  properties.push( {level:2, label:'borderRadius',type:'INPUT',value:this.borderRadius || '0px'} );
+  properties.push( {level:2, label:'shadow',type:'INPUT',value:this.shadow} );
   
-  properties.push( {label:'overflow',type:'SELECT',value:this.overflow, items:["auto","hidden"] || 'auto'} );
-  properties.push( {label:'stretch',type:'SELECT',value:this.stretch, items:["JA","NEIN"] || 'JA'} );
-  properties.push( {label:'visible',type:'SELECT',value:this.visible, items:["JA","NEIN"] || 'JA'} );
+  properties.push( {level:1, label:'overflow',type:'SELECT',value:this.overflow, items:["auto","hidden"] || 'auto'} );
+  properties.push( {level:2, label:'stretch',type:'SELECT',value:this.stretch, items:["JA","NEIN"] || 'JA'} );
+  properties.push( {level:3, label:'visible',type:'SELECT',value:this.visible, items:["JA","NEIN"] || 'JA'} );
 
   return properties;
+}
+
+getConstructionProperties()
+{
+  var properties = this.getProperties();
+  var p          = [];
+  
+  for (var i=0; i<properties.length; i++ )
+  {
+    var item = properties[i];
+    p.push( JSON.stringify('{"'+item.label+'":"'+item.value+'"}'));
+  } 
+  
+  var children = [];
+
+  if(this.childList && this.childList.length>0)
+  {
+    for(var j=0; j<this.childList.length; j++)
+    {
+      var child      = this.childList[j];
+      var childProps = child.getConstructionProperties();
+      children.push(childProps)
+    } 
+  }
+
+  p.push( {children:children} );
+  
+  return p;
 }
 
 setProperties( properties )
@@ -3912,7 +3959,7 @@ export class TForm
 
 
 export class TPropertyEditor
-//  properties = [{label:"Beschriftung" , value:"Wert" , type:"text" , items:["item1" , "item2" , ... , "itemx"] } , {} , {} ]
+//  properties = [{level:1, label:"Beschriftung" , value:"Wert" , type:"text" , items:["item1" , "item2" , ... , "itemx"] } , {} , {} ]
 {
   constructor( aParent , aProperties , aBtnSave , aCallBack_onSave )
   {
@@ -3920,16 +3967,38 @@ export class TPropertyEditor
     this.properties       = aProperties;
     this.btnSave          = aBtnSave;
     this.callBack_onSave  = aCallBack_onSave;  
+    this._level           = 999;
 
     if(this.btnSave)
     this.btnSave.callBack_onClick = function() { this.save() }.bind(this);
   }  
+
+  set level( aLevel )
+  {
+    this._level = aLevel;
+    this.render();
+  }
+
+  get level()
+  {
+    return this._level;
+  }
 
 
   setProperties( properties )
   {
     this.properties = properties;
     this.render();
+  }
+
+  set visible( value)
+  {
+    this.parent.visible = value;
+  }
+
+  get visible()
+  {
+    return this.parent.visible;
   }
   
   
@@ -3942,8 +4011,10 @@ export class TPropertyEditor
    for (var i=0; i<this.properties.length; i++ )
   {
      var item   = this.properties[i];
-     var select = item.items || [];
-
+     var select = item.items || [];   // falls Select - oder Combobox vorlieft...
+     
+     if(item.level > this._level) continue;  // nur die Items rendern, die auf der aktuellen Ebene liegen
+   
      var p = new TFPanel( this.parent , 0 , 0 , '99%' , '2.4em' , {css:"cssValueListPanel"});   // Dimension sind bereits im css definiert
          p.isGridLayout    = true;  // kommt vom css
          p.backgroundColor = (i % 2) != 0 ? "RGB(240,240,240)" : "RGB(255,255,255)"; 
@@ -3988,14 +4059,16 @@ save()
   for (var i=0; i<this.properties.length; i++ )
   {
     var item = this.properties[i];
-        if (item.control) 
-        {
-           item.value = item.control.value;
+    if(item.level > this._level) continue;  // nur die Items auf der aktuellen Ebene speichern
+      if (item.control) 
+      {
+        item.value = item.control.value;
            p.push({label:item.label , value:item.value});
-        }   
+      }   
   }  
     if(this.callBack_onSave) this.callBack_onSave(p)
 }    
+
 
 }  // end of class TPropertyEditor
 

@@ -43,7 +43,15 @@ export class TFGuiBuilder
     this.menuPanel.padding                       = '2px';
     this.menuPanel.buildGridLayout( '4x14' );
 
-    this.mouseInfo                 = dialogs.addPanel( this.menuPanel , 'cssBlackPanel' , 1 , 1 , 4 , 1);
+    var saveBtn                    = dialogs.addButton(this.menuPanel , '' , 4 , 1 , 1 , 1 , 'save');
+    saveBtn.margin                 = '1em';
+    saveBtn.callBack_onClick       = function()
+                                     { 
+                                       this.save(); 
+                                     }.bind(this);
+
+
+    this.mouseInfo                 = dialogs.addPanel( this.menuPanel , 'cssBlackPanel' , 1 , 1 , 3 , 1);
     this.mouseInfo.backgroundColor = 'rgba(0,0,0,0.25)';
     this.mouseInfo.margin          = '0.4em';
     this.mouseInfo.color           = 'white';
@@ -80,8 +88,26 @@ export class TFGuiBuilder
                                         { 
                                           this.setGridLayout( this.gridCtrlCols.value , this.gridCtrlRows.value ) 
                                         }.bind(this);
-        
-     var propertiesDiv = dialogs.addPanel( this.menuPanel , '' , 1 , 7 , 4 , 7);
+     
+     var propToollDiv = dialogs.addPanel( this.menuPanel , 'cssContainerPanel' , 1 , 7 , 4 , 1);                                    
+         propToollDiv.buildGridLayout_templateRows( '1fr 1fr' );
+         propToollDiv.buildGridLayout_templateColumns( '1fr' );
+         propToollDiv.backgroundColor = 'rgba(0,0,0,0.14)';
+         propToollDiv.paddingLeft = '0.5em';
+         propToollDiv.paddingRight = '0.5em';
+         
+     this.propLevelSelector = dialogs.addCombobox(propToollDiv , 1 , 1 , 7 , 'Anzeigelevel:' , '' , 'essential', [{caption:'essential',value:1},{caption:'useful',value:2},{caption:'all',value:3}] );    
+     this.propLevelSelector.callBack_onChange = function(v)
+                                            { 
+                                              if(this.propertyEditor)
+                                              this.propertyEditor.level = v;
+                                            }.bind(this);
+  
+    this.propCaption = dialogs.addPanel(propToollDiv , 'cssContainerPanel' , 1 , 2 , 2 , 1 );
+    this.propCaption.backgroundColor = 'rgba(0,0,0,0.77)';
+    this.propCaption.color           = 'white';
+
+     var propertiesDiv = dialogs.addPanel( this.menuPanel , '' , 1 , 8 , 4 , 6);
          propertiesDiv.backgroundColor               = 'white';
          propertiesDiv.DOMelement.style.borderRadius = '0px';
 
@@ -150,15 +176,18 @@ addComponent( parent , left , top , elementName )
 
     if(elementName == 'CHECKLISTBOX')  e = new TFListCheckbox ( parent , left , top , 1 , 1 , {dragable:true, items:[{caption:'Option1',value:1},{caption:'Option2',value:2},{caption:'Option3',value:3}]} );
   
-    if(elementName == 'LABEL')         e = dialogs.addLabel    ( parent , '' , left , top , 7 , 1 , 'Label' , {dragable:true});
-    if(elementName == 'CLOCK')         e = new TFAnalogClock   ( parent , left , top , 1 , 1 , {dragable:true} );
-    if(elementName == 'IMAGE')         e = dialogs.addImage    ( parent , left , top , 1 , 1 , placeHolderImageURL , {dragable:true} );
+    if(elementName == 'LABEL')         e = dialogs.addLabel    ( parent , '' , left , top , 1 , 1 , 'Label' , {dragable:true});
+    if(elementName == 'CLOCK')         e = new TFAnalogClock   ( parent      , left , top , 1 , 1 , {dragable:true} );
+    if(elementName == 'IMAGE')         e = dialogs.addImage    ( parent      , left , top , 1 , 1 , placeHolderImageURL , {dragable:true} );
 
 
 
     // anklick- und ziehbar machen...
     if (e != null)
     {
+      e.buildGridLayout_templateColumns( '1fr' );
+      e.buildGridLayout_templateRows   ( '1fr' );
+
       this.builderObjects.push(e);
       e.draggingData         = { id:e.ID };
       e.dataBinding          = e.draggingData;
@@ -170,7 +199,23 @@ addComponent( parent , left , top , elementName )
       this.selectComponent(e); // neues Element auswählen
     }
   }   
-  
+
+save()
+{
+  var result = this.dashBoard.getConstructionProperties();
+  console.log('save: ' + utils.JSONstringify(result) );
+  return result;
+}  
+
+load( json)
+{
+ 
+}  
+
+
+
+
+
   
 selectComponent(element) 
 {
@@ -180,15 +225,25 @@ selectComponent(element)
        if(this.selected.element == element) return false;  // tue nix
        this.selected.element.DOMelement.style.border = this.selected.border;
     } 
-    
+  
     // neues Element auswählen und opt. hervorheben
     this.selected.element = element;
     this.selected.border  = element.DOMelement.style.border;
     this.selected.element.DOMelement.style.border = "3px solid red";
 
+    if(element == this.dashBoard)
+    { 
+      this.propertyEditor.visible = false;
+      return;
+    }
+
     // PropertyEditor anzeigen
     var p = dialogs.getProperties( element );
+    this.propertyEditor.visible = true;
     this.propertyEditor.setProperties( p );
+    this.propertyEditor.level = this.propLevelSelector.value;
+
+    this.propCaption.innerHTML = `<center>${element.objName}</center>`;
 
     this.showGridLines( element );
     
@@ -199,7 +254,7 @@ selectComponent(element)
 
   saveProperties( p )
   {
-    console.log('Setrze Properties: ' + utils.JSONstringify(p) );
+    console.log('Setze Properties: ' + utils.JSONstringify(p) );
 
     if(this.selected.element) dialogs.setProperties( this.selected.element , p );  
 
