@@ -4288,13 +4288,32 @@ export function addComponent(parent , component )
   if(compType === 'TFPANEL') 
   { 
     c = new TFPanel(parent, component.left, component.top, component.width, component.height, {} );
+    c.buildGridLayout(component.gridLayout)
     c.setProperties(component);
   }
 
+  if(compType === 'TFBUTTON') 
+  { 
+    c = new TFButton(parent, component.left, component.top, component.width, component.height, {} );
+    c.setProperties(component);
+  }
 
+  if(compType === 'TFLABEL') 
+  { 
+    c = new TFLabel(parent, component.left, component.top, component.width, component.height, {} );
+    c.setProperties(component);
+  }
 
+  if(compType === 'TFEDIT') 
+  { 
+    c = new TFEdit(parent, component.left, component.top, component.width, component.height, {} );
+    c.setProperties(component);
+  }
 
-
+  /*
+""
+TFAnalogClock
+*/
 
   if(c!=null)
     if(component.hasOwnProperty('children') && Array.isArray(component.children))
