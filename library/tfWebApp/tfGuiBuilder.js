@@ -175,22 +175,22 @@ addComponent( parent , left , top , elementName )
       
       var e = null;
 
-    if(elementName == 'BTN')           e = dialogs.addButton  ( parent , '' , left , top , 1 , 1 , {caption:'Button'} , {dragable:true} );
-    if(elementName == 'DIV')           e = dialogs.addPanel   ( parent , '' , left , top , 1 , 1 , {dragable:true});
+    if(elementName == 'BTN')           e = dialogs.addButton        ( parent , '' , left , top , 1 , 1 , {caption:'Button'} , {dragable:true} );
+    if(elementName == 'DIV')           e = dialogs.addPanel         ( parent , '' , left , top , 1 , 1 , {dragable:true});
     if(elementName == 'INPUT')         e = dialogs.addInput         ( parent , left , top , 7 , 'Eingabe'   , '' , ''    , {dragable:true});
     if(elementName == 'INPUT_DATETIME')e = dialogs.addDateTimePicker( parent , left , top ,'Datum/Urhrzeit' , Date.now() , {dragable:true});
     if(elementName == 'INPUT_DATE')    e = dialogs.addDatePicker    ( parent , left , top ,'Datum'          , Date.now() , {dragable:true});
     if(elementName == 'INPUT_TIME')    e = dialogs.addTimePicker    ( parent , left , top ,'Uhrzeit'        , Date.now() , {dragable:true});
-    if(elementName == 'COMBOBOX')      e = dialogs.addCombobox( parent , left , top , 7 , 'Eingabe' , '' , '', ['Option1','Option2','Option3'] , {dragable:true}); 
-    if(elementName == 'SELECT')        e = dialogs.addInput   ( parent , left , top , 7 , 'Eingabe' , '' , '', {dragable:true,lookUp:true,items:['Option1','Option2','Option3']}); 
-    if(elementName == 'LISTBOX')       e = dialogs.addListBox ( parent , left , top , 1 , 1 , [{caption:'Option1',value:1},{caption:'Option2',value:2},{caption:'Option3',value:3}] , {dragable:true}); 
-    if(elementName == 'CHECKBOX')      e = dialogs.addCheckBox( parent , left , top , 'CheckBox' , true , {dragable:true} )
+    if(elementName == 'COMBOBOX')      e = dialogs.addCombobox      ( parent , left , top , 7 , 'Eingabe' , '' , '', ['Option1','Option2','Option3'] , {dragable:true}); 
+    if(elementName == 'SELECT')        e = dialogs.addInput         ( parent , left , top , 7 , 'Eingabe' , '' , '', {dragable:true,lookUp:true,items:['Option1','Option2','Option3']}); 
+    if(elementName == 'LISTBOX')       e = dialogs.addListBox       ( parent , left , top , 1 , 1 , [{caption:'Option1',value:1},{caption:'Option2',value:2},{caption:'Option3',value:3}] , {dragable:true}); 
+    if(elementName == 'CHECKBOX')      e = dialogs.addCheckBox      ( parent , left , top , 'CheckBox' , true , {dragable:true} )
 
-    if(elementName == 'CHECKLISTBOX')  e = new TFListCheckbox ( parent , left , top , 1 , 1 , {dragable:true, items:[{caption:'Option1',value:1},{caption:'Option2',value:2},{caption:'Option3',value:3}]} );
+    if(elementName == 'CHECKLISTBOX')  e = new TFListCheckbox       ( parent , left , top , 1 , 1 , {dragable:true, items:[{caption:'Option1',value:1},{caption:'Option2',value:2},{caption:'Option3',value:3}]} );
   
-    if(elementName == 'LABEL')         e = dialogs.addLabel    ( parent , '' , left , top , 1 , 1 , 'Label' , {dragable:true});
-    if(elementName == 'CLOCK')         e = new TFAnalogClock   ( parent      , left , top , 1 , 1 , {dragable:true} );
-    if(elementName == 'IMAGE')         e = dialogs.addImage    ( parent      , left , top , 1 , 1 , placeHolderImageURL , {dragable:true} );
+    if(elementName == 'LABEL')         e = dialogs.addLabel         ( parent , '' , left , top , 1 , 1 , 'Label' , {dragable:true});
+    if(elementName == 'CLOCK')         e = new TFAnalogClock        ( parent      , left , top , 1 , 1 , {dragable:true} );
+    if(elementName == 'IMAGE')         e = dialogs.addImage         ( parent      , left , top , 1 , 1 , placeHolderImageURL , {dragable:true} );
 
 
 
@@ -285,7 +285,7 @@ selectComponent(element)
   }
 
 
-  saveProperties( p )
+saveProperties( p )
   {
     console.log('Setze Properties: ' + utils.JSONstringify(p) );
 
@@ -364,22 +364,24 @@ onDragover(event)
 
 
     // Optional: visuelles Feedback geben, z.B. eine Linie oder einen Platzhalter anzeigen
-    this.mouseInfo.innerHTML = `<center><p>X:${gridPosition_left} Y:${gridPosition_top} </p></center>`;
+    this.mouseInfo.innerHTML = `<center><H4>X:${gridPosition_left} Y:${gridPosition_top} </H4></center>`;
 };
 
 
 onDrop(event , dropResult ) 
-{
-  var dropTarget = event.target;
-  event.stopPropagation()
+{ 
+  event.stopPropagation();
+  event.preventDefault(); 
+
   this.mouseInfo.innerHTML = "" ;
+  
+  var dropTarget = event.target;
+  var rect       = dropTarget.getBoundingClientRect();
+
+  if (dropTarget.tfObjInstance) dropTarget = dropTarget.tfObjInstance; // falls das Target ein Drag-Objekt ist, dann auf das Daten-Objekt wechseln
+  else return
 
   // Mausposition relativ zum Container berechnen
-  var rect=null;
-
-  if(utils.isHTMLElement(dropTarget))  rect = dropTarget.getBoundingClientRect();
-  else                                 rect = dropTarget.DOMelement.getBoundingClientRect();
-
   const x = event.clientX - rect.left;
   const y = event.clientY - rect.top;
 
@@ -387,10 +389,6 @@ onDrop(event , dropResult )
 
   var gridPosition_left = Math.floor(x / (rect.width  / gInfo.gridColumnCount)) +1 ;    
   var gridPosition_top  = Math.floor(y / (rect.height / gInfo.gridRowCount)) +1 ; 
-
-  event.preventDefault(); // Erlaubt das Droppen
-  const id = event.dataTransfer.getData('text'); // Holt die ID des gezogenen Elements
-  console.log('drop:  ID='+ id) ;
 
   if (dropResult.json.newObject)
   {
@@ -402,7 +400,7 @@ onDrop(event , dropResult )
   const droppedObject = this.___findComponentByID(dropResult.json.id); 
     
   if(droppedObject)
-  { // Element wurde auf ein anderes Element gezogen
+  { //  wurde Objekt auf ein anderes Element gedroppt ?
     droppedObject.setParent(dropTarget);
     droppedObject.gridLeft = gridPosition_left;
     droppedObject.gridTop  = gridPosition_top;

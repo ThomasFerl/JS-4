@@ -493,7 +493,8 @@ export class TFObject
     if(this.params.blur)            this.blur            = this.params.blur;
 
 
-    this.DOMelement.data =  this;   
+    this.DOMelement.tfObjInstance =  this;   
+    this.DOMelement.data          =  this;   // obsolet
    
           this.DOMelement.addEventListener('wheel', function(e) {if (this.callBack_onWheel) this.callBack_onWheel(e, this.dataBinding);}.bind(this));
           this.DOMelement.addEventListener('click', function(e) {if (this.callBack_onClick) this.callBack_onClick(e, this.dataBinding);}.bind(this));
@@ -529,6 +530,9 @@ export class TFObject
 
   setParent( newParent )
   {
+    
+    if(this.parent === newParent) return; // nichts zu tun, wenn der Parent gleich bleibt
+
     //aus der childListe des Parents entfernen ...
     if(this.parent && this.parent.childList)
       {
@@ -708,9 +712,10 @@ export class TFObject
 
   set gridLeft( g )
   {
+      var w = this.gridWidth;
       this.grid.left = parseInt(g, 10);
       this.DOMelement.style.gridColumnStart  = this.grid.left;
-      this.DOMelement.style.gridColumnEnd    = this.grid.left +  this.grid.width;
+      this.DOMelement.style.gridColumnEnd    = this.grid.left +  w;
     }           
   
     get gridLeft()
@@ -722,9 +727,10 @@ export class TFObject
   
     set gridTop( g )
     {
+       var h = this.gridHeight;
        this.grid.top = parseInt(g, 10);
        this.DOMelement.style.gridRowStart = this.grid.top;  
-       this.DOMelement.style.gridRowEnd   = this.grid.top + this.gridHeight;
+       this.DOMelement.style.gridRowEnd   = this.grid.top + h;
     }           
   
     get gridTop()
@@ -735,7 +741,7 @@ export class TFObject
   
     set gridWidth( g )
     {
-       this.grid.width = parseInt(g, 10);
+      this.grid.width = parseInt(g, 10);
        this.DOMelement.style.gridColumnEnd = this.gridLeft +  this.grid.width;
     }           
   
@@ -4275,7 +4281,7 @@ export class TFileDialog
 
 
 export function addComponent(parent , component )
-{ debugger;
+{ 
   var compType = (component.objName || '').toUpperCase();
   var c = null;
  
@@ -4294,7 +4300,11 @@ export function addComponent(parent , component )
     if(component.hasOwnProperty('children') && Array.isArray(component.children))
       {
         component.children.forEach(child => {
-          if(child) addComponent(c, child);
+                                              if(child) 
+                                              {
+                                               var childObj = Object.assign({}, ...child);
+                                                addComponent(c, childObj);
+                                              }    
         });
       }
 }
