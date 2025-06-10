@@ -41,6 +41,7 @@ export class TFMediaCollector_mediaSetViewer
   {
     this.mediaFiles              = [];
     this.mediaThumbs             = [];
+    this.orderBy                 = 0;
     this.callBack_onChanged      = callBack_onChanged
     this.selectedImgNdx          = 0;
     this.diaShowWindow           = null;
@@ -77,7 +78,7 @@ __init__()
     this.workSpace.buildGridLayout('21x21');
         
      this.menuPanel        = dialogs.addPanel ( this.workSpace , '' , 1 , 1 , 21 , 2 );
-     this.menuPanel.buildGridLayout_templateColumns('3em 3em 3em 3em 3em 3em 1fr 3em');
+     this.menuPanel.buildGridLayout_templateColumns('3em 3em 3em 3em 3em 3em 1fr 1fr 3em');
      this.menuPanel.buildGridLayout_templateRows('1fr');
      this.menuPanel.overflow = 'hidden';
      this.menuPanel.margin = '4px';
@@ -108,6 +109,18 @@ __init__()
           b.height = '1.7em';
           b.callBack_onClick = function(){ this.editMediaFile() }.bind(this);
        
+          var o = dialogs.addCombobox( this.menuPanel , 7 , 1 , 0 , "Sortierung" , '' , '' , [{caption:'',value:0},
+                                                                                               {caption:'Name',value:1},
+                                                                                               {caption:'Datum',value:2},
+                                                                                               {caption:'Typ',value:3},
+                                                                                               {caption:'Größe',value:4},
+                                                                                               {caption:'hash',value:7},
+                                                                                              ] );   
+          o.callBack_onChange = function(e)
+          { 
+            this.orderBy = e;
+            this.updateThumbs();
+          }.bind(this);
 
      this.dashboardPanel   = new TFPanel( this.workSpace ,  1 , 3 , 21 , 19 ,{css:'cssContainerPanel',dropTarget:true} );
      this.dashboardPanel.callBack_onDrop = function (e , data)
@@ -273,7 +286,19 @@ updateThumbs()
       this.dashboardPanel.alignItems='flex-start';
       this.dashboardPanel.justifyContent='flex-start';
 
-      var response = utils.webApiRequest('LSTHUMBS' , {mediaSet:this.mediaSet.ID} );
+      var params = {mediaSet:this.mediaSet.ID};
+
+      if(this.orderBy && this.orderBy>0) 
+      {
+        if(this.orderBy == 1) params.orderBy = 'name';
+        if(this.orderBy == 2) params.orderBy = 'date';
+        if(this.orderBy == 3) params.orderBy = 'type';
+        if(this.orderBy == 4) params.orderBy = 'size';
+        if(this.orderBy == 7) params.orderBy = 'hash';
+      }
+
+
+      var response = utils.webApiRequest('LSTHUMBS' , params );
       if(response.error) {dialogs.showMessage(response.errMsg); return; }
   
       for(var i=0; i<response.result.length; i++) 
