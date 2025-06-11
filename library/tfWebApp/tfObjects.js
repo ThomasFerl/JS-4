@@ -7,6 +7,13 @@ import { TFWindow   } from "./tfWindows.js";
 import { TFTreeView  }from "./tfTreeView.js"; 
 import { THTMLTable } from "./tfGrid.js";
 
+const fontList = [
+  "Arial", "Verdana", "Helvetica", "Tahoma", "Trebuchet MS",
+  "Times New Roman", "Georgia", "Garamond", "Courier New", "Lucida Console",
+  "Comic Sans MS", "Impact", "Segoe UI", "Calibri", "Cambria",
+  "Fira Code", "Roboto", "Open Sans", "Lato", "Monaco"
+];
+
 let objCounter = {};
 function countObj( objName )
 {
@@ -148,7 +155,8 @@ export class TFMenu
     });
   }
 
- 
+
+
   run(event) {
     event.preventDefault();
   
@@ -1266,7 +1274,7 @@ getProperties()
   properties.push( {level:1, label:'objName',type:'INPUT',value:this.objName} );
   properties.push( {level:1, label:'name',type:'INPUT',value:this.name} );
   
-  properties.push( {level:1, label:'css',type:'SELECT',value:this.css || '' , items:utils.getAvailableCSSClasses() || [] } );
+  properties.push( {level:1, label:'css',type:'LOOKUP',value:this.css || '' , items:utils.getAvailableCSSClasses() || [] } );
   
   properties.push( {level:1, label:'backgroundColor',type:'INPUT',value:this.backgroundColor} );
   properties.push( {level:1, label:'color',type:'INPUT',value:this.color} ); 
@@ -1276,15 +1284,11 @@ getProperties()
   properties.push( {level:2, label:'shadow',type:'INPUT',value:this.shadow} ); 
   properties.push( {level:3, label:'opacity',type:'INPUT',value:this.opacity} ); 
   properties.push( {level:3, label:'blur',type:'INPUT',value:this.blur} ); 
-  
-
-  properties.push( {level:2, label:'fontSize',type:'INPUT',value:this.fontSize} ); 
-  properties.push( {level:2, label:'fontWeight',type:'INPUT',value:this.fontWeight} ); 
-
-  properties.push( {level:3, label:'placeItems',type:'INPUT',value:this.placeItems} ); 
-  properties.push( {level:3, label:'justifyContent',type:'INPUT',value:this.justifyContent} ); 
-  properties.push( {level:3, label:'alignItems',type:'INPUT',value:this.alignItems} ); 
- 
+  properties.push( {level:2, label:'innerHTML',type:'INPUT',value:this.innerHTML} ); 
+  properties.push( {level:3, label:'placeItems',type:'SELECT',value:this.placeItems , items:['start','end','center','stretch','baseline']} ); 
+  properties.push( {level:3, label:'justifyContent',type:'SELECT',value:this.justifyContent, items:['flex-start','flex-end','center','space-between','space-around','space-evenly','start','end','left','right']} ); 
+  properties.push( {level:3, label:'alignItems',type:'LOOKUP',value:this.alignItems, items:['stretch','flex-start','flex-end','center','baseline','start','end']} ); 
+                                                 
   // Position im GRID-LAYOUT
   properties.push( {level:1, label:'gridLeft',type:'INPUT',value:this.gridLeft} );
   properties.push( {level:1, label:'gridTop',type:'INPUT',value:this.gridTop} );
@@ -1316,14 +1320,14 @@ getProperties()
   properties.push( {level:2, label:'borderRadius',type:'INPUT',value:this.borderRadius || '0px'} );
   properties.push( {level:2, label:'shadow',type:'INPUT',value:this.shadow} );
   
-  properties.push( {level:1, label:'overflow',type:'SELECT',value:this.overflow, items:["auto","hidden"] || 'auto'} );
-  properties.push( {level:2, label:'stretch',type:'SELECT',value:this.stretch, items:["true","false"] || 'true'} );
-  properties.push( {level:3, label:'visible',type:'SELECT',value:this.visible, items:["true","false"] || 'true'} );
+  properties.push( {level:1, label:'overflow',type:'LOOKUP',value:this.overflow, items:["auto","hidden"] || 'auto'} );
+  properties.push( {level:2, label:'stretch',type:'LOOKUP',value:this.stretch, items:["true","false"] || 'true'} );
+  properties.push( {level:3, label:'visible',type:'LOOKUP',value:this.visible, items:["true","false"] || 'true'} );
 
-  properties.push( {level:3, label:'visible',type:'SELECT',value:this.visible, items:["true","false"] || 'true'} );
-  properties.push( {level:4, label:'display',type:'SELECT',value:this.display, items:["block","flex","grid","inline-block","none"] || 'grid'} );
-  properties.push( {level:4, label:'position',type:'SELECT',value:this.position, items:["absolute","relative","fixed","sticky"] || 'absolute'} );
-  properties.push( {level:4, label:'flexDirection',type:'SELECT',value:this.flexDirection, items:["row","column","row-reverse","column-reverse"] || 'row'} );
+  properties.push( {level:3, label:'visible',type:'LOOKUP',value:this.visible, items:["true","false"] || 'true'} );
+  properties.push( {level:4, label:'display',type:'LOOKUP',value:this.display, items:['block', 'inline', 'inline-block', 'flex', 'inline-flex', 'grid', 'inline-grid', 'none', 'contents', 'table', 'table-row', 'table-cell', 'list-item']} );
+  properties.push( {level:4, label:'position',type:'LOOKUP',value:this.position, items:['static', 'relative', 'absolute', 'fixed', 'sticky'] });
+  properties.push( {level:4, label:'flexDirection',type:'LOOKUP',value:this.flexDirection, items:["row","column","row-reverse","column-reverse"] || 'row'} );
   
 // Grid-Infos holen
   var dim = utils.getGridLayoutDimension(this);
@@ -1334,30 +1338,19 @@ getProperties()
 
 getConstructionProperties()
 {
-  var properties = this.getProperties();
-  var p          = [];
-  
-  for (var i=0; i<properties.length; i++ )
-  {
-    var item = properties[i];
-    p.push( JSON.parse('{"'+item.label+'":"'+item.value+'"}'));
-  } 
-  
-  var children = [];
+  const properties = this.getProperties();
+  const propObj = {};
 
-  if(this.childList && this.childList.length>0)
-  {
-    for(var j=0; j<this.childList.length; j++)
-    {
-      var child      = this.childList[j];
-      var childProps = child.getConstructionProperties();
-      children.push(childProps)
-    } 
+  for (const { label, value } of properties) {
+    propObj[label] = value;
   }
 
-  p.push( {children:children} );
-  
-  return p;
+  // Rekursiv alle Kinder durchgehen
+  if (this.childList && this.childList.length > 0) {
+    propObj.children = this.childList.map(child => child.getConstructionProperties());
+  }
+
+  return propObj;
 }
 
 setProperties( properties )
@@ -1374,11 +1367,6 @@ setProperties( properties )
       this[key] = propertyObject[key];
     }    
 }
-
-
-
-
-
 
 
   destroy()
@@ -1413,8 +1401,21 @@ export class TFSlider extends TFObject
     
     // this.render() wird von bereits von der TFObjects Basisklasse aufgerufen
     // alles was jetzt passiert passiert NACH "unserem" this.render()
-   
   }  
+
+   getProperties()
+   {
+    var properties = super.getProperties();
+    properties.push( {level:1, label:'caption',type:'INPUT',value:this.caption} );
+    properties.push( {level:1, label:'sliderMin',type:'INPUT',value:this.slider.min} ); 
+    properties.push( {level:1, label:'sliderMax',type:'INPUT',value:this.slider.max} );
+    properties.push( {level:1, label:'sliderStep',type:'INPUT',value:this.slider.step} );
+    properties.push( {level:1, label:'value',type:'INPUT',value:this.slider.value} );
+
+    return properties;
+  } 
+   
+    
 
   render()
   { 
@@ -1554,6 +1555,19 @@ get textAlign()
   return this.__ta;
 } 
 
+set font(value) 
+{
+  if (this.paragraph) {
+    this.paragraph.style.fontFamily = value;
+  }
+}
+
+get font() {
+  const raw = this.paragraph?.style.fontFamily || this.getComputedStyleValue?.('fontFamily') || '';
+  return raw.split(',')[0].trim().replace(/^["']|["']$/g, '');
+}
+
+
 set fontSize( value )
 {
   this.paragraph.style.fontSize = value;
@@ -1574,10 +1588,21 @@ get color()
   return this.paragraph.style.color;
 }
 
-setTextIndent( value )
+
+
+getProperties()
 {
-  this.paragraph.style.paddingLeft = value;
-}  
+    var properties = super.getProperties();
+    properties.push( {level:1, label:'caption',type:'INPUT',value:this.caption} );
+    properties.push( {level:1, label:'textAlign',type:'INPUT',value:this.textAlign} ); 
+    properties.push( {level:1, label:'color',type:'INPUT',value:this.color} );
+    properties.push( {level:1, label:'font',type:'LOOKUP',value:this.font,items:fontList} );
+    properties.push( {level:1, label:'fontWeight',type:'INPUT',value:this.fontWeight} );
+    properties.push( {level:1, label:'fontSize',type:'INPUT',value:this.fontSize} );
+
+
+    return properties;
+ } 
 
 
 
@@ -1660,6 +1685,18 @@ export class TFImage extends TFObject
    {
      return this.__URL;
    }
+
+getProperties()
+{
+    var properties = super.getProperties();
+    properties.push( {level:1, label:'imgURL',type:'INPUT',value:this.imgURL} );
+    return properties;
+ } 
+
+
+
+
+
 } 
 
 //---------------------------------------------------------------------------
@@ -1798,6 +1835,15 @@ render()
  {
   return this.buttonText.textContent ; 
  }
+
+
+ getProperties()
+{
+    var properties = super.getProperties();
+    properties.push( {level:1, label:'caption',type:'INPUT',value:this.caption} );
+    return properties;
+ }
+ 
 }  
 
 //---------------------------------------------------------------------------
@@ -1938,6 +1984,13 @@ export class TFCheckBox extends TFObject
   {
     this.input.checked = value;
   }
+
+   getProperties()
+ {
+    var properties = super.getProperties();
+    properties.push( {level:1, label:'checked',type:'SELECT',value:this.checked,items:['true','false']} );
+    return properties;
+ }
 
 
 }
@@ -2440,6 +2493,23 @@ if(gridTemplate.apx)
     if(this.lookUp) return this.lookUp.enabled;
     else                   return !this.input.disabled;
   }
+
+
+   getProperties()
+ {
+    var properties = super.getProperties();
+    properties.push( {level:1, label:'caption',type:'INPUT',value:this.caption} );
+    properties.push( {level:2, label:'captionLength',type:'INPUT',value:this.captionLength} );
+    properties.push( {level:1, label:'value'  ,type:'INPUT',value:this.value} );
+    properties.push( {level:2, label:'editLength'  ,type:'INPUT',value:this.editLength} );
+    properties.push( {level:1, label:'appendix'  ,type:'INPUT',value:this.appendix} );
+    properties.push( {level:2, label:'appendixLength',type:'INPUT',value:this.appendixLength} );
+    properties.push( {level:1, label:'labelPosition'  ,type:'SELECT',value:this.checked,items:['left','top']} );
+    properties.push( {level:1, label:'justifyEditField'  ,type:'SELECT',value:this.checked,items:['left','right']} );
+    properties.push( {level:99, label:'typ'               ,type:'INPUT',value:this.type} );
+    return properties;
+ }
+
   
 }  //end class ...
 
@@ -2576,6 +2646,17 @@ this.parent.appendChild(this.container);
     this.input.value = v;
     this.onChange(v);
   }
+
+ set value(v) 
+  {
+    this.setValue(v);
+  }
+
+  get value()
+  { 
+    return this.getValue();
+  }
+
 
   addOption(opt) {
     this.options.push(opt);
@@ -4046,6 +4127,12 @@ export class TPropertyEditor
      if(item.type.toUpperCase()=='SELECT')
       item.control = new TFComboBox( p , 3 , 2 , 1 , 1 , {value:item.value , items:item.items} )
    
+     
+     if(item.type.toUpperCase()=='LOOKUP')
+      item.editControl = new TFEdit(p , 3, 2 , 1 , 1 ,   {lookUp:true,items:item.items,value:item.value});  
+      
+
+
    if(item.type.toUpperCase()=='DATE')
     item.control = new TFEdit(p ,3,2,1,1,{type:"date",value:item.value});  
  
@@ -4064,8 +4151,19 @@ export class TPropertyEditor
     item.editControl = new TFCheckBox(p,3,2,1,1,{value:item.value});
  }
 
-
  }
+
+
+propertyControlByName( name )
+{
+  for (var i=0; i<this.properties.length; i++ )
+  {
+    var item = this.properties[i];
+    if (item.label.toUpperCase() == name.toUpperCase()) return item.control;
+  }  
+  return null;
+} 
+
 
 
 save()
@@ -4311,7 +4409,10 @@ export function addComponent(parent , component )
   }
 
   /*
-""
+
+TFSlider
+TFCheckBox
+  ""
 TFAnalogClock
 */
 

@@ -177,6 +177,7 @@ var   btn9 = dialogs.addButton( menuContainer , "" , 9 , 1 , 1 , 1 , "Property-E
                                                         {label:"PLZ",value:"39218",type:"text",items:[]},
                                                         {label:"Ort",value:"Schönebeck",type:"text",items:[]},
                                                         {label:"favFastfood",value:"Pizza",type:"text",items:["Pizza","Pommes","Döner","HotDog","Sushi"]},
+                                                        {label:"favFastfood",value:"Pizza",type:"lookup",items:["Pizza","Pommes","Döner","HotDog","Sushi"]},
                                                         {label:"level",value:"90",type:"range",items:[]},
                                                         {label:"online",value:"true",type:"boolean",items:[]}];
 

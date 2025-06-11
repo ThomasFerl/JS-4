@@ -4,7 +4,8 @@ import * as dialogs         from "./tfDialogs.js";
 import * as objects         from "./tfObjects.js";
 
 import {TFAnalogClock,
-        TFListCheckbox
+        TFListCheckbox,
+        TFSlider
  }     from "./tfObjects.js";
 
 const placeHolderImageURL = '/tfWebApp/res/placeHolder.jpg'; // URL für Platzhalter-Bild
@@ -148,7 +149,7 @@ export class TFGuiBuilder
 
       this.___createToolboxItem('checklist', 'CHECKLISTBOX' , 1,6)
       this.___createToolboxItem('image'    , 'IMAGE'  , 2,6)
-      this.___createToolboxItem('*' , '*'  , 3,6)
+      this.___createToolboxItem('slider'   , 'SLIDER' , 3,6)
       this.___createToolboxItem('*' , '*'  , 4,6)
 
       this.setGridLayout( 10 , 10 );
@@ -191,6 +192,7 @@ addComponent( parent , left , top , elementName )
     if(elementName == 'LABEL')         e = dialogs.addLabel         ( parent , '' , left , top , 1 , 1 , 'Label' , {dragable:true});
     if(elementName == 'CLOCK')         e = new TFAnalogClock        ( parent      , left , top , 1 , 1 , {dragable:true} );
     if(elementName == 'IMAGE')         e = dialogs.addImage         ( parent      , left , top , 1 , 1 , placeHolderImageURL , {dragable:true} );
+    if(elementName == 'SLIDER')        e = new TFSlider             ( parent      , left , top , 1 , 1 , {dragable:true} );
 
 
 
@@ -199,6 +201,7 @@ addComponent( parent , left , top , elementName )
     {
       e.buildGridLayout_templateColumns( '1fr' );
       e.buildGridLayout_templateRows   ( '1fr' );
+      e.overflow = 'hidden';
 
       this.builderObjects.push(e);
       e.draggingData         = { id:e.ID };
@@ -213,10 +216,9 @@ addComponent( parent , left , top , elementName )
   }   
 
 save()
-{
-  var result = this.dashBoard.getConstructionProperties();
-  console.log('save: ' + utils.JSONstringify(result) );
-  return result;
+{ debugger;
+  var board = this.dashBoard.getConstructionProperties();
+  console.log('save: ' + utils.JSONstringify(board.children) );
 }  
 
 
@@ -288,7 +290,7 @@ selectComponent(element)
 saveProperties( p )
   {
     console.log('Setze Properties: ' + utils.JSONstringify(p) );
-
+debugger;
     if(this.selected.element) dialogs.setProperties( this.selected.element , p );  
 
   }
@@ -405,9 +407,22 @@ onDrop(event , dropResult )
     droppedObject.gridLeft = gridPosition_left;
     droppedObject.gridTop  = gridPosition_top;
   }
- 
-  // PropertyEditor anzeigen
-  this.selectComponent( droppedObject );
+
+  // neue Position PropertyEditor aktualisieren.
+  // Es sollen aber nicht ALLE Properties aktualisiert werden, sondern nur die beiten Positionsangaben....
+   var p = droppedObject.getConstructionProperties();
+  
+   // im property-Editor die beiden Positionen aktualisieren:
+   var c1 = this.propertyEditor.propertyControlByName('gridLeft');
+   if(c1!=null) c1.value = droppedObject.gridLeft;
+   
+   var c2 = this.propertyEditor.propertyControlByName('gridTop');
+    if(c2!=null) c2.value = droppedObject.gridTop;
+
+    this.propCaption.innerHTML = `<center>${droppedObject.objName}</center>`;
+
+    if(droppedObject.objName=='TFPanel')this.showGridLines( droppedObject );
+   
 };
 
 
@@ -488,16 +503,6 @@ showGridLines(div)
     ctx.moveTo(0, y);
     ctx.lineTo(divWidth, y);
     ctx.stroke();
-  }
-}
-
-
-showProperties()
-{
-  if(selected.element) 
-  {
-    selected.element.getProperties();
-                 
   }
 }
 
