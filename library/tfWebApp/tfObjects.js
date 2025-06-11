@@ -1526,7 +1526,7 @@ export class TFLabel extends TFObject
 
   set textAlign( value )
   {
-    
+    if(!value) value = 'center'; 
     this.__ta = value;
     if(value.toUpperCase() == 'LEFT')
     {
@@ -1557,6 +1557,7 @@ get textAlign()
 
 set font(value) 
 {
+  if (!value) value = 'Arial, sans-serif'; // Default-Font
   if (this.paragraph) {
     this.paragraph.style.fontFamily = value;
   }
@@ -1570,6 +1571,7 @@ get font() {
 
 set fontSize( value )
 {
+  if (!value) value = '1em'; // Default-FontSize
   this.paragraph.style.fontSize = value;
 }
 
@@ -1580,6 +1582,7 @@ get fontSize()
 
 set color( value )  
 {
+  if (!value) value = 'black'; // Default-FontColor
   this.paragraph.style.color = value;
 }
 
@@ -1787,9 +1790,18 @@ export class TFButton extends TFObject
 render()
 {
    super.render();
+   this.___render()
+}   
 
-   this.margin = 0;
-   this.padding = 0;
+
+___render()
+{     
+   this.innerHTML = '';
+   this.margin   = 0;
+   this.padding  = 0;
+   this.btnText  = null;
+   this.btnGlyph = null;
+
    var h = this.heightPx + 'px';
 
    if(this.params.glyph && this.params.caption)
@@ -1812,15 +1824,15 @@ render()
 
     if(this.params.caption)
     {
-     var capt = new TFLabel( this , 2 , 1 , 1 , 1 , {caption:this.params.caption,labelPosition:'CENTER',css:"cssButtonText"} );
-      capt.margin = 0;
-      capt.padding = 0;
+      this.btnText = new TFLabel( this , 2 , 1 , 1 , 1 , {caption:this.params.caption,labelPosition:'CENTER',css:"cssButtonText"} );
+      this.btnText.margin  = 0;
+      this.btnText.padding = 0;
     } 
 
    if(this.params.glyph)
     {
-      var imgPanel = new TFPanel( this , 1 , 1 , 1 , 1 , {css:"cssContainerPanel"} );
-      utils.drawSymbol( this.params.glyph , imgPanel , this.params.glyphColor || this.color || "lightgray" , "77%");
+      this.btnGlyph = new TFPanel( this , 1 , 1 , 1 , 1 , {css:"cssContainerPanel"} );
+      utils.drawSymbol( this.params.glyph , this.btnGlyph , this.params.glyphColor || this.color || "lightgray" , "77%");
     }  
 
  } 
@@ -1828,19 +1840,46 @@ render()
 
  set caption( txt )
  {
-   this.buttonText.textContent  = txt;
+   this.params.caption = txt;
+   this.___render() ;
  }
 
  get caption() 
  {
-  return this.buttonText.textContent ; 
+  return this.params.caption ; 
  }
 
+
+set glyph( g )
+ { debugger;
+   this.params.glyph = g;
+   this.___render() ;
+ }
+
+ get glyph() 
+ {
+  return this.params.glyph ; 
+ }
+
+
+ set glyphColor( c )
+ {
+   this.params.glyphColor = c;
+   this.___render();
+ }
+
+ get glyphColor()
+ {
+    return this.params.glyphColor;
+ }
 
  getProperties()
 {
     var properties = super.getProperties();
     properties.push( {level:1, label:'caption',type:'INPUT',value:this.caption} );
+    properties.push( {level:1, label:'glyph',type:'INPUT',value:this.glyph} );
+    properties.push( {level:1, label:'glyphColor',type:'INPUT',value:this.glyphColor} );
+    
     return properties;
  }
  
@@ -4419,13 +4458,7 @@ TFAnalogClock
   if(c!=null)
     if(component.hasOwnProperty('children') && Array.isArray(component.children))
       {
-        component.children.forEach(child => {
-                                              if(child) 
-                                              {
-                                               var childObj = Object.assign({}, ...child);
-                                                addComponent(c, childObj);
-                                              }    
-        });
+        component.children.forEach(child => {addComponent(c, child);})
       }
 }
 

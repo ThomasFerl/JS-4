@@ -225,8 +225,7 @@ save()
 test()
 { 
   // das dashBoard ist das einzige zentrale parent-Element
-  var propArray = this.dashBoard.getConstructionProperties();
-  var board = Object.assign({}, ...propArray);  // mache JSON-Array zu EINEM JSON-Objekt
+  var board = this.dashBoard.getConstructionProperties();
   
   // ein Fenster erzeugen, welches die Dimension und das Gridlayout des Dashboards übernimmt:
   var w = dialogs.createWindow(null, 'tfGuiBuilderTest', board.width+'px', board.height+'px', 'CENTER');
@@ -235,10 +234,8 @@ test()
 
   // die Child-Elemente hinzufügen:
   for (var i = 0; i < board.children.length; i++)
-  {
-    var cmp = board.children[i];
-    objects.addComponent(w.hWnd, Object.assign({}, ...cmp) );
-  }
+   objects.addComponent(w.hWnd, board.children[i] ); // die Child-Elemente hinzufügen
+ 
 } 
 
 
