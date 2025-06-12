@@ -169,7 +169,7 @@ setGridLayout( numCols , numRows )
 
 
 addComponent( parent , left , top , elementName ) 
-{
+{ 
   if (utils.isHTMLElement(parent)) parent = parent.data || null; 
 
   if (parent == null) parent = this.dashBoard; // wenn kein Parent angegeben, dann auf dem Dashboard
@@ -199,11 +199,15 @@ addComponent( parent , left , top , elementName )
     // anklick- und ziehbar machen...
     if (e != null)
     {
-      e.buildGridLayout_templateColumns( '1fr' );
-      e.buildGridLayout_templateRows   ( '1fr' );
-      e.overflow = 'hidden';
+       if(elementName == 'DIV')  
+       {  
+         e.buildGridLayout_templateColumns( '1fr' );
+         e.buildGridLayout_templateRows   ( '1fr' );
+         e.overflow = 'hidden';
+       }  
 
       this.builderObjects.push(e);
+
       e.draggingData         = { id:e.ID };
       e.dataBinding          = e.draggingData;
       e.callBack_onDragStart = function(event) { this.onDragstart(event , event.target ) }.bind(this);
@@ -216,7 +220,7 @@ addComponent( parent , left , top , elementName )
   }   
 
 save()
-{ debugger;
+{ 
   var board = this.dashBoard.getConstructionProperties();
   console.log('save: ' + utils.JSONstringify(board.children) );
 }  
@@ -287,7 +291,7 @@ selectComponent(element)
 saveProperties( p )
   {
     console.log('Setze Properties: ' + utils.JSONstringify(p) );
-debugger;
+
     if(this.selected.element) dialogs.setProperties( this.selected.element , p );  
 
   }
@@ -426,7 +430,16 @@ onDrop(event , dropResult )
 
 showGridLines(div) 
 {
-  if (div.layout().toUpperCase() !== 'GRID') {
+  if(div.objName != 'TFPanel') 
+  {
+    this.gridCtrlRows.value = '-';
+    this.gridCtrlCols.value = '-';
+    return;
+   } 
+ 
+
+  if (div.layout().toUpperCase() !== 'GRID') 
+  {
     this.gridCtrlRows.value = '-';
     this.gridCtrlCols.value = '-';
     return;

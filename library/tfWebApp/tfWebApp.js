@@ -68,14 +68,14 @@ export function login( callBackIfOK , bypass )
    
 
    var inpUsr = dialogs.addInput(loginDlg ,2 , 3 , 14 , "Benutzer" , "" , "");
-       inpUsr.caption.color     = 'lightgray';
-       inpUsr.caption.fontStyle = 'italic';
+       inpUsr.editCaption.color     = 'lightgray';
+       inpUsr.editCaption.fontStyle = 'italic';
        inpUsr.marginLeft = '1em';
        inpUsr.marginTop  = 0;
 
    var inpPwd = dialogs.addInput(loginDlg ,2 , 5 , 14 , "Passwort" , "" , "" , {type:"password"});
-       inpPwd.caption.color     = 'lightgray';
-       inpPwd.caption.fontStyle = 'italic';
+       inpPwd.editCaption.color     = 'lightgray';
+       inpPwd.editCaption.fontStyle = 'italic';
        inpPwd.marginLeft = '1em';
        inpPwd.marginTop = 0;
 

@@ -294,6 +294,7 @@ export class TFObject
                this.parent       = aParent; 
                this.parentWidth  = parent.clientWidth
                this.parentHeight = parent.clientHeight;
+               if(!params.dontRegister)
                if(this.parent.childList) this.parent.childList.push(this);
         }  
 
@@ -545,10 +546,17 @@ export class TFObject
     if(this.parent && this.parent.childList)
       {
         const index = this.parent.childList.indexOf(this);
-        if (index > -1) this.parent.childList.splice(index, 1);
+        if (index > -1) 
+        {
+          this.parent.childList.splice(index, 1);
+          // nur in ChildList eintragen, wenn es auch in einer childlist ist bzw. war. 
+          // für Hilfsobjekte gilt "dontRegister=true" und die ziehen nur aum DOM-Ebene um ;-)
+          newParent.childList.push(this);
+        }  
       } 
+
     newParent.appendChild(this.DOMelement);
-    newParent.childList.push(this);
+    
     this.parent = newParent;
   }
 
@@ -985,6 +993,7 @@ set placeItems(value)
     this.DOMelement.appendChild(aDOMelement);
   }
 
+
  set backgroundColor(value)
   {
     if(this.DOMelement) this.DOMelement.style.backgroundColor = value;
@@ -1178,7 +1187,6 @@ get opacity()
 set shadow(value) 
 {
     this._shadowDepth = value;
-
     if (value === 0) {
         // Schatten entfernen
         if (this.DOMelement) this.DOMelement.style.boxShadow = 'none';
@@ -1191,10 +1199,22 @@ set shadow(value)
     }
 }
 
-  get shadow()
-  { 
-    return this._shadowDepth || 0 
-  }  
+get shadow() 
+{
+  if (this._shadowDepth != null) return this._shadowDepth;
+
+  const raw = this.getComputedStyleValue?.('boxShadow') || '';
+  const parts = raw.split(' ');
+
+  if (parts.length >= 5 && parts[4].endsWith('px')) {
+    const depth = parseFloat(parts[4]);
+    this._shadowDepth = Math.round(depth);
+    return this._shadowDepth;
+  }
+
+  return 0;
+}
+
 
 
   async fadeOut(duration , callBack_when_ready )
@@ -1321,9 +1341,7 @@ getProperties()
   properties.push( {level:2, label:'shadow',type:'INPUT',value:this.shadow} );
   
   properties.push( {level:1, label:'overflow',type:'LOOKUP',value:this.overflow, items:["auto","hidden"] || 'auto'} );
-  properties.push( {level:2, label:'stretch',type:'LOOKUP',value:this.stretch, items:["true","false"] || 'true'} );
   properties.push( {level:3, label:'visible',type:'LOOKUP',value:this.visible, items:["true","false"] || 'true'} );
-
   properties.push( {level:3, label:'visible',type:'LOOKUP',value:this.visible, items:["true","false"] || 'true'} );
   properties.push( {level:4, label:'display',type:'LOOKUP',value:this.display, items:['block', 'inline', 'inline-block', 'flex', 'inline-flex', 'grid', 'inline-grid', 'none', 'contents', 'table', 'table-row', 'table-cell', 'list-item']} );
   properties.push( {level:4, label:'position',type:'LOOKUP',value:this.position, items:['static', 'relative', 'absolute', 'fixed', 'sticky'] });
@@ -1341,15 +1359,11 @@ getConstructionProperties()
   const properties = this.getProperties();
   const propObj = {};
 
-  for (const { label, value } of properties) {
-    propObj[label] = value;
-  }
+  for (const { label, value } of properties) { propObj[label] = value; }
 
   // Rekursiv alle Kinder durchgehen
-  if (this.childList && this.childList.length > 0) {
-    propObj.children = this.childList.map(child => child.getConstructionProperties());
-  }
-
+  if (this.childList && this.childList.length > 0) propObj.children = this.childList.map(child => child.getConstructionProperties());
+  
   return propObj;
 }
 
@@ -1364,7 +1378,7 @@ setProperties( properties )
   if (key in this)
     { 
       console.log('set property "'+key+'" to "'+propertyObject[key]+'"');
-      this[key] = propertyObject[key];
+      if(propertyObject[key] != null) this[key] = propertyObject[key];
     }    
 }
 
@@ -1420,29 +1434,33 @@ export class TFSlider extends TFObject
   render()
   { 
     super.render();
-
+    this.build();
+  }
+  
+  build()
+  {
+    this.innerHTML             = '';
     this.onChange              = null;
     this.display               = 'flex';
     this.alignItems            = 'center';
     this.justifyContent        = 'center'; 
     this.overflow              = 'hidden';
     this.backgroundColor       = this.params.backgroundColor;
-    this.caption               = null;
+    this.sliderCaption         = null;
     
    
     var s = null;
 
     if(this.params.caption)
     {
-      this.buildGridLayout_templateColumns(this.params.captionLength+'em 1fr');
+      this.buildGridLayout_templateColumns(this.params.captionLength || this.params.caption.length +'em 1fr');
       this.buildGridLayout_templateRows('1fr');
-      this.caption = new TFLabel(this , 1 , 1 , 1 , 1 , {caption:this.params.caption,labelPosition:'LEFT'} );
-      if(this.params.fontSize) this.caption.fontSize = this.params.fontSize;
-      this.caption.textAlign  = 'LEFT';
-      this.caption.fontWeight = 'bold';
-      this.caption.marginLeft = '0.5em';
-      
-      s = new TFPanel(this , 2 , 1 , 1 , 1 , {css:"cssContainerPanel"} );
+      this.sliderCaption = new TFLabel(this , 1 , 1 , 1 , 1 , {caption:this.params.caption,labelPosition:'LEFT' , dontRegister:true} );
+      if(this.params.fontSize) this.sliderCaption.fontSize = this.params.fontSize;
+      this.sliderCaption.textAlign  = 'LEFT';
+      this.sliderCaption.fontWeight = 'bold';
+      this.sliderCaption.marginLeft = '0.5em';
+      s = new TFPanel(this , 2 , 1 , 1 , 1 , {css:"cssContainerPanel" ,  dontRegister:true} );
     } else s=this; 
 
     s.overflow = 'hidden';
@@ -1480,6 +1498,22 @@ export class TFSlider extends TFObject
   {
     return this.slider.value;
   }
+
+  set caption( value )
+  {
+    if(this.sliderCaption) this.sliderCaption.caption = value;
+    else
+    {
+      this.params.caption = value;
+      this.build(); // neu aufbauen, damit die Caption angezeigt wird
+    }
+  }
+
+  get caption()
+  {
+    if(this.sliderCaption) return this.sliderCaption.caption || '';
+    else return '';
+  }  
 
  
 }
@@ -1592,7 +1626,6 @@ get color()
 }
 
 
-
 getProperties()
 {
     var properties = super.getProperties();
@@ -1628,9 +1661,10 @@ export class TFImage extends TFObject
     this.position = 'relative';
     this.overflow = 'hidden';
 
-    var p=this.params;
-    p.preventGrid=true;
-    p.css = "cssImageContainer";
+    var p              = this.params;
+        p.preventGrid  = true;
+        p.css          = "cssImageContainer";
+        p.dontRegister = true;
 
     this.imgContainer = new TFPanel(this , 1 , 1 , '100%' , '100%' , p );
     this.imgContainer.overflow = 'hidden';
@@ -1790,11 +1824,11 @@ export class TFButton extends TFObject
 render()
 {
    super.render();
-   this.___render()
+   this.build()
 }   
 
 
-___render()
+build()
 {     
    this.innerHTML = '';
    this.margin   = 0;
@@ -1824,14 +1858,14 @@ ___render()
 
     if(this.params.caption)
     {
-      this.btnText = new TFLabel( this , 2 , 1 , 1 , 1 , {caption:this.params.caption,labelPosition:'CENTER',css:"cssButtonText"} );
+      this.btnText = new TFLabel( this , 2 , 1 , 1 , 1 , {caption:this.params.caption,labelPosition:'CENTER',css:"cssButtonText" ,  dontRegister:true} );
       this.btnText.margin  = 0;
       this.btnText.padding = 0;
     } 
 
    if(this.params.glyph)
     {
-      this.btnGlyph = new TFPanel( this , 1 , 1 , 1 , 1 , {css:"cssContainerPanel"} );
+      this.btnGlyph = new TFPanel( this , 1 , 1 , 1 , 1 , {css:"cssContainerPanel" ,  dontRegister:true} );
       utils.drawSymbol( this.params.glyph , this.btnGlyph , this.params.glyphColor || this.color || "lightgray" , "77%");
     }  
 
@@ -1841,7 +1875,7 @@ ___render()
  set caption( txt )
  {
    this.params.caption = txt;
-   this.___render() ;
+   this.build() ;
  }
 
  get caption() 
@@ -1851,9 +1885,9 @@ ___render()
 
 
 set glyph( g )
- { debugger;
+ { 
    this.params.glyph = g;
-   this.___render() ;
+   this.build() ;
  }
 
  get glyph() 
@@ -1865,7 +1899,7 @@ set glyph( g )
  set glyphColor( c )
  {
    this.params.glyphColor = c;
-   this.___render();
+   this.build();
  }
 
  get glyphColor()
@@ -1977,9 +2011,16 @@ export class TFCheckBox extends TFObject
   render()
   {
     super.render();
-    
-    if(this.params.checkboxLeft) utils.buildGridLayout_templateColumns(this , '2em '+this.params.captionLength+'em 1fr');
-    else                    utils.buildGridLayout_templateColumns(this , this.params.captionLength+'em  2em 1fr');
+    this.build();
+  }
+
+  build()
+  {
+    this.innerHTML = '';
+
+    if(this.params.checkboxLeft) utils.buildGridLayout_templateColumns(this , '2em '+ this.params.captionLength || this.params.caption.length +'em 1fr');
+    else                         utils.buildGridLayout_templateColumns(this , this.params.captionLength || this.params.caption.length +'em  2em 1fr');
+
     utils.buildGridLayout_templateRows(this ,'1fr');
    
     if(this.params.checkboxLeft) this.gridTemplateAreas    = ' "checkbox editLabel" ';
@@ -2024,10 +2065,27 @@ export class TFCheckBox extends TFObject
     this.input.checked = value;
   }
 
-   getProperties()
+
+  set caption( value )
+  {
+    if(this.label) this.label.textContent = value;
+    else {
+           this.params.caption = value;
+           this.build();
+    }
+  }  
+
+  get caption()
+  {
+    if(this.label) return this.label.textContent || '';
+    else return '';   
+  }
+
+  getProperties()
  {
     var properties = super.getProperties();
     properties.push( {level:1, label:'checked',type:'SELECT',value:this.checked,items:['true','false']} );
+    properties.push( {level:1, label:'caption',type:'INPUT',value:this.caption} );
     return properties;
  }
 
@@ -2154,7 +2212,7 @@ export class TFListBox extends TFObject
 //---------------------------------------------------------------------------
 export class TFListCheckbox extends TFObject
 {
-  __render()
+  build()
   {
     this.innerHTML = '';  
 
@@ -2207,7 +2265,7 @@ export class TFListCheckbox extends TFObject
     this.overflow = 'auto';
     this.backgroundColor = 'rgba(0,0,0,0.1)';
    
-    this.__render();
+    this.build();
  }
 
 focus( ndx )
@@ -2221,20 +2279,20 @@ focus( ndx )
   addItem( item )
   {
     this.items.push(item);
-    this.__render();
+    this.build();
   }   
 
   removeItem( item )  
   {
     var ndx = this.items.indexOf(item);
     if(ndx>=0) this.items.splice(ndx,1);
-    this.__render();
+    this.build();
   }
 
   addItems( items )
   {
     this.items = items;
-    this.__render();
+    this.build();
   }
 
 
@@ -2353,6 +2411,12 @@ export class TFEdit extends TFObject
   render()
   {
     super.render(); 
+    this.build();
+  }
+
+  build()
+  {
+    this.innerHTML = '';
     this.combobox  = null; 
     this.lookUp    = null;
     this.padding   = 0;
@@ -2398,20 +2462,20 @@ utils.buildGridLayout_templateRows   (this , gridTemplate.rows    );
 
 if(gridTemplate.caption) 
   {
-    this.caption  = new TFLabel(this , gridTemplate.caption.left , gridTemplate.caption.top , gridTemplate.caption.width , gridTemplate.caption.height , {caption:this.params.caption  , labelPosition:'LEFT'});
-    this.caption.fontWeight = 'bold';
-    this.margin             =  0;
-    this.caption.marginLeft = '0.5em';
-    this.caption.textAlign  = 'LEFT';
-    this.caption.alignItems = 'end';
+    this.editCaption            = new TFLabel(this , gridTemplate.caption.left , gridTemplate.caption.top , gridTemplate.caption.width , gridTemplate.caption.height , {caption:this.params.caption  , labelPosition:'LEFT' ,  dontRegister:true});
+    this.editCaption.fontWeight = 'bold';
+    this.editCaption.margin     =  0;
+    this.editCaption.marginLeft = '0.5em';
+    this.editCaption.textAlign  = 'LEFT';
+    this.editCaption.alignItems = 'end';
   }  
 
 if(gridTemplate.apx) 
   {
-    this.appendix = new TFLabel(this , gridTemplate.apx.left     , gridTemplate.apx.top    , gridTemplate.apx.width      , gridTemplate.apx.height     , {caption:this.params.appendix , labelPosition:'LEFT'});
-    this.appendix.textAlign = 'LEFT';
-    this.appendix.alignItems = 'end';
-    this.appendix.marginLeft = '0.25em';
+    this.editApendix = new TFLabel(this , gridTemplate.apx.left     , gridTemplate.apx.top    , gridTemplate.apx.width      , gridTemplate.apx.height     , {caption:this.params.appendix , labelPosition:'LEFT' ,  dontRegister:true});
+    this.editApendix.textAlign = 'LEFT';
+    this.editApendix.alignItems = 'end';
+    this.editApendix.marginLeft = '0.25em';
   }     
     
     // keine Items vorhanden --> normales Inputfeld  
@@ -2532,6 +2596,138 @@ if(gridTemplate.apx)
     if(this.lookUp) return this.lookUp.enabled;
     else                   return !this.input.disabled;
   }
+
+
+  set caption( txt )
+  { 
+    if(this.editCaption) this.editCaption.caption = txt;
+    else {  
+            this.params.caption = txt;
+            if (!this.params.captionLength) this.params.captionLength = txt.length + 1;
+            this.build();
+         } 
+  }
+
+  get caption()
+  {
+    if(this.editCaption) return this.editCaption.caption || '';
+    else return '';
+  }
+
+
+  set captionLength( len )
+  {
+    if(this.editCaption) this.editCaption.width = len + 'em';
+    else {  
+            this.params.captionLength = len;
+            this.build();
+         }
+  } 
+
+  
+  get captionLength()
+  {
+    if(this.editCaption) return this.editCaption.width || '0';
+    else return ''; 
+  }
+
+  set editLength( len )
+  {
+    if(this.input) this.input.style.width = len + 'em';
+    else {  
+            this.params.editLength = len;
+            this.build(); 
+          }
+  }
+
+  get editLength()
+  {
+    if(this.input) return this.input.style.width.replace('em','') || '0';
+    else return '0';
+  }
+
+
+  set appendix( txt )
+  {
+    if(this.editApendix) this.editApendix.caption = txt;
+    else {
+            this.params.appendix = txt;
+            this.build();
+         }
+  }
+
+
+  get appendix()
+  {
+    if(this.editApendix) return this.editApendix.caption || '';
+    else return '';
+  }
+
+
+  set appendixLength( len )
+  {
+    if(this.appendix) this.editApendix.width = len + 'em';
+    else {
+            this.params.appendixLength = len;
+            this.build();
+          }
+  }
+ 
+ 
+  get appendixLength()
+  {
+    if(this.editApendix) return this.editApendix.width || '';
+    else return '';
+  }
+
+  set labelPosition( pos )
+  {
+   this.params.labelPosition = pos;
+   this.build();
+  }
+  
+  get labelPosition()
+  {
+    return this.params.labelPosition || 'left';
+  }
+
+  set justifyEditField( pos )
+  {
+    if(this.input){
+                    if(pos.toLowerCase() == 'left') this.input.style.justifySelf = 'start';
+                    if(pos.toLowerCase() == 'right') this.input.style.justifySelf = 'end';      
+                  } 
+    else {  
+            this.params.justifyEditField = pos;
+            this.build();
+         }
+  }
+
+  get justifyEditField()
+  {
+    if(this.input)
+      {
+      if(this.input.style.justifySelf == 'start') return 'left';
+      if(this.input.style.justifySelf == 'end')   return 'right';
+      if(this.input.style.justifySelf == 'center') return 'center'; 
+      } 
+    else return '';
+  }
+
+
+  set type( t )
+  {
+    // dummy - tut NIX
+    // der Typ kann im Nachgang nicht verändert werden...
+    // aber im Sinne der Setter/Getter Logik bauen wir hier eine Einbahnstraße ...
+  }  
+
+
+  get type()
+  {
+    return this.params.type || 'text';
+  }  
+
 
 
    getProperties()
