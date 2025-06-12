@@ -716,15 +716,13 @@ export function getProperties( obj )
 export function setProperties( obj , properties )
 { 
   // Properties vom PropertyEditor in property-Objekt für TFObject umwandeln
-  var p          = [];
+  var propObj    = {};
+
   for (var i=0; i<properties.length; i++ )
   {
     var item = properties[i];
-    p.push( JSON.parse('{"'+item.label+'":"'+item.value+'"}'));
+    propObj[item.label]=item.value;
   } 
-
-  var propObj = Object.assign({}, ...p)
-
   obj.setProperties(propObj);  
 }
 

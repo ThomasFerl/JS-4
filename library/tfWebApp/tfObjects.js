@@ -2506,14 +2506,13 @@ if(gridTemplate.apx)
      this.input.style.margin           = '0.5px';
      if(this.params.editLength) 
       {
-        if(this.params.editLength != 'auto') this.input.style.width = this.params.editLength+'em';
+        if(this.params.editLength != 'auto') this.input.style.minWidth = this.params.editLength+'em';
         else                                 this.input.style.width = '99%'; 
 
         if(this.params.justifyEditField =='left') this.input.style.justifySelf = 'start';
         else                                      this.input.style.justifySelf = 'end'; 
 
       } 
-    
 
       if(this.params.lookUp)
       { 
@@ -2600,84 +2599,65 @@ if(gridTemplate.apx)
 
   set caption( txt )
   { 
-    if(this.editCaption) this.editCaption.caption = txt;
-    else {  
-            this.params.caption = txt;
-            if (!this.params.captionLength) this.params.captionLength = txt.length + 1;
-            this.build();
-         } 
+    this.params.caption       = txt;
+    this.params.captionLength = txt.length + 1;
+    this.build(); 
   }
 
   get caption()
   {
-    if(this.editCaption) return this.editCaption.caption || '';
-    else return '';
+    return this.params.caption || '';
   }
 
 
   set captionLength( len )
-  {
-    if(this.editCaption) this.editCaption.width = len + 'em';
-    else {  
-            this.params.captionLength = len;
-            this.build();
-         }
+  { 
+    if(len=='' || len==null || len=='0' || len==0 || len=='auto') len = this.params.caption.length + 1;
+    this.params.captionLength = len;
+    this.build();
   } 
 
   
   get captionLength()
   {
-    if(this.editCaption) return this.editCaption.width || '0';
-    else return ''; 
+   return  this.params.captionLength || '0'; 
   }
 
   set editLength( len )
-  {
-    if(this.input) this.input.style.width = len + 'em';
-    else {  
-            this.params.editLength = len;
-            this.build(); 
-          }
+  { 
+    this.params.editLength = len;
+    this.build();          
   }
 
   get editLength()
   {
-    if(this.input) return this.input.style.width.replace('em','') || '0';
-    else return '0';
+   return this.params.editLength || 'auto';
   }
 
 
   set appendix( txt )
   {
-    if(this.editApendix) this.editApendix.caption = txt;
-    else {
-            this.params.appendix = txt;
-            this.build();
-         }
+    this.params.appendix = txt;
+    this.build();
   }
 
 
   get appendix()
   {
-    if(this.editApendix) return this.editApendix.caption || '';
-    else return '';
+    return this.params.appendix || '';
   }
 
 
   set appendixLength( len )
   {
-    if(this.appendix) this.editApendix.width = len + 'em';
-    else {
-            this.params.appendixLength = len;
-            this.build();
-          }
+    this.params.appendixLength = len;
+    this.build();
   }
  
  
   get appendixLength()
   {
-    if(this.editApendix) return this.editApendix.width || '';
-    else return '';
+    return this.params.appendixLength || '0';
   }
 
   set labelPosition( pos )
@@ -2693,25 +2673,13 @@ if(gridTemplate.apx)
 
   set justifyEditField( pos )
   {
-    if(this.input){
-                    if(pos.toLowerCase() == 'left') this.input.style.justifySelf = 'start';
-                    if(pos.toLowerCase() == 'right') this.input.style.justifySelf = 'end';      
-                  } 
-    else {  
-            this.params.justifyEditField = pos;
-            this.build();
-         }
+    this.params.justifyEditField = pos;
+    this.build();
   }
 
   get justifyEditField()
   {
-    if(this.input)
-      {
-      if(this.input.style.justifySelf == 'start') return 'left';
-      if(this.input.style.justifySelf == 'end')   return 'right';
-      if(this.input.style.justifySelf == 'center') return 'center'; 
-      } 
-    else return '';
+    return this.params.justifyEditField || 'left';
   }
 
 
