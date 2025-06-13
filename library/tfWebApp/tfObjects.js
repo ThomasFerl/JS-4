@@ -510,9 +510,7 @@ export class TFObject
           this.DOMelement.addEventListener('dblclick', function(e) {if (this.callBack_onDblClick) this.callBack_onDblClick(e, this.dataBinding);}.bind(this));
           this.DOMelement.addEventListener('mousemove', function(e) {if (this.callBack_onMouseMove) this.callBack_onMouseMove(e, this.dataBinding);}.bind(this));
           this.DOMelement.addEventListener('mouseleave', function(e) {if (this.callBack_onMouseOut) this.callBack_onMouseOut(e, this.dataBinding);}.bind(this));
-          
-          console.log(this.constructor.name+" popup:"+this.popupMenu);
-
+      
           if(this.popupMenu) { this.addPopupMenu(this.popupMenu)}
           else this.DOMelement.addEventListener('contextmenu', (e)=>{e.preventDefault();
                                                                      if( this.callBack_onClick) this.callBack_onClick (e,this.dataBinding) 
@@ -1290,7 +1288,7 @@ get shadow()
 getProperties()
 { 
   var properties = [];
- 
+
   properties.push( {level:1, label:'objName',type:'INPUT',value:this.objName} );
   properties.push( {level:1, label:'name',type:'INPUT',value:this.name} );
   
@@ -1304,7 +1302,7 @@ getProperties()
   properties.push( {level:2, label:'shadow',type:'INPUT',value:this.shadow} ); 
   properties.push( {level:3, label:'opacity',type:'INPUT',value:this.opacity} ); 
   properties.push( {level:3, label:'blur',type:'INPUT',value:this.blur} ); 
-  //properties.push( {level:2, label:'innerHTML',type:'INPUT',value:this.innerHTML} ); 
+ // properties.push( {level:2, label:'innerHTML',type:'INPUT',value:this.innerHTML} ); 
   properties.push( {level:3, label:'placeItems',type:'SELECT',value:this.placeItems , items:['start','end','center','stretch','baseline']} ); 
   properties.push( {level:3, label:'justifyContent',type:'SELECT',value:this.justifyContent, items:['flex-start','flex-end','center','space-between','space-around','space-evenly','start','end','left','right']} ); 
   properties.push( {level:3, label:'alignItems',type:'LOOKUP',value:this.alignItems, items:['stretch','flex-start','flex-end','center','baseline','start','end']} ); 
@@ -1361,17 +1359,26 @@ getConstructionProperties()
 
   for (const { label, value } of properties) { propObj[label] = value; }
 
-  // Rekursiv alle Kinder durchgehen
-  var childs = []
-  if (this.childList.length>0)
-     for(var i=0; i<this.childList.length; i++)
-       {
-         var aChild      = this.childList[i];
-         var aChildProps = aChild.getConstructionProperties();
-         if(aChildProps) childs.push(aChildProps);
-       }  
+  console.log(' - getConstructionProperties:');
+  console.log('  ' + propObj.objName + "("+propObj.name+") -> ");
+  console.log(JSON.stringify(propObj));
 
-  propObj.children = childs;
+  // Rekursiv alle Kinder durchgehen
+  var childs = [];
+  if (this.childList && this.childList.length > 0)
+     for(var i=0; i<this.childList.length; i++) 
+     {
+       var child = this.childList[i];
+       console.log('dive in recursion for child: ' + child.objName + '('+child.name+') ....' ); 
+       childs.push(child.getConstructionProperties());
+     }  
+  
+  console.log('');
+  console.log('');   
+  console.log('---> Children: ' + JSON.stringify(childs));    
+  
+  propObj.children = childs;   
+  
   return propObj;
 }
 
