@@ -203,7 +203,7 @@ export function addInput( aParent , left , top , textLength  , labelText , appen
   if(!params) params = {};
 
   if (labelText)  params.caption    = labelText;
-  if (textLength) params.editLength = textLength;
+  if (textLength) params.editLength = 'auto';
   if (appendix)   params.appendix   = appendix;
   if (preset)     params.value      = preset;
 

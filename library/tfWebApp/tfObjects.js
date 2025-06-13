@@ -1304,7 +1304,7 @@ getProperties()
   properties.push( {level:2, label:'shadow',type:'INPUT',value:this.shadow} ); 
   properties.push( {level:3, label:'opacity',type:'INPUT',value:this.opacity} ); 
   properties.push( {level:3, label:'blur',type:'INPUT',value:this.blur} ); 
-  properties.push( {level:2, label:'innerHTML',type:'INPUT',value:this.innerHTML} ); 
+  //properties.push( {level:2, label:'innerHTML',type:'INPUT',value:this.innerHTML} ); 
   properties.push( {level:3, label:'placeItems',type:'SELECT',value:this.placeItems , items:['start','end','center','stretch','baseline']} ); 
   properties.push( {level:3, label:'justifyContent',type:'SELECT',value:this.justifyContent, items:['flex-start','flex-end','center','space-between','space-around','space-evenly','start','end','left','right']} ); 
   properties.push( {level:3, label:'alignItems',type:'LOOKUP',value:this.alignItems, items:['stretch','flex-start','flex-end','center','baseline','start','end']} ); 
@@ -1362,10 +1362,20 @@ getConstructionProperties()
   for (const { label, value } of properties) { propObj[label] = value; }
 
   // Rekursiv alle Kinder durchgehen
-  if (this.childList && this.childList.length > 0) propObj.children = this.childList.map(child => child.getConstructionProperties());
-  
+  var childs = []
+  if (this.childList.length>0)
+     for(var i=0; i<this.childList.length; i++)
+       {
+         var aChild      = this.childList[i];
+         var aChildProps = aChild.getConstructionProperties();
+         if(aChildProps) childs.push(aChildProps);
+       }  
+
+  propObj.children = childs;
   return propObj;
 }
+
+
 
 setProperties( properties )
 {
@@ -4607,7 +4617,9 @@ export function addComponent(parent , component )
 
   if(compType === 'TFEDIT') 
   { 
-    c = new TFEdit(parent, component.left, component.top, component.width, component.height, {} );
+    var t = 'text';
+    if(component.hasOwnProperty('typ')) t = component.typ;
+    c = new TFEdit(parent, component.left, component.top, component.width, component.height, {type:t} );
     c.setProperties(component);
   }
 

@@ -44,17 +44,19 @@ export class TFGuiBuilder
    
     this.menuPanel                               = layout.right;
     this.menuPanel.padding                       = '2px';
-    this.menuPanel.buildGridLayout( '4x14' );
+    this.menuPanel.buildGridLayout( '4x17' );
 
     var saveBtn                    = dialogs.addButton(this.menuPanel , '' , 3 , 1 , 1 , 1 , 'save');
-    saveBtn.margin                 = '1em';
+    saveBtn.height                 = '2em';
+    saveBtn.marginTop              = '0.5em';
     saveBtn.callBack_onClick       = function()
                                      { 
                                        this.save(); 
                                      }.bind(this);
 
  var testBtn                       = dialogs.addButton(this.menuPanel , '' , 4 , 1 , 1 , 1 , 'test');
-     testBtn.margin                = '1em';
+     testBtn.height                = '2em';
+     testBtn.marginTop             = '0.5em';
      testBtn.backgroundColor       = 'gray';
 
      testBtn.callBack_onClick      = function()
@@ -66,11 +68,11 @@ export class TFGuiBuilder
 
     this.mouseInfo                 = dialogs.addPanel( this.menuPanel , 'cssBlackPanel' , 1 , 1 , 2 , 1);
     this.mouseInfo.backgroundColor = 'rgba(0,0,0,0.25)';
-    this.mouseInfo.margin          = '0.4em';
     this.mouseInfo.color           = 'white';
+    this.mouseInfo.margin          = '0.1em';
      
       // Panel für Eingabe der Dimensionierung des Grids:
-     var gridCtrlPanel = dialogs.addPanel(  this.menuPanel , '' , 1 , 2 , 4 , 1);   
+     var gridCtrlPanel = dialogs.addPanel(  this.menuPanel , '' , 1 , 2 , 4 , 2);   
           gridCtrlPanel.backgroundColor                  = 'lightgray';
           gridCtrlPanel.margin                           = 0;
           gridCtrlPanel.padding                          = 0;
@@ -102,57 +104,66 @@ export class TFGuiBuilder
                                           this.setGridLayout( this.gridCtrlCols.value , this.gridCtrlRows.value ) 
                                         }.bind(this);
      
-     var propToollDiv = dialogs.addPanel( this.menuPanel , 'cssContainerPanel' , 1 , 7 , 4 , 1);                                    
+     var propToollDiv = dialogs.addPanel( this.menuPanel , 'cssContainerPanel' , 1 , 8 , 4 , 2);                                    
          propToollDiv.buildGridLayout_templateRows( '1fr 1fr' );
-         propToollDiv.buildGridLayout_templateColumns( '1fr' );
+         propToollDiv.buildGridLayout_templateColumns( '1fr 2em' );
          propToollDiv.backgroundColor = 'rgba(0,0,0,0.14)';
-         propToollDiv.paddingLeft = '0.5em';
-         propToollDiv.paddingRight = '0.5em';
+         propToollDiv.margin  = 0;
+         propToollDiv.padding = 0;
          
-     this.propLevelSelector = dialogs.addCombobox(propToollDiv , 1 , 1 , 7 , 'Anzeigelevel:' , '' , 'essential', [{caption:'essential',value:1},{caption:'useful',value:2},{caption:'all',value:3}] );    
+       //  propToollDiv.paddingLeft = '0.5em';
+       //  propToollDiv.paddingRight = '0.5em';
+         
+     this.propLevelSelector = dialogs.addCombobox(propToollDiv , 1 , 1 , 'auto' , 'Anzeigelevel:' , '' , 'essential', [{caption:'essential',value:1},{caption:'useful',value:2},{caption:'all',value:3}] );    
      this.propLevelSelector.callBack_onChange = function(v)
                                             { 
                                               if(this.propertyEditor)
                                               this.propertyEditor.level = v;
                                             }.bind(this);
   
-    this.propCaption = dialogs.addPanel(propToollDiv , 'cssContainerPanel' , 1 , 2 , 2 , 1 );
+    this.propCaption = dialogs.addPanel(propToollDiv , 'cssContainerPanel' , 1 , 2 , 1 , 1 );
     this.propCaption.backgroundColor = 'rgba(0,0,0,0.77)';
+    this.propCaption.height          = '2em';
     this.propCaption.color           = 'white';
 
-     var propertiesDiv = dialogs.addPanel( this.menuPanel , '' , 1 , 8 , 4 , 6);
+     var propertiesDiv = dialogs.addPanel( this.menuPanel , '' , 1 , 10 , 4 , 8);
          propertiesDiv.backgroundColor               = 'white';
          propertiesDiv.DOMelement.style.borderRadius = '0px';
+    // saveButton für Property-Editor
+     var b = dialogs.addButton( propToollDiv , '' , 2 , 2 , 1 , 1 , 'ok' );
+         b.height = '2em';
+         b.marginTop = '4px'
 
-     // Property-Editor vorbereiten ...    
-     var b = dialogs.addButton( this.menuPanel , '' , 2 , 14 , 2 , 1 , 'ok' );
-         b.margin = '0.7em';
-         this.propertyEditor = dialogs.newPropertyEditor(propertiesDiv , [] , b );
-         this.propertyEditor.callBack_onSave = function(p){this.saveProperties(p)}.bind(this); 
+    this.propertyEditor = dialogs.newPropertyEditor(propertiesDiv , [] , b );
+    this.propertyEditor.callBack_onSave = function(p){this.saveProperties(p)}.bind(this); 
+    
+     
+         
+         
 
          
      // toolbox
-      this.___createToolboxItem( 'div'     , 'DIV'     , 1,3)
-      this.___createToolboxItem( 'button'  , 'BTN'     , 2,3)
-      this.___createToolboxItem( 'label'   , 'LABEL'   , 3,3)
-      this.___createToolboxItem( 'clock'   , 'CLOCK'   , 4,3)
-      this.___createToolboxItem( 'edit'    , 'INPUT'         , 1,4)
-      this.___createToolboxItem( 'datetime', 'INPUT_DATETIME', 2,4)
-      this.___createToolboxItem( 'date'    , 'INPUT_DATE'    , 3,4)
-      this.___createToolboxItem( 'time'    , 'INPUT_TIME'    , 4,4)
+      this.___createToolboxItem( 'div'     , 'DIV'     , 1,4)
+      this.___createToolboxItem( 'button'  , 'BTN'     , 2,4)
+      this.___createToolboxItem( 'label'   , 'LABEL'   , 3,4)
+      this.___createToolboxItem( 'clock'   , 'CLOCK'   , 4,4)
+      this.___createToolboxItem( 'edit'    , 'INPUT'         , 1,5)
+      this.___createToolboxItem( 'datetime', 'INPUT_DATETIME', 2,5)
+      this.___createToolboxItem( 'date'    , 'INPUT_DATE'    , 3,5)
+      this.___createToolboxItem( 'time'    , 'INPUT_TIME'    , 4,5)
 
 
-      this.___createToolboxItem( 'combo'   , 'COMBOBOX', 1,5)
-      this.___createToolboxItem( 'listbox' , 'LISTBOX' , 2,5)
-      this.___createToolboxItem( 'select'  , 'SELECT'  , 3,5)
-      this.___createToolboxItem( 'checkbox', 'CHECKBOX', 4,5)
+      this.___createToolboxItem( 'combo'   , 'COMBOBOX', 1,6)
+      this.___createToolboxItem( 'listbox' , 'LISTBOX' , 2,6)
+      this.___createToolboxItem( 'select'  , 'SELECT'  , 3,6)
+      this.___createToolboxItem( 'checkbox', 'CHECKBOX', 4,6)
 
-      this.___createToolboxItem('checklist', 'CHECKLISTBOX' , 1,6)
-      this.___createToolboxItem('image'    , 'IMAGE'  , 2,6)
-      this.___createToolboxItem('slider'   , 'SLIDER' , 3,6)
-      this.___createToolboxItem('*' , '*'  , 4,6)
+      this.___createToolboxItem('checklist', 'CHECKLISTBOX' , 1,7)
+      this.___createToolboxItem('image'    , 'IMAGE'  , 2,7)
+      this.___createToolboxItem('slider'   , 'SLIDER' , 3,7)
+      this.___createToolboxItem('*' , '*'  , 4,7)
 
-      this.setGridLayout( 10 , 10 );
+      this.setGridLayout( 4 , 21 );
 
     return 
 }
@@ -178,12 +189,12 @@ addComponent( parent , left , top , elementName )
 
     if(elementName == 'BTN')           e = dialogs.addButton        ( parent , '' , left , top , 1 , 1 , {caption:'Button'} , {dragable:true} );
     if(elementName == 'DIV')           e = dialogs.addPanel         ( parent , '' , left , top , 1 , 1 , {dragable:true});
-    if(elementName == 'INPUT')         e = dialogs.addInput         ( parent , left , top , 7 , 'Eingabe'   , '' , ''    , {dragable:true});
+    if(elementName == 'INPUT')         e = dialogs.addInput         ( parent , left , top ,'auto', 'Eingabe'   , '' , ''    , {dragable:true});
     if(elementName == 'INPUT_DATETIME')e = dialogs.addDateTimePicker( parent , left , top ,'Datum/Urhrzeit' , Date.now() , {dragable:true});
     if(elementName == 'INPUT_DATE')    e = dialogs.addDatePicker    ( parent , left , top ,'Datum'          , Date.now() , {dragable:true});
     if(elementName == 'INPUT_TIME')    e = dialogs.addTimePicker    ( parent , left , top ,'Uhrzeit'        , Date.now() , {dragable:true});
-    if(elementName == 'COMBOBOX')      e = dialogs.addCombobox      ( parent , left , top , 7 , 'Eingabe' , '' , '', ['Option1','Option2','Option3'] , {dragable:true}); 
-    if(elementName == 'SELECT')        e = dialogs.addInput         ( parent , left , top , 7 , 'Eingabe' , '' , '', {dragable:true,lookUp:true,items:['Option1','Option2','Option3']}); 
+    if(elementName == 'COMBOBOX')      e = dialogs.addCombobox      ( parent , left , top , 'auto' , 'Eingabe' , '' , '', ['Option1','Option2','Option3'] , {dragable:true}); 
+    if(elementName == 'SELECT')        e = dialogs.addInput         ( parent , left , top , 'auto' , 'Eingabe' , '' , '', {dragable:true,lookUp:true,items:['Option1','Option2','Option3']}); 
     if(elementName == 'LISTBOX')       e = dialogs.addListBox       ( parent , left , top , 1 , 1 , [{caption:'Option1',value:1},{caption:'Option2',value:2},{caption:'Option3',value:3}] , {dragable:true}); 
     if(elementName == 'CHECKBOX')      e = dialogs.addCheckBox      ( parent , left , top , 'CheckBox' , true , {dragable:true} )
 
@@ -229,6 +240,9 @@ save()
 test()
 { 
   // das dashBoard ist das einzige zentrale parent-Element
+  // durch das Sektieren, werdeen alle Elemente "deselektiert" und die (rote) Markierung deaktiviert ..."
+  this.selectComponent(this.dashBoard);
+
   var board = this.dashBoard.getConstructionProperties();
   
   // ein Fenster erzeugen, welches die Dimension und das Gridlayout des Dashboards übernimmt:
@@ -300,6 +314,7 @@ saveProperties( p )
 ___createToolboxItem( glyph , type , left , top)
 {
   var item                       = dialogs.addPanel( this.menuPanel , '' , left , top , 1 , 1 , {dragable:true , draggingData: { newObject:type } });
+      item.overflow              = 'hidden';
       item.margin                = '0.4em';
       item.innerHTML             = "<center>"+glyph+"</center>"
    // item.innerHTML             = `<img src=/tfWebApp/GUIsymbols/${glyph}.png style="width: 100%; height: 100%;">`;
