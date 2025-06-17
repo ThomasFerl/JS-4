@@ -578,13 +578,14 @@ export class TFObject
 
   set css(value)
   { 
-    this.DOMelement.className = value;
+    this.params.css = value;
+    if (this.DOMelement) this.DOMelement.className = value;
   }
-
 
   get css()
   {
-    return this.DOMelement.className;
+    if(this.DOMelement) return this.DOMelement.className;
+    else                return this.params.css;                    
   }
 
   set left( value )
@@ -635,7 +636,7 @@ export class TFObject
 
 
   set height( value )
-  {
+  { 
     if(this.hasGridLayout())
     {   
       if (typeof value === 'string') 
@@ -647,6 +648,7 @@ export class TFObject
     }
      else this.heightPx = value;
   } 
+
 
   get height()
   {
@@ -790,69 +792,77 @@ export class TFObject
       this.DOMelement.style.gridTemplateAreas = value;
     }
 
-  
-get fontSize() 
-{
-  return this.DOMelement?.style.fontSize || this.getComputedStyleValue('fontSize');
-}
-
 
 set fontSize(value) 
 {
-  this.DOMelement.style.fontSize = value;
-}
+  this.params.fontSize = value;
+  if(this.DOMelement) this.DOMelement.style.fontSize = value;
+} 
 
-
-get fontWeight() 
+get fontSize() 
 {
-  return this.DOMelement?.style.fontWeight || this.getComputedStyleValue('fontWeight');
+  if(this.DOMelement) return this.DOMelement.style.fontSize || this.getComputedStyleValue('fontSize');
+  else                return this.params.fontSize;
 }
-
 
 set fontWeight(value)
 {
+  this.params.fontWeight = value;
   this.DOMelement.style.fontWeight = value;
 }
 
+get fontWeight() 
+{
+  if(this.DOMelement) return this.DOMelement?.style.fontWeight || this.getComputedStyleValue('fontWeight');
+  else                return this.params.fontWeight;
+}
 
 set gap(value)
 {
-  this.DOMelement.style.gap = value;
+  this.params.gap = value;
+  if(this.DOMelement) this.DOMelement.style.gap = value;
 }
 
 get gap()
 {
-  return this.DOMelement.style.gap;
+  if(this.DOMelement) return this.DOMelement.style.gap;
+  else                return this.params.gap;
 }
 
-  buildGridLayout( gridSizeOrTemplate )
-  {
+
+buildGridLayout( gridSizeOrTemplate )
+{
     utils.buildGridLayout( this , gridSizeOrTemplate , {stretch:this.params.stretch} );
-
-  }    
+}    
 
  
-  buildGridLayout_templateColumns(template)
-  {
+buildGridLayout_templateColumns(template)
+{
    utils.buildGridLayout_templateColumns( this , template , {stretch:this.params.stretch}  );
-  }  
+}  
 
  
-  buildGridLayout_templateRows(template)
-  {
+buildGridLayout_templateRows(template)
+{
    utils.buildGridLayout_templateRows( this , template , {stretch:this.params.stretch}  );
-  }  
+}  
 
-  buildBlockLayout() 
-  {
+buildBlockLayout() 
+{
     utils.buildBlockLayout( this );
+}
+
+buildFlexBoxLayout() 
+{
+   utils.buildFlexBoxLayout( this );
+}
+   
+
+appendChild(aDOMelement)
+  {
+    this.DOMelement.appendChild(aDOMelement);
   }
 
-  buildFlexBoxLayout() 
-  {
-   utils.buildFlexBoxLayout( this );
-  }
-   
 
   // der unterschied zwischen hide/show  u. setInvisible/setVisible besteht darin, dass ersteres das Objekt unsichtbar macht und es im Hintergrund noch existiert
   // während setInvisible/setVisible das Objekt aus dem DOM-Baum entfernt und wieder einfügt
@@ -905,285 +915,324 @@ get gap()
 
   set display(value)
   {
-    this.DOMelement.style.display = value;  
+    this.params.display = value;
+    if(this.DOMelement) this.DOMelement.style.display = value;  
   }
 
 
   get display() 
   {
-   return this.DOMelement?.style.display || this.getComputedStyleValue('display');
+    if(this.DOMelement) return this.DOMelement.style.display || this.getComputedStyleValue('display');
+    else                return this.params.display;
   }
 
 
   set position(value)
   {
-    this.DOMelement.style.position = value;  
+    this.params.position = value;
+    if(this.DOMelement) this.DOMelement.style.position = value;  
   }
 
 
   get position()
   {
-    return this.DOMelement.style.position || this.getComputedStyleValue('position') 
+    if(this.DOMelement) return this.DOMelement.style.position || this.getComputedStyleValue('position');
+    else                return this.params.position;  
   }
 
 
 
 set placeItems(value)
   {
-    this.DOMelement.style.placeItems = value;
+    this.params.placeItems = value;
+    if(this.DOMelement) this.DOMelement.style.placeItems = value;
   }
-
 
  get placeItems()
   {
-    return this.DOMelement.style.placeItems || this.getComputedStyleValue('placeItems');
+    if(this.DOMelement) return this.DOMelement.style.placeItems || this.getComputedStyleValue('placeItems');
+    else                return this.params.placeItems; 
   }
+
 
   set justifyContent(value)
   {
-    this.DOMelement.style.justifyContent = value;  
+    this.params.justifyContent = value;
+    if(this.DOMelement) this.DOMelement.style.justifyContent = value;  
   }
 
 
   get justifyContent()
   {
-    return this.DOMelement.style.justifyContent || this.getComputedStyleValue('justifyContent');
+    if(this.DOMelement) return this.DOMelement.style.justifyContent || this.getComputedStyleValue('justifyContent');
+    else                return this.params.justifyContent;
   }
 
 
   set alignItems(value)
   {
-    this.DOMelement.style.alignItems = value;  
+    this.params.alignItems = value; 
+    if(this.DOMelement) this.DOMelement.style.alignItems = value;  
   }
 
 
   get alignItems()
   {
-    return this.DOMelement.style.alignItems || this.getComputedStyleValue('alignItems');  
+    if(this.DOMelement) return this.DOMelement.style.alignItems || this.getComputedStyleValue('alignItems');  
+    else                return this.params.alignItems;
   }
 
 
   set flexDirection(value)  
   {
-    this.DOMelement.style.flexDirection = value;
+    this.params.flexDirection = value;
+    if(this.DOMelement) this.DOMelement.style.flexDirection = value;
   }
  
 
   get flexDirection()   
   {
-    return this.DOMelement.style.flexDirection || this.getComputedStyleValue('flexDirection');
+    if(this.DOMelement) return this.DOMelement.style.flexDirection || this.getComputedStyleValue('flexDirection');
+    else                return this.params.flexDirection;
   }
   
 
+ set overflow(value) 
+  {
+    this.params.overflow = value;   
+    if(this.DOMelement) this.DOMelement.style.overflow = value;
+  }
+
   get overflow()  
   {     
-    return this.DOMelement.style.overflow || this.getComputedStyleValue('overflow');  
+    if(this.DOMelement) return this.DOMelement.style.overflow || this.getComputedStyleValue('overflow');  
+    else                return this.params.overflow;
   }
 
-  set overflow(value) 
+  set backgroundColor(value)
   {
-    this.DOMelement.style.overflow = value;
-  }
-
-
-  appendChild(aDOMelement)
-  {
-    this.DOMelement.appendChild(aDOMelement);
-  }
-
-
- set backgroundColor(value)
-  {
+    this.params.backgroundColor = value;
     if(this.DOMelement) this.DOMelement.style.backgroundColor = value;
   } 
 
   get backgroundColor()
   {
-    var r=undefined;
-    if(this.DOMelement)  r = this.DOMelement.style.backgroundColor || this.getComputedStyleValue('backgroundColor');
-    return r;
+    if(this.DOMelement) return this.DOMelement.style.backgroundColor || this.getComputedStyleValue('backgroundColor');
+    else                return this.params.backgroundColor;
   } 
 
   set color(value)
   {
+    this.params.color = value;
     if(this.DOMelement) this.DOMelement.style.color = value;
   } 
 
   get color()
   {
-    var r=undefined;
-    if(this.DOMelement)  r = this.DOMelement.style.color || this.getComputedStyleValue('color');
-    return r;
+    if(this.DOMelement) return this.DOMelement.style.color || this.getComputedStyleValue('color');
+                        return this.params.color;
   } 
 
   
   set margin( value ) 
-  {
+  { 
+    this.params.margin = this.margin;
     if(this.DOMelement) this.DOMelement.style.margin = value;
   }
 
 
   get margin()
   {
-    return this.DOMelement.style.margin || this.getComputedStyleValue('margin');
+    if(this.DOMelement) return this.DOMelement.style.margin || this.getComputedStyleValue('margin');
+    else                return this.params.margin;
   }
 
 
   set marginTop( value ) 
   {
+    this.params.marginTop = value;
     if(this.DOMelement) this.DOMelement.style.marginTop = value;
   }
 
-
   get marginTop()
   {
-    return this.DOMelement.style.marginTop || this.getComputedStyleValue('marginTop');
+    if(this.DOMelement) return this.DOMelement.style.marginTop || this.getComputedStyleValue('marginTop');
+    else                return this.params.marginTop;
   }
+
 
   set marginLeft( value ) 
   {
+    this.params.marginLeft = value;
     if(this.DOMelement) this.DOMelement.style.marginLeft = value;
   }
 
 
   get marginLeft()
   {
-    return this.DOMelement.style.marginLeft || this.getComputedStyleValue('marginLeft');
+    if(this.DOMelement) return this.DOMelement.style.marginLeft || this.getComputedStyleValue('marginLeft');
+    else                return this.params.marginLeft;
   }
 
 
   set marginRight( value ) 
   {
+    this.params.marginRight = value;
     if(this.DOMelement) this.DOMelement.style.marginRight = value;
   }
 
 
   get marginRight()
   {
-    return this.DOMelement.style.marginRight  || this.getComputedStyleValue('marginRight');
+    if(this.DOMelement) return this.DOMelement.style.marginRight  || this.getComputedStyleValue('marginRight');
+    else                return this.params.marginRight;
   }
 
 
-set marginBottom( value ) 
+  set marginBottom( value ) 
   {
+    this.params.marginBottom = value;
     if(this.DOMelement) this.DOMelement.style.marginBottom = value;
   }
 
 
   get marginBottom()
   {
-    return this.DOMelement.style.marginBottom || this.getComputedStyleValue('marginBottom');
+    if(this.DOMelement) return this.DOMelement.style.marginBottom || this.getComputedStyleValue('marginBottom');
+    else                return this.params.marginBottom;
   }
+
 
   set padding( value ) 
   {
+    this.params.padding = value; 
     if(this.DOMelement) this.DOMelement.style.padding = value;
   }
 
   get padding()
   {
-    return this.DOMelement.style.padding || this.getComputedStyleValue('padding');
+    if(this.DOMelement) return this.DOMelement.style.padding || this.getComputedStyleValue('padding');
+    else                return this.params.padding; 
   }
 
   set paddingTop( value )   
   {
+    this.params.paddingTop = value;
     if(this.DOMelement) this.DOMelement.style.paddingTop = value; 
   }
 
-
   get paddingTop()
   {
-    return this.DOMelement.style.paddingTop || this.getComputedStyleValue('paddingTop');
+    if(this.DOMelement) return this.DOMelement.style.paddingTop || this.getComputedStyleValue('paddingTop');
+    else                return this.params.paddingTop;
   }
 
   set paddingLeft( value )
   {
+    this.params.paddingLeft;
     if(this.DOMelement) this.DOMelement.style.paddingLeft = value;
   }
 
   get paddingLeft()
   {
-    return this.DOMelement.style.paddingLeft || this.getComputedStyleValue('paddingLeft');
+    if(this.DOMelement) return this.DOMelement.style.paddingLeft || this.getComputedStyleValue('paddingLeft');
+    else                return this.params.paddingLeft;
   }
+
 
   set paddingRight( value )
   {
+    this.params.paddingRight = value;  
     if(this.DOMelement) this.DOMelement.style.paddingRight = value;
   }
 
   get paddingRight()
   {
-    return this.DOMelement.style.paddingRight || this.getComputedStyleValue('paddingRight');
+    if(this.DOMelement) return this.DOMelement.style.paddingRight || this.getComputedStyleValue('paddingRight');
+    else                return this.params,this.paddingRight;
   }
+
 
   set paddingBottom( value )
   {
+    this.params.paddingBottom = value; 
     if(this.DOMelement) this.DOMelement.style.paddingBottom = value;
   }
 
   get paddingBottom()
   {
-    return this.DOMelement.style.paddingBottom || this.getComputedStyleValue('paddingBottom');
+    if(this.DOMelement) return this.DOMelement.style.paddingBottom || this.getComputedStyleValue('paddingBottom');
+    else                return this.params.paddingBottom;
   }
 
   set borderWidth( value )
   {
+    this.params.borderWidth = value;
     if(this.DOMelement) this.DOMelement.style.borderWidth = value;
   }
 
   get borderWidth()
   {
-    return this.DOMelement.style.borderWidth || this.getComputedStyleValue('borderWidth');
+    if(this.DOMelement) return this.DOMelement.style.borderWidth || this.getComputedStyleValue('borderWidth');
+    else                return this.params.borderWidth;
   }
 
   set borderColor( value )
   {
+    this.params.borderColor = value;   
     if(this.DOMelement) this.DOMelement.style.borderColor = value;
   }
 
   get borderColor()
   {
-    return this.DOMelement.style.borderColor || this.getComputedStyleValue('borderColor');
+    if(this.DOMelement) return this.DOMelement.style.borderColor || this.getComputedStyleValue('borderColor');
+    else                return this.params.borderColor;
   }
 
   set borderRadius(value) 
   {
-    if (this.DOMelement) {
-        this.DOMelement.style.borderRadius = typeof value === 'string' ? value : value + 'px';
-    }
-}
+    this.params.borderRadius = value;
+    if (this.DOMelement) this.DOMelement.style.borderRadius = typeof value === 'string' ? value : value + 'px';
+  }
 
 
   get borderRadius()
   {
-    return this.DOMelement.style.borderRadius || this.getComputedStyleValue('borderRadius');
+    if(this.DOMelement) return this.DOMelement.style.borderRadius || this.getComputedStyleValue('borderRadius');
+    else                return this.params.borderRadius;
   }
 
 
 set blur(value)
 {
+  this.params.blur = value;
   if(this.DOMelement) this.DOMelement.style.filter = 'blur('+value+'px)';
 }
 
 get blur()
 {
-  return this.DOMelement.style.filter || 0;
+  if(this.DOMelement) return this.DOMelement.style.filter || 0;
+  else                return this.params.blur;
 }
 
 
 set opacity(value)  
 {
+  this.params.opacity = value;
   if(this.DOMelement) this.DOMelement.style.opacity = value;
 }
 
 get opacity()
 {
-  return this.DOMelement.style.opacity || this.getComputedStyleValue('opacity');
+  if(this.DOMelement) return this.DOMelement.style.opacity || this.getComputedStyleValue('opacity');
+  else                return this.params.opacity;
 }
 
 
 set shadow(value) 
 {
+    this.params.shadow = value;
+
     this._shadowDepth = value;
     if (value === 0) {
         // Schatten entfernen
@@ -1200,17 +1249,7 @@ set shadow(value)
 get shadow() 
 {
   if (this._shadowDepth != null) return this._shadowDepth;
-
-  const raw = this.getComputedStyleValue?.('boxShadow') || '';
-  const parts = raw.split(' ');
-
-  if (parts.length >= 5 && parts[4].endsWith('px')) {
-    const depth = parseFloat(parts[4]);
-    this._shadowDepth = Math.round(depth);
-    return this._shadowDepth;
-  }
-
-  return 0;
+  else                           return this.params.shadow;
 }
 
 
@@ -1302,23 +1341,23 @@ getProperties()
   properties.push( {level:2, label:'shadow',type:'INPUT',value:this.shadow} ); 
   properties.push( {level:3, label:'opacity',type:'INPUT',value:this.opacity} ); 
   properties.push( {level:3, label:'blur',type:'INPUT',value:this.blur} ); 
- // properties.push( {level:2, label:'innerHTML',type:'INPUT',value:this.innerHTML} ); 
+  properties.push( {level:3, label:'innerHTML',type:'INPUT',value:this.innerHTML} ); 
   properties.push( {level:3, label:'placeItems',type:'SELECT',value:this.placeItems , items:['start','end','center','stretch','baseline']} ); 
   properties.push( {level:3, label:'justifyContent',type:'SELECT',value:this.justifyContent, items:['flex-start','flex-end','center','space-between','space-around','space-evenly','start','end','left','right']} ); 
-  properties.push( {level:3, label:'alignItems',type:'LOOKUP',value:this.alignItems, items:['stretch','flex-start','flex-end','center','baseline','start','end']} ); 
+  properties.push( {level:3, label:'alignItems',type:'SELECT',value:this.alignItems, items:['stretch','flex-start','flex-end','center','baseline','start','end']} ); 
                                                  
   // Position im GRID-LAYOUT
-  properties.push( {level:1, label:'gridLeft',type:'INPUT',value:this.gridLeft} );
-  properties.push( {level:1, label:'gridTop',type:'INPUT',value:this.gridTop} );
-  properties.push( {level:1, label:'gridWidth',type:'INPUT',value:this.gridWidth} );
-  properties.push( {level:1, label:'gridHeight',type:'INPUT',value:this.gridHeight} ); 
+  properties.push( {level:3, label:'gridLeft',type:'INPUT',value:this.gridLeft} );
+  properties.push( {level:3, label:'gridTop',type:'INPUT',value:this.gridTop} );
+  properties.push( {level:3, label:'gridWidth',type:'INPUT',value:this.gridWidth} );
+  properties.push( {level:3, label:'gridHeight',type:'INPUT',value:this.gridHeight} ); 
   properties.push( {level:3, label:'gap',type:'INPUT',value:this.gap} ); 
 
   // Nach Initial-Positionierung -> nachträgliche Änderungen der Geometrie
-  properties.push( {level:2, label:'left',type:'INPUT',value:this.left} );
-  properties.push( {level:2, label:'top',type:'INPUT',value:this.top} );
-  properties.push( {level:2, label:'width',type:'INPUT',value:this.width} );
-  properties.push( {level:2, label:'height',type:'INPUT',value:this.height} );
+  properties.push( {level:1, label:'left',type:'INPUT',value:this.left} );
+  properties.push( {level:1, label:'top',type:'INPUT',value:this.top} );
+  properties.push( {level:1, label:'width',type:'INPUT',value:this.width} );
+  properties.push( {level:1, label:'height',type:'INPUT',value:this.height} );
   properties.push( {level:3, label:'zIndex',type:'INPUT',value:this.zIndex} );
 
   properties.push( {level:1, label:'margin',type:'INPUT',value:this.margin || '0px'} );
@@ -1333,17 +1372,16 @@ getProperties()
   properties.push( {level:2, label:'paddingRight',type:'INPUT',value:this.paddingRight || '0px'} );
   properties.push( {level:2, label:'paddingBottom',type:'INPUT',value:this.paddingBottom || '0px'} );
 
-  properties.push( {level:2, label:'borderWidth',type:'INPUT',value:this.borderWidth || '0px'} );
+  properties.push( {level:1, label:'borderWidth',type:'INPUT',value:this.borderWidth || '0px'} );
   properties.push( {level:2, label:'borderColor',type:'INPUT',value:this.borderColor || '0px'} );
   properties.push( {level:2, label:'borderRadius',type:'INPUT',value:this.borderRadius || '0px'} );
   properties.push( {level:2, label:'shadow',type:'INPUT',value:this.shadow} );
   
-  properties.push( {level:1, label:'overflow',type:'LOOKUP',value:this.overflow, items:["auto","hidden"] || 'auto'} );
-  properties.push( {level:3, label:'visible',type:'LOOKUP',value:this.visible, items:["true","false"] || 'true'} );
-  properties.push( {level:3, label:'visible',type:'LOOKUP',value:this.visible, items:["true","false"] || 'true'} );
-  properties.push( {level:4, label:'display',type:'LOOKUP',value:this.display, items:['block', 'inline', 'inline-block', 'flex', 'inline-flex', 'grid', 'inline-grid', 'none', 'contents', 'table', 'table-row', 'table-cell', 'list-item']} );
-  properties.push( {level:4, label:'position',type:'LOOKUP',value:this.position, items:['static', 'relative', 'absolute', 'fixed', 'sticky'] });
-  properties.push( {level:4, label:'flexDirection',type:'LOOKUP',value:this.flexDirection, items:["row","column","row-reverse","column-reverse"] || 'row'} );
+  properties.push( {level:1, label:'overflow',type:'SELECT',value:this.overflow, items:["auto","hidden"] || 'auto'} );
+  properties.push( {level:3, label:'visible',type:'SELECT',value:this.visible, items:["true","false"] || 'true'} );
+  properties.push( {level:3, label:'display',type:'SELECT',value:this.display, items:['block', 'inline', 'inline-block', 'flex', 'inline-flex', 'grid', 'inline-grid', 'none', 'contents', 'table', 'table-row', 'table-cell', 'list-item']} );
+  properties.push( {level:3, label:'position',type:'SELECT',value:this.position, items:['static', 'relative', 'absolute', 'fixed', 'sticky'] });
+  properties.push( {level:3, label:'flexDirection',type:'SELECT',value:this.flexDirection, items:["row","column","row-reverse","column-reverse"] || 'row'} );
   
 // Grid-Infos holen
   var dim = utils.getGridLayoutDimension(this);
@@ -1848,8 +1886,6 @@ render()
 build()
 {     
    this.innerHTML = '';
-   this.margin   = 0;
-   this.padding  = 0;
    this.btnText  = null;
    this.btnGlyph = null;
 
@@ -2413,8 +2449,8 @@ export class TFEdit extends TFObject
         params.value            = params.value           || "";
         params.labelPosition    = params.labelPosition   || "LEFT";
         params.appendix         = params.appendix        || "";
-        params.captionLength    = (params.captionLength  || params.caption.length)+1;
-        params.appendixLength   = (params.appendixLength || params.appendix.length)+1;
+        params.captionLength    = (params.captionLength  || (params.caption.length/2))+1;
+        params.appendixLength   = (params.appendixLength || (params.appendix.length/2))+1;
         params.editLength       = params.editLength      || "auto";
         params.justifyEditField = params.justifyEdit     || 'right';
         params.type             = params.type            || 'text';
@@ -2897,16 +2933,50 @@ this.parent.appendChild(this.container);
     return !this.input.disabled;
   }
 
-  setOptions(list) {
+  setOptions(list) 
+  {
     this.options = list;
     this.renderOptions(this.input.value);
   }
+
+   getOptions() 
+   {
+     return this.options;    
+   }
+
 }
 
 
 //--------------------------------------------------------------------------- 
 
 export class TFComboBox extends TFEdit
+{
+   constructor (parent , left , top , width , height , params )
+  { 
+    if(!params)       params       = {};
+    if(!params.items) params.items = [];
+    params.lookUp                  = true;
+    super(parent , left , top , width , height , params );
+  }
+
+
+ set items( items )
+ {
+   this.params.items = items;
+   if(this.params.lookUp) this.lookUp.setOptions(items);
+ }    
+ 
+ get items()
+ {
+   if(this.params.lookUp) return this.lookUp.getOptions();
+   else                   return this.params.items;
+ }
+
+}
+
+
+
+export class TFSelectBox extends TFEdit
 {
   constructor (parent , left , top , width , height , params )
   {
@@ -2915,7 +2985,6 @@ export class TFComboBox extends TFEdit
 
     super(parent , left , top , width , height , params );
   }
-
 
 
   render()
@@ -4345,11 +4414,11 @@ export class TPropertyEditor
      }  
 
      if(item.type.toUpperCase()=='SELECT')
-      item.control = new TFComboBox( p , 3 , 2 , 1 , 1 , {value:item.value , items:item.items} )
+      item.control = new TFSelectBox( p , 3 , 2 , 1 , 1 , {value:item.value , items:item.items} )
    
      
      if(item.type.toUpperCase()=='LOOKUP')
-      item.editControl = new TFEdit(p , 3, 2 , 1 , 1 ,   {lookUp:true,items:item.items,value:item.value});  
+      item.control = new TFComboBox(p , 3, 2 , 1 , 1 ,   {lookUp:true,items:item.items,value:item.value});  
       
 
 
@@ -4368,7 +4437,7 @@ export class TPropertyEditor
 
 
    if((item.type.toUpperCase()=='CHECKBOX') || (item.type.toUpperCase()=='BOOLEAN'))
-    item.editControl = new TFCheckBox(p,3,2,1,1,{value:item.value});
+    item.control = new TFCheckBox(p,3,2,1,1,{value:item.value});
  }
 
  }
@@ -4387,7 +4456,7 @@ propertyControlByName( name )
 
 
 save()
-{
+{ debugger;
   var p=[];
 
   for (var i=0; i<this.properties.length; i++ )
@@ -4630,13 +4699,58 @@ export function addComponent(parent , component )
     c.setProperties(component);
   }
 
-  /*
+  if(compType === 'TFCHECKBOX') 
+  { 
+     c = new TFCheckBox(parent, component.left, component.top, component.width, component.height, {} );
+    c.setProperties(component);
+  } 
 
-TFSlider
-TFCheckBox
-  ""
-TFAnalogClock
-*/
+  if(compType === 'TFSLIDER') 
+  { 
+     c = new TFSlider(parent, component.left, component.top, component.width, component.height, {} );
+     c.setProperties(component);
+  }
+
+  if(compType === 'TFANALOGCLOCK') 
+  { 
+     c = new TFAnalogClock(parent, component.left, component.top, component.width, component.height, {} );
+     c.setProperties(component);
+  }
+
+  if(compType === 'TFCOMBOBOX') 
+  { 
+     c = new TFComboBox(parent, component.left, component.top, component.width, component.height, {} );
+     c.setProperties(component);
+  }
+
+    if(compType === 'TFSELECTBOX') 
+  { 
+     c = new TFSelectBox(parent, component.left, component.top, component.width, component.height, {} );
+     c.setProperties(component);
+  }
+
+  if(compType === 'TFLISTBOX') 
+  { 
+     c = new TFListBox(parent, component.left, component.top, component.width, component.height, {} );
+     c.setProperties(component);
+  }
+
+
+  if(compType === 'TFLISTCHECKBOX') 
+  { 
+     c = new TFListCheckbox(parent, component.left, component.top, component.width, component.height, {} );
+     c.setProperties(component);
+  }
+
+
+  if(compType === 'TFIMAGE') 
+  { 
+     c = new TFImage(parent, component.left, component.top, component.width, component.height, {} );
+     c.setProperties(component);
+  }
+
+
+
 
   if(c!=null)
     if(component.hasOwnProperty('children') && Array.isArray(component.children))

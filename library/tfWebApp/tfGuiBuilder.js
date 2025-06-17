@@ -106,7 +106,7 @@ export class TFGuiBuilder
      
      var propToollDiv = dialogs.addPanel( this.menuPanel , 'cssContainerPanel' , 1 , 8 , 4 , 2);                                    
          propToollDiv.buildGridLayout_templateRows( '1fr 1fr' );
-         propToollDiv.buildGridLayout_templateColumns( '1fr 2em' );
+         propToollDiv.buildGridLayout_templateColumns( '1fr 4em' );
          propToollDiv.backgroundColor = 'rgba(0,0,0,0.14)';
          propToollDiv.margin  = 0;
          propToollDiv.padding = 0;
@@ -114,7 +114,7 @@ export class TFGuiBuilder
        //  propToollDiv.paddingLeft = '0.5em';
        //  propToollDiv.paddingRight = '0.5em';
          
-     this.propLevelSelector = dialogs.addCombobox(propToollDiv , 1 , 1 , 'auto' , 'Anzeigelevel:' , '' , 'essential', [{caption:'essential',value:1},{caption:'useful',value:2},{caption:'all',value:3}] );    
+     this.propLevelSelector = dialogs.addSelectBox(propToollDiv , 1 , 1 , 'auto' , 'Anzeigelevel:' , '' , 'essential', [{caption:'essential',value:1},{caption:'useful',value:2},{caption:'all',value:3}] );    
      this.propLevelSelector.callBack_onChange = function(v)
                                             { 
                                               if(this.propertyEditor)
@@ -135,7 +135,7 @@ export class TFGuiBuilder
          b.marginTop = '4px'
 
     this.propertyEditor = dialogs.newPropertyEditor(propertiesDiv , [] , b );
-    this.propertyEditor.callBack_onSave = function(p){this.saveProperties(p)}.bind(this); 
+    this.propertyEditor.callBack_onSave = function(p){debugger; this.saveProperties(p)}.bind(this); 
     
      
          
@@ -193,8 +193,8 @@ addComponent( parent , left , top , elementName )
     if(elementName == 'INPUT_DATETIME')e = dialogs.addDateTimePicker( parent , left , top ,'Datum/Urhrzeit' , Date.now() , {dragable:true});
     if(elementName == 'INPUT_DATE')    e = dialogs.addDatePicker    ( parent , left , top ,'Datum'          , Date.now() , {dragable:true});
     if(elementName == 'INPUT_TIME')    e = dialogs.addTimePicker    ( parent , left , top ,'Uhrzeit'        , Date.now() , {dragable:true});
-    if(elementName == 'COMBOBOX')      e = dialogs.addCombobox      ( parent , left , top , 'auto' , 'Eingabe' , '' , '', ['Option1','Option2','Option3'] , {dragable:true}); 
-    if(elementName == 'SELECT')        e = dialogs.addInput         ( parent , left , top , 'auto' , 'Eingabe' , '' , '', {dragable:true,lookUp:true,items:['Option1','Option2','Option3']}); 
+    if(elementName == 'COMBOBOX')      e = dialogs.addCombobox      ( parent , left , top , 'auto' , 'Combobox' , '' , '', ['Option1','Option2','Option3'] , {dragable:true}); 
+    if(elementName == 'SELECT')        e = dialogs.addSelectBox     ( parent , left , top , 'auto' , 'SelectBox' , '' , '', {dragable:true,lookUp:true,items:['Option1','Option2','Option3']}); 
     if(elementName == 'LISTBOX')       e = dialogs.addListBox       ( parent , left , top , 1 , 1 , [{caption:'Option1',value:1},{caption:'Option2',value:2},{caption:'Option3',value:3}] , {dragable:true}); 
     if(elementName == 'CHECKBOX')      e = dialogs.addCheckBox      ( parent , left , top , 'CheckBox' , true , {dragable:true} )
 
