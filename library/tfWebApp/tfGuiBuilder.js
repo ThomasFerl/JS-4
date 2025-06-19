@@ -5,6 +5,8 @@ import * as objects         from "./tfObjects.js";
 
 import {TFAnalogClock,
         TFListCheckbox,
+        TFComboBox,
+        TFSelectBox,
         TFSlider
  }     from "./tfObjects.js";
 
@@ -16,7 +18,6 @@ export class TFGuiBuilder
   constructor()
   { 
     this.builderObjects                          = [];
-    this.mouseInfo                               = null
     this.selected                                = {element:null , border:""};
     this.propertyEditor                          = null;	
     this.dashBoard                               = null
@@ -46,7 +47,20 @@ export class TFGuiBuilder
     this.menuPanel.padding                       = '2px';
     this.menuPanel.buildGridLayout( '4x17' );
 
-    var saveBtn                    = dialogs.addButton(this.menuPanel , '' , 3 , 1 , 1 , 1 , 'save');
+    var fileOps                   = dialogs.addPanel(this.menuPanel , 'cssContainerPanel',1,1,4,2,{backgroundColor:"rgba(0,0,0,0.14"})     
+        fileOps.buildGridLayout( '5x2' );
+
+    this.formNameInp              = new TFComboBox( fileOps,1,1,5,1, { items: utils.lsForms() }) ;
+
+ var newBtn                        = dialogs.addButton(fileOps , '' , 1 , 2 , 1 , 1 , 'new');
+     newBtn.height                 = '2em';
+     newBtn.marginTop              = '0.5em';
+     newBtn.callBack_onClick       = function()
+                                     { 
+                                       this.newProject(); 
+                                     }.bind(this);
+
+var saveBtn                        = dialogs.addButton(fileOps , '' , 2 , 2 , 1 , 1 , 'save');
     saveBtn.height                 = '2em';
     saveBtn.marginTop              = '0.5em';
     saveBtn.callBack_onClick       = function()
@@ -54,56 +68,60 @@ export class TFGuiBuilder
                                        this.save(); 
                                      }.bind(this);
 
- var testBtn                       = dialogs.addButton(this.menuPanel , '' , 4 , 1 , 1 , 1 , 'test');
+var loadBtn                        = dialogs.addButton(fileOps , '' , 3 , 2 , 1 , 1 , 'load');
+    loadBtn.height                 = '2em';
+    loadBtn.marginTop              = '0.5em';
+    loadBtn.callBack_onClick       = function()
+                                     { 
+                                       this.load(); 
+                                     }.bind(this);
+
+
+ var testBtn                       = dialogs.addButton(fileOps , '' , 4 , 2 , 1 , 1 , 'test');
      testBtn.height                = '2em';
      testBtn.marginTop             = '0.5em';
      testBtn.backgroundColor       = 'gray';
-
      testBtn.callBack_onClick      = function()
                                      { 
                                        this.test(); 
                                      }.bind(this);
 
-
-
-    this.mouseInfo                 = dialogs.addPanel( this.menuPanel , 'cssBlackPanel' , 1 , 1 , 2 , 1);
-    this.mouseInfo.backgroundColor = 'rgba(0,0,0,0.25)';
-    this.mouseInfo.color           = 'white';
-    this.mouseInfo.margin          = '0.1em';
-     
-      // Panel für Eingabe der Dimensionierung des Grids:
-     var gridCtrlPanel = dialogs.addPanel(  this.menuPanel , '' , 1 , 2 , 4 , 2);   
+  // Panel für Eingabe der Dimensionierung des Grids:
+ var gridCtrlPanel = dialogs.addPanel(  this.menuPanel , '' , 1 , 3 , 4 , 1);   
           gridCtrlPanel.backgroundColor                  = 'lightgray';
           gridCtrlPanel.margin                           = 0;
           gridCtrlPanel.padding                          = 0;
           gridCtrlPanel.DOMelement.style.overflow        = 'hidden';
           
           gridCtrlPanel.buildGridLayout_templateColumns(  '1fr 1fr 4em' );
-          gridCtrlPanel.buildGridLayout_templateRows   (  '1.5em 1fr 1em' );
+          gridCtrlPanel.buildGridLayout_templateRows   (  '1em 1fr' );
 
      var p = dialogs.addPanel(gridCtrlPanel , 'cssContainerPanel' , 1 , 1 , 3 , 1 );
-         p.backgroundColor = 'rgba(0,0,0,0.55)';
+         p.backgroundColor = 'rgba(0,0,0,0.47)';
          p.padding = 0;
          p.margin = 0;
-         p.marginBottom = '4px';
-
+         p.marginBottom = '1px';
          p.overflow = 'hidden';
-         dialogs.addLabel( p , '' , 1 , 1 , '100%','1em','Gridlayout_definieren' ).color = 'white';
 
-     this.gridCtrlRows       = dialogs.addInput ( gridCtrlPanel    , 1 , 2 , 4  , 'row' , '' , '-' , {}) ;
-     this.gridCtrlCols       = dialogs.addInput ( gridCtrlPanel    , 2 , 2 , 4  , 'col' , '' , '-' , {} );
+     var h=dialogs.addLabel( p , '' , 1 , 1 , '100%','1em','Gridlayout definieren' );
+         h.color = 'white';
+         h.fontSize = '0.77em';
+
+     this.gridCtrlRows       = dialogs.addInput ( gridCtrlPanel    , 1 , 2 , 4  , 'row' , '' , '-' , {margin:0}) ;
+     this.gridCtrlCols       = dialogs.addInput ( gridCtrlPanel    , 2 , 2 , 4  , 'col' , '' , '-' , {margin:0} );
 
      var gridCtrlBtn        = dialogs.addButton( gridCtrlPanel ,'', 3 , 2 , 1 , 1 , '...' );
-         gridCtrlBtn.margin = '4px';
-         gridCtrlBtn.marginLeft = '1em';
-         gridCtrlBtn.height = '2em';
+         gridCtrlBtn.height = '1.7em';
          gridCtrlBtn.width  = '2em';
+         gridCtrlBtn.margin = 0;
+         gridCtrlBtn.marginTop='7px';
          gridCtrlBtn.backgroundColor = 'gray';
          gridCtrlBtn.callBack_onClick = function() 
                                         { 
                                           this.setGridLayout( this.gridCtrlCols.value , this.gridCtrlRows.value ) 
                                         }.bind(this);
-     
+
+
      var propToollDiv = dialogs.addPanel( this.menuPanel , 'cssContainerPanel' , 1 , 8 , 4 , 2);                                    
          propToollDiv.buildGridLayout_templateRows( '1fr 1fr' );
          propToollDiv.buildGridLayout_templateColumns( '1fr 4em' );
@@ -135,7 +153,7 @@ export class TFGuiBuilder
          b.marginTop = '4px'
 
     this.propertyEditor = dialogs.newPropertyEditor(propertiesDiv , [] , b );
-    this.propertyEditor.callBack_onSave = function(p){debugger; this.saveProperties(p)}.bind(this); 
+    this.propertyEditor.callBack_onSave = function(p){this.saveProperties(p)}.bind(this); 
     
      
          
@@ -230,11 +248,68 @@ addComponent( parent , left , top , elementName )
     }
   }   
 
+
+newProject()
+{
+
+}
+
+
 save()
 { 
+  if(this.formNameInp.value=="")
+  {
+    dialogs.showMessage('Bitte zuvor einen EINDEUTIGEN Namen eingeben, unter dem das Formular zukünftig referenziert werden soll !');
+    return;
+  }
   var board = this.dashBoard.getConstructionProperties();
-  console.log('save: ' + utils.JSONstringify(board.children) );
-}  
+  utils.saveForm(this.formNameInp.value , board );
+
+  this.formNameInp.items = utils.lsForms() ;
+  
+} 
+
+
+load()
+{ 
+  if(this.formNameInp.value=="")
+  {
+    dialogs.showMessage('Bitte zuvor den Namen des Formulars eingeben !');
+    return;
+  }
+
+  var formData = utils.loadForm(this.formNameInp.value);
+  
+  this.dashBoard.innerHTML = '';
+  this.builderObjects      = [];
+
+  this.dashBoard.backgroundColor = formData.backgroundColor;
+  this.dashBoard.buildGridLayout( formData.gridLayout );
+  this.showGridLines(this.dashBoard);
+
+  for(var i=0; i<formData.children.length; i++)
+  {
+    var c = formData.children[i];
+    objects.addComponent( this.dashBoard , c , function(e){   // CallBack on Ready
+                                                         console.log('callback: '+ e.objName);
+                                                         this.builderObjects.push(e);
+                                                         e.setDragable();
+                                                         e.draggingData         = { id:e.ID };
+                                                         e.dataBinding          = e.draggingData;
+                                                         e.callBack_onDragStart = function(event) { this.onDragstart(event , event.target ) }.bind(this);
+                                                         e.callBack_onDragOver  = function(event) { this.onDragover(event) }.bind(this);
+                                                         e.callBack_onDrop      = function(event , dropResult) { this.onDrop(event , dropResult) }.bind(this);
+                                                         e.callBack_onClick     = function(event , dataBinding) {this.onMouseClick(event , dataBinding.id ) }.bind(this);
+                                                     }.bind(this) )
+ }  
+
+
+
+
+} 
+
+
+
 
 
 test()
@@ -255,14 +330,6 @@ test()
    objects.addComponent(w.hWnd, board.children[i] ); // die Child-Elemente hinzufügen
  
 } 
-
-
-load( json)
-{
- 
-}  
-
-
 
 
 
@@ -380,9 +447,12 @@ onDragover(event)
     var gridPosition_left = Math.floor(x / (rect.width  / gInfo.gridColumnCount)) +1 ;    
     var gridPosition_top  = Math.floor(y / (rect.height / gInfo.gridRowCount)) +1 ; 
 
+    var obj = '';
+    if(this.selected)
+      if(this.selected.element) obj = this.selected.element.objName || ""; 
 
     // Optional: visuelles Feedback geben, z.B. eine Linie oder einen Platzhalter anzeigen
-    this.mouseInfo.innerHTML = `<center><H4>X:${gridPosition_left} Y:${gridPosition_top} </H4></center>`;
+    this.propCaption.innerHTML = `<center>${obj} (X:${gridPosition_left} Y:${gridPosition_top})</center>`;
 };
 
 
@@ -391,8 +461,6 @@ onDrop(event , dropResult )
   event.stopPropagation();
   event.preventDefault(); 
 
-  this.mouseInfo.innerHTML = "" ;
-  
   var dropTarget = event.target;
   var rect       = dropTarget.getBoundingClientRect();
 

@@ -1344,6 +1344,36 @@ if(scriptTags.length>1)
 
 
 
+export function saveForm(formName , formData )
+{
+   return  webApiRequest( 'SAVEFORM', {formName:formName, formData:formData} , 'POST' )
+}
+
+export function lsForms()
+{ 
+  var response = webApiRequest('LSFORMS' , {} ); 
+  if (response.error) return [];
+  else
+      {
+        var r = [];
+        for( var i=0; i<response.result.length; i++) r.push(response.result[i]['FORMNAME'])
+        return r;
+      }                
+}  
+
+
+export function loadForm(formName)
+{ 
+  var response = webApiRequest('LOADFORM' , {formName:formName} ); 
+  if (response.error) return [];
+  var r = {};
+  try
+  { r = JSON.parse(response.result['FORMDATA'])
+    return r;
+  }  
+  catch { return {} }
+  
+}  
 
 
 export function fetchRecord( sql , etc )
@@ -1956,7 +1986,7 @@ export function isImageFile(ext)
 
 // parst eine Zeichenkette in ein JSON-Objekt - siehe Beispiel unten
 export function parseToJSON(inputStr)  
-  { debugger;
+  {
     let result = {};
     let pairs = inputStr.split(";").map(pair => pair.trim()).filter(pair => pair); // Aufteilen & leere Elemente entfernen
 

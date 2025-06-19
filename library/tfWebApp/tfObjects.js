@@ -389,82 +389,8 @@ export class TFObject
 
     this.DOMelement.setAttribute('ID'   ,  this.ID );
 
-    if(this.isDragable) 
-    { // das element "dragable" machen
-      this.DOMelement.setAttribute('draggable', true);
-      
-      // die Reaktionen diesbezüglich ...
-      this.DOMelement.addEventListener('dragstart', (e)=>{
-                                                          if(this.draggingData)
-                                                          {  
-                                                            const d = JSON.stringify(this.draggingData);  
-                                                            e.dataTransfer.setData('application/json', d );
-                                                          }  
-                                                          if( this.callBack_onDragStart) this.callBack_onDragStart(e);
-                                                          }); 
-                                                          
-      this.DOMelement.addEventListener("drag", (e) => {
-                                                          if( this.callBack_onDragging) this.callBack_onDragging(e);  
-                                                          });                                                          
-
-
-      this.DOMelement.addEventListener('dragend',   (e)=>{
-                                                           if( this.callBack_onDragEnd) this.callBack_onDragEnd(e);
-                                                         });  
-
-    }
-    
-    if (this.isDropTarget) 
-    {
-      this.DOMelement.addEventListener("dragover", (e) => {
-        e.preventDefault();
-        if (this.callBack_onDragOver) this.callBack_onDragOver(e, null);
-      });
-    
-      this.DOMelement.addEventListener("drop", (e) => {
-        e.preventDefault();
-        const items = e.dataTransfer.items;
-        const dropResult = {};
-        let pending = 0;
-    
-        for (let item of items) {
-          if (item.kind === "file") {
-            dropResult.localFile = item.getAsFile();
-          }
-    
-          else if (item.kind === "string" && item.type === "application/json") {
-            pending++;
-            item.getAsString((jsonStr) => {
-              try {
-                dropResult.json = JSON.parse(jsonStr);
-              } catch (err) {
-                console.warn("Ungültiges JSON im Drop-Item", err);
-              }
-              if (--pending === 0 && this.callBack_onDrop) this.callBack_onDrop(e, dropResult);
-            });
-          }
-    
-          else if (item.kind === "string" && item.type === "text/uri-list") {
-            pending++;
-            item.getAsString((url) => {
-              dropResult.url = url;
-              if (--pending === 0 && this.callBack_onDrop) this.callBack_onDrop(e, dropResult);
-            });
-          }
-    
-          else if (item.kind === "string" && item.type === "text/plain") {
-            pending++;
-            item.getAsString((txt) => {
-              dropResult.plainText = txt;
-              if (--pending === 0 && this.callBack_onDrop) this.callBack_onDrop(e, dropResult);
-            });
-          }
-        }
-    
-        // Wenn alles synchron war (z.B. nur lokale Datei), sofort Callback
-        if (pending === 0 && this.callBack_onDrop) this.callBack_onDrop(e, dropResult);
-      });
-    }
+    if(this.isDragable)     this.setDragable(); // das element "dragable" machen
+    if (this.isDropTarget)  this.setDropTarget(); 
     
 
     this.left   = this.params.left;
@@ -523,6 +449,99 @@ export class TFObject
           this.DOMelement.addEventListener('keydown', function(e) { if (this.callBack_onKeyDown) this.callBack_onKeyDown(e, this.dataBinding);}.bind(this));                                                     
           this.DOMelement.addEventListener('keyup', function(e) {if (this.callBack_onKeyUp) this.callBack_onKeyUp(e, this.dataBinding);}.bind(this));                                                     
   } 
+
+
+  setDragable()
+  {
+    this.isDragable        = true;
+    this.params.isDragable = true;
+    if(!this.DOMelement) return;
+    else
+    { // das element "dragable" machen
+      this.DOMelement.setAttribute('draggable', true);
+      
+      // die Reaktionen diesbezüglich ...
+      this.DOMelement.addEventListener('dragstart', (e)=>{
+                                                          if(this.draggingData)
+                                                          {  
+                                                            const d = JSON.stringify(this.draggingData);  
+                                                            e.dataTransfer.setData('application/json', d );
+                                                          }  
+                                                          if( this.callBack_onDragStart) this.callBack_onDragStart(e);
+                                                          }); 
+                                                          
+      this.DOMelement.addEventListener("drag", (e) => {
+                                                          if( this.callBack_onDragging) this.callBack_onDragging(e);  
+                                                          });                                                          
+
+
+      this.DOMelement.addEventListener('dragend',   (e)=>{
+                                                           if( this.callBack_onDragEnd) this.callBack_onDragEnd(e);
+                                                         });  
+
+    } 
+  }
+
+
+  setDropTarget()
+  {
+    this.isDropTarget       = true;
+    this.params.dropTarget  = true;
+    if(!this.DOMelement) return;
+    else
+    {
+      this.DOMelement.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        if (this.callBack_onDragOver) this.callBack_onDragOver(e, null);
+      });
+    
+      this.DOMelement.addEventListener("drop", (e) => {
+        e.preventDefault();
+        const items = e.dataTransfer.items;
+        const dropResult = {};
+        let pending = 0;
+    
+        for (let item of items) {
+          if (item.kind === "file") {
+            dropResult.localFile = item.getAsFile();
+          }
+    
+          else if (item.kind === "string" && item.type === "application/json") {
+            pending++;
+            item.getAsString((jsonStr) => {
+              try {
+                dropResult.json = JSON.parse(jsonStr);
+              } catch (err) {
+                console.warn("Ungültiges JSON im Drop-Item", err);
+              }
+              if (--pending === 0 && this.callBack_onDrop) this.callBack_onDrop(e, dropResult);
+            });
+          }
+    
+          else if (item.kind === "string" && item.type === "text/uri-list") {
+            pending++;
+            item.getAsString((url) => {
+              dropResult.url = url;
+              if (--pending === 0 && this.callBack_onDrop) this.callBack_onDrop(e, dropResult);
+            });
+          }
+    
+          else if (item.kind === "string" && item.type === "text/plain") {
+            pending++;
+            item.getAsString((txt) => {
+              dropResult.plainText = txt;
+              if (--pending === 0 && this.callBack_onDrop) this.callBack_onDrop(e, dropResult);
+            });
+          }
+        }
+    
+        // Wenn alles synchron war (z.B. nur lokale Datei), sofort Callback
+        if (pending === 0 && this.callBack_onDrop) this.callBack_onDrop(e, dropResult);
+      });
+    }
+    
+  }
+
 
   addPopupMenu(p)
   {  
@@ -1341,7 +1360,7 @@ getProperties()
   properties.push( {level:2, label:'shadow',type:'INPUT',value:this.shadow} ); 
   properties.push( {level:3, label:'opacity',type:'INPUT',value:this.opacity} ); 
   properties.push( {level:3, label:'blur',type:'INPUT',value:this.blur} ); 
-  properties.push( {level:3, label:'innerHTML',type:'INPUT',value:this.innerHTML} ); 
+  //properties.push( {level:3, label:'innerHTML',type:'INPUT',value:this.innerHTML} ); 
   properties.push( {level:3, label:'placeItems',type:'SELECT',value:this.placeItems , items:['start','end','center','stretch','baseline']} ); 
   properties.push( {level:3, label:'justifyContent',type:'SELECT',value:this.justifyContent, items:['flex-start','flex-end','center','space-between','space-around','space-evenly','start','end','left','right']} ); 
   properties.push( {level:3, label:'alignItems',type:'SELECT',value:this.alignItems, items:['stretch','flex-start','flex-end','center','baseline','start','end']} ); 
@@ -4456,7 +4475,7 @@ propertyControlByName( name )
 
 
 save()
-{ debugger;
+{
   var p=[];
 
   for (var i=0; i<this.properties.length; i++ )
@@ -4667,7 +4686,7 @@ export class TFileDialog
 }
 
 
-export function addComponent(parent , component )
+export function addComponent(parent , component , callBackOnCreate )
 { 
   var compType = (component.objName || '').toUpperCase();
   var c = null;
@@ -4677,18 +4696,21 @@ export function addComponent(parent , component )
     c = new TFPanel(parent, component.left, component.top, component.width, component.height, {} );
     c.buildGridLayout(component.gridLayout)
     c.setProperties(component);
+    if(callBackOnCreate) callBackOnCreate(c);
   }
 
   if(compType === 'TFBUTTON') 
   { 
     c = new TFButton(parent, component.left, component.top, component.width, component.height, {} );
     c.setProperties(component);
+    if(callBackOnCreate) callBackOnCreate(c);
   }
 
   if(compType === 'TFLABEL') 
   { 
     c = new TFLabel(parent, component.left, component.top, component.width, component.height, {} );
     c.setProperties(component);
+    if(callBackOnCreate) callBackOnCreate(c);
   }
 
   if(compType === 'TFEDIT') 
@@ -4697,42 +4719,49 @@ export function addComponent(parent , component )
     if(component.hasOwnProperty('typ')) t = component.typ;
     c = new TFEdit(parent, component.left, component.top, component.width, component.height, {type:t} );
     c.setProperties(component);
+    if(callBackOnCreate) callBackOnCreate(c);
   }
 
   if(compType === 'TFCHECKBOX') 
   { 
      c = new TFCheckBox(parent, component.left, component.top, component.width, component.height, {} );
     c.setProperties(component);
+    if(callBackOnCreate) callBackOnCreate(c);
   } 
 
   if(compType === 'TFSLIDER') 
   { 
      c = new TFSlider(parent, component.left, component.top, component.width, component.height, {} );
      c.setProperties(component);
+     if(callBackOnCreate) callBackOnCreate(c);
   }
 
   if(compType === 'TFANALOGCLOCK') 
   { 
      c = new TFAnalogClock(parent, component.left, component.top, component.width, component.height, {} );
      c.setProperties(component);
+     if(callBackOnCreate) callBackOnCreate(c);
   }
 
   if(compType === 'TFCOMBOBOX') 
   { 
      c = new TFComboBox(parent, component.left, component.top, component.width, component.height, {} );
      c.setProperties(component);
+     if(callBackOnCreate) callBackOnCreate(c);
   }
 
     if(compType === 'TFSELECTBOX') 
   { 
      c = new TFSelectBox(parent, component.left, component.top, component.width, component.height, {} );
      c.setProperties(component);
+     if(callBackOnCreate) callBackOnCreate(c);
   }
 
   if(compType === 'TFLISTBOX') 
   { 
      c = new TFListBox(parent, component.left, component.top, component.width, component.height, {} );
      c.setProperties(component);
+     if(callBackOnCreate) callBackOnCreate(c);
   }
 
 
@@ -4740,6 +4769,7 @@ export function addComponent(parent , component )
   { 
      c = new TFListCheckbox(parent, component.left, component.top, component.width, component.height, {} );
      c.setProperties(component);
+     if(callBackOnCreate) callBackOnCreate(c);
   }
 
 
@@ -4747,6 +4777,7 @@ export function addComponent(parent , component )
   { 
      c = new TFImage(parent, component.left, component.top, component.width, component.height, {} );
      c.setProperties(component);
+     if(callBackOnCreate) callBackOnCreate(c);
   }
 
 
@@ -4755,7 +4786,7 @@ export function addComponent(parent , component )
   if(c!=null)
     if(component.hasOwnProperty('children') && Array.isArray(component.children))
       {
-        component.children.forEach(child => {addComponent(c, child);})
+        component.children.forEach(child => {addComponent(c, child , callBackOnCreate || null );})
       }
 }
 

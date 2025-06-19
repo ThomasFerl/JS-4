@@ -18,6 +18,7 @@ const globals     = require('./backendGlobals');
 const userAPI     = require('./userAPI');
 const session     = require('./session');
 const dbTables    = require('./dbTables');
+const etcTables   = require('./etcTables');
 
 const sslOptions  = {
     key : fs.readFileSync('./SSL/privateKex.pem'  , 'utf8' ),     // Pfad zum privaten Schlüssel
@@ -34,7 +35,8 @@ const dB          = new Database( dBName  , { verbose: utils.log ,  readonly: fa
 
 
 // Datenstruktur lt. dBTables erzeugen ....
-dbTables.buildTables( dB );
+dbTables.buildTables ( dB  );
+etcTables.buildTables( etc );
 
 // Datenstruktur auf ggf. vorhandene Änderungen prüfen ....
 // dbTables.checkdbTableStructure();
