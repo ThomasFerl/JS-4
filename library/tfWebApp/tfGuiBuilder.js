@@ -2,6 +2,7 @@ import * as globals         from "./globals.js";
 import * as utils           from "./utils.js";
 import * as dialogs         from "./tfDialogs.js";
 import * as objects         from "./tfObjects.js";
+import {TFgui}              from "./tfGUI.js";
 
 import {TFAnalogClock,
         TFListCheckbox,
@@ -322,12 +323,13 @@ test()
   
   // ein Fenster erzeugen, welches die Dimension und das Gridlayout des Dashboards übernimmt:
   var w = dialogs.createWindow(null, 'tfGuiBuilderTest', board.width+'px', board.height+'px', 'CENTER');
-      w.hWnd.backgroundColor = board.backgroundColor;
-      w.hWnd.buildGridLayout(board.gridLayout);
 
-  // die Child-Elemente hinzufügen:
-  for (var i = 0; i < board.children.length; i++)
-   objects.addComponent(w.hWnd, board.children[i] ); // die Child-Elemente hinzufügen
+  var gui = new TFgui( w.hWnd , board );
+  
+  gui.editFirstName.value     = 'Thomas';
+  gui.editLastName.value      = 'Ferl';
+  gui.selectFamilyState.setItems([{caption:'ledig',value:0},{caption:'verheiratet',value:2},{caption:'getrennt lebend',value:3},{caption:'geschieden',value:4},{caption:'verwitwet',value:-1}]) 
+
  
 } 
 

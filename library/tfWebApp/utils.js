@@ -1361,7 +1361,6 @@ export function lsForms()
       }                
 }  
 
-
 export function loadForm(formName)
 { 
   var response = webApiRequest('LOADFORM' , {formName:formName} ); 
