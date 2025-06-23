@@ -43,6 +43,7 @@ export class TFGuiBuilder
     this.dashBoard.callBack_onDragOver           = function(e){  this.onDragover(e) }.bind(this);
     this.dashBoard.callBack_onDrop               = function(e , dropResult){ this.onDrop(e , dropResult) }.bind(this);
     this.dashBoard.callBack_onClick              = function(e){this.selectComponent(this.dashBoard)}.bind(this);
+    this.dashBoard.callBack_onKeyDown            = function(event) { if(event.key=='Delete') this.deleteSeletedObject()}.bind(this);
    
     this.menuPanel                               = layout.right;
     this.menuPanel.padding                       = '2px';
@@ -244,11 +245,9 @@ addComponent( parent , left , top , elementName )
       e.callBack_onDragOver  = function(event) { this.onDragover(event) }.bind(this);
       e.callBack_onDrop      = function(event , dropResult) { this.onDrop(event , dropResult) }.bind(this);
       e.callBack_onClick     = function(event , dataBinding) {this.onMouseClick(event , dataBinding.id ) }.bind(this);
-
-      this.selectComponent(e); // neues Element auswählen
-    }
-  }   
-
+      e.callBack_onKeyDown   = function(event) { if(event.key=='Delete') this.deleteSeletedObject()}.bind(this);
+   }   
+  }
 
 newProject()
 {
@@ -301,6 +300,7 @@ load()
                                                          e.callBack_onDragOver  = function(event) { this.onDragover(event) }.bind(this);
                                                          e.callBack_onDrop      = function(event , dropResult) { this.onDrop(event , dropResult) }.bind(this);
                                                          e.callBack_onClick     = function(event , dataBinding) {this.onMouseClick(event , dataBinding.id ) }.bind(this);
+                                                         e.callBack_onKeyDown   = function(event) { if(event.key=='Delete') this.deleteSeletedObject()}.bind(this);
                                                      }.bind(this) )
  }  
 
@@ -370,6 +370,24 @@ selectComponent(element)
       
   }
 
+
+
+deleteSeletedObject()
+{
+  if(this.selected.element)
+  {
+    var idx = this.builderObjects.indexOf(this.selected.element);
+    if (idx > -1)
+    {
+      this.builderObjects.splice(idx, 1); // Element aus dem Array entfernen
+      this.selected.element.DOMelement.remove(); // Element aus dem DOM entfernen
+      this.selected.element = null; // Selektion zurücksetzen
+      this.selected.border  = '';
+      this.propCaption.innerHTML = '';
+      this.propertyEditor.visible = false; // PropertyEditor ausblenden
+    }
+  }
+}       
 
 saveProperties( p )
   {
