@@ -108,7 +108,7 @@ export function login( callBackIfOK , bypass )
                                  }
                               
                               // blank screen
-                              globals.Screen.HTML="<F5> Restart ..."; 
+                              globals.Screen.HTML=""; 
                               callBackIfOK();  
 
                             }.bind({usr:inpUsr,pwd:inpPwd})
@@ -116,7 +116,7 @@ export function login( callBackIfOK , bypass )
    var b = dialogs.addButton( btns , "cssAbortBtn01"  , 3 , 2 , 1 , 1 ,"Abbrechen" );
        b.callBack_onClick = function() 
                             {
-                              alert("Anmeldung wurde abgebrochen - Neustart mit <F5>");
+                              alert("Anmeldung wurde abgebrochen - Neustart mit F5");
                             }                  
 
                           
