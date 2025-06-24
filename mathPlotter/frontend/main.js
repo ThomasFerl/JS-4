@@ -3,8 +3,7 @@ import * as globals      from "./tfWebApp/globals.js";
 import * as utils        from "./tfWebApp/utils.js";    
 import * as dialogs      from "./tfWebApp/tfDialogs.js";
 import * as app          from "./tfWebApp/tfWebApp.js"; 
-
-import {TFgui}           from "./tfWebApp/tfGUI.js";
+import {TFgui}             from "./tfWebApp/tfGUI.js";
 
 
 
@@ -24,9 +23,10 @@ import { TFDateTime }    from "./tfWebApp/utils.js";
 var caption1  = '';
 var caption2  = '';
 
+var chartContainer   = null;
 var listBoxContainer = null;
-var fktListBox = null;
-var chart      = null;
+var fktListBox       = null;
+var chart            = null;
 
 
 export function main(capt1)
@@ -51,9 +51,11 @@ function run()
     
     var gui = new TFgui(ws.handle , 'fktPlotter' );
 
-    listBoxContainer = gui.TFPanel331;
+    listBoxContainer = gui.listBoxContainer;
+    chartContainer   = gui.chartContainer;
 
     gui.btnAddFunction.callBack_onClick = function(){addFunction()}
+    gui.btnRun.callBack_onClick         = function(){drawFunction()}
 
     updateFunctions();
 }
@@ -87,4 +89,33 @@ function updateFunctions()
   fktListBox = dialogs.addListCheckbox(listBoxContainer,fkt,{});
 
 }
+
+
+function drawFunction()
+{
+   if(chart!=null) {chart.destroy(); chart = null;}
+
+   var fkts = fktListBox.getSelectedItems();
+   if (fkts.length==null) { dialogs.showMessage('Bitte eine Funktion auswählen !'); return }
+     
+    // Chart erzeugen....
+    chart = new TFChart( chartContainer , 1 , 1 , '100%' , '100%' , {chartBackgroundColor:'white',chartType:'SPLINE_NO_POINTS'} );
+     
+    // alle Funktionen der CheckListBox durchlaufen
+    for(var i=0; i<fkts.length; i++ )
+    {
+       var fkt    = fkts[i];
+       var values = [];
+       var series = chart.addSeries(fkt.caption ||fkt.text , utils.randomColor() );
+       var expr   = math.parse(fkt.caption ||fkt.text);
+       var code   = expr.compile();
+   
+       for(var x=-10; x<11; x=x+0.01) values.push({ x:x , y:code.evaluate({ x: x })}); 
+
+       chart.addPoint(series , values);
+    }    
+  }                   
+                                          
+
+
 
