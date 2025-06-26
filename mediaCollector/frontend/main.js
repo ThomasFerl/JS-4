@@ -28,6 +28,7 @@ export function main(capt1)
   globals.sysMenu.push( {caption:'Info' , action:function(){app.sysInfo()} } );
   globals.sysMenu.push( {caption:'Symbol-Bibliothek (nur in der Entwicklungsphase)' , action:function(){dialogs.browseSymbols()} } );
   globals.sysMenu.push( {caption:'API-Test (nur in der Entwicklungsphase)' , action:function(){app.APItest()} } );
+  globals.sysMenu.push( {caption:'GUI-Builder (nur in der Entwicklungsphase)' , action:function(){app.guiBuilder()} } );
   globals.sysMenu.push( {caption:'Abbrechen' , action:function(){} } );
   
   //app.login( ()=>{  caption2 = 'Willkommen ' + globals.session.userName ; run() });

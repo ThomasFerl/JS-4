@@ -24,11 +24,11 @@ const sslOptions  = {
     cert: fs.readFileSync('./SSL/certificate.pem' , 'utf8' )    // Pfad zum Zertifikat
    };
 
-const dBetc       = './etc.db';
+const dBetc       = '/home/tferl/tmp/mediaCollector/etc.db';
 const etc         = new Database( dBetc  , { verbose: utils.log } );
       utils.log("etc-dB: "+etc.constructor.name);
 
-const dBName      = './workingBase.db';
+const dBName      = '/home/tferl/tmp/mediaCollector/workingBase.db';
 const dB          = new Database( dBName  , { verbose: utils.log ,  readonly: false } );
       utils.log("working-dB: "+dB.constructor.name);
 

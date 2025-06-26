@@ -56,7 +56,8 @@ function run()
 
     gui.btnAddFunction.callBack_onClick = function(){addFunction()}
     gui.btnRun.callBack_onClick         = function(){drawFunction()}
-
+    
+    gui.btn.callBack_onClick = function() {alert(gui.dani.value)};
     updateFunctions();
 }
 
