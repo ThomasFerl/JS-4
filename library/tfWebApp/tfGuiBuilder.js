@@ -4,6 +4,9 @@ import * as dialogs         from "./tfDialogs.js";
 import * as objects         from "./tfObjects.js";
 import {TFgui}              from "./tfGUI.js";
 
+import {TFTreeView,
+        TFTreeNode }        from "./tfTreeView.js";
+
 import {TFAnalogClock,
         TFListCheckbox,
         TFComboBox,
@@ -21,9 +24,10 @@ export class TFGuiBuilder
     this.builderObjects                          = [];
     this.selected                                = {element:null , border:""};
     this.propertyEditor                          = null;	
-    this.dashBoard                               = null
+    this.dashBoard                               = null;
     this.menuPanel                               = null;
-    
+    this.treeViewVisible                         = false;
+    this.treeView                                = null;
 
     var w = dialogs.createWindow(null, 'tfGuiBuilder', '100%', '100%', 'CENTER').hWnd;
 
@@ -134,14 +138,19 @@ var loadBtn                        = dialogs.addButton(fileOps , '' , 3 , 2 , 1 
        //  propToollDiv.paddingLeft = '0.5em';
        //  propToollDiv.paddingRight = '0.5em';
          
-     this.propLevelSelector = dialogs.addSelectBox(propToollDiv , 1 , 1 , 'auto' , 'Anzeigelevel:' , '' , 'essential', [{caption:'essential',value:1},{caption:'useful',value:2},{caption:'all',value:3}] );    
+     this.propLevelSelector = dialogs.addSelectBox(propToollDiv , 1 , 2 , 'auto' , 'Anzeigelevel:' , '' , 'essential', [{caption:'essential',value:1},{caption:'useful',value:2},{caption:'all',value:3}] );    
      this.propLevelSelector.callBack_onChange = function(v)
                                             { 
                                               if(this.propertyEditor)
                                               this.propertyEditor.level = v;
                                             }.bind(this);
+
+     var treeBtn = dialogs.addButton( propToollDiv , '' , 2 , 2 , 1 , 1 , '...' );
+         treeBtn.height = '2em';
+         treeBtn.marginTop = '4px';
+         treeBtn.callBack_onClick = function() { this.handleTreeView() }.bind(this);                                     
   
-    this.propCaption = dialogs.addPanel(propToollDiv , 'cssContainerPanel' , 1 , 2 , 1 , 1 );
+    this.propCaption = dialogs.addPanel(propToollDiv , 'cssContainerPanel' , 1 , 1 , 1 , 1 );
     this.propCaption.backgroundColor = 'rgba(0,0,0,0.77)';
     this.propCaption.height          = '2em';
     this.propCaption.color           = 'white';
@@ -150,17 +159,13 @@ var loadBtn                        = dialogs.addButton(fileOps , '' , 3 , 2 , 1 
          propertiesDiv.backgroundColor               = 'white';
          propertiesDiv.DOMelement.style.borderRadius = '0px';
     // saveButton für Property-Editor
-     var b = dialogs.addButton( propToollDiv , '' , 2 , 2 , 1 , 1 , 'ok' );
+     var b = dialogs.addButton( propToollDiv , '' , 2 , 1 , 1 , 1 , 'ok' );
          b.height = '2em';
          b.marginTop = '4px'
 
     this.propertyEditor = dialogs.newPropertyEditor(propertiesDiv , [] , b );
     this.propertyEditor.callBack_onSave = function(p){this.saveProperties(p)}.bind(this); 
-    
-     
-         
-         
-
+   
          
      // toolbox
       this.___createToolboxItem( 'div'     , 'DIV'     , 1,4)
@@ -247,6 +252,10 @@ addComponent( parent , left , top , elementName )
       e.callBack_onClick     = function(event , dataBinding) {this.onMouseClick(event , dataBinding.id ) }.bind(this);
       e.callBack_onKeyDown   = function(event) { if(event.key=='Delete') this.deleteSeletedObject()}.bind(this);
    }   
+
+  this.updateTreeView();
+  this.selectComponent(e); // das neu erzeugte Element gleich selektieren
+
   }
 
 newProject()
@@ -333,9 +342,56 @@ test()
  
 } 
 
+ handleTreeView()
+ {  
+   if(this.treeViewVisible) return;
+   
+   this.treeView = dialogs.createWindow(null, 'tfGuiBuilderTreeView', '25%', '90%', 'CENTER');
+   this.treeView.hWnd.zIndex = 1000000; // ganz oben
+   this.treeViewVisible = true;
+   this.treeView.callBack_onClose = function() {this.treeViewVisible=false;}.bind(this);
+
+  this.updateTreeView();
+}
 
 
+updateTreeView()
+{
+  if(!this.treeViewVisible) return;
+  if(this.treeView==null) return; 
+
+  this.treeView.hWnd.innerHTML = ''; // Baum leeren
   
+
+ // rekursive scanFunktion zur Erzeugung der Baumstruktur:
+   var __scanNodes = function( tree , treeNode , obj )
+  {
+    var n = null;
+
+    if(treeNode==null) n=  tree.addNode   (            obj.name , obj );
+    else               n = tree.addSubNode( treeNode , obj.name , obj );   
+
+    if(obj.childList.length>0)
+       for (var j=0; j<obj.childList.length; j++)  __scanNodes( tree , n , obj.childList[j] ); 
+  }
+
+  var t = new TFTreeView(  this.treeView.hWnd , {} );
+   for(var i=0; i<this.dashBoard.childList.length; i++) __scanNodes( t , null , this.dashBoard.childList[i] );
+      
+  t.buildNodeList(); 
+  t.collabseAll(false);
+  t.callBack_onClick = function(node)
+  {
+    if(node.content) 
+    { // wenn ein Datenobjekt vorhanden ist, dann dieses selektieren
+      var obj = node.content;
+      if(obj instanceof objects.TFObject) this.selectComponent(obj);
+    }       
+  }.bind(this);
+}  
+
+
+
 selectComponent(element) 
 {
     // letztes Element abwählen
@@ -385,6 +441,7 @@ deleteSeletedObject()
       this.selected.border  = '';
       this.propCaption.innerHTML = '';
       this.propertyEditor.visible = false; // PropertyEditor ausblenden
+      this.updateTreeView();
     }
   }
 }       
@@ -510,6 +567,7 @@ onDrop(event , dropResult )
     droppedObject.setParent(dropTarget);
     droppedObject.gridLeft = gridPosition_left;
     droppedObject.gridTop  = gridPosition_top;
+    this.updateTreeView();
   }
 
   // neue Position PropertyEditor aktualisieren.
