@@ -25,8 +25,9 @@ Eingabefeld - Typen
 <textarea>
 */
 
-import * as globals   from "./globals.js";
-import * as utils     from "./utils.js";
+import  * as globals   from "./globals.js";
+import  * as symbols   from "./symbols.js";  
+import  * as utils     from "./utils.js";
 
 import { TFDateTime } from "./utils.js";
 import { TFWindow   } from "./tfWindows.js";
@@ -948,31 +949,24 @@ export function showImage( url , caption )
   }
 
 
+  
   export async function browseSymbols()
   {  
     var w            = new TFWindow( null , 'Symbol-Browser' , '80%' , '80%' , 'CENTER' );
     var svgContainer = w.hWnd;
 
-   var svgs = utils.webApiRequest('LSSYMBOLS' , {} ).result;
+   var svgs = symbols.list()
   
    for(var i=0; i<svgs.length; i++)
    { 
-     var p = addImage( svgContainer , "" , 1 , 1 , "77px" , "77px" );
-     
-     var svg = utils.webApiRequest('SYMBOL',{symbolName:svgs[i]} ); 
-
-        if (!svg.error) 
-          {
-            p.svgContent = svg.result;
-            p.dataBinding = {svg:svg.result , name:svgs[i]};
-            p.callBack_onClick = function(e, d ) { var wnd = new TFWindow( svgContainer , d.name  , '25%' , '25%' , 'CENTER' ); 
-                                                   var img = addImage( wnd.hWnd ,  '' , 1, 1, '100%' , '100%' );                                       
-                                                       img.svgContent = d.svg;
-                                                 };
-          }
-          await utils.processMessages();    
+     console.log('Symbol: ' + svgs[i]);
+     var p = addPanel( svgContainer , "" , 1 , 1 , "77px" , "77px" );
+  
+     symbols.draw( p ,  svgs[i] ); 
+     //symbols.drawStatic( p , svgs[i] ); 
+     await utils.processMessages();    
     }      
-  }
+ }
 
 
   export function createMenu( menuItems)

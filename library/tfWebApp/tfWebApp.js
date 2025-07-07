@@ -1,6 +1,7 @@
 import * as globals     from "./globals.js";
 import * as utils       from "./utils.js";
 import * as dialogs     from "./tfDialogs.js";
+import * as symbols     from "./symbols.js";
 import { TFGuiBuilder } from "./tfGuiBuilder.js";
 import { TFScreen }     from "./tfObjects.js";
 import { TFWorkSpace }  from "./tfObjects.js";
@@ -307,7 +308,9 @@ export class TFWebApp
    window.addEventListener('blur' , function() { utils.log('Blur')  ; this.active = false; }.bind(this) );
 
    this.keepAlive = setInterval( function() {if(this.active) utils.webApiRequest('keepAlive' , '' )}.bind( this ) , 60000 );
-    
+ 
+   symbols.init();
+
   }
   
 

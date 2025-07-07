@@ -1,4 +1,6 @@
 import * as globals   from "./globals.js";
+import * as symbols   from './symbols.js';
+
 
 const debug              = globals.debug;
 
@@ -86,6 +88,42 @@ export function JSONstringify(obj)
 
 
 
+export function drawSymbol(symbolName, container, color, size) 
+{
+  const dom = container.DOMelement || container;
+
+  // Container vorbereiten
+  /*
+  dom.style.overflow = 'hidden';
+  dom.style.padding = '0';
+  dom.style.margin = '0';
+  dom.style.borderWidth = '0';
+  dom.style.borderColor = 'transparent';
+*/
+  // Symbol einfügen (symbolName wie "OK", size z. B. "77%" oder Zahl)
+  symbols.draw(dom, symbolName, size);
+  
+  
+  // Optional: Farbe setzen
+  if (color) {
+    const svg = dom.querySelector('svg');
+    if (svg) {
+      const elements = svg.querySelectorAll('*');
+      elements.forEach(el => {
+        const tag = el.tagName.toLowerCase();
+        if (['path', 'rect', 'circle', 'ellipse', 'polygon', 'line', 'polyline', 'g', 'use'].includes(tag)) {
+          el.setAttribute('fill', color);
+          if (el.hasAttribute('stroke')) el.setAttribute('stroke', color);
+        }
+      });
+    }
+  }
+}
+
+
+
+/*   ALTE LOGIK 
+
 export function drawSymbol( symbolName , container , color , size )
 { 
   var svgFile = webApiRequest('SYMBOL',{symbolName:symbolName});
@@ -141,7 +179,7 @@ export function prepareSVG(svg, container, color , size)
 
 }
 
-
+*/
 
 
 export function evaluate( exp )
@@ -1211,6 +1249,52 @@ export function webApiRequest( _cmd , _param , getOrPost )
 }     
 
 
+
+export async function webApiRequestAsync(_cmd, _param = {}, getOrPost = 'GET') 
+{
+  const session = globals.session?.ID;
+  let url, options;
+
+  if (getOrPost.toUpperCase() === 'GET') 
+  {
+    url = buildURL(_cmd, _param);
+    options = { method: 'GET' };
+  } else 
+   {
+    url = globals.URL_webAppPOSTrequest();
+    options = {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ session, cmd: _cmd, param: _param })
+    };
+  }
+
+  try {
+    const response = await fetch(url, options);
+    const text     = await response.text();
+
+    let json;
+    try {
+      json = JSON.parse(text);
+    } catch (err) {
+      return { error: false, errMsg: 'OK', result: text };
+    }
+
+    if (json.errMsg && json.errMsg.toUpperCase() === 'INVALID SESSION') {
+      alert('<B>S</B>itzung abgelaufen !', {
+        glyp: 'fa-solid fa-person-walking-arrow-right',
+        button: ['OK']
+      });
+      document.body.innerHTML = 'Applikation beendet  - Neustart mit F5 ';
+      return { error: true, errMsg: json.errMsg, result: {} };
+    }
+
+    if ('result' in json) return json;
+    else return { error: false, errMsg: 'OK', result: json };
+  } catch (err) {
+    return { error: true, errMsg: err.message, result: {} };
+  }
+}
 
 
 

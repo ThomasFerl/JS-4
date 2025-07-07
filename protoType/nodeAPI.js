@@ -106,7 +106,11 @@ if( CMD=='GETIMAGEFILE')    {
                              await utils.getImageFile  ( fs , path , param.fileName , webRequest , webResponse ); // function streamt direkt 
                              return {isStream:true};
                             }
-
+if(CMD=='SYMBOLPATH') 
+  {
+    return utils.getSymbolPath(param.symbol);
+  } 
+  
 
 if( CMD=='LSSYMBOLS')       {
                               var response = utils.scanDir ( fs , path , globals.symbolPath() , '*.*');
@@ -247,13 +251,6 @@ if(CMD=='GETUSERGRANTS')
 {
   return grants.getUserGrants( etc , param.userName ); 
 } 
-
-
-if(CMD=='SYMBOLPATH') 
-  {
-    return utils.getSymbolPath(param.symbol);
-  } 
-  
 
 
 if(CMD=='GETVAR') 

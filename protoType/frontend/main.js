@@ -273,11 +273,11 @@ var   btn10 = dialogs.addButton( menuContainer , "" , 10 , 1 , 1 , 1 , "ask me" 
 const points = [];
 
 // Punkte initialisieren
-for (let i = 0; i < 10; i++) {    
+for (let i = 0; i < 100; i++) {    
     const p = {
         x: Math.round(Math.random() * 200), // Zufällige Startposition (x)
         y: Math.round(Math.random() * 200), // Zufällige Startposition (y)
-        radius: 7,                          // Radius des Punkts
+        radius:  Math.round(Math.random() * 7),                          // Radius des Punkts
         dx: Math.random() * 2,              // Geschwindigkeit in x-Richtung
         dy: Math.random() * 2,              // Geschwindigkeit in y-Richtung
         width: 500,                         // Standardbreite
