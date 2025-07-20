@@ -64,6 +64,13 @@ export function run()
    //  document.document.requestFullscreen();
 
     var ws = app.startWebApp(caption1,caption2).activeWorkspace;
+        ws.buildGridLayout('20x20');
+
+    setTimeout( function() {    
+                             var b = dialogs.addButton( ws.handle , '' , 1 , 1 , 1 , 1 , {caption:'TEST',glyph:'adn'} );
+    } , 10000 ); 
+
+    return;
 
     var l  = dialogs.setLayout( ws.handle , {gridCount:28,head:3,left:14} )
   
