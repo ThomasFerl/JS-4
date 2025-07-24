@@ -155,7 +155,7 @@ export function addButton( aParent , className , left , top , width , height , d
 {
   var capt  = '';
   var glyph = '';
-  
+ 
   if(utils.isJSON(decoration)) 
   {
     capt  = decoration.caption;
@@ -950,19 +950,31 @@ export function showImage( url , caption )
 
 
   
-  export async function browseSymbols()
+  export async function browseSymbols(path)
   {  
     var w            = new TFWindow( null , 'Symbol-Browser' , '80%' , '80%' , 'CENTER' );
     var svgContainer = w.hWnd;
 
-   var svgs = symbols.list()
+   var svgs = symbols.list();
   
    for(var i=0; i<svgs.length; i++)
    { 
      console.log('Symbol: ' + svgs[i]);
-     var p = addPanel( svgContainer , "" , 1 , 1 , "77px" , "77px" );
-  
-     symbols.draw( p ,  svgs[i] ); 
+     var p = addPanel( svgContainer , "" , 1 , 1 , "140px" , "120px" );
+        p.padding = 0;
+         p.buildGridLayout_templateColumns('1fr');
+         p.buildGridLayout_templateRows('1.2em 1fr');
+     var s = addPanel(p,'cssContainerPanel',1,2,1,1)
+     utils.drawSymbol(svgs[i], p , 'black' , '100%') 
+    
+     // Caption ..
+     var c = addPanel( p , 'cssContainerPanel' , 1,1,1,1);
+     c.margin = 0;
+     c.ppadding=0;
+     c.overflow='hidden';
+     c.backgroundColor = 'rgba(0,0,0,0.14)';
+     c.innerHTML='<center>'+svgs[i]+'</center>';
+     
      //symbols.drawStatic( p , svgs[i] ); 
      await utils.processMessages();    
     }      

@@ -4,7 +4,7 @@ let symbolIDs = [];
 
 export async function init_old_asynchron() 
 {
-  const svgs = utils.webApiRequest('LSSYMBOLS', {}).result;
+  const svgs = utils.webApiRequest('LSSYMBOLS', {path:'/unsorted'}).result;
   let spriteText = '<svg id="icon-sprite" xmlns="http://www.w3.org/2000/svg" style="display:none">\n';
 
   for (let i = 0; i < svgs.length; i++) 
@@ -39,7 +39,7 @@ console.log("sprite-Text:"+spriteText);
 export async function init() 
 {
   // 1. Alle Symbolnamen laden
-  const listResponse = await webApiRequestAsync('LSSYMBOLS', {});
+  const listResponse = await webApiRequestAsync('LSSYMBOLS', {path:'essential'});
   const svgs = listResponse.result || [];
 
   symbolIDs = []; // zurücksetzen
@@ -47,7 +47,7 @@ export async function init()
 
   // 2. Parallel alle SVGs laden
   const loadTasks = svgs.map(async (id) => {
-    const res = await webApiRequestAsync('SYMBOL', { symbolName: id });
+    const res = await webApiRequestAsync('SYMBOL', {path:'essential' , symbolName: id });
 
     if (res.error || !res.result?.trim()) return null;
 
@@ -80,7 +80,8 @@ export function list()
 }
 
 
-export function draw(container, symbolName, size = null) {
+export function draw(container, symbolName, size = null) 
+{
   const id = 'icon-' + symbolName;
   if (!symbolIDs.includes(symbolName)) {
     console.warn("Symbol nicht vorhanden:", symbolName);
@@ -89,35 +90,29 @@ export function draw(container, symbolName, size = null) {
 
   container.innerHTML = '';
 
+  // SVG erstellen
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('viewBox', '0 0 24 24'); // universelles Koordinatensystem
+
+  // Feste Größe oder 100% (z. B. für Flex-Layouts)
   if (size) {
     svg.setAttribute('width', size);
     svg.setAttribute('height', size);
+    container.style.width = size + 'px';
+    container.style.height = size + 'px';
   } else {
     svg.setAttribute('width', '100%');
     svg.setAttribute('height', '100%');
+    container.style.width = '48px';   // Beispielgröße
+    container.style.height = '48px';
   }
 
+  // Skalierungsverhalten
+  svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+
+  // Symbol einbinden
   const use = document.createElementNS('http://www.w3.org/2000/svg', 'use');
   use.setAttribute('href', '#' + id);
-  use.setAttributeNS('http://www.w3.org/1999/xlink', 'xlink:href', '#' + id);
-
   svg.appendChild(use);
   container.appendChild(svg);
-}
-
-
-export function drawStatic(container, symbolName, size = null) 
-{
-  if (!symbolIDs.includes(symbolName)) 
-   {
-    console.warn("Symbol nicht vorhanden:", symbolName);
-    return;
-   }
-
-   const id = '#icon-' + symbolName;
-   const w  = size || '100%';
-   
-   container.innerHTML ='<svg width="'+w+'" height="'+w+'">  <use href="'+id+'" /> </svg>';
-    
 }

@@ -113,7 +113,9 @@ if(CMD=='SYMBOLPATH')
   
 
 if( CMD=='LSSYMBOLS')       {
-                              var response = utils.scanDir ( fs , path , globals.symbolPath() , '*.*');
+                              var spath = globals.symbolPath(param.path || ''); 
+                              console.log('LSSYMBOLS: -> '+spath)
+                              var response = utils.scanDir ( fs , path , spath , '*.*');
                               if (response.error) return response;
                               var sym = [];  
                               for (var i=0; i<response.result.length; i++) sym.push( path.basename(response.result[i].name, '.svg')); 
@@ -123,7 +125,8 @@ if( CMD=='LSSYMBOLS')       {
 
 
 if( CMD=='SYMBOL')         {
-                             var p = globals.symbolPath()+'/'+param.symbolName+'.svg';
+                             var p = globals.symbolPath(param.path || '');
+                                 p = path.join( p , param.symbolName+'.svg');
                              return utils.getTextFile( fs , p );
                            }
 
