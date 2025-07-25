@@ -1,66 +1,53 @@
 import { webApiRequestAsync } from './utils.js'; 
+import { webApiRequest }      from './utils.js'; 
 
-let symbolIDs = [];
 
-export async function init_old_asynchron() 
+var symbolsList      = [];
+var symbolObjMapping = [];
+
+
+export function symbolGroups()
 {
-  const svgs = utils.webApiRequest('LSSYMBOLS', {path:'/unsorted'}).result;
-  let spriteText = '<svg id="icon-sprite" xmlns="http://www.w3.org/2000/svg" style="display:none">\n';
-
-  for (let i = 0; i < svgs.length; i++) 
-  {
-    const id = svgs[i];
-    const svgText = utils.webApiRequest('SYMBOL', { symbolName: id }).result;
-    if (!svgText || !svgText.trim()) continue;
-
-    let viewBox = '0 0 24 24';
-    const match = svgText.match(/viewBox="([^"]+)"/);
-    if (match && match[1]) viewBox = match[1];
-
-    let content = svgText.replace(/<svg[^>]*>/, '').replace(/<\/svg>/, '');
-
-    spriteText += `<symbol id="icon-${id}" viewBox="${viewBox}">\n${content}\n</symbol>\n`;
-    symbolIDs.push(id);
-  }
-
-  spriteText += '</svg>';
-
-  const container     = document.createElement('div');
-  container.innerHTML = spriteText;
-  document.body.prepend(container.firstElementChild);
-
-console.log("Symbols initialized:", symbolIDs.length, "symbols loaded.");
-console.log("Available symbols:", symbolIDs.join(', '));
-console.log("sprite-Text:"+spriteText);
-
+  var groups=[];
+  for(var i=0; i<symbolsList.length; i++) groupCollapsed.push(symbolsList[i].groupName)
 }
 
 
-export async function init() 
+class TFSymbols 
 {
-  // 1. Alle Symbolnamen laden
-  const listResponse = await webApiRequestAsync('LSSYMBOLS', {path:'essential'});
-  const svgs = listResponse.result || [];
+  constructor ( group ) 
+  {
+    this.symbolIDs = [];
+    this.groupName = group || '';
+    this.loadSymbols( this.groupName );
+  }
 
-  symbolIDs = []; // zurücksetzen
-  let symbolDefs = [];
+   
+  async loadSymbols( group )
+  {
+    const listResponse = await webApiRequestAsync('LSSYMBOLS', {path:group});
+    const svgs         = listResponse.result || [];
 
-  // 2. Parallel alle SVGs laden
-  const loadTasks = svgs.map(async (id) => {
-    const res = await webApiRequestAsync('SYMBOL', {path:'essential' , symbolName: id });
+     this.symbolIDs  = []; // zurücksetzen
+     this.symbolDefs = [];
 
-    if (res.error || !res.result?.trim()) return null;
+   // 2. Parallel alle SVGs laden
+    const loadTasks = svgs.map(async function(id) 
+                      {
+                        const res = await webApiRequestAsync('SYMBOL', {path:group , symbolName: id });
 
-    let svgText = res.result;
-    let viewBox = '0 0 24 24';
-    const match = svgText.match(/viewBox="([^"]+)"/);
-    if (match && match[1]) viewBox = match[1];
+                        if (res.error || !res.result?.trim()) return null;
 
-    let content = svgText.replace(/<svg[^>]*>/, '').replace(/<\/svg>/, '');
-    symbolIDs.push(id);
+                        let svgText = res.result;
+                        let viewBox = '0 0 24 24';
+                        const match = svgText.match(/viewBox="([^"]+)"/);
+                        if (match && match[1]) viewBox = match[1];
 
-    return `<symbol id="icon-${id}" viewBox="${viewBox}">\n${content}\n</symbol>`;
-  });
+                        let content = svgText.replace(/<svg[^>]*>/, '').replace(/<\/svg>/, '');
+                        this.symbolIDs.push(id);
+
+                        return `<symbol id="icon-${id}" viewBox="${viewBox}">\n${content}\n</symbol>`;
+                      }.bind(this));
 
   const symbolElements = await Promise.all(loadTasks);
   const spriteText = `<svg id="icon-sprite" xmlns="http://www.w3.org/2000/svg" style="display:none">\n${symbolElements.filter(Boolean).join('\n')}\n</svg>`;
@@ -69,23 +56,22 @@ export async function init()
   const container = document.createElement('div');
   container.innerHTML = spriteText;
   document.body.prepend(container.firstElementChild);
-
-  console.log("✅ Symbols initialized:", symbolIDs.length, "loaded.");
+  console.log("✅ Symbols ("+group+") initialized:", this.symbolIDs.length, "loaded.");
 }
 
 
-export function list() 
+list() 
 {
-  return symbolIDs;
+  return this.symbolIDs;
 }
 
 
-export function draw(container, symbolName, size = null) 
+draw(container, symbolName, size = null) 
 {
   const id = 'icon-' + symbolName;
-  if (!symbolIDs.includes(symbolName)) {
+  if (!this.symbolIDs.includes(symbolName)) {
     console.warn("Symbol nicht vorhanden:", symbolName);
-    return;
+    return false;
   }
 
   container.innerHTML = '';
@@ -115,4 +101,60 @@ export function draw(container, symbolName, size = null)
   use.setAttribute('href', '#' + id);
   svg.appendChild(use);
   container.appendChild(svg);
+
+  return true;
+}
+
+} // class TFSymbols
+
+
+
+export async function init() 
+{
+    // symbol-Liste löschen
+    symbolsList      = [];
+    symbolObjMapping = [];
+    
+    // ermittle alle Symbol-gruppen
+    const symbolGroups =  webApiRequest('LSSYMBOLGROUPS', {}).result;
+
+    for(var i=0; i<symbolGroups.length; i++)
+    {  
+      var s = new TFSymbols(symbolGroups[i]); 
+      symbolsList.push( s );
+
+      for(var j=0; j<s.symbolIDs.length; j++) symbolObjMapping.push({group:symbolGroups[i], obj:s, symbol:s.symbolIDs[j]})
+    }  
+}
+
+
+export function list(group)
+{
+  var sumList = [];
+
+  for(var i=0; i<symbolObjMapping.length; i++)
+  {  
+     if(group) 
+     {
+       if(group==symbolObjMapping[i].group) sumList.push(symbolObjMapping[i].symbol) 
+     }
+     else sumList.push(symbolObjMapping[i].symbol);
+  }  
+  return sumList;
+
+}
+
+
+export function draw( container  , symbolName , size = null , symbolGroup=null ) 
+{
+  if(symbolGroup) 
+    {
+      for(var i=0; i<symbolsList.length; i++) 
+      if(symbolsList[i].groupName==group) return symbolsList[i].draw( container , symbolName , size )
+    }
+    else
+         for(var i=0; i<symbolObjMapping.length; i++) 
+         {
+           if(symbolObjMapping[i].symbol==symbolName) symbolObjMapping[i].obj.draw(container,symbolName,size);   
+         }
 }

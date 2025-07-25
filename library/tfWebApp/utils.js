@@ -88,7 +88,7 @@ export function JSONstringify(obj)
 
 
 
-export function drawSymbol(symbolName, container, color, size) 
+export function drawSymbol( symbolName, container, color, size , symbolGroup) 
 {
   const dom = container.DOMelement || container;
 
@@ -101,7 +101,7 @@ export function drawSymbol(symbolName, container, color, size)
   dom.style.borderColor = 'transparent';
 */
   // Symbol einfügen (symbolName wie "OK", size z. B. "77%" oder Zahl)
-  symbols.draw(dom, symbolName, size);
+  symbols.draw(dom, symbolName, size , symbolGroup );
   
   
   // Optional: Farbe setzen

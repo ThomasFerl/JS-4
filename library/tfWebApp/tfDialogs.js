@@ -954,7 +954,7 @@ export function showImage( url , caption )
   {  
     var w            = new TFWindow( null , 'Symbol-Browser' , '80%' , '80%' , 'CENTER' );
     var svgContainer = w.hWnd;
-
+debugger;
    var svgs = symbols.list();
   
    for(var i=0; i<svgs.length; i++)

@@ -106,6 +106,18 @@ if( CMD=='GETIMAGEFILE')    {
                              await utils.getImageFile  ( fs , path , param.fileName , webRequest , webResponse ); // function streamt direkt 
                              return {isStream:true};
                             }
+
+if(CMD=='LSSYMBOLGROUPS') 
+  {
+     var spath = globals.symbolPath(); 
+     console.log('LSSYMBOLGROUPS: -> '+spath)
+     var response = utils.scanDir ( fs , path , spath , '*.*');
+     if (response.error) return response;
+     var grp = [];  
+     for (var i=0; i<response.result.length; i++) if(response.result[i].isDir) grp.push(response.result[i].name); 
+     return {error:false, errMsg:"", result:grp};  
+  } 
+
 if(CMD=='SYMBOLPATH') 
   {
     return utils.getSymbolPath(param.symbol);
