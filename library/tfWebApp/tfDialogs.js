@@ -34,6 +34,8 @@ import { TFWindow   } from "./tfWindows.js";
 import { THTMLTable } from "./tfGrid.js";
 import { TFTreeView } from "./tfTreeView.js"; 
 
+import  {TFSymbolBrowser} from "./symbols.js"; 
+
 import { TFCheckBox, 
          TFileUploadPanel, 
          TFImage, 
@@ -950,35 +952,14 @@ export function showImage( url , caption )
 
 
   
-  export async function browseSymbols(path)
+  export async function browseSymbols(path )
   {  
-    var w            = new TFWindow( null , 'Symbol-Browser' , '80%' , '80%' , 'CENTER' );
-    var svgContainer = w.hWnd;
-debugger;
-   var svgs = symbols.list();
-  
-   for(var i=0; i<svgs.length; i++)
-   { 
-     console.log('Symbol: ' + svgs[i]);
-     var p = addPanel( svgContainer , "" , 1 , 1 , "140px" , "120px" );
-        p.padding = 0;
-         p.buildGridLayout_templateColumns('1fr');
-         p.buildGridLayout_templateRows('1.2em 1fr');
-     var s = addPanel(p,'cssContainerPanel',1,2,1,1)
-     utils.drawSymbol(svgs[i], p , 'black' , '100%') 
-    
-     // Caption ..
-     var c = addPanel( p , 'cssContainerPanel' , 1,1,1,1);
-     c.margin = 0;
-     c.ppadding=0;
-     c.overflow='hidden';
-     c.backgroundColor = 'rgba(0,0,0,0.14)';
-     c.innerHTML='<center>'+svgs[i]+'</center>';
-     
-     //symbols.drawStatic( p , svgs[i] ); 
-     await utils.processMessages();    
-    }      
- }
+     var s=new TFSymbolBrowser();
+         s.callback_onOkClicked = (s)=>{alert(JSON.stringify(s))}
+  }
+   
+
+   
 
 
   export function createMenu( menuItems)

@@ -1,6 +1,13 @@
 import { webApiRequestAsync } from './utils.js'; 
 import { webApiRequest }      from './utils.js'; 
 
+import  * as globals   from "./globals.js";
+import  * as dialogs   from "./tfDialogs.js";  
+import  * as utils     from "./utils.js";
+
+import { TFWindow   } from "./tfWindows.js";
+
+
 
 var symbolsList      = [];
 var symbolObjMapping = [];
@@ -9,7 +16,8 @@ var symbolObjMapping = [];
 export function symbolGroups()
 {
   var groups=[];
-  for(var i=0; i<symbolsList.length; i++) groupCollapsed.push(symbolsList[i].groupName)
+  for(var i=0; i<symbolsList.length; i++) groups.push(symbolsList[i].groupName);
+  return groups;
 }
 
 
@@ -45,6 +53,8 @@ class TFSymbols
 
                         let content = svgText.replace(/<svg[^>]*>/, '').replace(/<\/svg>/, '');
                         this.symbolIDs.push(id);
+                        
+                        symbolObjMapping.push({group:group, obj:this, symbol:id})
 
                         return `<symbol id="icon-${id}" viewBox="${viewBox}">\n${content}\n</symbol>`;
                       }.bind(this));
@@ -122,8 +132,6 @@ export async function init()
     {  
       var s = new TFSymbols(symbolGroups[i]); 
       symbolsList.push( s );
-
-      for(var j=0; j<s.symbolIDs.length; j++) symbolObjMapping.push({group:symbolGroups[i], obj:s, symbol:s.symbolIDs[j]})
     }  
 }
 
@@ -157,4 +165,93 @@ export function draw( container  , symbolName , size = null , symbolGroup=null )
          {
            if(symbolObjMapping[i].symbol==symbolName) symbolObjMapping[i].obj.draw(container,symbolName,size);   
          }
+}
+
+
+export class TFSymbolBrowser
+{
+  constructor()
+  {
+      this.cache    = [];
+      this.selected = [];
+      this.callback_onOkClicked = null;
+      this.wnd      = new TFWindow( null , 'Symbol-Browser' , '80%' , '80%' , 'CENTER' );
+   
+      this.wnd.hWnd.buildGridLayout_templateColumns('1fr '   );
+      this.wnd.hWnd.buildGridLayout_templateRows   ('3em 1fr');
+
+      var svgSelection = dialogs.addPanel(this.wnd.hWnd,'sccContainerPanel',1,1,1,1,{});
+          svgSelection.buildGridLayout_templateColumns('1fr , 4em');
+          svgSelection.buildGridLayout_templateRows('1fr');
+
+          
+     var btnSelectSymbol             = dialogs.addButton( svgSelection , '' , 2,1,1,1,{glyph:'check',caption:'OK'});
+         btnSelectSymbol.height      = '2.2em';
+         btnSelectSymbol.marginTop   = '4px';
+         btnSelectSymbol.marginRight = '1em';
+         btnSelectSymbol.callBack_onClick = function () { if(this.callback_onOkClicked) this.callback_onOkClicked(this.selected)}.bind(this);
+
+     var svgCombobox                 = dialogs.addSelectBox(svgSelection,1,1,35,'Kategorie','','essentiall', symbolGroups(),{});    
+         svgCombobox.callBack_onClick = async function( v , c ){if (typeof v === "string") this.updateSymbols(v) }.bind(this)
+
+     this.updateSymbols('essential');     
+  }
+
+
+ async updateSymbols(path)
+ {  
+   var svgContainer = null;
+
+   for(var i=0; i<this.cache.length; i++)
+    {
+      if(this.cache[i].groupName==path)
+      {
+        svgContainer = this.cache[i].container;
+        svgContainer.show();
+      }
+      else this.cache[i].container.hide()
+    } 
+
+    if(svgContainer) return;
+
+    svgContainer = dialogs.addPanel(this.wnd.hWnd,'' ,1,2,1,1,{});
+
+    var svgs     = list( path );
+    
+    for(var i=0; i<svgs.length; i++)
+    { 
+      console.log('Symbol: ' + svgs[i]);
+      var p = dialogs.addPanel( svgContainer , "" , 1 , 1 , "140px" , "120px" );
+          p.padding = 0;
+          p.buildGridLayout_templateColumns('1fr');
+          p.buildGridLayout_templateRows('1.2em 1fr');
+      var s = dialogs.addPanel(p,'cssContainerPanel',1,2,1,1)
+      utils.drawSymbol(svgs[i], s , 'black' , '100%') 
+      s.dataBinding = {obj:s,sym:svgs[i]};
+
+      s.callBack_onClick = function(evt,dataBinding){ 
+                                                     const ndx = this.selected.indexOf(dataBinding.sym);
+                                                     if (ndx !== -1) { this.selected.splice(ndx, 1);
+                                                                       dataBinding.obj.backgroundColor = 'gray';
+                                                                     }  
+                                                                else { this.selected.push(dataBinding.sym);
+                                                                       dataBinding.obj.backgroundColor = 'white';
+                                                                     } 
+      }.bind(this);
+    
+     // Caption ..
+     var c = dialogs.addPanel( p , 'cssContainerPanel' , 1,1,1,1);
+         c.margin          = 0;
+         c.ppadding        = 0;
+         c.overflow        = 'hidden';
+         c.backgroundColor = 'rgba(0,0,0,0.14)';
+         c.innerHTML       = '<center>'+svgs[i]+'</center>';
+
+    await utils.processMessages();   
+   }   
+    
+   this.cache.push({groupName:path, container:svgContainer });
+  }
+  
+
 }
