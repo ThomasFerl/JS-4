@@ -1352,9 +1352,9 @@ getProperties()
   
   properties.push( {level:1, label:'css',type:'LOOKUP',value:this.css || '' , items:utils.getAvailableCSSClasses() || [] } );
   
-  properties.push( {level:1, label:'backgroundColor',type:'INPUT',value:this.backgroundColor} );
-  properties.push( {level:1, label:'color',type:'INPUT',value:this.color} ); 
-  properties.push( {level:2, label:'borderColor',type:'INPUT',value:this.borderColor} ); 
+  properties.push( {level:1, label:'backgroundColor',type:'INPUT',value:this.backgroundColor, dialog:'COLORPICKER'} );
+  properties.push( {level:1, label:'color',type:'INPUT',value:this.color , dialog:'COLORPICKER'} ); 
+  properties.push( {level:2, label:'borderColor',type:'INPUT',value:this.borderColor, dialog:'COLORPICKER'} ); 
   properties.push( {level:2, label:'borderWidth',type:'INPUT',value:this.borderWidth} ); 
   properties.push( {level:2, label:'borderRadius',type:'INPUT',value:this.borderRadius} ); 
   properties.push( {level:2, label:'shadow',type:'INPUT',value:this.shadow} ); 
@@ -1705,8 +1705,8 @@ getProperties()
     var properties = super.getProperties();
     properties.push( {level:1, label:'caption',type:'INPUT',value:this.caption} );
     properties.push( {level:1, label:'textAlign',type:'INPUT',value:this.textAlign} ); 
-    properties.push( {level:1, label:'color',type:'INPUT',value:this.color} );
-    properties.push( {level:1, label:'font',type:'LOOKUP',value:this.font,items:fontList} );
+    properties.push( {level:1, label:'color',type:'INPUT',value:this.color , dialog:'COLORPICKER'} );
+    properties.push( {level:1, label:'font',type:'LOOKUP',value:this.font,items:fontList , dialog:'FONTDIALOG'} );
     properties.push( {level:1, label:'fontWeight',type:'INPUT',value:this.fontWeight} );
     properties.push( {level:1, label:'fontSize',type:'INPUT',value:this.fontSize} );
 
@@ -1800,7 +1800,7 @@ export class TFImage extends TFObject
 getProperties()
 {
     var properties = super.getProperties();
-    properties.push( {level:1, label:'imgURL',type:'INPUT',value:this.imgURL} );
+    properties.push( {level:1, label:'imgURL',type:'INPUT',value:this.imgURL , dialog:'FILEPICKER'} );
     return properties;
  } 
 
@@ -1983,8 +1983,8 @@ set glyph( g )
 {
     var properties = super.getProperties();
     properties.push( {level:1, label:'caption',type:'INPUT',value:this.caption} );
-    properties.push( {level:1, label:'glyph',type:'INPUT',value:this.glyph} );
-    properties.push( {level:1, label:'glyphColor',type:'INPUT',value:this.glyphColor} );
+    properties.push( {level:1, label:'glyph',type:'INPUT',value:this.glyph,dialog:'SYMBOLPICKER'} );
+    properties.push( {level:1, label:'glyphColor',type:'INPUT',value:this.glyphColor, dialog:'COLORPICKER'} );
     
     return properties;
  }
@@ -4372,6 +4372,7 @@ export class TPropertyEditor
     this.properties       = aProperties;
     this.btnSave          = aBtnSave;
     this.callBack_onSave  = aCallBack_onSave;  
+    this.callBack_onDialog= null;
     this._level           = 999;
 
     if(this.btnSave)
@@ -4417,46 +4418,67 @@ export class TPropertyEditor
   {
      var item   = this.properties[i];
      var select = item.items || [];   // falls Select - oder Combobox vorlieft...
+     var dlg    = item.dialog;
+     var w      = 2;
+     if(dlg) w=1;
+
      
      if(item.level > this._level) continue;  // nur die Items rendern, die auf der aktuellen Ebene liegen
    
      var p = new TFPanel( this.parent , 0 , 0 , '99%' , '2.4em' , {css:"cssValueListPanel"});   // Dimension sind bereits im css definiert
          p.isGridLayout    = true;  // kommt vom css
          p.backgroundColor = (i % 2) != 0 ? "RGB(240,240,240)" : "RGB(255,255,255)"; 
+         
      var l = new TFLabel( p , 2 , 2 , 1, 1 , {css:"cssBoldLabel" , caption:item.label} );
          l.textAlign = 'left';
 
      if((item.type.toUpperCase()=='TEXT') || (item.type.toUpperCase()=='INPUT'))
      { 
-        if(select.length > 0) item.control = new TFComboBox( p , 3 , 2 , 1 , 1 , {value:item.value , items:item.items} )
-        else                  item.control = new TFEdit    ( p , 3 , 2 , 1 , 1 , {value:item.value} );
+        if(select.length > 0) item.control = new TFComboBox( p , 3 , 2 , w , 1 , {value:item.value , items:item.items} )
+        else                  item.control = new TFEdit    ( p , 3 , 2 , w , 1 , {value:item.value} );
      }  
 
      if(item.type.toUpperCase()=='SELECT')
-      item.control = new TFSelectBox( p , 3 , 2 , 1 , 1 , {value:item.value , items:item.items} )
+      item.control = new TFSelectBox( p , 3 , 2 , w , 1 , {value:item.value , items:item.items} )
    
      
      if(item.type.toUpperCase()=='LOOKUP')
-      item.control = new TFComboBox(p , 3, 2 , 1 , 1 ,   {lookUp:true,items:item.items,value:item.value});  
+      item.control = new TFComboBox(p , 3, 2 , w , 1 ,   {lookUp:true,items:item.items,value:item.value});  
       
 
 
    if(item.type.toUpperCase()=='DATE')
-    item.control = new TFEdit(p ,3,2,1,1,{type:"date",value:item.value});  
+    item.control = new TFEdit(p ,3,2,w,1,{type:"date",value:item.value});  
  
    if(item.type.toUpperCase()=='TIME')
-    item.control = new TFEdit(p ,3,2,1,1,{type:"time",value:item.value});  
+    item.control = new TFEdit(p ,3,2,w,1,{type:"time",value:item.value});  
    
    if(item.type.toUpperCase()=='DATETIME')
-    item.control = new TFEdit(p ,3,2,1,1,{type:"datetime-local",value:item.value});  
+    item.control = new TFEdit(p ,3,2,w,1,{type:"datetime-local",value:item.value});  
    
    
    if(item.type.toUpperCase()=='RANGE')
-    item.control = new TFSlider(p ,3,2,1,1,{value:item.value});
+    item.control = new TFSlider(p ,3,2,w,1,{value:item.value});
 
 
    if((item.type.toUpperCase()=='CHECKBOX') || (item.type.toUpperCase()=='BOOLEAN'))
-    item.control = new TFCheckBox(p,3,2,1,1,{value:item.value});
+    item.control = new TFCheckBox(p,3,2,w,1,{value:item.value});
+
+  // falls das Element mit einem Dialog veerknüpft ist ....
+  if(dlg)
+  {
+    var btn = new TFButton(p,4,2,1,1,{caption:'...'});
+        btn.backgroundColor = "rgba(0,0,0,0.5)";
+        btn.height          = '1.7em';
+        btn.margin          = '2px';
+        btn.borderRadius    = '2px';
+
+        btn.dataBinding = {item:item}
+        btn.callBack_onClick = function (e,d) {if ( this.callBack_onDialog) this.callBack_onDialog(d.item) }.bind(this)
+  }
+
+
+
  }
 
  }

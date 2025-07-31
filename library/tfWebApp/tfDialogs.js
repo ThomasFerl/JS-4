@@ -952,10 +952,11 @@ export function showImage( url , caption )
 
 
   
-  export async function browseSymbols(path )
+  export async function browseSymbols(path , callBack_onSelection )
   {  
      var s=new TFSymbolBrowser();
-         s.callback_onOkClicked = (s)=>{alert(JSON.stringify(s))}
+     if(callBack_onSelection) s.callback_onOkClicked = callBack_onSelection;
+     else s.callback_onOkClicked = (items)=>{alert(JSON.stringify(items))} 
   }
    
 

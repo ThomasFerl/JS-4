@@ -164,7 +164,8 @@ var loadBtn                        = dialogs.addButton(fileOps , '' , 3 , 2 , 1 
          b.marginTop = '4px'
 
     this.propertyEditor = dialogs.newPropertyEditor(propertiesDiv , [] , b );
-    this.propertyEditor.callBack_onSave = function(p){this.saveProperties(p)}.bind(this); 
+    this.propertyEditor.callBack_onSave   = function(p){this.saveProperties(p)}.bind(this); 
+    this.propertyEditor.callBack_onDialog = function(item){ this.propertyEditorDialog(item)}.bind(this);
    
          
      // toolbox
@@ -675,6 +676,17 @@ showGridLines(div)
     ctx.lineTo(divWidth, y);
     ctx.stroke();
   }
+}
+
+
+propertyEditorDialog(item)
+{
+  if (item.dialog=='SYMBOLPICKER')
+  {
+    dialogs.browseSymbols('', function (symbolName){ this.propertyItem.control.value = symbolName[0];
+                                                     
+                                                   }.bind({self:this,propertyItem:item}) )
+  }  
 }
 
 

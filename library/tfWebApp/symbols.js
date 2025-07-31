@@ -189,7 +189,7 @@ export class TFSymbolBrowser
          btnSelectSymbol.height      = '2.2em';
          btnSelectSymbol.marginTop   = '4px';
          btnSelectSymbol.marginRight = '1em';
-         btnSelectSymbol.callBack_onClick = function () { if(this.callback_onOkClicked) this.callback_onOkClicked(this.selected)}.bind(this);
+         btnSelectSymbol.callBack_onClick = function () { if(this.callback_onOkClicked) this.callback_onOkClicked(this.selected) , this.wnd.close() }.bind(this);
 
      var svgCombobox                 = dialogs.addSelectBox(svgSelection,1,1,35,'Kategorie','','essentiall', symbolGroups(),{});    
          svgCombobox.callBack_onClick = async function( v , c ){if (typeof v === "string") this.updateSymbols(v) }.bind(this)

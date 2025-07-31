@@ -1007,8 +1007,8 @@ html, body {
    align-items       : center; /* Vertikal zentrieren */    
    overflow          : hidden;
    display           : grid;
-   grid-template-columns: 4px 1fr 1fr 4px;
-   grid-template-rows   : 4px 1fr 4px;
+   grid-template-columns: 1px 1fr 1fr 2em;
+   grid-template-rows   : 1px 1fr 1px;
  } 
 
 
