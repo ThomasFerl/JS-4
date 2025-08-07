@@ -961,19 +961,40 @@ export function showImage( url , caption )
    
 
    
-export function colorPicker( currentColor , callback_onColorChanged )
-{debugger;
-   var inp = document.createElement('input');
-       inp.setAttribute("type","color");
-       inp.style.display="none"; 
-       inp.value = currentColor || "#000000";
-       inp.onchange = (newColor)=>{if(callback_onColorChanged) callback_onColorChanged(inp.value)}
+export function colorPicker(currentColor, callback_onColorChanged) 
+{
+  const colors = [
+    "#000000", "#444444", "#888888", "#cccccc", "#ffffff",
+    "#ff0000", "#00ff00", "#0000ff", "#ffff00", "#ff00ff", "#00ffff",
+    "#800000", "#008000", "#000080", "#808000", "#800080", "#008080"
+  ];
 
-       document.body.appendChild(inp); // Wichtig: ins DOM einfügen
-       inp.click(); // Öffnet den ColorPicker
+  let wnd = createWindow(null,"Farbauswahl","200px","200px","CENTER");
+  
+  let inp = wnd.hWnd.DOMelement;
+  inp.style.display               = 'grid';
+  inp.style.gridTemplateColumns   = "repeat(8, 20px)";
+  inp.style.gap                   = "4px";
+  inp.style.padding               = "10px";
+  inp.style.background            = "#f0f0f0";
+  inp.style.border                = "1px solid #ccc";
+  inp.style.width                 = "max-content";
+
+
+
+
+  inp.value = currentColor || '#000000';
+  inp.style.display = 'none';
+
+  inp.onchange = () => 
+  {
+    if (callback_onColorChanged) callback_onColorChanged(inp.value);
+    inp.remove(); // optional: aufräumen
+  };
+
+  document.body.appendChild(inp);
+  inp.click(); // Muss direkt im Event-Handler stehen!
 }
-
-
 
 
 
