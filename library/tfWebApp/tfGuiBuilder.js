@@ -58,7 +58,7 @@ export class TFGuiBuilder
 
     this.formNameInp              = new TFComboBox( fileOps,1,1,5,1, { items: utils.lsForms() }) ;
 
- var newBtn                        = dialogs.addButton(fileOps , '' , 1 , 2 , 1 , 1 , 'new');
+ var newBtn                        = dialogs.addButton(fileOps , '' , 1 , 2 , 1 , 1 , {glyph:"file-circle-plus",caption:""});
      newBtn.height                 = '2em';
      newBtn.marginTop              = '0.5em';
      newBtn.callBack_onClick       = function()
@@ -66,7 +66,7 @@ export class TFGuiBuilder
                                        this.newProject(); 
                                      }.bind(this);
 
-var saveBtn                        = dialogs.addButton(fileOps , '' , 2 , 2 , 1 , 1 , 'save');
+var saveBtn                        = dialogs.addButton(fileOps , '' , 2 , 2 , 1 , 1 , {glyph:"file-arrow-down",caption:""});
     saveBtn.height                 = '2em';
     saveBtn.marginTop              = '0.5em';
     saveBtn.callBack_onClick       = function()
@@ -74,7 +74,7 @@ var saveBtn                        = dialogs.addButton(fileOps , '' , 2 , 2 , 1 
                                        this.save(); 
                                      }.bind(this);
 
-var loadBtn                        = dialogs.addButton(fileOps , '' , 3 , 2 , 1 , 1 , 'load');
+var loadBtn                        = dialogs.addButton(fileOps , '' , 3 , 2 , 1 , 1 , {glyph:"file-arrow-up",caption:""});
     loadBtn.height                 = '2em';
     loadBtn.marginTop              = '0.5em';
     loadBtn.callBack_onClick       = function()
@@ -83,7 +83,7 @@ var loadBtn                        = dialogs.addButton(fileOps , '' , 3 , 2 , 1 
                                      }.bind(this);
 
 
- var testBtn                       = dialogs.addButton(fileOps , '' , 4 , 2 , 1 , 1 , 'test');
+ var testBtn                       = dialogs.addButton(fileOps , '' , 4 , 2 , 1 , 1 , {glyph:"desktop",caption:""});
      testBtn.height                = '2em';
      testBtn.marginTop             = '0.5em';
      testBtn.backgroundColor       = 'gray';
@@ -116,7 +116,7 @@ var loadBtn                        = dialogs.addButton(fileOps , '' , 3 , 2 , 1 
      this.gridCtrlRows       = dialogs.addInput ( gridCtrlPanel    , 1 , 2 , 4  , 'row' , '' , '-' , {margin:0}) ;
      this.gridCtrlCols       = dialogs.addInput ( gridCtrlPanel    , 2 , 2 , 4  , 'col' , '' , '-' , {margin:0} );
 
-     var gridCtrlBtn        = dialogs.addButton( gridCtrlPanel ,'', 3 , 2 , 1 , 1 , '...' );
+     var gridCtrlBtn        = dialogs.addButton( gridCtrlPanel ,'', 3 , 2 , 1 , 1 ,  {glyph:"check",caption:""});
          gridCtrlBtn.height = '1.7em';
          gridCtrlBtn.width  = '2em';
          gridCtrlBtn.margin = 0;
@@ -169,26 +169,27 @@ var loadBtn                        = dialogs.addButton(fileOps , '' , 3 , 2 , 1 
    
          
      // toolbox
-      this.___createToolboxItem( 'div'     , 'DIV'     , 1,4)
-      this.___createToolboxItem( 'button'  , 'BTN'     , 2,4)
-      this.___createToolboxItem( 'label'   , 'LABEL'   , 3,4)
-      this.___createToolboxItem( 'clock'   , 'CLOCK'   , 4,4)
-      this.___createToolboxItem( 'edit'    , 'INPUT'         , 1,5)
-      this.___createToolboxItem( 'datetime', 'INPUT_DATETIME', 2,5)
-      this.___createToolboxItem( 'date'    , 'INPUT_DATE'    , 3,5)
-      this.___createToolboxItem( 'time'    , 'INPUT_TIME'    , 4,5)
+      this.___createToolboxItem( 'stop'             , 'DIV'     , 1,4)
+      this.___createToolboxItem( 'square-check'     , 'BTN'     , 2,4)
+      this.___createToolboxItem( 'font'             , 'LABEL'   , 3,4)
+      this.___createToolboxItem( 'clock'            , 'CLOCK'   , 4,4)
+      this.___createToolboxItem( 'pen-clip'         , 'INPUT'         , 1,5)
+      this.___createToolboxItem( 'calendar-days'    , 'INPUT_DATETIME', 2,5)
+      this.___createToolboxItem( 'calendar-days'    , 'INPUT_DATE'    , 3,5)
+      this.___createToolboxItem( 'calendar-days'    , 'INPUT_TIME'    , 4,5)
 
 
-      this.___createToolboxItem( 'combo'   , 'COMBOBOX', 1,6)
-      this.___createToolboxItem( 'listbox' , 'LISTBOX' , 2,6)
-      this.___createToolboxItem( 'select'  , 'SELECT'  , 3,6)
-      this.___createToolboxItem( 'checkbox', 'CHECKBOX', 4,6)
+      this.___createToolboxItem( 'indent'           , 'COMBOBOX', 1,6)
+      this.___createToolboxItem( 'indent'           , 'SELECT'  , 2,6)
+      this.___createToolboxItem( 'list'             , 'LISTBOX' , 3,6)
+      
+      this.___createToolboxItem( 'square-check'     , 'CHECKBOX', 4,6)
 
-      this.___createToolboxItem('checklist', 'CHECKLISTBOX' , 1,7)
-      this.___createToolboxItem('image'    , 'IMAGE'  , 2,7)
-      this.___createToolboxItem('slider'   , 'SLIDER' , 3,7)
-      this.___createToolboxItem('*' , '*'  , 4,7)
-
+      this.___createToolboxItem('check-double'      , 'CHECKLISTBOX' , 1,7)
+      this.___createToolboxItem('image'             , 'IMAGE'  , 2,7)
+      this.___createToolboxItem('sliders'           , 'SLIDER' , 3,7)
+      //this.___createToolboxItem('*'                 , '*'      , 4,7)
+      
       this.setGridLayout( 4 , 21 );
 
     return 
@@ -461,9 +462,9 @@ ___createToolboxItem( glyph , type , left , top)
   var item                       = dialogs.addPanel( this.menuPanel , '' , left , top , 1 , 1 , {dragable:true , draggingData: { newObject:type } });
       item.overflow              = 'hidden';
       item.margin                = '0.4em';
-      item.innerHTML             = "<center>"+glyph+"</center>"
-   // item.innerHTML             = `<img src=/tfWebApp/GUIsymbols/${glyph}.png style="width: 100%; height: 100%;">`;
+      utils.drawSymbol(  glyph , item , "90%" ); 
       item.type                  = type;
+      item.DOMelement.setAttribute("title", type)
   return item;  
 }
 
@@ -687,6 +688,18 @@ propertyEditorDialog(item)
                                                      
                                                    }.bind({self:this,propertyItem:item}) )
   }  
+
+
+if (item.dialog=='COLORPICKER')
+  {
+    dialogs.colorPicker( item.value , function (newColor){ this.propertyItem.control.value = newColor;
+                                                     
+                                                   }.bind({self:this,propertyItem:item}) )
+  }  
+
+
+
+
 }
 
 

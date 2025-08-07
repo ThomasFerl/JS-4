@@ -90,8 +90,10 @@ export function JSONstringify(obj)
 
 export function drawSymbol( symbolName, container, color, size , symbolGroup) 
 {
-  const dom = container.DOMelement || container;
-
+  let dom = null;
+  if(isHTMLElement(container)) dom = container;
+  else                         dom = container.DOMelement;
+  
   // Container vorbereiten
   /*
   dom.style.overflow = 'hidden';

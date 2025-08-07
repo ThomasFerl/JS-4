@@ -1938,7 +1938,8 @@ build()
    if(this.params.glyph)
     {
       this.btnGlyph = new TFPanel( this , 1 , 1 , 1 , 1 , {css:"cssContainerPanel" ,  dontRegister:true} );
-      utils.drawSymbol( this.params.glyph , this.btnGlyph , this.params.glyphColor || this.color || "lightgray" , "77%");
+      this.btnGlyph.overflow = 'hidden';
+      utils.drawSymbol( this.params.glyph , this.btnGlyph , this.params.glyphColor || this.color || "lightgray" , "104%");
     }  
 
  } 
@@ -4464,10 +4465,10 @@ export class TPropertyEditor
    if((item.type.toUpperCase()=='CHECKBOX') || (item.type.toUpperCase()=='BOOLEAN'))
     item.control = new TFCheckBox(p,3,2,w,1,{value:item.value});
 
-  // falls das Element mit einem Dialog veerknüpft ist ....
+  // falls das Element mit einem Dialog verknüpft ist ....
   if(dlg)
   {
-    var btn = new TFButton(p,4,2,1,1,{caption:'...'});
+    var btn = new TFButton(p,4,2,1,1,{glyph:"whmcs"});
         btn.backgroundColor = "rgba(0,0,0,0.5)";
         btn.height          = '1.7em';
         btn.margin          = '2px';

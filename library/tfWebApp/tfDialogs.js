@@ -961,6 +961,20 @@ export function showImage( url , caption )
    
 
    
+export function colorPicker( currentColor , callback_onColorChanged )
+{debugger;
+   var inp = document.createElement('input');
+       inp.setAttribute("type","color");
+       inp.style.display="none"; 
+       inp.value = currentColor || "#000000";
+       inp.onchange = (newColor)=>{if(callback_onColorChanged) callback_onColorChanged(inp.value)}
+
+       document.body.appendChild(inp); // Wichtig: ins DOM einfügen
+       inp.click(); // Öffnet den ColorPicker
+}
+
+
+
 
 
   export function createMenu( menuItems)

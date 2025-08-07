@@ -88,7 +88,7 @@ draw(container, symbolName, size = null)
 
   // SVG erstellen
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-  svg.setAttribute('viewBox', '0 0 24 24'); // universelles Koordinatensystem
+  svg.setAttribute('viewBox', '0 0 35 35'); // universelles Koordinatensystem
 
   // Feste Größe oder 100% (z. B. für Flex-Layouts)
   if (size) {
