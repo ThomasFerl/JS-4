@@ -49,6 +49,7 @@ import { TFCheckBox,
          TPropertyEditor,
          TFileDialog,
          TFListBox,
+         TFColorDialog, 
          TFListCheckbox } from "./tfObjects.js";
 
 var   splash  = {panel:null, imgPanel:null, msgPanel:null, msg:'...' , activ:false};
@@ -961,7 +962,7 @@ export function showImage( url , caption )
    
 
    
-export function colorPicker(currentColor, callback_onColorChanged) 
+export function _colorPicker(currentColor, callback_onColorChanged) 
 {
   const colors = [
     "#000000", "#444444", "#888888", "#cccccc", "#ffffff",
@@ -970,7 +971,7 @@ export function colorPicker(currentColor, callback_onColorChanged)
   ];
 
   let wnd = createWindow(null,"Farbauswahl","200px","200px","CENTER");
-  
+  debugger;
   let inp = wnd.hWnd.DOMelement;
   inp.style.display               = 'grid';
   inp.style.gridTemplateColumns   = "repeat(8, 20px)";
@@ -979,12 +980,9 @@ export function colorPicker(currentColor, callback_onColorChanged)
   inp.style.background            = "#f0f0f0";
   inp.style.border                = "1px solid #ccc";
   inp.style.width                 = "max-content";
-
-
-
-
-  inp.value = currentColor || '#000000';
-  inp.style.display = 'none';
+  inp.style.height                = "max-content";
+  inp.value                       = currentColor || '#000000';
+  inp.style.display               = 'none';
 
   inp.onchange = () => 
   {
@@ -997,6 +995,14 @@ export function colorPicker(currentColor, callback_onColorChanged)
 }
 
 
+
+export function colorPicker(currentColor, callback_onColorChanged)
+{
+  const dlg = new TFColorDialog(currentColor, color => {
+                                                         if (callback_onColorChanged) callback_onColorChanged(color);
+                                                       });
+ 
+}
 
   export function createMenu( menuItems)
   {

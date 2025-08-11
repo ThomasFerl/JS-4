@@ -939,6 +939,32 @@ export function rgbToHex(r, g, b)
 }
 
 
+export function rgbStringToHex(rgbString) 
+{
+    // Beispiel: "rgb(255, 0, 128)"
+    const rgb = rgbString.match(/\d+/g); // Extrahiert die Zahlen
+    if (!rgb || rgb.length !== 3) return null;
+
+    return "#" + rgb.map(x => {
+        const hex = parseInt(x).toString(16);
+        return hex.length === 1 ? "0" + hex : hex;
+    }).join("");
+}
+
+
+export function hexToRgbString(hexString) 
+{
+    // Beispiel: "#ff0080"
+    const hex = hexString.replace("#", "");
+    if (hex.length !== 6) return null;
+
+    const r = parseInt(hex.substring(0, 2), 16);
+    const g = parseInt(hex.substring(2, 4), 16);
+    const b = parseInt(hex.substring(4, 6), 16);
+
+    return `rgb(${r}, ${g}, ${b})`;
+}
+
 
 // Konvertiert RGB in HSL
 export function darkenColor(color, amount) 

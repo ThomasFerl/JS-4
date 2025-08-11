@@ -6,6 +6,7 @@ import * as chartJS  from "./chart.js";
 import { TFWindow   } from "./tfWindows.js"; 
 import { TFTreeView  }from "./tfTreeView.js"; 
 import { THTMLTable } from "./tfGrid.js";
+import { addButton, addLabel, addPanel, createWindow } from "./tfDialogs.js";
 
 const fontList = [
   "Arial", "Verdana", "Helvetica", "Tahoma", "Trebuchet MS",
@@ -1187,8 +1188,10 @@ set placeItems(value)
   set borderWidth( value )
   {
     this.params.borderWidth = value;
-    if(this.DOMelement) this.DOMelement.style.borderWidth = value;
+    if(this.DOMelement) this.DOMelement.style.border = value + " solid " + this.borderColor;
   }
+
+
 
   get borderWidth()
   {
@@ -4817,4 +4820,117 @@ export function addComponent(parent , component , callBackOnCreate )
 
 
 
+export class TFColorDialog 
+{
+  constructor(initialColor = '#000000', onSelect = null) 
+  { 
+    this.onSelect = onSelect;
 
+    this.colors = [
+    // Grauabstufungen
+    "#000000", "#333333", "#444444", "#666666", "#888888", "#999999", "#cccccc", "#e6e6e6", "#f2f2f2", "#ffffff",
+
+    // Rottöne
+    "#800000", "#ff0000", "#ff3300", "#ff6600", "#ff9999", "#ffcc00", "#ffccff", "#ff0033",
+
+    // Grüntöne
+    "#008000", "#00ff00", "#33ff00", "#66ff00", "#99ff99", "#ccff00", "#00ff33",
+
+    // Blautöne
+    "#000080", "#0033ff", "#0000ff", "#0066ff", "#9999ff", "#00ccff", "#00ffff",
+
+    // Gelb-/Orangetöne
+    "#808000", "#999900", "#ccff00", "#ffff00",
+
+    // Pink-/Violetttöne
+    "#800080", "#990099", "#cc00ff", "#ff00ff", "#ff00cc", "#3300ff", "#6600ff",
+
+    // Türkis-/Cyan-/Mischfarben
+    "#008080", "#009999", "#00ffcc", "#00ff66"];
+    
+    this.colorPanels = []; 
+    this.dlgWnd      = createWindow(null,"colorPicker","20%","25%","CENTER");
+    this.dlgWnd.buildGridLayout_templateColumns('1fr');
+    this.dlgWnd.buildGridLayout_templateRows('1fr 3.5em');
+
+    var body                 = addPanel(this.dlgWnd.hWnd,'cssContainerPanel',1,1,1,1);
+        body.backgroundColor = "rgba(0,0,0,0.07)"
+      
+    var footer    = addPanel(this.dlgWnd.hWnd,'cssContainerPanel',1,2,1,1);
+        footer.buildGridLayout_templateColumns("1fr 1fr 1fr 1fr 1fr 1fr");
+        footer.buildGridLayout_templateRows('1fr');
+        footer.marginLeft   = '4px';
+        footer.marginRight  = '4px';
+        footer.marginBottom = '4px'; 
+
+    this.currentColor = addPanel(footer,"",6,1,2,1);
+    this.currentColor.backgroundColor = initialColor;
+
+    this.currentRGB       = addLabel(footer,"",4,1,2,2,"");
+    this.currentRGB.color = 'gray';
+    this.currentRGB.size  = '0.77em';
+
+
+    var btnOk        = addButton(footer,'',1,1,1,1,{glyph:"circle-check"});
+        btnOk.height = '2em';
+        btnOk.width  = '3em';
+        btnOk.callBack_onClick =  function(){if(onSelect) onSelect(this.currentColor.backgroundColor) ; this.dlgWnd.close() }.bind(this);
+
+    var btnAbort  = addButton(footer,'cssAbortBtn01',2,1,1,1,{glyph:"circle-xmark"});
+        btnAbort.height = '2em';
+        btnAbort.width  = '3em';
+        btnAbort.callBack_onClick = function(){this.dlgWnd.close()}.bind(this);
+
+
+    var btnPicker = addButton(footer,'',3,1,1,1,{glyph:"magnifying-glass"});
+        btnPicker.height           = '2em';
+        btnPicker.width            = '3em';
+        btnPicker.backgroundColor  = 'gray';
+        btnPicker.callBack_onClick = function(){ 
+                                                 this.input.value = utils.rgbStringToHex(this.currentColor.backgroundColor);
+                                                 this.input.click();
+                                               }.bind(this); 
+
+    
+    body.buildGridLayout("7x7");
+    var gx=0; 
+    var gy=1;
+    for(var c=0; c<this.colors.length;c++)
+    {
+      gx++;
+      if(gx>7){gx=1;gy++}
+      var cp = new TFPanel(body,gx,gy,1,1,{css:'csContainerPanel'});
+          this.colorPanels.push(cp);
+          
+          cp.shadow          = '4';
+          cp.margin          = '2px';
+          cp.borderColor     = 'rgba(0,0,0,0.77)';
+          cp.borderWidth     = '1px';
+          cp.borderRadius    = '2px';
+          cp.backgroundColor = this.colors[c];
+          cp.callBack_onClick = function()
+                                          { 
+                                            this.self.colorPanels.forEach((p)=>{p.borderWidth='1px'}) 
+                                            this.cp.borderWidth='3px'
+                                            this.self.currentColor.backgroundColor = this.cp.backgroundColor;
+                                            this.self.currentRGB.caption           = this.cp.backgroundColor; 
+                                          }.bind({self:this,cp:cp})
+
+    }  
+     
+     this.input                     = document.createElement('input');
+     this.input.type                = 'color';
+     this.input.style.position      = 'fixed';
+     this.input.style.opacity       = '0';        // bleibt unsichtbar
+     this.input.style.pointerEvents = 'auto';
+     this.input.value               = utils.rgbStringToHex(initialColor);
+
+    // Event für Auswahl
+    this.input.addEventListener('input', function() {
+                                                      this.currentColor.backgroundColor = this.input.value;
+                                                      this.currentRGB.caption           = utils.hexToRgbString(this.input.value);
+                                                    }.bind(this));
+    this.dlgWnd.hWnd.appendChild(this.input);
+  }  
+
+}

@@ -145,9 +145,10 @@ var loadBtn                        = dialogs.addButton(fileOps , '' , 3 , 2 , 1 
                                               this.propertyEditor.level = v;
                                             }.bind(this);
 
-     var treeBtn = dialogs.addButton( propToollDiv , '' , 2 , 2 , 1 , 1 , '...' );
-         treeBtn.height = '2em';
+     var treeBtn = dialogs.addButton( propToollDiv , '' , 2 , 2 , 1 , 1 , {glyph:"folder-tree"} );
+         treeBtn.height = '3em';
          treeBtn.marginTop = '4px';
+         treeBtn.backgroundColor = 'gray';
          treeBtn.callBack_onClick = function() { this.handleTreeView() }.bind(this);                                     
   
     this.propCaption = dialogs.addPanel(propToollDiv , 'cssContainerPanel' , 1 , 1 , 1 , 1 );
@@ -159,8 +160,8 @@ var loadBtn                        = dialogs.addButton(fileOps , '' , 3 , 2 , 1 
          propertiesDiv.backgroundColor               = 'white';
          propertiesDiv.DOMelement.style.borderRadius = '0px';
     // saveButton für Property-Editor
-     var b = dialogs.addButton( propToollDiv , '' , 2 , 1 , 1 , 1 , 'ok' );
-         b.height = '2em';
+     var b = dialogs.addButton( propToollDiv , '' , 2 , 1 , 1 , 1 ,  {glyph:"check"} );
+         b.height = '3em';
          b.marginTop = '4px'
 
     this.propertyEditor = dialogs.newPropertyEditor(propertiesDiv , [] , b );
