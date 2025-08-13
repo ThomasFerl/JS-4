@@ -21,6 +21,8 @@ export class TFGuiBuilder
 {
   constructor()
   { 
+    this.hasChanged                              = false;
+    this.lastFormName                            = '';
     this.builderObjects                          = [];
     this.selected                                = {element:null , border:""};
     this.propertyEditor                          = null;	
@@ -61,22 +63,25 @@ export class TFGuiBuilder
  var newBtn                        = dialogs.addButton(fileOps , '' , 1 , 2 , 1 , 1 , {glyph:"file-circle-plus",caption:""});
      newBtn.height                 = '2em';
      newBtn.marginTop              = '0.5em';
+     newBtn.DOMelement.setAttribute("title", 'neues Formular');
      newBtn.callBack_onClick       = function()
                                      { 
                                        this.newProject(); 
                                      }.bind(this);
 
-var saveBtn                        = dialogs.addButton(fileOps , '' , 2 , 2 , 1 , 1 , {glyph:"file-arrow-down",caption:""});
+var saveBtn                        = dialogs.addButton(fileOps , '' , 2 , 2 , 1 , 1 , {glyph:"download",caption:""});
     saveBtn.height                 = '2em';
     saveBtn.marginTop              = '0.5em';
+    saveBtn.DOMelement.setAttribute("title", 'Formular speichern')
     saveBtn.callBack_onClick       = function()
                                      { 
                                        this.save(); 
                                      }.bind(this);
 
-var loadBtn                        = dialogs.addButton(fileOps , '' , 3 , 2 , 1 , 1 , {glyph:"file-arrow-up",caption:""});
+var loadBtn                        = dialogs.addButton(fileOps , '' , 3 , 2 , 1 , 1 , {glyph:"upload",caption:""});
     loadBtn.height                 = '2em';
     loadBtn.marginTop              = '0.5em';
+    loadBtn.DOMelement.setAttribute("title", 'Formular laden');
     loadBtn.callBack_onClick       = function()
                                      { 
                                        this.load(); 
@@ -87,6 +92,7 @@ var loadBtn                        = dialogs.addButton(fileOps , '' , 3 , 2 , 1 
      testBtn.height                = '2em';
      testBtn.marginTop             = '0.5em';
      testBtn.backgroundColor       = 'gray';
+     testBtn.DOMelement.setAttribute("title", 'Formular testen')
      testBtn.callBack_onClick      = function()
                                      { 
                                        this.test(); 
@@ -122,6 +128,7 @@ var loadBtn                        = dialogs.addButton(fileOps , '' , 3 , 2 , 1 
          gridCtrlBtn.margin = 0;
          gridCtrlBtn.marginTop='7px';
          gridCtrlBtn.backgroundColor = 'gray';
+         gridCtrlBtn.DOMelement.setAttribute("title", 'GRID anwenden');
          gridCtrlBtn.callBack_onClick = function() 
                                         { 
                                           this.setGridLayout( this.gridCtrlCols.value , this.gridCtrlRows.value ) 
@@ -149,6 +156,7 @@ var loadBtn                        = dialogs.addButton(fileOps , '' , 3 , 2 , 1 
          treeBtn.height = '3em';
          treeBtn.marginTop = '4px';
          treeBtn.backgroundColor = 'gray';
+         treeBtn.DOMelement.setAttribute("title", 'Formular in hirarchischer Ansicht');
          treeBtn.callBack_onClick = function() { this.handleTreeView() }.bind(this);                                     
   
     this.propCaption = dialogs.addPanel(propToollDiv , 'cssContainerPanel' , 1 , 1 , 1 , 1 );
@@ -163,6 +171,7 @@ var loadBtn                        = dialogs.addButton(fileOps , '' , 3 , 2 , 1 
      var b = dialogs.addButton( propToollDiv , '' , 2 , 1 , 1 , 1 ,  {glyph:"check"} );
          b.height = '3em';
          b.marginTop = '4px'
+         b.DOMelement.setAttribute("title", 'Änderungen anwenden');
 
     this.propertyEditor = dialogs.newPropertyEditor(propertiesDiv , [] , b );
     this.propertyEditor.callBack_onSave   = function(p){this.saveProperties(p)}.bind(this); 
@@ -258,27 +267,54 @@ addComponent( parent , left , top , elementName )
 
   this.updateTreeView();
   this.selectComponent(e); // das neu erzeugte Element gleich selektieren
+  this.hasChanged = true;
 
   }
 
 newProject()
 {
+  if(this.hasChanged)
+  {
+    dialogs.showMessage("Das aktuwelle Formular besitzt noch ungespeicherte Änderungen. Bitte speichern Sie diese zuvor !" );
+    return;
+  } 
 
+ this.lastFormName        = '';
+ this.hasChanged          = false;
+ this.builderObjects      = []; 
+ this.dashBoard.innerHTML = '';
+ this.showGridLines(this.dashBoard);
 }
 
 
+___saveForm()
+{
+  this.hasChanged   = false;
+  this.lastFormName = this.formNameInp.value;
+  var form = this.dashBoard.getConstructionProperties();
+  utils.saveForm(this.formNameInp.value , form );
+  this.formNameInp.items = utils.lsForms() ;
+}
+
 save()
-{ 
+{  
+  if(!this.hasChanged) return;
+  
   if(this.formNameInp.value=="")
   {
     dialogs.showMessage('Bitte zuvor einen EINDEUTIGEN Namen eingeben, unter dem das Formular zukünftig referenziert werden soll !');
     return;
   }
-  var board = this.dashBoard.getConstructionProperties();
-  utils.saveForm(this.formNameInp.value , board );
 
-  this.formNameInp.items = utils.lsForms() ;
-  
+  if(this.formNameInp.value==this.lastFormName)
+  {
+    dialogs.ask('nachgefragt...','Soll das existierende Formular überschrieben bzw. aktualisiert werden ?' ,
+                // YES:
+                function() { this.___saveForm() }.bind(this) )
+  }            
+  else {  this.___saveForm() };
+
+  return;
 } 
 
 
@@ -290,8 +326,15 @@ load()
     return;
   }
 
+ if(this.hasChanged)
+ {
+    dialogs.showMessage("Das aktuwelle Formular besitzt noch ungespeicherte Änderungen. Bitte speichern Sie diese bevor Sie ein neues Formular laden !" );
+    return;
+  } 
+ 
   var formData = utils.loadForm(this.formNameInp.value);
-  
+  this.lastFormName        = this.formNameInp.value;
+  this.hasChanged          = false;  
   this.dashBoard.innerHTML = '';
   this.builderObjects      = [];
 
@@ -338,10 +381,11 @@ test()
 
   var gui = new TFgui( w.hWnd , board );
   
+  /*
   gui.editFirstName.value     = 'Thomas';
   gui.editLastName.value      = 'Ferl';
   gui.selectFamilyState.setItems([{caption:'ledig',value:0},{caption:'verheiratet',value:2},{caption:'getrennt lebend',value:3},{caption:'geschieden',value:4},{caption:'verwitwet',value:-1}]) 
-
+ */
  
 } 
 
