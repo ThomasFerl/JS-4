@@ -296,7 +296,7 @@ export class TFObject
                this.parentWidth  = parent.clientWidth
                this.parentHeight = parent.clientHeight;
                if(!params.dontRegister)
-               if(this.parent.childList) this.parent.childList.push(this);
+                  if(this.parent.childList) this.parent.childList.push(this);
         }  
 
     // Params aufbereiten / ergänzen 
@@ -1024,9 +1024,15 @@ set placeItems(value)
   }
 
   get overflow()  
-  {     
-    if(this.DOMelement) return this.DOMelement.style.overflow || this.getComputedStyleValue('overflow');  
-    else                return this.params.overflow;
+  {   
+    var v = '';  
+    if(this.DOMelement) v = this.DOMelement.style.overflow || this.getComputedStyleValue('overflow');  
+    else                v = this.params.overflow;
+
+    console.log("get overflow: " + v);
+    if(v=='') v= "auto";
+
+    return v;
   }
 
   set backgroundColor(value)
@@ -1399,15 +1405,17 @@ getProperties()
   properties.push( {level:2, label:'borderRadius',type:'INPUT',value:this.borderRadius || '0px'} );
   properties.push( {level:2, label:'shadow',type:'INPUT',value:this.shadow} );
   
-  properties.push( {level:1, label:'overflow',type:'SELECT',value:this.overflow, items:["auto","hidden"] || 'auto'} );
-  properties.push( {level:3, label:'visible',type:'SELECT',value:this.visible, items:["true","false"] || 'true'} );
-  properties.push( {level:3, label:'display',type:'SELECT',value:this.display, items:['block', 'inline', 'inline-block', 'flex', 'inline-flex', 'grid', 'inline-grid', 'none', 'contents', 'table', 'table-row', 'table-cell', 'list-item']} );
+  properties.push( {level:1, label:'overflow',type:'SELECT',value:this.overflow || "auto" , items:["hidden","auto"] } );
+  properties.push( {level:3, label:'visible',type:'SELECT',value:this.visible || "true"  , items:["true","false"] } );
+  properties.push( {level:3, label:'display',type:'SELECT',value:this.display || "flex" , items:['block', 'inline', 'inline-block', 'flex', 'inline-flex', 'grid', 'inline-grid', 'none', 'contents', 'table', 'table-row', 'table-cell', 'list-item']} );
   properties.push( {level:3, label:'position',type:'SELECT',value:this.position, items:['static', 'relative', 'absolute', 'fixed', 'sticky'] });
-  properties.push( {level:3, label:'flexDirection',type:'SELECT',value:this.flexDirection, items:["row","column","row-reverse","column-reverse"] || 'row'} );
+  properties.push( {level:3, label:'flexDirection',type:'SELECT',value:this.flexDirection  || "row", items:["row","column","row-reverse","column-reverse"]} );
   
 // Grid-Infos holen
   var dim = utils.getGridLayoutDimension(this);
   if(dim) properties.push( {level:4, label:'gridLayout',type:'INPUT',value:dim.gridColumnCount+'x'+dim.gridRowCount} );
+
+ // console.log("get Properties: " + JSON.stringify(properties))
   
   return properties;
 }
@@ -1460,19 +1468,43 @@ setProperties( properties )
 }
 
 
-  destroy()
+removeChild( child )
+{
+  if(!child) return;
+
+  // finde das childObjekt in "meiner" childList ...
+ var idx = this.childList.indexOf(child);
+     if (idx > -1) this.childList.splice(idx, 1); // Element aus dem childListArray entfernen
+}
+
+
+remove()
+{
+  // alle "meine" childObjekte löschen
+  while(this.childList.lenth>0)
   {
-    while(this.childList.lenth>0)
-    {
-      var o=this.childList.pop();
-      o.destroy();
-      o=null;
-    }
-    
-    if(utils.isHTMLElement(this.parent)) this.parent.removeChild(this.DOMelement);
-    else this.parent.DOMelement.removeChild(this.DOMelement); 
-    
+    var o=this.childList.pop();
+    o.remove();
+    o=null;
   }
+
+  // "mich selbst" aus childListe "meines" parents entfernen ... 
+  if (this.parent)
+  {  
+     if(utils.isHTMLElement(this.parent)) this.parent.removeChild(this.DOMelement);
+     else this.parent.removeChild(this)
+  }   
+  
+  // HTML-Element aus DOM entfernen  
+  this.DOMelement.remove();
+}
+
+
+destroy()
+{
+  this.remove;  
+}
+
 }   //end class ...
 
 
@@ -3014,10 +3046,12 @@ export class TFSelectBox extends TFEdit
   {
     this.items = [];
     super.render();
-    
-    if(this.params.items) this.setItems (this.params.items);
+   
     this.combobox = this.input;  // nur aus Gründen der besseren Lesbarkeit / Anwendbarkeit
-    this.__render();
+   
+   if(this.params.items.length > 0) this.setItems (this.params.items);
+   else                             this.__render();
+    
     this.combobox.addEventListener('change',  function() { 
       if(this.callBack_onChange)
       {
@@ -3041,6 +3075,8 @@ export class TFSelectBox extends TFEdit
   {
     if(!this.combobox) return;
 
+    var savedValue = this.combobox.value;
+
     this.combobox.innerHTML = '';
     for(var i=0; i<this.items.length; i++)
     {
@@ -3058,6 +3094,8 @@ export class TFSelectBox extends TFEdit
       option.value = v;
       this.combobox.appendChild(option);
     }
+
+    this.combobox.value = savedValue;
   } 
 
   set text( txt )
@@ -4421,7 +4459,7 @@ export class TPropertyEditor
    for (var i=0; i<this.properties.length; i++ )
   {
      var item   = this.properties[i];
-     var select = item.items || [];   // falls Select - oder Combobox vorlieft...
+     var select = item.items || [];   // falls Select - oder Combobox vorliegt...
      var dlg    = item.dialog;
      var w      = 2;
      if(dlg) w=1;
@@ -4519,7 +4557,6 @@ save()
 
 
 }  // end of class TPropertyEditor
-
 
 
 

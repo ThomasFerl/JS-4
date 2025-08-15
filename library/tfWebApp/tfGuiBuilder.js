@@ -17,6 +17,11 @@ import {TFAnalogClock,
 const placeHolderImageURL = '/tfWebApp/res/placeHolder.jpg'; // URL für Platzhalter-Bild
 
 
+
+
+
+
+
 export class TFGuiBuilder
 {
   constructor()
@@ -49,7 +54,7 @@ export class TFGuiBuilder
     this.dashBoard.callBack_onDragOver           = function(e){  this.onDragover(e) }.bind(this);
     this.dashBoard.callBack_onDrop               = function(e , dropResult){ this.onDrop(e , dropResult) }.bind(this);
     this.dashBoard.callBack_onClick              = function(e){this.selectComponent(this.dashBoard)}.bind(this);
-    this.dashBoard.callBack_onKeyDown            = function(event) { if(event.key=='Delete') this.deleteSeletedObject()}.bind(this);
+    this.dashBoard.callBack_onKeyDown            = function(event) {this.keyHandler(event)}.bind(this);
    
     this.menuPanel                               = layout.right;
     this.menuPanel.padding                       = '2px';
@@ -145,7 +150,7 @@ var loadBtn                        = dialogs.addButton(fileOps , '' , 3 , 2 , 1 
        //  propToollDiv.paddingLeft = '0.5em';
        //  propToollDiv.paddingRight = '0.5em';
          
-     this.propLevelSelector = dialogs.addSelectBox(propToollDiv , 1 , 2 , 'auto' , 'Anzeigelevel:' , '' , 'essential', [{caption:'essential',value:1},{caption:'useful',value:2},{caption:'all',value:3}] );    
+     this.propLevelSelector = dialogs.addSelectBox(propToollDiv , 1 , 2 , 'auto' , 'Anzeigelevel:' , '' , {caption:'essential',value:1} , [{caption:'essential',value:1},{caption:'useful',value:2},{caption:'all',value:3}] );    
      this.propLevelSelector.callBack_onChange = function(v)
                                             { 
                                               if(this.propertyEditor)
@@ -202,8 +207,89 @@ var loadBtn                        = dialogs.addButton(fileOps , '' , 3 , 2 , 1 
       
       this.setGridLayout( 4 , 21 );
 
-    return 
+      // globalen KeyHandler einhängen ....
+      
+      window.addEventListener('keydown', function(event) 
+                                        {
+                                          // Prüfe, ob das Ziel ein Eingabefeld ist
+                                          const isInput = (
+                                                              event.target.tagName === 'INPUT' ||
+                                                              event.target.tagName === 'TEXTAREA' ||
+                                                              event.target.isContentEditable
+                                                          );
+
+                                          if (isInput) return; // Eingabe aktiv – keyboardEvent ignorieren   
+    
+                                        console.log('window.eventListener -> Taste gedrückt:', event.key);
+                                        if (event.ctrlKey || event.metaKey) this.keyHandler(event)
+                                        else
+                                              switch (event.key.toLowerCase()) 
+                                              {
+                                               case 'delete': this.keyHandler(event)
+                                               break;
+
+                                               case 'escape': this.keyHandler(event)
+                                               break;  
+
+                                               case 'tab':  this.keyHandler(event)
+                                               break; 
+        
+                                               case 'backspace': this.keyHandler(event)
+                                               break;  
+                                             }   
+                                        }.bind(this) , true); // ← wichtig: useCapture = true
 }
+
+
+
+
+
+
+
+
+
+keyHandler( event )
+{//kleiner privater key-Handler ;-)
+  if (event.ctrlKey || event.metaKey) 
+     {
+      switch (event.key.toLowerCase()) 
+      {
+         case 'c':
+         console.log('CTRL+C erkannt');
+        break;
+      
+        case 'v':
+        console.log('CTRL+V erkannt');
+       break;
+     }
+  }
+  else
+      switch (event.key.toLowerCase()) 
+      {
+         case 'delete':
+         console.log('DELETE erkannt');
+         this.deleteSeletedObject()
+        break;
+
+         case 'escape':
+         console.log('ESCAPE erkannt');
+         
+        break;  
+
+        case 'tab':
+         console.log('TAB erkannt');
+         this.___selectNextElement();
+         
+        break; 
+        
+        case 'backspace':
+         console.log('BACKSPACE erkannt');
+          this.deleteSeletedObject()
+        break;  
+      }  
+
+}
+
 
 
 setGridLayout( numCols , numRows )
@@ -262,7 +348,7 @@ addComponent( parent , left , top , elementName )
       e.callBack_onDragOver  = function(event) { this.onDragover(event) }.bind(this);
       e.callBack_onDrop      = function(event , dropResult) { this.onDrop(event , dropResult) }.bind(this);
       e.callBack_onClick     = function(event , dataBinding) {this.onMouseClick(event , dataBinding.id ) }.bind(this);
-      e.callBack_onKeyDown   = function(event) { if(event.key=='Delete') this.deleteSeletedObject()}.bind(this);
+      e.callBack_onKeyDown   = function(event) { this.keyHandler(event)}.bind(this);
    }   
 
   this.updateTreeView();
@@ -283,6 +369,7 @@ newProject()
  this.hasChanged          = false;
  this.builderObjects      = []; 
  this.dashBoard.innerHTML = '';
+ this.selected            = null;
  this.showGridLines(this.dashBoard);
 }
 
@@ -355,7 +442,7 @@ load()
                                                          e.callBack_onDragOver  = function(event) { this.onDragover(event) }.bind(this);
                                                          e.callBack_onDrop      = function(event , dropResult) { this.onDrop(event , dropResult) }.bind(this);
                                                          e.callBack_onClick     = function(event , dataBinding) {this.onMouseClick(event , dataBinding.id ) }.bind(this);
-                                                         e.callBack_onKeyDown   = function(event) { if(event.key=='Delete') this.deleteSeletedObject()}.bind(this);
+                                                         e.callBack_onKeyDown   = function(event) {this.keyHandler(event)}.bind(this);
                                                      }.bind(this) )
  }  
 
@@ -380,6 +467,13 @@ test()
   var w = dialogs.createWindow(null, 'tfGuiBuilderTest', board.width+'px', board.height+'px', 'CENTER');
 
   var gui = new TFgui( w.hWnd , board );
+
+  gui.btnOk.callBack_onClick = function(){
+                                           this.bluePanel.innerHTML    = this.edit_blue.value;
+                                           this.greenPanel.innerHTML   = this.edit_green.value;
+                                           this.skyBluePanel.innerHTML = this.edit_skyBlue.value;
+                                          }.bind(gui)
+  gui.btnAbort.callBack_onClick = ()=>{w.close()}                                        
   
   /*
   gui.editFirstName.value     = 'Thomas';
@@ -396,7 +490,8 @@ test()
    this.treeView = dialogs.createWindow(null, 'tfGuiBuilderTreeView', '25%', '90%', 'CENTER');
    this.treeView.hWnd.zIndex = 1000000; // ganz oben
    this.treeViewVisible = true;
-   this.treeView.callBack_onClose = function() {this.treeViewVisible=false;}.bind(this);
+   this.treeView.callBack_onClose   = function() {this.treeViewVisible=false;}.bind(this);
+   this.treeView.callBack_onKeyDown = function(event) {this.keyHandler(event)}.bind(this);
 
   this.updateTreeView();
 }
@@ -441,6 +536,8 @@ updateTreeView()
 
 selectComponent(element) 
 {
+    if(!element) return;
+
     // letztes Element abwählen
     if (this.selected.element != null)
     { 
@@ -478,12 +575,13 @@ selectComponent(element)
 deleteSeletedObject()
 {
   if(this.selected.element)
-  {
+  { 
     var idx = this.builderObjects.indexOf(this.selected.element);
     if (idx > -1)
     {
       this.builderObjects.splice(idx, 1); // Element aus dem Array entfernen
-      this.selected.element.DOMelement.remove(); // Element aus dem DOM entfernen
+      this.selected.element.remove(); // Element aus dem DOM entfernen
+
       this.selected.element = null; // Selektion zurücksetzen
       this.selected.border  = '';
       this.propCaption.innerHTML = '';
@@ -522,6 +620,23 @@ ___findComponentByID( id )
     if (objId == id) return this.builderObjects[i];
   }
   return null; // Element nicht gefunden
+}
+
+
+___selectNextElement()
+{ 
+  // wenn liste leer dann ist diese Funktion sinnlos ..
+  if (this.builderObjects.length == 0) return;
+
+  var ndx = -1;
+  // aktuelles Element finden ...
+  if(this.selected.element) ndx = this.builderObjects.indexOf(this.selected.element);
+ 
+  ndx++;
+  if( !(ndx < this.builderObjects.length) ) ndx=0;
+
+  this.selectComponent(this.builderObjects[ndx]);
+
 }
 
 
@@ -633,7 +748,6 @@ onDrop(event , dropResult )
     if(droppedObject.objName=='TFPanel')this.showGridLines( droppedObject );
    
 };
-
 
 
 showGridLines(div) 

@@ -303,10 +303,12 @@ export class TFWebApp
    this.clientHeight    =  globals.Screen.height;
    this.active          =  true;
 
-   
-   window.addEventListener('focus', function() { utils.log('Focus') ; this.active = true; }.bind(this) );
-   window.addEventListener('blur' , function() { utils.log('Blur')  ; this.active = false; }.bind(this) );
+   this.keyHandler      = null;
 
+   
+   window.addEventListener('focus'  , function() { utils.log('Focus') ; this.active = true; }.bind(this) );
+   window.addEventListener('blur'   , function() { utils.log('Blur')  ; this.active = false; }.bind(this) );
+   
    this.keepAlive = setInterval( function() {if(this.active) utils.webApiRequest('keepAlive' , '' )}.bind( this ) , 60000 );
  
    symbols.init();
