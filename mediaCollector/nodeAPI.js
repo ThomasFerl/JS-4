@@ -16,7 +16,7 @@ var   batchProcesses  = new batchProc.TBatchQueue( batchProcedureHandler );
 //für diese Befehle wird kein GrantCheck() durchgeführt ...
 var sysCommands    = ['KEEPALIVE' , 'LSGRANTS' , 'GETUSERGRANTS' , 'GETVAR' , 'GETVARS' , 'USERLOGOUT' , 'CREATETABLE' , 'FETCHVALUE' , 'FETCHRECORD' , 'FETCHRECORDS',
                       'INSERTINTOTABLE' , 'UPDATETABLE' , 'DROP' , 'EXISTTABLE' , 'STRUCTURE' , 'AST' , 'LSUSER' , 'ADDUSER' ,  'EDITUSER' , 'ADDGRANT' , 'IDGRANT' , 
-                      'RESETUSERGRANTS' , 'ADDUSERGRANT' , 'SETUSERGRANTS' , 'GETUSERGRANTS' , 'SETVAR' , 'DELVAR' , 'JSN2EXCEL' ];
+                      'RESETUSERGRANTS' , 'ADDUSERGRANT' , 'SETUSERGRANTS' , 'GETUSERGRANTS' , 'SETVAR' , 'DELVAR' , 'JSN2EXCEL' , 'LSFORMS' , 'LOADFORM' , 'SAVEFORM' , 'DELFORM'];
 
 var startTime      = utils.seconds();
 utils.log('StartTime: '+startTime);
@@ -103,13 +103,31 @@ if( CMD=='GETFILE')         return utils.getTextFile( fs , param.fileName );
 if( CMD=='GETTEXTFILE')     return utils.getTextFile( fs , param.fileName );
 
 if( CMD=='GETIMAGEFILE')    {
-                             await utils.getImageFile  ( fs , path , param.fileName || 'noFile.why', webRequest , webResponse ); // function streamt direkt 
+                             await utils.getImageFile  ( fs , path , param.fileName , webRequest , webResponse ); // function streamt direkt 
                              return {isStream:true};
                             }
 
+if(CMD=='LSSYMBOLGROUPS') 
+  {
+     var spath = globals.symbolPath(); 
+     console.log('LSSYMBOLGROUPS: -> '+spath)
+     var response = utils.scanDir ( fs , path , spath , '*.*');
+     if (response.error) return response;
+     var grp = [];  
+     for (var i=0; i<response.result.length; i++) if(response.result[i].isDir) grp.push(response.result[i].name); 
+     return {error:false, errMsg:"", result:grp};  
+  } 
+
+if(CMD=='SYMBOLPATH') 
+  {
+    return utils.getSymbolPath(param.symbol);
+  } 
+  
 
 if( CMD=='LSSYMBOLS')       {
-                              var response = utils.scanDir ( fs , path , globals.symbolPath() , '*.*');
+                              var spath = globals.symbolPath(param.path || ''); 
+                              console.log('LSSYMBOLS: -> '+spath)
+                              var response = utils.scanDir ( fs , path , spath , '*.*');
                               if (response.error) return response;
                               var sym = [];  
                               for (var i=0; i<response.result.length; i++) sym.push( path.basename(response.result[i].name, '.svg')); 
@@ -119,12 +137,13 @@ if( CMD=='LSSYMBOLS')       {
 
 
 if( CMD=='SYMBOL')         {
-                             var p = globals.symbolPath()+'/'+param.symbolName+'.svg';
+                             var p = globals.symbolPath(param.path || '');
+                                 p = path.join( p , param.symbolName+'.svg');
                              return utils.getTextFile( fs , p );
                            }
 
 if( CMD=='GETMOVIEFILE')    {
-                             await utils.getMovieFile  ( fs , path , param.fileName || 'noFile.why' , webRequest , webResponse ); // function streamt direkt 
+                             await utils.getMovieFile  ( fs , path , param.fileName , webRequest , webResponse ); // function streamt direkt 
                              return {isStream:true};
                             }
 
@@ -186,22 +205,24 @@ if( CMD=='STRUCTURE')
   }
 }
 
-  
+
+if( CMD=='SCHEMA')          return dbUtils.schema( dB , param.tableName )
+    
 if( CMD=='AST' )            return dbUtils.extractTableNames( param.sql );
 
 if( CMD=='LSUSER')          return dbUtils.fetchRecords_from_Query( etc , 'Select * from user' );
 
 if( CMD=='ADDUSER') 
 {
- var sql    = "insert into user( username , firstName , lastName , jobFunction , passwd , birthdate) values(?,?,?,?,?,?)";
- var params = [ param.username , param.firstname , param.lastname , param.jobfunction , param.passwd , param.birthdate ];
+ var sql    = "insert into user( username , firstName , lastName , jobFunction , passwd , email) values(?,?,?,?,?,?)";
+ var params = [ param.username , param.firstname , param.lastname , param.jobfunction , param.passwd , param.email ];
  return dbUtils.runSQL( etc , sql , params );
 }
 
 if( CMD=='EDITUSER') 
 {
- var sql    = "update user set username=? , firstName=? , lastName=? , jobFunction=? , passwd=? , birthdate=? where id=?";
- var params = [ param.username , param.firstname , param.lastname , param.jobfunction , param.passwd , param.birthdate , param.ID ];
+ var sql    = "update user set username=? , firstName=? , lastName=? , jobFunction=? , passwd=? , email=? where id=?";
+ var params = [ param.username , param.firstname , param.lastname , param.jobfunction , param.passwd , param.email , param.ID ];
  return dbUtils.runSQL( etc , sql , params );
 }
 
@@ -245,13 +266,6 @@ if(CMD=='GETUSERGRANTS')
 {
   return grants.getUserGrants( etc , param.userName ); 
 } 
-
-
-if(CMD=='SYMBOLPATH') 
-  {
-    return utils.getSymbolPath(param.symbol);
-  } 
-  
 
 
 if(CMD=='GETVAR') 
@@ -302,6 +316,44 @@ if(CMD=='SHOWLOG')
   }  
 
 
+if(CMD=='LSFORMS') 
+  {
+     return dbUtils.fetchRecords_from_Query( etc , "Select FORMNAME from forms order by formName");
+  }  
+
+if(CMD=='LOADFORM') 
+  {
+     return dbUtils.fetchRecord_from_Query( etc , "Select * from forms Where formName='"+param.formName+"'" );
+  }  
+
+
+if(CMD=='SAVEFORM') 
+  {
+    console.log('SAVEFORM:');
+    console.log('========');
+    console.log('prüfe die Existenz des Formular "'+param.formName+'"');
+    var ID = dbUtils.fetchValue_from_Query( etc , "Select ID from forms Where formName='"+param.formName+"'" ).result;  
+
+    if(!ID)
+      {
+         console.log('Datensatz existiert nicht -> Neuanlage');
+         return dbUtils.insertIntoTable( etc , "forms" , {formName:param.formName, FormData:JSON.stringify(param.formData)});
+      }   
+       else
+       { 
+        console.log('Datensatz existiert bereits -> Akualisierung');
+        return dbUtils.updateTable(etc , 'forms' , 'ID' , ID , {formName:param.formName, FormData:JSON.stringify(param.formData)} );
+       } 
+
+  }  
+
+
+if(CMD=='DELFORM') 
+  {
+    return dbUtils.runSQL(etc , "Delete forms where formName='"+param.formName+"'" );
+  }  
+
+  
 //----------------------------------------------------------------
 if(CMD=='ADD_BATCHPROC')  // Befehl an den Batch-Process-Manager weiterleiten   
 // Dieser Endpunkt sorgt dafür, dass der in den parametern angegebene Befehl param.batchCmd mit den Parametern param.batchParam in die Warteschlange eingereiht wird... 
@@ -327,4 +379,5 @@ if(CMD=='ADD_BATCHPROC')  // Befehl an den Batch-Process-Manager weiterleiten
 return  await userAPI.handleCommand( sessionID , cmd , param , req ,  res , fs , path )
                        
 }   
+
 

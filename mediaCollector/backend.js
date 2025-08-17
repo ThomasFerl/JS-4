@@ -12,29 +12,31 @@ const bodyParser  = require('body-parser');
 const Database    = require('better-sqlite3');
 const fs          = require('fs-extra');
 const path        = require('path');
-const globals     = require('./backendGlobals');
 const utils       = require('./nodeUtils');
 const webAPI      = require('./nodeAPI');
+const globals     = require('./backendGlobals');
 const userAPI     = require('./userAPI');
 const session     = require('./session');
 const dbTables    = require('./dbTables');
+const etcTables   = require('./etcTables');
 
 const sslOptions  = {
     key : fs.readFileSync('./SSL/privateKex.pem'  , 'utf8' ),     // Pfad zum privaten Schlüssel
     cert: fs.readFileSync('./SSL/certificate.pem' , 'utf8' )    // Pfad zum Zertifikat
    };
 
-const dBetc       = '/home/tferl/tmp/mediaCollector/etc.db';
+const dBetc       = './etc.db';
 const etc         = new Database( dBetc  , { verbose: utils.log } );
       utils.log("etc-dB: "+etc.constructor.name);
 
-const dBName      = '/home/tferl/tmp/mediaCollector/workingBase.db';
+const dBName      = './workingBase.db';
 const dB          = new Database( dBName  , { verbose: utils.log ,  readonly: false } );
       utils.log("working-dB: "+dB.constructor.name);
 
 
 // Datenstruktur lt. dBTables erzeugen ....
-dbTables.buildTables( dB );
+dbTables.buildTables ( dB  );
+etcTables.buildTables( etc );
 
 // Datenstruktur auf ggf. vorhandene Änderungen prüfen ....
 // dbTables.checkdbTableStructure();
@@ -194,6 +196,8 @@ function userLoginx( req , res )
   var remoteIP  = req.connection.remoteAddress;
   var passwd    = req.params.passwd;
 
+  console.log("userLoginx -> " + userName + " / " + remoteIP + " / " + passwd);
+
   var h         = JSON.stringify(session.userLogin(etc , remoteIP , userName , passwd ));
     utils.log("return from login: " + h)
     res.send( h );
@@ -348,6 +352,7 @@ webServer.listen( port , () => {console.log('Server listening on Port ' + port )
 
 setInterval( webAPI.run          , 60000 ); // jede Minute prüfen, ob etwas im BATCH wartet ...
 setInterval( session.ctrlSession , 1000 ); 
+
 
 
 

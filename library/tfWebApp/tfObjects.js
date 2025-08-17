@@ -3707,6 +3707,8 @@ export class TFAnalogClock extends TFPanel
 
   __tick()
     {       if(!this.ctx) return;
+            if( this.secHandLength < 1 ) return;
+            
 
             var date   = new Date();
 

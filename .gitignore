@@ -140,11 +140,4 @@ results/
 
 #Databases
 *.db
-prodia/uploads/image1_1733676974055.png
-prodia/uploads/image1_1733677568317.png
-prodia/uploads/image1_1733678697779.png
-prodia/uploads/image1_1733678837685.png
-prodia/uploads/image2_1733676974055.png
-prodia/uploads/image2_1733677568317.png
-prodia/uploads/image2_1733678697779.png
-prodia/uploads/image2_1733678837685.png
+etc.db
