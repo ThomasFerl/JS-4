@@ -902,12 +902,13 @@ appendChild(aDOMelement)
   show()
   {
     this.DOMelement.style.visibility = 'visible';
+    this.setVisible()
   }
 
 
   setVisible()
   {
-    this.DOMelement.style.display = 'block';  
+    this.DOMelement.style.display = 'grid';  
   }
 
 

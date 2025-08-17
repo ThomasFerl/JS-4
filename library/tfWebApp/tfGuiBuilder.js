@@ -72,6 +72,7 @@ export class TFGuiBuilder
      newBtn.callBack_onClick       = function()
                                      { 
                                        this.newProject(); 
+                                       this.abortBtn.visible = false;
                                      }.bind(this);
 
 var saveBtn                        = dialogs.addButton(fileOps , '' , 2 , 2 , 1 , 1 , {glyph:"download",caption:""});
@@ -81,6 +82,7 @@ var saveBtn                        = dialogs.addButton(fileOps , '' , 2 , 2 , 1 
     saveBtn.callBack_onClick       = function()
                                      { 
                                        this.save(); 
+                                       this.abortBtn.visible = false;
                                      }.bind(this);
 
 var loadBtn                        = dialogs.addButton(fileOps , '' , 3 , 2 , 1 , 1 , {glyph:"upload",caption:""});
@@ -90,6 +92,7 @@ var loadBtn                        = dialogs.addButton(fileOps , '' , 3 , 2 , 1 
     loadBtn.callBack_onClick       = function()
                                      { 
                                        this.load(); 
+                                       this.abortBtn.visible = false;
                                      }.bind(this);
 
 
@@ -102,6 +105,20 @@ var loadBtn                        = dialogs.addButton(fileOps , '' , 3 , 2 , 1 
                                      { 
                                        this.test(); 
                                      }.bind(this);
+
+
+ this.abortBtn                      = dialogs.addButton(fileOps , '' , 5 , 2 , 1 , 1 , {glyph:"trash-can",caption:""});
+ this.abortBtn.height                = '2em';
+ this.abortBtn.marginTop             = '0.5em';
+ this.abortBtn.backgroundColor       = 'red';
+ this.abortBtn.DOMelement.setAttribute("title", 'Änderungen verwerfen ...');
+ this.abortBtn.visible               = false;
+ this.abortBtn.callBack_onClick      = function()
+                                     { 
+                                       this.abortBtn.visible = false;
+                                       this.hasChanged = false;
+                                     }.bind(this);
+
 
   // Panel für Eingabe der Dimensionierung des Grids:
  var gridCtrlPanel = dialogs.addPanel(  this.menuPanel , '' , 1 , 3 , 4 , 1);   
@@ -141,9 +158,9 @@ var loadBtn                        = dialogs.addButton(fileOps , '' , 3 , 2 , 1 
 
 
      var propToollDiv = dialogs.addPanel( this.menuPanel , 'cssContainerPanel' , 1 , 8 , 4 , 2);                                    
-         propToollDiv.buildGridLayout_templateRows( '1fr 1fr' );
+         propToollDiv.buildGridLayout_templateRows( '1fr 1fr 1fr' );
          propToollDiv.buildGridLayout_templateColumns( '1fr 4em' );
-         propToollDiv.backgroundColor = 'rgba(0,0,0,0.14)';
+         propToollDiv.backgroundColor = 'rgba(2, 31, 85, 0.14)';
          propToollDiv.margin  = 0;
          propToollDiv.padding = 0;
          
@@ -157,12 +174,28 @@ var loadBtn                        = dialogs.addButton(fileOps , '' , 3 , 2 , 1 
                                               this.propertyEditor.level = v;
                                             }.bind(this);
 
-     var treeBtn = dialogs.addButton( propToollDiv , '' , 2 , 2 , 1 , 1 , {glyph:"folder-tree"} );
-         treeBtn.height = '3em';
-         treeBtn.marginTop = '4px';
+    
+    
+    // saveButton für Property-Editor - Events werden im Property-Editor ausgewertet 
+     var b = dialogs.addButton( propToollDiv , '' , 2 , 1 , 1 , 1 ,  {glyph:"check"} );
+         b.height = '2em';
+         b.margin = '2px'
+         b.DOMelement.setAttribute("title", 'Änderungen anwenden');
+
+    var treeBtn = dialogs.addButton( propToollDiv , '' , 2 , 2 , 1 , 1 , {glyph:"folder-tree"} );
+         treeBtn.height = '2em';
+         treeBtn.margin = '2px';
          treeBtn.backgroundColor = 'gray';
          treeBtn.DOMelement.setAttribute("title", 'Formular in hirarchischer Ansicht');
-         treeBtn.callBack_onClick = function() { this.handleTreeView() }.bind(this);                                     
+         treeBtn.callBack_onClick = function() { this.handleTreeView() }.bind(this);       
+
+    var duplicateBtn = dialogs.addButton( propToollDiv , '' , 2 , 3 , 1 , 1 , {glyph:"paste"} );
+         duplicateBtn.height = '2em';
+         duplicateBtn.margin = '2px';
+         duplicateBtn.backgroundColor = 'green';
+         duplicateBtn.DOMelement.setAttribute("title", 'Element duplizieren');
+         duplicateBtn.callBack_onClick = function() { this.handleDuplicate() }.bind(this);            
+         
   
     this.propCaption = dialogs.addPanel(propToollDiv , 'cssContainerPanel' , 1 , 1 , 1 , 1 );
     this.propCaption.backgroundColor = 'rgba(0,0,0,0.77)';
@@ -172,12 +205,7 @@ var loadBtn                        = dialogs.addButton(fileOps , '' , 3 , 2 , 1 
      var propertiesDiv = dialogs.addPanel( this.menuPanel , '' , 1 , 10 , 4 , 8);
          propertiesDiv.backgroundColor               = 'white';
          propertiesDiv.DOMelement.style.borderRadius = '0px';
-    // saveButton für Property-Editor
-     var b = dialogs.addButton( propToollDiv , '' , 2 , 1 , 1 , 1 ,  {glyph:"check"} );
-         b.height = '3em';
-         b.marginTop = '4px'
-         b.DOMelement.setAttribute("title", 'Änderungen anwenden');
-
+    
     this.propertyEditor = dialogs.newPropertyEditor(propertiesDiv , [] , b );
     this.propertyEditor.callBack_onSave   = function(p){this.saveProperties(p)}.bind(this); 
     this.propertyEditor.callBack_onDialog = function(item){ this.propertyEditorDialog(item)}.bind(this);
@@ -258,6 +286,10 @@ keyHandler( event )
          console.log('CTRL+C erkannt');
         break;
       
+         case 'd':
+         console.log('CTRL+D erkannt');
+        break;
+
         case 'v':
         console.log('CTRL+V erkannt');
        break;
@@ -354,8 +386,70 @@ addComponent( parent , left , top , elementName )
   this.updateTreeView();
   this.selectComponent(e); // das neu erzeugte Element gleich selektieren
   this.hasChanged = true;
+  this.abortBtn.visible = true;
 
+}
+
+
+
+___deepRename( obj )
+{
+  const renameObj=function(obj)
+  {
+    let newName = obj['name'];
+     //enthält der name bereits ein "copy1" dann "copy2" erzeugen...
+
+        const copyNumber = (newName.match(/copy(\d+)$/) || [])[1] || 0;
+        const newCopyNumber = parseInt(copyNumber, 10) + 1;
+
+        if(newCopyNumber==1) obj['name'] = newName + '_copy1';
+        else                 obj['name'] = newName.replace(/copy\d*$/, `copy${newCopyNumber}`);
+      
+        if(obj.children.length>0)
+        for(let i=0; i<obj.children.length; i++)  renameObj(obj.children[i]);
   }
+
+  renameObj(obj);
+
+}
+
+
+handleDuplicate()
+{ 
+  if(!this.selected.element) return;
+
+  // Bauplan vom selektierten Element besorgen ...
+  var layout = this.selected.element.getConstructionProperties()  
+
+  var copy = JSON.parse(JSON.stringify(layout));
+
+  console.log('Duplizieren dieses Knoten ...');
+  console.log('-----------------------------');
+  console.log(JSON.stringify(copy));
+
+  // alle Namen im Objekt umbenennen ...
+  this.___deepRename(layout);
+
+  // nun das duplizierte Objekt einfügen ...
+  objects.addComponent( this.dashBoard , layout , function(e){ // CallBack on Ready
+                                                               // anklick- und ziehbar machen...
+                                                                this.builderObjects.push(e);
+                                                                e.setDragable();
+                                                                e.draggingData         = { id:e.ID };
+                                                                e.dataBinding          = e.draggingData;
+                                                                e.callBack_onDragStart = function(event) { this.onDragstart(event , event.target ) }.bind(this);
+                                                                e.callBack_onDragOver  = function(event) { this.onDragover(event) }.bind(this);
+                                                                e.callBack_onDrop      = function(event , dropResult) { this.onDrop(event , dropResult) }.bind(this);
+                                                                e.callBack_onClick     = function(event , dataBinding) {this.onMouseClick(event , dataBinding.id ) }.bind(this);
+                                                                e.callBack_onKeyDown   = function(event) { this.keyHandler(event)}.bind(this);
+                                                            }.bind(this) );
+  this.updateTreeView();
+  this.hasChanged = true;
+  this.abortBtn.visible = true
+}                                                             
+
+
+
 
 newProject()
 {
@@ -445,7 +539,6 @@ load()
                                                          e.callBack_onKeyDown   = function(event) {this.keyHandler(event)}.bind(this);
                                                      }.bind(this) )
  }  
-
 
 
 
@@ -588,6 +681,7 @@ deleteSeletedObject()
       this.propertyEditor.visible = false; // PropertyEditor ausblenden
       this.updateTreeView();
     }
+    this.abortBtn.visible = true;
   }
 }       
 
@@ -746,6 +840,8 @@ onDrop(event , dropResult )
     this.propCaption.innerHTML = `<center>${droppedObject.objName}</center>`;
 
     if(droppedObject.objName=='TFPanel')this.showGridLines( droppedObject );
+
+    this.abortBtn.visible = true;
    
 };
 
