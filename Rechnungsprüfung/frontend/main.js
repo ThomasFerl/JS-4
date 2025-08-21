@@ -21,9 +21,10 @@ import { TFDateTime }    from "./tfWebApp/utils.js";
 import {TFgui}           from "./tfWebApp/tfGUI.js";
 
 
-var caption1   = '';
-var caption2   = '';
-var guiMainWnd = null;
+var caption1    = '';
+var caption2    = '';
+var guiMainWnd  = null;
+var waitOnStart = null;
 
 
 export function main(capt1)
@@ -46,20 +47,36 @@ export function main(capt1)
 
 export function run()
 { 
-  var ws     = app.startWebApp(caption1,caption2).activeWorkspace;
+  var ws      = app.startWebApp(caption1,caption2).activeWorkspace;
 
-  guiMainWnd = new TFgui( ws.handle , 'rechnungspruefungMain' );
+  waitOnStart = dialogs.createWindow(ws.handle,'Rechnungsprüfung ...','25%','25%','CENTER');
+  waitOnStart.hWnd.buildGridLayout_templateColumns('0.5fr 1fr 0.5fr');
+  waitOnStart.hWnd.buildGridLayout_templateRows   ('1fr 1fr 1fr');
+  dialogs.addLabel(waitOnStart.hWnd,'',2,2,1,1,'Anwendung wird geladen ...');
 
+  setTimeout(()=>{
+                   waitOnStart.close();
+                   guiMainWnd = new TFgui( ws.handle , 'rechnungspruefungMain' );
+                   guiMainWnd.btnNewBill.callBack_onClick = newBill;
+                 } , 4000 )  
 } 
 
 
 function updateView()
 {
-  dialogs.createTable( guiMainWnd.gridContainer , [{Name:"Ferl",Vorname:"Thomas",gebDatum:"29.10.1966"},
+  dialogs.createTable( guiMainWnd.gridPanel , [{Name:"Ferl",Vorname:"Thomas",gebDatum:"29.10.1966"},
                                                    {Name:"Mustermann",Vorname:"Max",gebDatum:"01.01.2000"},
                                                    {Name:"Schmidt",Vorname:"Klaus",gebDatum:"15.03.1975"}] , '' , ''); 
 }
   
+
+function newBill()
+{
+   var dlg           = dialogs.createWindow(null,'neue Rechnung erfassen','50%','70%','CENTER');
+   var guiNewBillDlg = new TFgui( dlg.hWnd , 'addBillDlg' );
+   dialogs.addFileUploader( guiNewBillDlg.dropZone , '*.*' , true , 'testUpload' , (selectedFiles) => {dialogs.showMessage(JSON.stringify(selectedFiles))}  );
+   updateView();
+}
     
  
 

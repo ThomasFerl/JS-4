@@ -207,7 +207,7 @@ var loadBtn                        = dialogs.addButton(fileOps , '' , 3 , 2 , 1 
          propertiesDiv.DOMelement.style.borderRadius = '0px';
     
     this.propertyEditor = dialogs.newPropertyEditor(propertiesDiv , [] , b );
-    this.propertyEditor.callBack_onSave   = function(p){this.saveProperties(p)}.bind(this); 
+    this.propertyEditor.callBack_onSave   = function(p){this.saveProperties(p) ; this.hasChanged = true; this.abortBtn.visible = true; }.bind(this); 
     this.propertyEditor.callBack_onDialog = function(item){ this.propertyEditorDialog(item)}.bind(this);
    
          
@@ -478,7 +478,7 @@ ___saveForm()
 }
 
 save()
-{  
+{  debugger;
   if(!this.hasChanged) return;
   
   if(this.formNameInp.value=="")
@@ -682,6 +682,7 @@ deleteSeletedObject()
       this.updateTreeView();
     }
     this.abortBtn.visible = true;
+    this.hasChanged = true;
   }
 }       
 
