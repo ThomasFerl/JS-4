@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="./../tfWebApp/style.css">
+    <title>Document</title>
+</head>
+<body>
+       <div style="width                : 100%;
+                   height               : 100%;
+                   padding              : 7px;
+                   color                : black;
+                   background-Color     : rgb(221, 221, 221);	
+                   box-Shadow           : 4px 4px 7px rgba(0,0,0,0.7);
+                   display              : grid;
+                   grid-template-columns: repeat(10, 1fr);
+                   grid-template-rows   : repeat(10, 1fr);" >
+     
+        
+        <!-- Container links (komplette höhe) -->
+        <div style="background-color    : rgb(221, 221, 221);	
+                    margin              : 4px;
+                    margin-bottom:      : 0;
+                    padding             : 4px;
+                    color               : black;
+                    border              : solid 1px rgb(121, 121, 121);	
+                    border-Radius       : 7px;
+                    box-Shadow          : 4px 4px 7px rgba(0,0,0,0.7);
+                    grid-column-start   : 1;
+                    grid-column-end     : 5;
+                    grid-row-start      : 1;
+                    grid-row-end        : 11;
+                    overflow            : auto;
+                    display             : block; ">
+  
+            <label class="cssLabelForInput" style="margin-left:0;" for="NAME">Benutzer definierter Clip-Name:</label><br>
+            <input class="cssEditField"     style="width:97%;"    type="text" id="NAME" name="CLIP"><br>  
+
+            <div style="background-color:inherited; width:100%; height:1em"></div>
+            
+            <div style="background-color : inherit;	
+                    margin               : 0;
+                    padding-top          : 4px;
+                    color                : inherit;
+                    border               : 0;	
+                    display              : grid;
+                    grid-template-columns: 1fr 2em 2em;
+                    grid-template-rows   : 1em 1fr;" >
+  
+              <label  class="cssLabelForInput" style="grid-area: 1/ 1 / span 1 /span 1; margin-left:0;" for="ALLTAGS">Stichwörter / Tags:</label><br>
+              <Select class="cssEditField"     style="grid-area: 2/ 1 / span 1 /span 1;" id="ALLTAGS" name="CLIP"></Select><br>     
+              <button class="cssButton01"      style="grid-area: 2/ 2 / span 1 /span 1;" id="btn_addTag">+</button> 
+              <button class="cssButton01"      style="grid-area: 2/ 3 / span 1 /span 1;" id="btn_delTag">-</button> 
+            </div>
+
+            <select name="CLIP" id="TAGS" size="7" 
+                    multiple 
+                    style="background-color : white;	
+                       margin-top           : 0.25em;
+                       padding              : 0.5em;
+                       color                : inherit;
+                       border               : 1px solid gray;	
+                       width                : 100%;
+                       height               : 7em" > 
+                        
+                        <option value="option1">Option 1</option>
+                        <option value="option2">Option 2</option>
+                        <option value="option3">Option 3</option>
+                        
+            </select>
+
+            <div style="background-color:inherited; width:100%; height:1em"></div>
+
+            <label  class="cssLabelForInput" style="margin-left:0; margin-top:2em;" for="SOURCE">Quelle</label><br>
+            <Select class="cssEditField"  style="width:97%; margin-top:0;" id="SOURCE" name="CLIP">
+                <option value="option1">Option 1</option>
+                <option value="option2">Option 2</option>
+                <option value="option3">Option 3</option>  
+            </Select>    
+
+            <div style="background-color:inherit; width:100%; height:1em"></div>
+
+            <label  class="cssLabelForInput" style="margin-left:0;" for="KATEGORIE">Kategorie</label><br>
+            
+            <Select class="cssEditField"  style="width:97%; margin-top:0;" id="KATEGORIE" name="CLIP">
+                    <option value="option1">Option 1</option>
+                    <option value="option2">Option 2</option>
+                    <option value="option3">Option 3</option>      
+            </Select>        
+
+            <div style="background-color:inherit; width:100%; height:1em"></div>
+
+            <label  class="cssLabelForInput" style="margin-left:0; margin-top:2em;" for="QUALITY">Bewertung</label><br>
+            <input  type="range" style="width:20em;"  id="QUALITY" name="CLIP"><br> 
+
+            <div style="background-color:inherit; width:100%; height:1em"></div>
+
+            <label  class="cssLabelForInput" style="margin-left:0; margin-top:2em;" for="BEMERKUNGEN">Bemerkungen</label><br>
+            <textarea id="BEMERKUNGEN" name="CLIP" style="width:97%; height:4em"></textarea><br>
+
+
+            <div style="background-color:inherit; width:100%; height:1em"></div>
+
+            <label  class="cssLabelForInput" style="margin-left:0; margin-top:2em;" for="PLAYTIME">Spieldauer</label>
+            <label id="PLAYTIME" name="PLAYTIME" style="color:gray">123</label>  [min]<br>
+
+            <div style="background-color:inherit; width:100%; height:1em"></div>
+
+            <label  class="cssLabelForInput" style="margin-left:0; margin-top:1em;" for="DIMENSION">Dimensionen</label>
+            <label id="DIMENSION" name="DIMENSION" style="color:gray">1920 x 1080</label><br>
+
+            <div style="background-color:inherit; width:100%; height:1em"></div>
+
+            <label  class="cssLabelForInput" style="margin-left:0; margin-top:1em;" for="DIR">Verzeichnis / Path</label>
+            <label id="DIR" name="DIR" style="color:gray">/tmp</label><br>
+
+            <div style="background-color:inherit; width:100%; height:1em"></div>
+
+            <label  class="cssLabelForInput" style="margin-left:0; margin-top:1em;" for="FILESIZE">Dateigröße</label>
+            <label id="FILESIZE" name="FILESIZE" style="color:gray">1,1GB</label>  [MB]<br>
+
+        </div>
+
+<!-- Container oben rechts -->
+        <div name="CLIP"
+             style="background-color     : inherit;
+                    margin               : 4px;
+                    padding              : 4px;
+                    color                : black;
+                    border               : solid 1px rgb(121, 121, 121);	
+                    border-Radius        : 7px;
+                    box-Shadow           : 4px 4px 7px rgba(0,0,0,0.7);
+                    grid-column-start    : 5;
+                    grid-column-end      : 11;
+                    grid-row-start       : 1;
+                    grid-row-end         : 6;
+                    overflow             : auto;
+                    display              : grid;
+                    grid-template-columns: 1fr 1fr;
+                    grid-template-rows   : 1fr;">
+
+                <div style="background-color: inherited;	
+                        margin              : 0;
+                        padding             : 0;
+                        color               : black;
+                        border              : none;	
+                        grid-column-start   : 1;
+                        grid-column-end     : 2;
+                        grid-row-start      : 1;
+                        grid-row-end        : 2;
+                        display             : block; ">
+
+                 <div style="background-color: inherited;	
+                        margin               : 0;
+                        width                : 100%;
+                        height               : 4em;
+                        padding-top          : 4px;
+                        color                : inherit;
+                        border               : 0;	
+                        display              : grid;
+                        grid-template-columns: 1fr 2em 2em;
+                        grid-template-rows   : 1em 1fr;" >
+  
+                        <label  class="cssLabelForInput" style="grid-area: 1/ 1 / span 1 /span 1; margin-left:0;" for="ALLACTORS">Darsteller:</label><br>
+                        <Select class="cssEditField"     style="grid-area: 2/ 1 / span 1 /span 1;" id="ALLACTORS" name="ALLACTORS"></Select><br>     
+                        <button class="cssButton01"      style="grid-area: 2/ 2 / span 1 /span 1;" id="btn_addActor" >+</button> 
+                        <button class="cssButton01"      style="grid-area: 2/ 3 / span 1 /span 1;" id="btn_delActor" >-</button> 
+                </div>
+
+                <select name="ACTORS" id="ACTORS" size="7" multiple 
+                       style="background-color     : white;	
+                              margin-top           : 0.25em;
+                              padding              : 0.5em;
+                              color                : inherit;
+                              border               : 1px solid gray;	
+                              width                : 100%;
+                              height               : 14em" > 
+                        
+                        <option value="Actor #1">Actor #1</option>
+                        <option value="Actor #2">Actor #2</option>
+                        <option value="Actor #3">Actor #3</option>
+                </select>
+            </div>
+
+
+             <div id  ="POSTER" name="POSTER" 
+                 style="background-color    : black;	
+                        margin              : 0;
+                        margin-left         : 4px;
+                        padding             : 7px;
+                        color               : black;
+                        border              : 0;
+                        border-Radius       : 7px;	
+                        grid-column-start   : 2;
+                        grid-column-end     : 3;
+                        grid-row-start      : 1;
+                        grid-row-end        : 2;
+                        display             : block;
+
+                        background-image    : url('pix.jpeg'); 
+                        background-size     : cover; 
+                        background-position : center;
+                        background-repeat   : no-repeat;"> Poster
+            </div>        
+        </div>
+        
+        
+        <div id   ="THUMBS" name="THUMBS"
+             style="background-color     : black;
+                    margin               : 4px;
+                    padding              : 4px;
+                    color                : white;
+                    border               : solid 1px rgb(121, 121, 121);	
+                    border-Radius        : 7px;
+                    box-Shadow           : 4px 4px 7px rgba(0,0,0,0.7);
+                    grid-column-start    : 5;
+                    grid-column-end      : 11;
+                    grid-row-start       : 6;
+                    grid-row-end         : 12;
+                    overflow             : auto;
+                    display              : block;"> thumbs
+        </div> 
+
+
+        <div style="background-color     : gray; 
+                    margin               : 4px;
+                    padding              : 4px;
+                    color                : black;
+                    border               : solid 1px rgb(121, 121, 121);	
+                    border-Radius        : 7px;
+                    box-Shadow           : 4px 4px 7px rgba(0,0,0,0.7);
+                    grid-column-start    : 1;
+                    grid-column-end      : 5;
+                    grid-row-start       : 11;
+                    grid-row-end         : 11;
+                    display              : flex;">
+            
+            <button id="btnOk" name="bntOk" class="cssButton01"  style="width:14em; height:2em;margin:4px"> OK </button> 
+            <button id="btnAbort" name="bntAbort" class="cssAbortBtn01"  style="width:14em; height:2em;margin:4px"> Abbruch </button> 
+                    
+
+        </div> 
+
+    </div>    
+</body>
+</html>
