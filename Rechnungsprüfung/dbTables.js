@@ -7,23 +7,17 @@ var content = [];
 
 
 tables.push( 
-  {tableName:"table1",
+  {tableName:"billArchive",
    tableFields:[
-      {fieldName:"FIELDNAME1"    , fieldType:"Text" } ,
-      {fieldName:"FIELDNAME2"    , fieldType:"integer" } ,
-      {fieldName:"FIELDNAME3"	   , fieldType:"numeric" } ,
-      {fieldName:"FIELDNAME4"	   , fieldType:"real" } 
+      {fieldName:"ORGFILENAME"   , fieldType:"Text" } ,
+      {fieldName:"ARCPATH"       , fieldType:"Text" } ,
+      {fieldName:"TABLENAME"     , fieldType:"Text" } ,
+      {fieldName:"IMPORTED"  	   , fieldType:"real" } ,
+      {fieldName:"DESCRIPTION1"	 , fieldType:"Text" } ,
+      {fieldName:"DESCRIPTION2"	 , fieldType:"Text" } ,
+      {fieldName:"DESCRIPTION3"	 , fieldType:"Text" } 
    ]});
 
-   tables.push( 
-      {tableName:"table2",
-       tableFields:[
-         {fieldName:"FIELDNAME1"    , fieldType:"Text" } ,
-         {fieldName:"FIELDNAME2"    , fieldType:"integer" } ,
-         {fieldName:"FIELDNAME3"	   , fieldType:"numeric" } ,
-         {fieldName:"FIELDNAME4"	   , fieldType:"real" } 
-       ]}); 
-       
 
 module.exports.buildTables = function( dB )
 {

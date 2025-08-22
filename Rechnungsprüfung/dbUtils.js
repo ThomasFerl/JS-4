@@ -190,7 +190,7 @@ function _createTable( db , tableName , fieldDef )
 
 module.exports.createTable = ( db , tableName , fieldDef ) =>
 {
-  _createTable( db , tableName , fieldDef )
+  return _createTable( db , tableName , fieldDef )
 }
 
 
@@ -225,14 +225,18 @@ function _insertBatchIntoTable( db , tableName , records )
 // Quelle: chatGPT
 { 
   try{
-  const insert = db.transaction((records) =>
+       const insert = db.transaction((records) =>
                 {
                   for (const record of records) 
                   {
-                    var fieldNames = Object.keys(record);
+                    var fieldNames   = Object.keys(record);
+                    var values       = Object.values(record)
+                    for(var i=0; i<values.length; i++) values[i]="'"+values[i]+"'";
+
                     var placeholders = fieldNames.map(() => '?').join(', ');
                     var sql = `INSERT INTO ${tableName} (${fieldNames.join(', ')}) VALUES (${placeholders})`;
-                    db.prepare(sql).run(...Object.values(record));
+                    console.log("SQL:" + sql + "  VALUES: "+ JSON.stringify(values));
+                    db.prepare(sql).run(...values);
                   }
                 });
 

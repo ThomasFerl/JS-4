@@ -1,6 +1,7 @@
 const globals             = require('./backendGlobals.js');
 const utils               = require('./nodeUtils.js');
 const dbUtils             = require('./dbUtils.js');
+const procExcelFiles      = require('./processExcelFiles.js');
 const { TFDateTime }      = require('./nodeUtils.js');
 
 var   dB           = {}; // lokale Kopie der Arbeits-Datenbank - wird via startBackend() initialisiert ....   
@@ -48,7 +49,10 @@ if( CMD=='TEST')
 }
 
 
-
+if( CMD=='PROCESSEXCELFILE') 
+{
+  return procExcelFiles.run( fs , path ,  dB , param.excelFile , param.originalName , param.archiveName ); 
+}
 
 
 }

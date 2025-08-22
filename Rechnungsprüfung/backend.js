@@ -61,6 +61,17 @@ if(!fs.existsSync(uploadPath))
   utils.log( uploadPath + " created");
 }
 
+// Archiv-Pfad ggf anlegen ....
+if(!fs.existsSync(globals.archivePath))
+{
+  fs.mkdirSync(globals.archivePath , { recursive: true });
+  utils.log( globals.archivePath + " created");
+}
+
+
+
+
+
  // Konfiguriere Multer, für fileUpload
 const storage = multer.diskStorage({
   destination: function (req, file, cb ) { cb(null, uploadPath ); }, // Zielverzeichnis für uploads 

@@ -21,10 +21,11 @@ import { TFDateTime }    from "./tfWebApp/utils.js";
 import {TFgui}           from "./tfWebApp/tfGUI.js";
 
 
-var caption1    = '';
-var caption2    = '';
-var guiMainWnd  = null;
-var waitOnStart = null;
+var caption1     = '';
+var caption2     = '';
+var guiMainWnd   = null;
+var waitOnStart  = null;
+var lastInsertID = 0;
 
 
 export function main(capt1)
@@ -58,25 +59,64 @@ export function run()
                    waitOnStart.close();
                    guiMainWnd = new TFgui( ws.handle , 'rechnungspruefungMain' );
                    guiMainWnd.btnNewBill.callBack_onClick = newBill;
+                   updateView();
                  } , 4000 )  
 } 
 
 
 function updateView()
 {
-  dialogs.createTable( guiMainWnd.gridPanel , [{Name:"Ferl",Vorname:"Thomas",gebDatum:"29.10.1966"},
-                                                   {Name:"Mustermann",Vorname:"Max",gebDatum:"01.01.2000"},
-                                                   {Name:"Schmidt",Vorname:"Klaus",gebDatum:"15.03.1975"}] , '' , ''); 
+  guiMainWnd.gridPanel.innerHTML = '';
+
+  // alle Archiv-Einträge lesen...
+  var response = utils.webApiRequest('FETCHRECORDS',{sql:"Select * from billArchive"})
+  
+  dialogs.createTable( guiMainWnd.gridPanel , response.result , '' , ''); 
 }
   
 
 function newBill()
 {
+  lastInsertID       = 0;
    var dlg           = dialogs.createWindow(null,'neue Rechnung erfassen','50%','70%','CENTER');
    var guiNewBillDlg = new TFgui( dlg.hWnd , 'addBillDlg' );
-   dialogs.addFileUploader( guiNewBillDlg.dropZone , '*.*' , true , 'testUpload' , (selectedFiles) => {dialogs.showMessage(JSON.stringify(selectedFiles))}  );
-   updateView();
+   dialogs.addFileUploader( guiNewBillDlg.dropZone , '*.*' , true , 'testUpload' , function(selectedFiles) {processUploadFiles(selectedFiles , this.dropZone , this.dlgWnd )}.bind({dropZone: guiNewBillDlg.dropZone , dlgWnd:dlg}) );
+
+   guiNewBillDlg.btnOk.callBack_onClick = function() {
+                                                       if(lastInsertID==0) {dialogs.showMessage("Bitte erst eine Excel-Datei hochladen !");return;}
+                                                       var bez = this.bezeichnung;
+                                                       var id  = lastInsertID;
+                                                       utils.webApiRequest('UPDATETABLE',{tableName:"billArchive",ID_field:'ID', ID_Value:id, fields:{DESCRIPTION1:bez}})
+                                                       updateView();
+                                                       this.dlg.close();
+                                                       }.bind({bezeichnung:guiNewBillDlg.editBezeichnung.value, dlg:dlg})
+
 }
     
+
+function processUploadFiles( files , dropZone , dlgWnd )
+{
+  if(files.error) 
+  {
+    dialogs.showMessage('Der Upload-Prozess ist gescheitert ! ' + files.errMsg);
+    dlgWnd.close();
+    return;
+  } 
+
+  var response = utils.webApiRequest('processExcelFile' , {excelFile:files.result.savedPath, originalName:files.result.originalName , archiveName:files.result.savedName})
+
+  if (response.error)
+  {
+     dialogs.showMessage('Fehler beim Upload: ' + response.errMsg);
+     dlgWnd.close();
+     return;
+  }
+  else lastInsertID = response.result.lastInsertRowid;
+
+  dropZone.innerHTML = '';
+  utils.drawSymbol('circle-check' , dropZone , 'green' , '100%' );
+  updateView();
+
+}
  
 
