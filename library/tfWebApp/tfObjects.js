@@ -650,8 +650,13 @@ export class TFObject
 
   get width()
   {
-    if(this.hasGridLayout()) return this.gridWidth;
-    else                     return this.widthPx;
+    var result = 0;
+    if(this.hasGridLayout()) result = this.gridWidth;
+    else                     result = this.widthPx;
+    
+     if (this.DOMelement.style.width)  result = this.DOMelement.style.width;
+
+    return result;
   } 
 
 
@@ -672,10 +677,14 @@ export class TFObject
 
   get height()
   {
-    if(this.hasGridLayout()) return this.gridHeight;
-    else                     return this.heightPx;
+    var result = 0;
+    if(this.hasGridLayout()) result = this.gridHeight;
+    else                     result = this.heightPx;
+
+    if ( this.DOMelement.style.height )  result = this.DOMelement.style.height;
+
+    return result;
   } 
-   
 
   set zIndex( value )
   {
@@ -725,7 +734,7 @@ export class TFObject
   {
     //var rect = this.DOMelement.getBoundingClientRect();
     //return Math.round(rect.width);
-    return this.DOMelement.clientWidth;
+    return this.DOMelement.offsetWidth; //clientWidth;
   } 
 
 
@@ -740,7 +749,7 @@ export class TFObject
   {
     //var rect = this.DOMelement.getBoundingClientRect();
     //return  Math.round(rect.height);
-    return this.DOMelement.clientHeight;
+    return this.DOMelement.offsetHeight; //clientHeight;
  } 
 
 
@@ -4972,5 +4981,69 @@ export class TFColorDialog
                                                     }.bind(this));
     this.dlgWnd.hWnd.appendChild(this.input);
   }  
+
+}
+
+
+
+export class TFLoader 
+{
+  constructor( params )
+  {
+    params      = params || {}
+    this.title  = params.title || "Lade Daten …";
+    this.note   = params.note || "Bitte einen Moment Geduld.";
+    this.parent = params.parent || document.body;
+    this.overlay = null;
+  }
+
+  show() 
+  {
+    if (this.overlay) return;
+    const overlay = document.createElement('div');
+    overlay.className = 'tf-loader';
+    overlay.innerHTML = `
+      <div class="tf-loader-card">
+        <svg class="tf-spinner" viewBox="0 0 50 50">
+          <g class="ring">
+            <circle class="path" cx="25" cy="25" r="20" fill="none" stroke="currentColor" stroke-width="4"/>
+          </g>
+        </svg>
+        <div class="tf-loader-title">${this.title}</div>
+        <div class="tf-loader-note">${this.note}</div>
+      </div>`;
+    this.parent.appendChild(overlay);
+    this.overlay = overlay;
+  }
+
+  hide() 
+  {
+    if (!this.overlay) return;
+    this.overlay.remove();
+    this.overlay = null;
+  }
+
+  /** Loader sichtbar, solange Promise läuft */
+ async while(promise, { minMs = 0 } = {}) 
+ {
+    this.show();
+    const start = Date.now();
+    try {
+         const value      = await promise;                           // warte auf Promise
+         const elapsed    = Date.now() - start;
+         const remaining  = Math.max(0, minMs - elapsed);
+      if (remaining > 0) { await TFLoader.wait(remaining); }         // ggf. Mindestzeit auffüllen
+      
+      return value;
+    } finally {
+      this.hide();
+    }
+  }
+
+  /** Kleine Helferfunktion: Promise, das nach ms auflöst */
+  static wait(ms) 
+  {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
 
 }

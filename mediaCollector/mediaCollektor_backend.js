@@ -9,9 +9,20 @@ const sharp           = require('sharp');
 const { imageHash }   = require('image-hash');
 const hamming         = require('hamming-distance');  // Ähnlichkeit von Bildern ...
 
+/*
 _posterPath    = "/home/tferl/tmp/mediaCollector/mediaCache/poster/";
 _thumbsPath    = "/home/tferl/tmp/mediaCollector/mediaCache/thumbs/";
 _personsPath   = "/home/tferl/tmp/mediaCollector/mediaCache/persons/";
+*/
+
+_posterPath    = "./mediaCache/poster/";
+_thumbsPath    = "./mediaCache/thumbs/";
+_personsPath   = "./mediaCache/persons/";
+
+
+
+
+
 
 const videoExtensions = [
    'mp4', 'm4v', 'mov', 'avi', 'wmv', 'flv',

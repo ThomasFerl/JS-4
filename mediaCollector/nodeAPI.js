@@ -98,13 +98,22 @@ if( CMD=='KEEPALIVE')       return session.keepAlive(sessionID)
 
 if( CMD=='SCANDIR')         return utils.scanDir ( fs , path , param.dir , param.fileExt);
 
-if( CMD=='GETFILE')         return utils.getTextFile( fs , param.fileName );
+if( CMD=='GETFILE')         {
+                             if (fs.existsSync( param.fileName)) return utils.getTextFile( fs , param.fileName );
+                             else return {error:true, errMsg:"file not found", result:{}};
+                           }
 
-if( CMD=='GETTEXTFILE')     return utils.getTextFile( fs , param.fileName );
+if( CMD=='GETTEXTFILE')     {
+                              if (fs.existsSync( param.fileName)) return utils.getTextFile( fs , param.fileName );
+                               else return {error:true, errMsg:"file not found", result:{}};
+                           } 
 
-if( CMD=='GETIMAGEFILE')    {
+if( CMD=='GETIMAGEFILE')    { // existiert as file ?
+                            if (fs.existsSync( param.fileName)) 
+                            {
                              await utils.getImageFile  ( fs , path , param.fileName , webRequest , webResponse ); // function streamt direkt 
                              return {isStream:true};
+                            } else return {error:true, errMsg:"file not found", result:{}}; 
                             }
 
 if(CMD=='LSSYMBOLGROUPS') 

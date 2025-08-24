@@ -65,6 +65,10 @@ export class TFGuiBuilder
 
     this.formNameInp              = new TFComboBox( fileOps,1,1,5,1, { items: utils.lsForms() }) ;
 
+
+//-----------------------------------------------------------------------------------------------------------
+
+
  var newBtn                        = dialogs.addButton(fileOps , '' , 1 , 2 , 1 , 1 , {glyph:"file-circle-plus",caption:""});
      newBtn.height                 = '2em';
      newBtn.marginTop              = '0.5em';
@@ -120,8 +124,11 @@ var loadBtn                        = dialogs.addButton(fileOps , '' , 3 , 2 , 1 
                                      }.bind(this);
 
 
+//-----------------------------------------------------------------------------------------------------------
+
+
   // Panel für Eingabe der Dimensionierung des Grids:
- var gridCtrlPanel = dialogs.addPanel(  this.menuPanel , '' , 1 , 3 , 4 , 1);   
+ var gridCtrlPanel = dialogs.addPanel(  this.menuPanel , '' , 1 , 4 , 4 , 1);   
           gridCtrlPanel.backgroundColor                  = 'lightgray';
           gridCtrlPanel.margin                           = 0;
           gridCtrlPanel.padding                          = 0;
@@ -156,7 +163,53 @@ var loadBtn                        = dialogs.addButton(fileOps , '' , 3 , 2 , 1 
                                           this.setGridLayout( this.gridCtrlCols.value , this.gridCtrlRows.value ) 
                                         }.bind(this);
 
+//-----------------------------------------------------------------------------------------------------------
 
+
+
+
+  // Panel für Eingabe der Dimensionierung des Containers:
+     var  contDimPanel = dialogs.addPanel(  this.menuPanel , 'cssContainerPanel' , 1 , 3 , 4 , 1);   
+          contDimPanel.backgroundColor                  = 'lightgray';
+          contDimPanel.margin                           = 0;
+          contDimPanel.padding                          = 0;
+          contDimPanel.DOMelement.style.overflow        = 'hidden';
+
+          contDimPanel.buildGridLayout_templateColumns(  '1fr 1fr 4em' );
+          contDimPanel.buildGridLayout_templateRows   (  '1em 1fr' );
+
+     var p = dialogs.addPanel(contDimPanel , 'cssContainerPanel' , 1 , 1 , 3 , 1 );
+         p.backgroundColor = 'black';
+         p.padding = 0;
+         p.margin = 0;
+         p.marginBottom = '1px';
+         p.overflow = 'hidden';
+
+     var h=dialogs.addLabel( p , '' , 1 , 1 , '100%','1em','Containergröße definieren' );
+         h.color = 'white';
+         h.fontSize = '0.77em';
+
+     this.contDimRows       = dialogs.addInput ( contDimPanel    , 1 , 2 , 4  , 'width' , '' , '-' , {margin:0}) ;
+     this.contDimCols       = dialogs.addInput ( contDimPanel    , 2 , 2 , 4  , 'height' , '' , '-' , {margin:0} );
+
+     var contDimCtrlBtn        = dialogs.addButton( contDimPanel ,'', 3 , 2 , 1 , 1 ,  {glyph:"check",caption:""});
+         contDimCtrlBtn.height = '1.7em';
+         contDimCtrlBtn.width  = '2em';
+         contDimCtrlBtn.margin = 0;
+         contDimCtrlBtn.marginTop='7px';
+         contDimCtrlBtn.backgroundColor = 'gray';
+         contDimCtrlBtn.DOMelement.setAttribute("title", 'Dimension anwenden');
+         contDimCtrlBtn.callBack_onClick = function() 
+                                        { 
+                                          this.setContainerLayout( this.contDimRows.value , this.contDimCols.value ) 
+                                        }.bind(this);
+
+
+
+
+
+
+//-----------------------------------------------------------------------------------------------------------                                        
      var propToollDiv = dialogs.addPanel( this.menuPanel , 'cssContainerPanel' , 1 , 8 , 4 , 2);                                    
          propToollDiv.buildGridLayout_templateRows( '1fr 1fr 1fr' );
          propToollDiv.buildGridLayout_templateColumns( '1fr 4em' );
@@ -212,6 +265,11 @@ var loadBtn                        = dialogs.addButton(fileOps , '' , 3 , 2 , 1 
    
          
      // toolbox
+    this.toolbox = dialogs.addPanel(this.menuPanel, 'cssContainerPanel', 1, 5, 4, 3 );
+    this.toolbox.backgroundColor = 'rgba(0,0,0,0.47)';
+    this.toolbox.color = 'white';
+    this.toolbox.buildFlexBoxLayout();
+
       this.___createToolboxItem( 'stop'             , 'DIV'     , 1,4)
       this.___createToolboxItem( 'square-check'     , 'BTN'     , 2,4)
       this.___createToolboxItem( 'font'             , 'LABEL'   , 3,4)
@@ -271,9 +329,12 @@ var loadBtn                        = dialogs.addButton(fileOps , '' , 3 , 2 , 1 
 
 
 
-
-
-
+setContainerLayout( width , height )
+{
+  if(!this.dashBoard) return;
+   this.dashBoard.width  = width;
+   this.dashBoard.height = height;
+}
 
 
 keyHandler( event )
@@ -449,8 +510,6 @@ handleDuplicate()
 }                                                             
 
 
-
-
 newProject()
 {
   if(this.hasChanged)
@@ -545,9 +604,6 @@ load()
 } 
 
 
-
-
-
 test()
 { 
   // das dashBoard ist das einzige zentrale parent-Element
@@ -629,14 +685,16 @@ updateTreeView()
 
 selectComponent(element) 
 {
+    // nix gewählt ... 
     if(!element) return;
 
+    // bereits ausgewählt
+    if(this.selected.element == element) return false;  // tue nix
+
+
     // letztes Element abwählen
-    if (this.selected.element != null)
-    { 
-       if(this.selected.element == element) return false;  // tue nix
-       this.selected.element.DOMelement.style.border = this.selected.border;
-    } 
+    if (this.selected.element != null) this.selected.element.DOMelement.style.border = this.selected.border;
+
   
     // neues Element auswählen und opt. hervorheben
     this.selected.element = element;
@@ -697,7 +755,8 @@ saveProperties( p )
 
 ___createToolboxItem( glyph , type , left , top)
 {
-  var item                       = dialogs.addPanel( this.menuPanel , '' , left , top , 1 , 1 , {dragable:true , draggingData: { newObject:type } });
+  if(!this.toolbox) return;
+  var item                       = dialogs.addPanel( this.toolbox , '' , 1 , 1 , '4em' , '4em' , {dragable:true , draggingData: { newObject:type } });
       item.overflow              = 'hidden';
       item.margin                = '0.4em';
       utils.drawSymbol(  glyph , item , "90%" ); 

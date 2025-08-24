@@ -13,7 +13,8 @@ import { TFEdit,
          TFPopUpMenu,
          TPropertyEditor,
          TFAnalogClock,
-         TFWorkSpace }   from "./tfWebApp/tfObjects.js";
+         TFWorkSpace,
+         TFLoader }      from "./tfWebApp/tfObjects.js";
 
 import { TFWindow }      from "./tfWebApp/tfWindows.js"; 
 import { TFChart }       from "./tfWebApp/tfObjects.js";
@@ -46,9 +47,10 @@ export function main(capt1)
 }  
 
 
-export function run()
+export async function run()
 { 
   var ws      = app.startWebApp(caption1,caption2).activeWorkspace;
+  /*
 
   waitOnStart = dialogs.createWindow(ws.handle,'Rechnungsprüfung ...','25%','25%','CENTER');
   waitOnStart.hWnd.buildGridLayout_templateColumns('0.5fr 1fr 0.5fr');
@@ -61,6 +63,16 @@ export function run()
                    guiMainWnd.btnNewBill.callBack_onClick = newBill;
                    updateView();
                  } , 4000 )  
+ */
+
+
+ const loader = new TFLoader({ title: "lade Daten …" , note:"hab's gleich geschafft ..." });
+
+// Splashscreen 5s anzeigen
+await loader.while(TFLoader.wait(5000))
+
+updateView();
+
 } 
 
 
