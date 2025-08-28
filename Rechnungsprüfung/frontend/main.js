@@ -25,7 +25,6 @@ import {TFgui}           from "./tfWebApp/tfGUI.js";
 var caption1     = '';
 var caption2     = '';
 var guiMainWnd   = null;
-var waitOnStart  = null;
 var lastInsertID = 0;
 
 
@@ -49,28 +48,15 @@ export function main(capt1)
 
 export async function run()
 { 
-  var ws      = app.startWebApp(caption1,caption2).activeWorkspace;
-  /*
-
-  waitOnStart = dialogs.createWindow(ws.handle,'Rechnungsprüfung ...','25%','25%','CENTER');
-  waitOnStart.hWnd.buildGridLayout_templateColumns('0.5fr 1fr 0.5fr');
-  waitOnStart.hWnd.buildGridLayout_templateRows   ('1fr 1fr 1fr');
-  dialogs.addLabel(waitOnStart.hWnd,'',2,2,1,1,'Anwendung wird geladen ...');
-
-  setTimeout(()=>{
-                   waitOnStart.close();
-                   guiMainWnd = new TFgui( ws.handle , 'rechnungspruefungMain' );
-                   guiMainWnd.btnNewBill.callBack_onClick = newBill;
-                   updateView();
-                 } , 4000 )  
- */
-
-
- const loader = new TFLoader({ title: "lade Daten …" , note:"hab's gleich geschafft ..." });
+  var ws       = app.startWebApp(caption1,caption2).activeWorkspace;
+  const loader = new TFLoader({ title: "lade Daten …" , note:"hab's gleich geschafft ..." });
 
 // Splashscreen 5s anzeigen
-await loader.while(TFLoader.wait(5000))
+await loader.while(TFLoader.wait(7000))
 
+
+guiMainWnd = new TFgui( ws.handle , 'rechnungspruefungMain' );
+guiMainWnd.btnNewBill.callBack_onClick = newBill;
 updateView();
 
 } 
@@ -83,14 +69,19 @@ function updateView()
   // alle Archiv-Einträge lesen...
   var response = utils.webApiRequest('FETCHRECORDS',{sql:"Select * from billArchive"})
   
-  dialogs.createTable( guiMainWnd.gridPanel , response.result , '' , ''); 
+  var table    = dialogs.createTable( guiMainWnd.gridPanel , response.result , '' , ''); 
+      table.onRowDblClick = function( selectedRow , itemIndex , rowData ) {
+          // Handle double-click on table row
+          dialogs.showMessage("Row double-clicked: " + JSON.stringify(rowData));
+          showReports(rowData)
+      };
 }
   
 
 function newBill()
 {
   lastInsertID       = 0;
-   var dlg           = dialogs.createWindow(null,'neue Rechnung erfassen','50%','70%','CENTER');
+   var dlg           = dialogs.createWindow(null,caption1,'50%','70%','CENTER');
    var guiNewBillDlg = new TFgui( dlg.hWnd , 'addBillDlg' );
    dialogs.addFileUploader( guiNewBillDlg.dropZone , '*.*' , true , 'testUpload' , function(selectedFiles) {processUploadFiles(selectedFiles , this.dropZone , this.dlgWnd )}.bind({dropZone: guiNewBillDlg.dropZone , dlgWnd:dlg}) );
 
@@ -103,8 +94,67 @@ function newBill()
                                                        this.dlg.close();
                                                        }.bind({bezeichnung:guiNewBillDlg.editBezeichnung.value, dlg:dlg})
 
+   guiNewBillDlg.btnAbort.callBack_onClick = function() {this.close()}.bind(dlg) 
+
 }
     
+
+
+function showReports( data )
+{
+   var dlg           = dialogs.createWindow(null,caption1,'100%','100%','CENTER');
+   var guiNewBillDlg = new TFgui( dlg.hWnd , 'rechnungspruefungAuswertung' );
+   var select        = guiNewBillDlg.selectReport; // besseres handling
+
+   select.setItems( [ {value:'RAW'     , caption:'Rohdaten anzeigen'} ,
+                      {value:'SUMMARY' , caption:'Zusammenfassung anzeigen'} 
+                    
+                    ]);
+
+   select.callBack_onChange = function( v ) { 
+                                              
+                                             runReport( this.data , this.container , v ); 
+
+                                            }.bind({data:data, container:guiNewBillDlg.gridContainer});
+
+  runReport(data, guiNewBillDlg.gridContainer , 'RAW' );
+
+}
+
+
+function runReport( data , container , mode )
+{
+
+
+  mode = (mode || 'RAW').toUpperCase();
+
+    var tn   = data.TABLENAME;
+
+
+    var sql  = "SELECT * FROM " + tn;
+
+
+    if (mode === 'SUMMARY') 
+    {
+      sql = "SELECT produkt , ort,ortsteil, count(*) as ANZAHL ,  sum(AKTIV_GEFOERDERT) as AKTIV_GEFOERDERT FROM " + tn + " GROUP BY Produkt,Ort,Ortsteil";
+    }   
+
+    var reportData = utils.webApiRequest('fetchRecords', { sql:sql });
+     
+    if (reportData.error) {
+           dialogs.showMessage('Fehler beim Laden der Berichte: ' + reportData.errMsg);
+           return;
+       }
+
+    dialogs.createTable( container , reportData.result ) ;
+
+
+}
+
+
+
+
+
 
 function processUploadFiles( files , dropZone , dlgWnd )
 {
