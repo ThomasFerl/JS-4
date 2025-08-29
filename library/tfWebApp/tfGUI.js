@@ -7,7 +7,7 @@ export class TFgui
   {
       this.dashBoard           = aParent;
       this.dashBoard.innerHTML = '';
-      this.guiObjects          = {};
+      this.guiObjects          = {___ID:''};
       
       var formData             = null; 
     

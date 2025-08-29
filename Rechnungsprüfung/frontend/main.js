@@ -52,7 +52,7 @@ export async function run()
   const loader = new TFLoader({ title: "lade Daten …" , note:"hab's gleich geschafft ..." });
 
 // Splashscreen 5s anzeigen
-await loader.while(TFLoader.wait(7000))
+await loader.while(TFLoader.wait(1000))
 
 
 guiMainWnd = new TFgui( ws.handle , 'rechnungspruefungMain' );
@@ -72,7 +72,7 @@ function updateView()
   var table    = dialogs.createTable( guiMainWnd.gridPanel , response.result , '' , ''); 
       table.onRowDblClick = function( selectedRow , itemIndex , rowData ) {
           // Handle double-click on table row
-          dialogs.showMessage("Row double-clicked: " + JSON.stringify(rowData));
+          // dialogs.showMessage("Row double-clicked: " + JSON.stringify(rowData));
           showReports(rowData)
       };
 }
@@ -99,47 +99,93 @@ function newBill()
 }
     
 
-
 function showReports( data )
 {
    var dlg           = dialogs.createWindow(null,caption1,'100%','100%','CENTER');
    var guiNewBillDlg = new TFgui( dlg.hWnd , 'rechnungspruefungAuswertung' );
+   var tableName     = data.TABLENAME;
+
+   //  Die Liste der möglichen Reports....
    var select        = guiNewBillDlg.selectReport; // besseres handling
+       select.addItem('Rohdaten anzeigen' , 'RAW');
 
-   select.setItems( [ {value:'RAW'     , caption:'Rohdaten anzeigen'} ,
-                      {value:'SUMMARY' , caption:'Zusammenfassung anzeigen'} 
-                    
-                    ]);
-
-   select.callBack_onChange = function( v ) { 
-                                              
+   var response      = utils.webApiRequest( 'FETCHRECORDS' , {sql:'Select ID ,  REPORTNAME from reports order by REPORTNAME'});
+   if(!response.error) 
+    for(var i=0; i<response.result.length; i++) select.addItem( response.result[i].REPORTNAME , response.result[i].ID );     
+ 
+   select.callBack_onChange = function( v ) {                                               
                                              runReport( this.data , this.container , v ); 
 
                                             }.bind({data:data, container:guiNewBillDlg.gridContainer});
 
-  runReport(data, guiNewBillDlg.gridContainer , 'RAW' );
 
+// Button: neuen Report erzeugen ...
+guiNewBillDlg.btnAddReport.callBack_onClick = function(){ editReport(tableName ) }
+
+
+// Button: Report bearbeiten ...
+guiNewBillDlg.btnEditReport.callBack_onClick = function(){ editReport(tableName) }
+
+
+// Button Report löschen ...
+guiNewBillDlg.btnDeleteReport.callBack_onClick = function(){ deleteReport() }
+
+
+// per Default erstmal die Roh-Daten anzeigen ...
+runReport(data, guiNewBillDlg.gridContainer , 'RAW' );
 }
 
 
 function runReport( data , container , mode )
 {
+  var sql             = '';
+  container.innerHTML = '';
+  var tn              = data.TABLENAME;
+  var komma           = ' ';
 
-
-  mode = (mode || 'RAW').toUpperCase();
-
-    var tn   = data.TABLENAME;
-
-
-    var sql  = "SELECT * FROM " + tn;
-
-
-    if (mode === 'SUMMARY') 
+  if(!isNaN(mode))  // Wenn NUMERISCH dann als ID des Reports interpretieren ....
+  {
+    var response = utils.webApiRequest('FETCHRECORD',{sql:'Select * from reports Where ID='+mode })
+    if(response.error) 
     {
-      sql = "SELECT produkt , ort,ortsteil, count(*) as ANZAHL ,  sum(AKTIV_GEFOERDERT) as AKTIV_GEFOERDERT FROM " + tn + " GROUP BY Produkt,Ort,Ortsteil";
-    }   
+      dialogs.showMessage(response.errMsg);
+      return;
+    }
+     
+    var groupFields = JSON.parse(response.result.GROUPFIELDS);
+    var sumFields   = JSON.parse(response.result.SUMFIELDS);
+    
+    sql = 'select count(*) as ANZAHL';
+    for(var i=0; i<groupFields.length;i++) sql = sql + ', ' + groupFields[i]
+  
+     if(groupFields.length==0) komma = ' ';
+     else                      komma = ', ';
 
-    var reportData = utils.webApiRequest('fetchRecords', { sql:sql });
+     for(var i=0; i<sumFields.length;i++)
+      {
+        if(i>0) komma=', ';
+         sql = sql + komma + 'SUM(' + sumFields[i]+') as ' + sumFields[i]
+      }
+      
+    sql = sql + ' from ' + tn;
+    
+    if(groupFields.length>0)
+    {
+      sql   = sql + ' GROUP BY ';
+      komma = ' ';
+       for(var i=0; i<groupFields.length;i++)
+       {
+         if(i>0) komma=', ';
+         sql = sql + komma + groupFields[i];
+       }   
+    }  
+
+
+  } 
+  else sql  = "SELECT * FROM " + tn;
+
+
+  var reportData = utils.webApiRequest('fetchRecords', { sql:sql });
      
     if (reportData.error) {
            dialogs.showMessage('Fehler beim Laden der Berichte: ' + reportData.errMsg);
@@ -148,12 +194,7 @@ function runReport( data , container , mode )
 
     dialogs.createTable( container , reportData.result ) ;
 
-
 }
-
-
-
-
 
 
 function processUploadFiles( files , dropZone , dlgWnd )
@@ -182,3 +223,101 @@ function processUploadFiles( files , dropZone , dlgWnd )
 }
  
 
+// Button: Report bearbeiten ...  ist ID == null -> neuEingabe
+function editReport( tableName , ID ) 
+{
+  var dlg               = dialogs.createWindow(null,caption1,'50%','70%','CENTER');
+  var guiDefineReport   = new TFgui( dlg.hWnd , 'reportDefinition' );
+
+  // für einen leichteren Umgang ;-)
+  var cbReportKategorie = guiDefineReport.cbReportKategorie;
+  var selectDatafield1  = guiDefineReport.selectDatafield1;
+  var selectDatafield2  = guiDefineReport.selectDatafield2;
+  var lbGroupFields     = guiDefineReport.lbGroupFields;
+  var lbSumFields       = guiDefineReport.lbSumFields;
+  var btnAbort          = guiDefineReport.btnAbort;
+  var btnOk             = guiDefineReport.btnOk;
+ 
+  // kleiner Trick - bindet die ID ans GUI, so dass später beim 'save' entschieden werden kann ob INSERT oder UPDATE .... 
+  if(ID) guiDefineReport.___ID = ID;
+  
+  // Combobox mit Kategirien befüllen...
+  var response      = utils.webApiRequest( 'FETCHRECORDS' , {sql:"Select Distinct KATEGORIE from reports Order by KATEGORIE"} );
+  if(!response.error)
+    {
+      var items = [];
+      for(var i=0; i<response.result.length;i++) items.push(response.result[i].KATEGORIE)
+      cbReportKategorie.items = items;
+    }
+
+ // datafield-Selection mit Datenfeldern der akt. Tabelle beestücken ...
+ var dataFields = ___getFieldNames(tableName)
+
+ selectDatafield1.setItems( dataFields );
+ selectDatafield2.setItems( dataFields );
+
+// Button zum Listboxen bestücken....
+guiDefineReport.btnAddToGroup.callBack_onClick = function() { ___addField(this.fieldName.value , this.listBox) }.bind({fieldName:selectDatafield1 , listBox:lbGroupFields })
+guiDefineReport.btnAddToSum.callBack_onClick   = function() { ___addField(this.fieldName.value , this.listBox) }.bind({fieldName:selectDatafield2 , listBox:lbSumFields })
+
+// Button zum entfernen der Listbox-Einträge ....
+guiDefineReport.btnDelFromGroup.callBack_onClick = function() { ___removeField(this.listBox) }.bind({listBox:lbGroupFields })
+guiDefineReport.btnDelFromSum.callBack_onClick   = function() { ___removeField(this.listBox) }.bind({listBox:lbSumFields })
+
+// Button zum Abbruch ...
+btnAbort.callBack_onClick = function(){this.close()}.bind(dlg);
+
+// button zum Speichern ...
+btnOk.callBack_onClick = function(){ ___saveReport(this.dlgWnd , this.gui)}.bind({dlgWnd:dlg, gui:guiDefineReport})
+
+}
+
+
+// Button Report löschen ...
+function deleteReport() 
+{}
+
+
+
+
+// Hilfsfunktionen
+
+function ___getFieldNames(tableName)
+{
+  var result   = [];
+  var response = utils.webApiRequest('STRUCTURE' , {tableName:tableName})
+
+  if (response.error) return result;
+
+  for (var i=0; i<response.result.length; i++) result.push(response.result[i].name)
+
+  return result;  
+}  
+
+
+function  ___addField( value , listBox )
+{
+  listBox.addItem( {value:value, caption:value} , true );
+}
+
+
+function ___removeField( listBox ) 
+{
+   var selectedItems = listBox.selectedItems;
+   for(var i=0; i<selectedItems.length; i++) listBox.removeItem( selectedItems[i] );
+}
+
+
+function  ___saveReport( dlgWnd , gui)
+{ 
+  var record = {};
+      record.REPORTNAME  = gui.editReportName.value;
+      record.KATEGORIE   = gui.cbReportKategorie.value;
+      record.GROUPFIELDS = JSON.stringify(gui.lbGroupFields.getItems('value'));
+      record.SUMFIELDS   = JSON.stringify(gui.lbSumFields.getItems('value'));
+
+      if (gui.___ID == '') utils.insertIntoTable('reports',record)
+      else                 utils.updateTable('report' , 'ID' , gui.___ID , record );  
+
+   dlgWnd.close(); 
+}

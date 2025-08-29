@@ -2235,14 +2235,39 @@ export class TFListBox extends TFObject
     if(this.params.items) this.addItems(this.params.items);
   }
   
-  addItem( item )
-  {
+  addItem( item , unique)
+  { 
+   // ist Item ein String ?
+   if(typeof item == 'string') item = {value:item , caption:item}
+
+   // es sind nur eindeutige Einträge erlaubt....
+   if(unique)
+   {
+    // vor Einfügen prüfen 
+     var ndx = this.items.findIndex( i => i.value == item.value );
+     if (ndx>=0) return;
+   }   
+    
     this.items.push(item);
     var option = document.createElement('option');
     option.value = item.value || item.text || item.caption;
     option.textContent = item.text || item.caption;
     option.selected = item.selected || false;
     this.listbox.appendChild(option);
+
+  }
+
+
+  getItems( what )
+  {
+    var result = [];
+    for (var i = 0; i < this.items.length; i++)
+    {
+      var item = this.items[i];
+      if(what) result.push( item[what] )
+      else     result.push( item );  
+    }
+    return result;
   }
 
   removeItem( item )

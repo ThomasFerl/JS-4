@@ -1533,6 +1533,17 @@ export function insertIntoTable( tableName , fields , etc )
 }
 
 
+
+export function updateTable( tableName , ID_field , ID_value ,  fields ,  etc )
+{
+  var _etc = false;
+   if(etc) _etc=true;
+   
+   var response = webApiRequest( 'UPDATETABLE' , {tableName:tableName , ID_field:ID_field, ID_value:ID_value, fields:fields  , etc:_etc} );
+   return response;
+}
+
+
 export function _copyStringToClipboard (str) 
 {
   log( 'utils.copyStringToClipboard('+str+')' );

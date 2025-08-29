@@ -19,6 +19,20 @@ tables.push(
    ]});
 
 
+tables.push( 
+  {tableName:"reports",
+   tableFields:[
+      {fieldName:"REPORTNAME"    , fieldType:"Text" } ,
+      {fieldName:"KATEGORIE"     , fieldType:"Text" } ,
+      {fieldName:"GROUPFIELDS"   , fieldType:"Text" } ,
+      {fieldName:"SUMFIELDS"     , fieldType:"Text" } 
+      
+   ]});
+
+
+
+
+
 module.exports.buildTables = function( dB )
 {
    for(var i=0; i< tables.length; i++)
