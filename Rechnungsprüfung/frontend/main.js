@@ -164,7 +164,7 @@ function runReport( data , container , mode )
      for(var i=0; i<sumFields.length;i++)
       {
         if(i>0) komma=', ';
-         sql = sql + komma + 'SUM(' + sumFields[i]+') as ' + sumFields[i]
+         sql = sql + komma + "SUM( CAST( REPLACE("+sumFields[i]+", '''', '') as REAL)) as " + sumFields[i]
       }
       
     sql = sql + ' from ' + tn;
@@ -178,7 +178,9 @@ function runReport( data , container , mode )
          if(i>0) komma=', ';
          sql = sql + komma + groupFields[i];
        }   
-    }  
+    }
+    
+  sql = sql + ' ORDER BY ANZAHL DESC';  
 
 
   } 
