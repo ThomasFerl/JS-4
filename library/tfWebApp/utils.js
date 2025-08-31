@@ -38,7 +38,17 @@ export function getYearList(startDate, endDate)
   return yearList;
 }
 
+ export function getParentWindow( childElement )
+ {
+   if(!childElement) return globals.webApp.activeWorkspace || globals.Screen;
 
+    while (childElement.parent != null)
+   {
+     if(childElement.parent.constructor.name == 'TFWindow') return childElement.parent;
+     childElement = childElement.parent;
+   }
+   return null;
+ }
 
 export function isHTMLElement(element) 
 {
@@ -2087,6 +2097,9 @@ export function keys_toUpperCase(jsn)
 
 export function isMovieFile(ext)
 {
+    // besitzt ext einen vorangestellten Punkt ?
+    if(ext.indexOf('.')==0) ext = ext.substring(1);
+
    for(var i=0; i<globals.movieFileExtensions.length; i++)
    {
      if(ext.toUpperCase()==globals.movieFileExtensions[i].toUpperCase()) return true;

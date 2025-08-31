@@ -29,7 +29,7 @@ export class TFGuiBuilder
     this.hasChanged                              = false;
     this.lastFormName                            = '';
     this.builderObjects                          = [];
-    this.selected                                = {element:null , border:""};
+    this.selected                                = { element: null, outline: '', outlineOffset: '' };
     this.propertyEditor                          = null;	
     this.dashBoard                               = null;
     this.menuPanel                               = null;
@@ -45,11 +45,17 @@ export class TFGuiBuilder
         dashBoardContainer.className             = 'ccContainerPanel';
         dashBoardContainer.padding               = '0px';
         dashBoardContainer.margin                = '0px';
+        dashBoardContainer.backgroundColor       = 'darkgray';
+        dashBoardContainer.buildFlexBoxLayout();
+        dashBoardContainer.justifyContent        = 'center';
+        dashBoardContainer.alignItems            = 'center';
 
     this.dashBoard                               = dialogs.addPanel(dashBoardContainer , '' , 0 , 0 , '100%' , '100%' , {dropTarget:true} );
     this.dashBoard.name                          = 'dashBoard';
     this.dashBoard.overflow                      = 'hidden';
     this.dashBoard.backgroundColor               = 'white';
+    this.dashBoard.margin                        = '0px';
+    this.dashBoard.padding                       = '0px';
     this.dashBoard.DOMelement.style.borderRadius = '2px';
     this.dashBoard.callBack_onDragOver           = function(e){  this.onDragover(e) }.bind(this);
     this.dashBoard.callBack_onDrop               = function(e , dropResult){ this.onDrop(e , dropResult) }.bind(this);
@@ -100,7 +106,18 @@ var loadBtn                        = dialogs.addButton(fileOps , '' , 3 , 2 , 1 
                                      }.bind(this);
 
 
- var testBtn                       = dialogs.addButton(fileOps , '' , 4 , 2 , 1 , 1 , {glyph:"desktop",caption:""});
+var loadBtn                        = dialogs.addButton(fileOps , '' , 4 , 2 , 1 , 1 , {glyph:"diagram-next",caption:""});
+    loadBtn.height                 = '2em';
+    loadBtn.marginTop              = '0.5em';
+    loadBtn.DOMelement.setAttribute("title", 'Formular als PlugIn laden');
+    loadBtn.callBack_onClick       = function()
+                                     { 
+                                       this.loadPlugin(); 
+                                       this.abortBtn.visible = false;
+                                     }.bind(this);                                     
+
+
+ var testBtn                       = dialogs.addButton(fileOps , '' , 5 , 2 , 1 , 1 , {glyph:"desktop",caption:""});
      testBtn.height                = '2em';
      testBtn.marginTop             = '0.5em';
      testBtn.backgroundColor       = 'gray';
@@ -111,7 +128,7 @@ var loadBtn                        = dialogs.addButton(fileOps , '' , 3 , 2 , 1 
                                      }.bind(this);
 
 
- this.abortBtn                      = dialogs.addButton(fileOps , '' , 5 , 2 , 1 , 1 , {glyph:"trash-can",caption:""});
+ this.abortBtn                      = dialogs.addButton(fileOps , '' , 6 , 2 , 1 , 1 , {glyph:"trash-can",caption:""});
  this.abortBtn.height                = '2em';
  this.abortBtn.marginTop             = '0.5em';
  this.abortBtn.backgroundColor       = 'red';
@@ -123,99 +140,14 @@ var loadBtn                        = dialogs.addButton(fileOps , '' , 3 , 2 , 1 
                                        this.hasChanged = false;
                                      }.bind(this);
 
-
-//-----------------------------------------------------------------------------------------------------------
-
-
-  // Panel für Eingabe der Dimensionierung des Grids:
- var gridCtrlPanel = dialogs.addPanel(  this.menuPanel , '' , 1 , 4 , 4 , 1);   
-          gridCtrlPanel.backgroundColor                  = 'lightgray';
-          gridCtrlPanel.margin                           = 0;
-          gridCtrlPanel.padding                          = 0;
-          gridCtrlPanel.DOMelement.style.overflow        = 'hidden';
-          
-          gridCtrlPanel.buildGridLayout_templateColumns(  '1fr 1fr 4em' );
-          gridCtrlPanel.buildGridLayout_templateRows   (  '1em 1fr' );
-
-     var p = dialogs.addPanel(gridCtrlPanel , 'cssContainerPanel' , 1 , 1 , 3 , 1 );
-         p.backgroundColor = 'rgba(0,0,0,0.47)';
-         p.padding = 0;
-         p.margin = 0;
-         p.marginBottom = '1px';
-         p.overflow = 'hidden';
-
-     var h=dialogs.addLabel( p , '' , 1 , 1 , '100%','1em','Gridlayout definieren' );
-         h.color = 'white';
-         h.fontSize = '0.77em';
-
-     this.gridCtrlRows       = dialogs.addInput ( gridCtrlPanel    , 1 , 2 , 4  , 'row' , '' , '-' , {margin:0}) ;
-     this.gridCtrlCols       = dialogs.addInput ( gridCtrlPanel    , 2 , 2 , 4  , 'col' , '' , '-' , {margin:0} );
-
-     var gridCtrlBtn        = dialogs.addButton( gridCtrlPanel ,'', 3 , 2 , 1 , 1 ,  {glyph:"check",caption:""});
-         gridCtrlBtn.height = '1.7em';
-         gridCtrlBtn.width  = '2em';
-         gridCtrlBtn.margin = 0;
-         gridCtrlBtn.marginTop='7px';
-         gridCtrlBtn.backgroundColor = 'gray';
-         gridCtrlBtn.DOMelement.setAttribute("title", 'GRID anwenden');
-         gridCtrlBtn.callBack_onClick = function() 
-                                        { 
-                                          this.setGridLayout( this.gridCtrlCols.value , this.gridCtrlRows.value ) 
-                                        }.bind(this);
-
-//-----------------------------------------------------------------------------------------------------------
-
-
-
-
-  // Panel für Eingabe der Dimensionierung des Containers:
-     var  contDimPanel = dialogs.addPanel(  this.menuPanel , 'cssContainerPanel' , 1 , 3 , 4 , 1);   
-          contDimPanel.backgroundColor                  = 'lightgray';
-          contDimPanel.margin                           = 0;
-          contDimPanel.padding                          = 0;
-          contDimPanel.DOMelement.style.overflow        = 'hidden';
-
-          contDimPanel.buildGridLayout_templateColumns(  '1fr 1fr 4em' );
-          contDimPanel.buildGridLayout_templateRows   (  '1em 1fr' );
-
-     var p = dialogs.addPanel(contDimPanel , 'cssContainerPanel' , 1 , 1 , 3 , 1 );
-         p.backgroundColor = 'black';
-         p.padding = 0;
-         p.margin = 0;
-         p.marginBottom = '1px';
-         p.overflow = 'hidden';
-
-     var h=dialogs.addLabel( p , '' , 1 , 1 , '100%','1em','Containergröße definieren' );
-         h.color = 'white';
-         h.fontSize = '0.77em';
-
-     this.contDimRows       = dialogs.addInput ( contDimPanel    , 1 , 2 , 4  , 'width' , '' , '-' , {margin:0}) ;
-     this.contDimCols       = dialogs.addInput ( contDimPanel    , 2 , 2 , 4  , 'height' , '' , '-' , {margin:0} );
-
-     var contDimCtrlBtn        = dialogs.addButton( contDimPanel ,'', 3 , 2 , 1 , 1 ,  {glyph:"check",caption:""});
-         contDimCtrlBtn.height = '1.7em';
-         contDimCtrlBtn.width  = '2em';
-         contDimCtrlBtn.margin = 0;
-         contDimCtrlBtn.marginTop='7px';
-         contDimCtrlBtn.backgroundColor = 'gray';
-         contDimCtrlBtn.DOMelement.setAttribute("title", 'Dimension anwenden');
-         contDimCtrlBtn.callBack_onClick = function() 
-                                        { 
-                                          this.setContainerLayout( this.contDimRows.value , this.contDimCols.value ) 
-                                        }.bind(this);
-
-
-
-
-
-
 //-----------------------------------------------------------------------------------------------------------                                        
      var propToollDiv = dialogs.addPanel( this.menuPanel , 'cssContainerPanel' , 1 , 8 , 4 , 2);                                    
          propToollDiv.buildGridLayout_templateRows( '1fr 1fr 1fr' );
          propToollDiv.buildGridLayout_templateColumns( '1fr 4em' );
          propToollDiv.backgroundColor = 'rgba(2, 31, 85, 0.14)';
-         propToollDiv.margin  = 0;
-         propToollDiv.padding = 0;
+         propToollDiv.overflow        = 'hidden';    
+         propToollDiv.margin          = 0;
+         propToollDiv.padding         = 0;
          
        //  propToollDiv.paddingLeft = '0.5em';
        //  propToollDiv.paddingRight = '0.5em';
@@ -260,12 +192,57 @@ var loadBtn                        = dialogs.addButton(fileOps , '' , 3 , 2 , 1 
          propertiesDiv.DOMelement.style.borderRadius = '0px';
     
     this.propertyEditor = dialogs.newPropertyEditor(propertiesDiv , [] , b );
-    this.propertyEditor.callBack_onSave   = function(p){this.saveProperties(p) ; this.hasChanged = true; this.abortBtn.visible = true; }.bind(this); 
+    this.propertyEditor.callBack_onSave   = function(p){ this.saveProperties(p) ; this.showGridLines( this.selected.element ); this.hasChanged = true; this.abortBtn.visible = true; }.bind(this); 
     this.propertyEditor.callBack_onDialog = function(item){ this.propertyEditorDialog(item)}.bind(this);
    
-         
+
+    
+//-----------------------------------------------------------------------------------------------------------
+// Panel für Eingabe der Dimensionierung des Grids:
+
+var gridCtrlPanel = dialogs.addPanel(  this.menuPanel , 'cssContainerPanel' , 1 , 7 , 4 , 1);   
+          gridCtrlPanel.backgroundColor                  = 'lightgray';
+          gridCtrlPanel.margin                           = 0;
+          gridCtrlPanel.padding                          = 0;
+          gridCtrlPanel.DOMelement.style.overflow        = 'hidden';
+          
+          gridCtrlPanel.buildGridLayout_templateColumns(  '1fr 1fr 4em' );
+          gridCtrlPanel.buildGridLayout_templateRows   (  '1em 1fr' );
+
+     var p = dialogs.addPanel(gridCtrlPanel , 'cssContainerPanel' , 1 , 1 , 3 , 1 );
+         p.backgroundColor = 'rgba(0,0,0,0.47)';
+         p.padding = 0;
+         p.margin = 0;
+         p.marginBottom = '1px';
+         p.overflow = 'hidden';
+
+     var h=dialogs.addLabel( p , '' , 1 , 1 , '100%','1em','Gridlayout definieren' );
+         h.backgroundColor = 'rgba(0,0,0,0.77)';
+         h.color = 'white';
+         h.fontSize = '0.77em';
+
+     this.gridCtrlRows       = dialogs.addInput ( gridCtrlPanel    , 1 , 2 , 4  , 'row' , '' , '-' , {margin:0}) ;
+     this.gridCtrlCols       = dialogs.addInput ( gridCtrlPanel    , 2 , 2 , 4  , 'col' , '' , '-' , {margin:0} );
+
+     var gridCtrlBtn             = dialogs.addButton( gridCtrlPanel ,'', 3 , 2 , 1 , 1 ,  {glyph:"check",caption:""});
+         gridCtrlBtn.height      = '2em';
+         gridCtrlBtn.width       = '3.7em';
+
+         //gridCtrlBtn.marginLeft  = '7px';
+         //gridCtrlBtn.marginRight = '7px';
+         //gridCtrlBtn.marginTop='7px';
+
+         gridCtrlBtn.backgroundColor = 'gray';
+         gridCtrlBtn.DOMelement.setAttribute("title", 'GRID anwenden');
+         gridCtrlBtn.callBack_onClick = function() 
+                                        { 
+                                          this.setGridLayout( this.gridCtrlCols.value , this.gridCtrlRows.value ) 
+                                        }.bind(this);
+
+//-----------------------------------------------------------------------------------------------------------
+
      // toolbox
-    this.toolbox = dialogs.addPanel(this.menuPanel, 'cssContainerPanel', 1, 5, 4, 3 );
+    this.toolbox = dialogs.addPanel(this.menuPanel, 'cssContainerPanel', 1, 3, 4, 4 );
     this.toolbox.backgroundColor = 'rgba(0,0,0,0.47)';
     this.toolbox.color = 'white';
     this.toolbox.buildFlexBoxLayout();
@@ -291,7 +268,7 @@ var loadBtn                        = dialogs.addButton(fileOps , '' , 3 , 2 , 1 
       this.___createToolboxItem('sliders'           , 'SLIDER' , 3,7)
       //this.___createToolboxItem('*'                 , '*'      , 4,7)
       
-      this.setGridLayout( 4 , 21 );
+      this.setGridLayout( 21 , 21 );
 
       // globalen KeyHandler einhängen ....
       
@@ -329,12 +306,6 @@ var loadBtn                        = dialogs.addButton(fileOps , '' , 3 , 2 , 1 
 
 
 
-setContainerLayout( width , height )
-{
-  if(!this.dashBoard) return;
-   this.dashBoard.width  = width;
-   this.dashBoard.height = height;
-}
 
 
 keyHandler( event )
@@ -531,13 +502,14 @@ ___saveForm()
 {
   this.hasChanged   = false;
   this.lastFormName = this.formNameInp.value;
+  this.selectComponent(null);
   var form = this.dashBoard.getConstructionProperties();
   utils.saveForm(this.formNameInp.value , form );
   this.formNameInp.items = utils.lsForms() ;
 }
 
 save()
-{  debugger;
+{ 
   if(!this.hasChanged) return;
   
   if(this.formNameInp.value=="")
@@ -604,6 +576,22 @@ load()
 } 
 
 
+
+loadPlugin()
+{
+ if(this.formNameInp.value=="")
+  {
+    dialogs.showMessage('Bitte zuvor den Namen des einzufügenden PlugIns eingeben !');
+    return;
+  }
+ 
+  var formData = utils.loadForm(this.formNameInp.value);
+
+  
+
+
+} 
+
 test()
 { 
   // das dashBoard ist das einzige zentrale parent-Element
@@ -611,25 +599,8 @@ test()
   this.selectComponent(this.dashBoard);
 
   var board = this.dashBoard.getConstructionProperties();
-  
-  // ein Fenster erzeugen, welches die Dimension und das Gridlayout des Dashboards übernimmt:
-  var w = dialogs.createWindow(null, 'tfGuiBuilderTest', board.width+'px', board.height+'px', 'CENTER');
+  var gui = new TFgui( null , board , { autoSizeWindow: true });
 
-  var gui = new TFgui( w.hWnd , board );
-
-  gui.btnOk.callBack_onClick = function(){
-                                           this.bluePanel.innerHTML    = this.edit_blue.value;
-                                           this.greenPanel.innerHTML   = this.edit_green.value;
-                                           this.skyBluePanel.innerHTML = this.edit_skyBlue.value;
-                                          }.bind(gui)
-  gui.btnAbort.callBack_onClick = ()=>{w.close()}                                        
-  
-  /*
-  gui.editFirstName.value     = 'Thomas';
-  gui.editLastName.value      = 'Ferl';
-  gui.selectFamilyState.setItems([{caption:'ledig',value:0},{caption:'verheiratet',value:2},{caption:'getrennt lebend',value:3},{caption:'geschieden',value:4},{caption:'verwitwet',value:-1}]) 
- */
- 
 } 
 
  handleTreeView()
@@ -644,7 +615,6 @@ test()
 
   this.updateTreeView();
 }
-
 
 updateTreeView()
 {
@@ -682,46 +652,53 @@ updateTreeView()
 }  
 
 
-
 selectComponent(element) 
 {
-    // nix gewählt ... 
-    if(!element) return;
+  const prev = this.selected.element;
 
-    // bereits ausgewählt
-    if(this.selected.element == element) return false;  // tue nix
+  // 1) Abbruch: Gleiches Element erneut gewählt → nix tun
+  if (prev && element === prev) return false;
 
-
-    // letztes Element abwählen
-    if (this.selected.element != null) this.selected.element.DOMelement.style.border = this.selected.border;
-
-  
-    // neues Element auswählen und opt. hervorheben
-    this.selected.element = element;
-    this.selected.border  = element.DOMelement.style.border;
-    this.selected.element.DOMelement.style.border = "3px solid red";
-
-    if(element == this.dashBoard)
-    { 
-      this.propertyEditor.visible = false;
-      return;
-    }
-
-    // PropertyEditor anzeigen
-    var p = dialogs.getProperties( element );
-    this.propertyEditor.visible = true;
-    this.propertyEditor.setProperties( p );
-    this.propertyEditor.level = this.propLevelSelector.value;
-
-    this.propCaption.innerHTML = `<center>${element.objName}</center>`;
-
-    this.showGridLines( element );
-    
-    return false;
-      
+  // 2) Vorher ausgewähltes Element sauber zurücksetzen
+  if (prev && prev.DOMelement) 
+  {
+    prev.DOMelement.style.outline       = this.selected.outline || '';
+    prev.DOMelement.style.outlineOffset = this.selected.outlineOffset || '';
   }
 
+  // 3) Wenn "nichts wählen" übergeben wurde → Auswahl/Editor leeren
+  if (!element) 
+  {
+    this.selected.element       = null;
+    this.selected.outline       = '';
+    this.selected.outlineOffset = '';
+    this.propertyEditor.visible = false;  
+    this.propCaption.innerHTML  = '';
+    return false;
+  }
 
+  // 4) Neues Element merken + Originalwerte puffern
+  this.selected.element       = element;
+  this.selected.outline       = element.DOMelement.style.outline;
+  this.selected.outlineOffset = element.DOMelement.style.outlineOffset;
+
+  // 5) Visuelle Hervorhebung per outline (layout-neutral)
+  element.DOMelement.style.outline       = '3px solid #e11';
+  element.DOMelement.style.outlineOffset = '0px'; // ggf. z.B. '2px' für Abstand
+
+  // 6) PropertyEditor anzeigen/füllen
+  const p = dialogs.getProperties(element);
+  this.propertyEditor.visible = true;
+  this.propertyEditor.setProperties(p);
+  this.propertyEditor.level = this.propLevelSelector.value;
+
+  if (element == this.dashBoard) this.propCaption.innerHTML = `<center>Container</center>`;
+  else                           this.propCaption.innerHTML = `<center>${element.objName} (${element.ID})</center>`;
+
+  this.showGridLines(element);
+
+  return false;
+}
 
 deleteSeletedObject()
 {
@@ -733,10 +710,8 @@ deleteSeletedObject()
       this.builderObjects.splice(idx, 1); // Element aus dem Array entfernen
       this.selected.element.remove(); // Element aus dem DOM entfernen
 
-      this.selected.element = null; // Selektion zurücksetzen
-      this.selected.border  = '';
-      this.propCaption.innerHTML = '';
-      this.propertyEditor.visible = false; // PropertyEditor ausblenden
+      this.selectComponent(null);
+
       this.updateTreeView();
     }
     this.abortBtn.visible = true;
@@ -751,7 +726,6 @@ saveProperties( p )
     if(this.selected.element) dialogs.setProperties( this.selected.element , p );  
 
   }
-
 
 ___createToolboxItem( glyph , type , left , top)
 {

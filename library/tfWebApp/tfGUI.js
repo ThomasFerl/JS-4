@@ -1,24 +1,52 @@
 import * as utils    from "./utils.js";
 import * as objects  from "./tfObjects.js";
+import * as dialogs  from "./tfDialogs.js";
+
+
+
+
 
 export class TFgui 
 { 
-   constructor ( aParent , guiNameOrguiObject )
-  {
-      this.dashBoard           = aParent;
-      this.dashBoard.innerHTML = '';
-      this.guiObjects          = {___ID:''};
+   constructor ( aParent , guiNameOrguiObject , params )
+  { debugger;
+      this.params              = params || {};
       
       var formData             = null; 
-    
       if (typeof guiNameOrguiObject === 'string') formData  = utils.loadForm(guiNameOrguiObject);
       if (typeof guiNameOrguiObject === 'object') formData  = guiNameOrguiObject;
 
-      if(formData==null) return;
-
+      if(aParent==null)
+        { 
+          this.window       = dialogs.createWindow(null, '' , formData.width, formData.width , 'CENTER');
+          this.dashBoard    = this.window.hWnd;
+          this.params.autoSizeWindow = false; // Fenster ist bereits in gewünschter Größe
+      }
+      else {
+             if(aParent.constructor.name == 'TFWindow')
+             {
+               this.window    = aParent;
+               this.dashBoard = aParent.hWnd;
+             }
+             else { 
+                     this.dashBoard = aParent;
+                     this.window    = utils.getParentWindow(aParent);
+                 }   
+      }       
+      
+      this.dashBoard.innerHTML = '';
+      this.guiObjects          = {___ID:''};
+    
+      if(this.params.autoSizeWindow)
+        {
+          this.window.width  = formData.width;
+          this.window.height = formData.height;
+      }
+      
       this.dashBoard.backgroundColor = formData.backgroundColor;
       this.dashBoard.buildGridLayout( formData.gridLayout );
-      
+
+    
       for(var i=0; i<formData.children.length; i++)
       {
         var c = formData.children[i];

@@ -162,7 +162,7 @@ export class TFMediaCollector_fileManager
 
     
     viewMedia(fn , ext)
-    {
+    { 
         if(this.mediaViewer==null  || this.mediaViewerClosed)
          {
             this.mediaViewer = new TFWindow( null , fn , '44%' , '44%' , 'CENTER' );
@@ -174,7 +174,8 @@ export class TFMediaCollector_fileManager
         if(utils.isImageFile(ext))
         {
          var url = utils.buildURL('GETIMAGEFILE',{fileName:fn} );
-         dialogs.addImage( this.mediaViewer.hWnd , '' , 1 , 1 , '100%' , '100%' , url );
+         dialogs.addImage( this.mediaViewer.hWnd , 1 , 1 , '100%' , '100%' , url );
+         
         }
      
         if(utils.isMovieFile(ext))
