@@ -221,33 +221,36 @@ module.exports.insertIntoTable = ( db , tableName , fields ) =>
 }
 
 
-function _insertBatchIntoTable( db , tableName , records )
-// Quelle: chatGPT
-{ 
-  try{
-       const insert = db.transaction((records) =>
-                {
-                  for (const record of records) 
-                  {
-                    var fieldNames   = Object.keys(record);
-                    var values       = Object.values(record)
-                    for(var i=0; i<values.length; i++) values[i]="'"+values[i]+"'";
+function _insertBatchIntoTable(db, tableName, records) {
+  try {
+    const insert = db.transaction((records) => {
+      for (const record of records) {
+        const fieldNames = Object.keys(record);
 
-                    var placeholders = fieldNames.map(() => '?').join(', ');
-                    var sql = `INSERT INTO ${tableName} (${fieldNames.join(', ')}) VALUES (${placeholders})`;
-                    console.log("SQL:" + sql + "  VALUES: "+ JSON.stringify(values));
-                    db.prepare(sql).run(...values);
-                  }
-                });
+        const values = Object.values(record).map(v => {
+          if (v === undefined) return null; // undefined → null
+          if (v === null) return null;
+          if (typeof v === 'object') return JSON.stringify(v); // Objekt → JSON-String
+          if (typeof v === 'boolean') return v ? 1 : 0; // Boolean → Zahl
+          return v; // Zahl oder String bleibt wie er ist
+        });
 
-  // Führt die Transaktion mit allen Datensätzen aus
-  insert(records);
+        const placeholders = fieldNames.map(() => '?').join(', ');
+        const sql = `INSERT INTO ${tableName} (${fieldNames.join(', ')}) VALUES (${placeholders})`;
 
-  return {error:false, errMsg:'OK', result:{} }
+        console.log("SQL:", sql, "VALUES:", JSON.stringify(values));
+        db.prepare(sql).run(...values);
+      }
+    });
 
+    insert(records);
+    return { error: false, errMsg: 'OK', result: {} };
+  } catch (e) {
+    return { error: true, errMsg: e.message, result: {} };
   }
-  catch(e) { return {error:true, errMsg:e.message, result:{} } }
 }
+
+
 
 
 /* Kurze Erklärung zum "..."  Spread-Operator:

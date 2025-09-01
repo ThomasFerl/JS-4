@@ -22,11 +22,15 @@ import { TFDateTime }    from "./tfWebApp/utils.js";
 import {TFgui}           from "./tfWebApp/tfGUI.js";
 
 
-var caption1     = '';
-var caption2     = '';
-var guiMainWnd   = null;
-var lastInsertID = 0;
+var caption1           = '';
+var caption2           = '';
+var guiMainWnd         = null;
 
+var lastInsertID       = 0;          // der letzte importierte Rechnungs-Datensatz
+var lastSelectedNdx    = -1;         // die zuletzt ausgewählte Rechnung
+var gridReportResults  = null;       // das Grid, in welchem der aktuelle Report dargestellt wird
+var selectedReport     = '';         // der akuell ausgewählte Report ...
+var selectedTable      = '';
 
 export function main(capt1)
 {
@@ -55,7 +59,7 @@ export async function run()
 await loader.while(TFLoader.wait(1000))
 
 
-guiMainWnd = new TFgui( ws.handle , 'rechnungspruefungMain' );
+guiMainWnd = new TFgui( null , 'rechnungspruefungMain' );
 guiMainWnd.btnNewBill.callBack_onClick = newBill;
 updateView();
 
@@ -70,20 +74,20 @@ function updateView()
   var response = utils.webApiRequest('FETCHRECORDS',{sql:"Select * from billArchive"})
   
   var table    = dialogs.createTable( guiMainWnd.gridPanel , response.result , '' , ''); 
-      table.onRowDblClick = function( selectedRow , itemIndex , rowData ) {
-          // Handle double-click on table row
-          // dialogs.showMessage("Row double-clicked: " + JSON.stringify(rowData));
-          showReports(rowData)
+      table.onRowClick = function( selectedRow , itemIndex , rowData ) 
+      {
+        if(lastSelectedNdx==itemIndex) { showReports(rowData) }
+        lastSelectedNdx=itemIndex;
+         
       };
 }
   
 
 function newBill()
-{
-  lastInsertID       = 0;
-   var dlg           = dialogs.createWindow(null,caption1,'50%','70%','CENTER');
-   var guiNewBillDlg = new TFgui( dlg.hWnd , 'addBillDlg' );
-   dialogs.addFileUploader( guiNewBillDlg.dropZone , '*.*' , true , 'testUpload' , function(selectedFiles) {processUploadFiles(selectedFiles , this.dropZone , this.dlgWnd )}.bind({dropZone: guiNewBillDlg.dropZone , dlgWnd:dlg}) );
+{ 
+  lastInsertID      = 0;
+  var guiNewBillDlg = new TFgui( null , 'addBillDlg' );
+   dialogs.addFileUploader( guiNewBillDlg.dropZone , '*.*' , true , 'testUpload' , function(selectedFiles) {processUploadFiles(selectedFiles , this.dropZone , this.gui )}.bind({dropZone: guiNewBillDlg.dropZone , gui:guiNewBillDlg}) );
 
    guiNewBillDlg.btnOk.callBack_onClick = function() {
                                                        if(lastInsertID==0) {dialogs.showMessage("Bitte erst eine Excel-Datei hochladen !");return;}
@@ -91,19 +95,18 @@ function newBill()
                                                        var id  = lastInsertID;
                                                        utils.webApiRequest('UPDATETABLE',{tableName:"billArchive",ID_field:'ID', ID_Value:id, fields:{DESCRIPTION1:bez}})
                                                        updateView();
-                                                       this.dlg.close();
-                                                       }.bind({bezeichnung:guiNewBillDlg.editBezeichnung.value, dlg:dlg})
+                                                       this.gui.close();
+                                                       }.bind({bezeichnung:guiNewBillDlg.editBezeichnung.value, gui:guiNewBillDlg})
 
-   guiNewBillDlg.btnAbort.callBack_onClick = function() {this.close()}.bind(dlg) 
+   guiNewBillDlg.btnAbort.callBack_onClick = function() {this.gui.close()}.bind({gui:guiNewBillDlg}) 
 
 }
     
 
 function showReports( data )
 {
-   var dlg           = dialogs.createWindow(null,caption1,'100%','100%','CENTER');
-   var guiNewBillDlg = new TFgui( dlg.hWnd , 'rechnungspruefungAuswertung' );
-   var tableName     = data.TABLENAME;
+   var guiNewBillDlg = new TFgui( null , 'rechnungspruefungAuswertung' );
+   selectedTable     = data.TABLENAME;
 
    //  Die Liste der möglichen Reports....
    var select        = guiNewBillDlg.selectReport; // besseres handling
@@ -115,16 +118,15 @@ function showReports( data )
  
    select.callBack_onChange = function( v ) {                                               
                                              runReport( this.data , this.container , v ); 
-
                                             }.bind({data:data, container:guiNewBillDlg.gridContainer});
 
 
 // Button: neuen Report erzeugen ...
-guiNewBillDlg.btnAddReport.callBack_onClick = function(){ editReport(tableName ) }
+guiNewBillDlg.btnAddReport.callBack_onClick = function(){ editReport(this.tableName ) }.bind({tableName:selectedTable})
 
 
 // Button: Report bearbeiten ...
-guiNewBillDlg.btnEditReport.callBack_onClick = function(){ editReport(tableName) }
+guiNewBillDlg.btnEditReport.callBack_onClick = function(){ editReport(this.tableName) }.bind({tableName:selectedTable})
 
 
 // Button Report löschen ...
@@ -133,15 +135,21 @@ guiNewBillDlg.btnDeleteReport.callBack_onClick = function(){ deleteReport() }
 
 // per Default erstmal die Roh-Daten anzeigen ...
 runReport(data, guiNewBillDlg.gridContainer , 'RAW' );
+
+
+guiNewBillDlg.btnExcel.callBack_onClick = function(){ ___excelExport( gridReportResults ) }
+
 }
 
 
 function runReport( data , container , mode )
+// Build SQL-Statement
 {
   var sql             = '';
   container.innerHTML = '';
   var tn              = data.TABLENAME;
   var komma           = ' ';
+  selectedReport      = mode;
 
   if(!isNaN(mode))  // Wenn NUMERISCH dann als ID des Reports interpretieren ....
   {
@@ -152,6 +160,7 @@ function runReport( data , container , mode )
       return;
     }
      
+    // aus en beiden Feldern "GroupFields" und "SumFields" das SQL-Statement erstellen...
     var groupFields = JSON.parse(response.result.GROUPFIELDS);
     var sumFields   = JSON.parse(response.result.SUMFIELDS);
     
@@ -194,17 +203,83 @@ function runReport( data , container , mode )
            return;
        }
 
-    dialogs.createTable( container , reportData.result ) ;
-
+    gridReportResults = dialogs.createTable( container , reportData.result ) ;
+    gridReportResults.onRowClick = function( selectedRow , itemIndex , rowData ) 
+      {
+         detailView( rowData )  
+      };
 }
 
 
-function processUploadFiles( files , dropZone , dlgWnd )
+
+
+function detailView( data )
+{
+  var w   = dialogs.createWindow(null,'Details', "100%" , "100%" , "CENTER")
+  var gui = new TFgui( w , 'rechnungsPruefungReportDetails' , {autoSizeWindow:true} );  // valueContainer & gridContainer
+  
+  gui.valueContainer.buildFlexBoxLayout();
+  gui.valueContainer.overflow = 'auto';
+
+  for (var key in data)
+  {
+    var p = dialogs.addPanel(gui.valueContainer,'cssContainerPanel',1,1,'99%','2em');
+        p.backgroundColor = 'white';
+        p.margin = '4px';
+        p.buildGridLayout_templateColumns('14em 1fr');
+        p.buildGridLayout_templateRows('1fr'); 
+        dialogs.addLabel(p,'',1,1,1,1,key,{fontWeight:'bold'}).textAlign = 'left';
+        dialogs.addLabel(p,'',2,1,1,1,data[key] ).textAlign = 'left';
+   }  
+   
+   // nun ein sql-Statement erstellen, welches die Einzelfälle der Gruppe listet.
+   // dazu wird die Tabelle durchsucht nach: select * from Tabelle Where groupField[1]=auspraegung[1] AND groupField[2]=auspraegung[2] ...
+
+   // um zu erfahren, welches für diesen Report die gruppierungsfelder sind, diesen nochmals laden:
+   var reportData        = null;  // ist <>null, wenn ein existierender Report bearbeitet werden soll....
+   if(selectedReport!='') 
+   {
+      var response = utils.webApiRequest('fetchRecord',{sql:"Select * from reports Where ID="+selectedReport});
+      if(!response.error) reportData = response.result;
+    }
+
+    var sql = "select * from " + selectedTable;
+
+    // durchlaufe gruppierungsfelder 
+    var grpFields = JSON.parse(reportData.GROUPFIELDS);
+    var help      = " where ";
+    for(var i=0; i<grpFields.length; i++) 
+    {
+       if (i>0) help = " and ";
+       sql = sql + help + grpFields[i] +  "='" + data[grpFields[i]]+"'" ;
+    }  
+
+    var detailData = utils.webApiRequest('fetchRecords', { sql:sql });
+     
+    if (detailData.error) {
+           dialogs.showMessage('Fehler beim Laden der Details: ' + detailData.errMsg);
+           return;
+       }
+
+    dialogs.createTable( gui.gridContainer , detailData.result ) ;
+
+    gui.btnExcel.callBack_onClick = function()
+                                    {
+                                      utils.POSTrequest('JSN2EXCEL', { worksheetName:'Tabelle1' , data:this.data, excludeFields:[] , fieldTitles:[] } , "download_"+globals.session.userName+"_"+Date.now().toString() );
+                                    }.bind({data:detailData.result})
+                                    
+   
+  
+}
+
+
+
+function processUploadFiles( files , dropZone , gui )
 {
   if(files.error) 
   {
     dialogs.showMessage('Der Upload-Prozess ist gescheitert ! ' + files.errMsg);
-    dlgWnd.close();
+    gui.close();
     return;
   } 
 
@@ -213,7 +288,7 @@ function processUploadFiles( files , dropZone , dlgWnd )
   if (response.error)
   {
      dialogs.showMessage('Fehler beim Upload: ' + response.errMsg);
-     dlgWnd.close();
+     gui.close();
      return;
   }
   else lastInsertID = response.result.lastInsertRowid;
@@ -226,12 +301,19 @@ function processUploadFiles( files , dropZone , dlgWnd )
  
 
 // Button: Report bearbeiten ...  ist ID == null -> neuEingabe
-function editReport( tableName , ID ) 
-{
-  var dlg               = dialogs.createWindow(null,caption1,'50%','70%','CENTER');
-  var guiDefineReport   = new TFgui( dlg.hWnd , 'reportDefinition' );
+function editReport( tableName  ) 
+{ 
+ var guiDefineReport   = new TFgui( null , 'reportDefinition' );
+
+ var reportData        = null;  // ist <>null, wenn ein existierender Report bearbeitet werden soll....
+ if(selectedReport!='') 
+ {
+   var response = utils.webApiRequest('fetchRecord',{sql:"Select * from reports Where ID="+selectedReport});
+   if(!response.error) reportData = response.result;
+ }
 
   // für einen leichteren Umgang ;-)
+  var editReportName    = guiDefineReport.editReportName;
   var cbReportKategorie = guiDefineReport.cbReportKategorie;
   var selectDatafield1  = guiDefineReport.selectDatafield1;
   var selectDatafield2  = guiDefineReport.selectDatafield2;
@@ -240,9 +322,7 @@ function editReport( tableName , ID )
   var btnAbort          = guiDefineReport.btnAbort;
   var btnOk             = guiDefineReport.btnOk;
  
-  // kleiner Trick - bindet die ID ans GUI, so dass später beim 'save' entschieden werden kann ob INSERT oder UPDATE .... 
-  if(ID) guiDefineReport.___ID = ID;
-  
+    
   // Combobox mit Kategirien befüllen...
   var response      = utils.webApiRequest( 'FETCHRECORDS' , {sql:"Select Distinct KATEGORIE from reports Order by KATEGORIE"} );
   if(!response.error)
@@ -258,6 +338,22 @@ function editReport( tableName , ID )
  selectDatafield1.setItems( dataFields );
  selectDatafield2.setItems( dataFields );
 
+ //  Eingabefelder ggf. bestücken sofern im Editier-Modus
+ if(reportData)
+ {
+    editReportName.value    = reportData.REPORTNAME; 
+    cbReportKategorie.value = reportData.KATEGORIE;  
+
+  try {
+       var f = JSON.parse(reportData.GROUPFIELDS);
+       for (var i=0; i<f.length; i++) lbGroupFields.addItem({caption:f[i],value:f[i]});
+
+           f = JSON.parse(reportData.SUMFIELDS);
+       for (var i=0; i<f.length; i++) lbSumFields.addItem({caption:f[i],value:f[i]});
+     
+   } catch(e) { }; 
+ }
+ 
 // Button zum Listboxen bestücken....
 guiDefineReport.btnAddToGroup.callBack_onClick = function() { ___addField(this.fieldName.value , this.listBox) }.bind({fieldName:selectDatafield1 , listBox:lbGroupFields })
 guiDefineReport.btnAddToSum.callBack_onClick   = function() { ___addField(this.fieldName.value , this.listBox) }.bind({fieldName:selectDatafield2 , listBox:lbSumFields })
@@ -267,10 +363,10 @@ guiDefineReport.btnDelFromGroup.callBack_onClick = function() { ___removeField(t
 guiDefineReport.btnDelFromSum.callBack_onClick   = function() { ___removeField(this.listBox) }.bind({listBox:lbSumFields })
 
 // Button zum Abbruch ...
-btnAbort.callBack_onClick = function(){this.close()}.bind(dlg);
+btnAbort.callBack_onClick = function(){this.gui.close()}.bind({gui:guiDefineReport});
 
 // button zum Speichern ...
-btnOk.callBack_onClick = function(){ ___saveReport(this.dlgWnd , this.gui)}.bind({dlgWnd:dlg, gui:guiDefineReport})
+btnOk.callBack_onClick = function(){ ___saveReport( this.gui)}.bind({gui:guiDefineReport})
 
 }
 
@@ -310,7 +406,7 @@ function ___removeField( listBox )
 }
 
 
-function  ___saveReport( dlgWnd , gui)
+function  ___saveReport( gui)
 { 
   var record = {};
       record.REPORTNAME  = gui.editReportName.value;
@@ -318,8 +414,19 @@ function  ___saveReport( dlgWnd , gui)
       record.GROUPFIELDS = JSON.stringify(gui.lbGroupFields.getItems('value'));
       record.SUMFIELDS   = JSON.stringify(gui.lbSumFields.getItems('value'));
 
-      if (gui.___ID == '') utils.insertIntoTable('reports',record)
-      else                 utils.updateTable('report' , 'ID' , gui.___ID , record );  
+      if (isNaN(selectedReport)) utils.insertIntoTable('reports',record)
+      else                       utils.updateTable    ('reports' , 'ID' , selectedReport , record );  
 
-   dlgWnd.close(); 
+   gui.close(); 
 }
+
+
+function ___excelExport( grid )
+{
+  if (grid==null) return;
+
+  var xlsValues = [];
+   
+  utils.POSTrequest('JSN2EXCEL', { worksheetName:'Tabelle1' , data:grid.jsonData, excludeFields:[] , fieldTitles:[] } , "download_"+globals.session.userName+"_"+Date.now().toString() );
+}
+  

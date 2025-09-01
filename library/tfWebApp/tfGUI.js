@@ -9,7 +9,7 @@ import * as dialogs  from "./tfDialogs.js";
 export class TFgui 
 { 
    constructor ( aParent , guiNameOrguiObject , params )
-  { debugger;
+  { 
       this.params              = params || {};
       
       var formData             = null; 
@@ -18,7 +18,7 @@ export class TFgui
 
       if(aParent==null)
         { 
-          this.window       = dialogs.createWindow(null, '' , formData.width, formData.width , 'CENTER');
+          this.window       = dialogs.createWindow(null, '' , formData.width, formData.height , 'CENTER');
           this.dashBoard    = this.window.hWnd;
           this.params.autoSizeWindow = false; // Fenster ist bereits in gewünschter Größe
       }
@@ -56,25 +56,36 @@ export class TFgui
       } 
       
       
-    // proxy-Klasse für bequemen Zugriff einrichten ....
-    var proxy = new Proxy( this.guiObjects , {
-                                            get(target, prop) {
-                                                                return prop in target ? target[prop] : createDummyComponent(prop);
-                                                              },
+ // proxy-Klasse für bequemen Zugriff einrichten ....
+var proxy = new Proxy(this.guiObjects, {
+  get: (target, prop) => { if (prop in target) return target[prop];
+                           if (typeof this[prop] === 'function') return this[prop].bind(this); // Methode aus TFgui
+                           return createDummyComponent(prop);
+                         },
+  set: (target, prop, value) => { if (prop in target) { target[prop] = value;
+                                                        return true;
+                                                      }
+                                 console.warn(`⚠️ '${prop}' existiert nicht – 'set' wird ignoriert.`);
+                                 return true;
+                                }
+  });
 
-                                             set(target, prop, value) {
-                                                                        if (prop in target) {
-                                                                                              target[prop] = value;
-                                                                                              return true;
-                                                                                            }
-                                                                         console.warn(`⚠️ '${prop}' existiert nicht – 'set' wird ignoriert.`);
-                                                                         return true;
-                                                                      }
-                                         });
-    return proxy;
+  return proxy;
+  }
+
+
+
+
+
+  close()
+  {
+    if(this.window!=null) this.window.close();
   }
 
 }
+
+
+
 
 
 
