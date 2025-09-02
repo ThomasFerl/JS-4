@@ -37,7 +37,7 @@ export class TPerson
 
     if(portraitPath) this.#portraitPath = portraitPath;
 
-     // Prüfung: enthält dbPerson **nur** das Feld "ID"
+     // Prüfung: enthält dbPerson **nur** das Feld "ID" dann wird es aus der dB geladen. Dazu muss natürlich eine dB-Instanz mitgegeben werden
      const keys = Object.keys(dbPerson);
 
     if (keys.length === 1 && keys[0] === "ID") 
@@ -135,7 +135,17 @@ edit( callback_if_ready )
 {
   var caption = this.ID ? 'Person bearbeiten' : 'Neue Person anlegen';
   var w       =    dialogs.createWindow( null,caption,"80%","80%","CENTER");  
-  var _w      =    w.hWnd;
+  
+  var gui    =  new TFgui( w , 'personDlg' );
+
+      // Hier werden die Datenfelder der Datenbank mit den GUI-Elementen verbunden
+      this.addDataBinding( gui.editFirstName , 'VORNAME' );
+      this.addDataBinding( gui.editName      , 'NAME'    );
+      this.addDataBinding( gui.editAlias1    , 'ALIAS1'  );
+      this.addDataBinding( gui.editAlias2    , 'ALIAS2'  );
+      this.addDataBinding( gui.editAlias3    , 'ALIAS3'  );
+
+
   
   w.buildGridLayout_templateColumns('1fr 1fr 1fr 1fr');
   w.buildGridLayout_templateRows   ('1fr 1fr 1fr 1fr');
