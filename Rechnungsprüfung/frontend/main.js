@@ -56,7 +56,7 @@ export async function run()
   const loader = new TFLoader({ title: "lade Daten …" , note:"hab's gleich geschafft ..." });
 
 // Splashscreen 5s anzeigen
-await loader.while(TFLoader.wait(1000))
+await loader.while(TFLoader.wait(10000))
 
 
 guiMainWnd = new TFgui( null , 'rechnungspruefungMain' );
@@ -219,14 +219,17 @@ function detailView( data )
   var gui = new TFgui( w , 'rechnungsPruefungReportDetails' , {autoSizeWindow:true} );  // valueContainer & gridContainer
   
   gui.valueContainer.buildFlexBoxLayout();
-  gui.valueContainer.overflow = 'auto';
+  gui.valueContainer.overflow        = 'auto';
+  gui.valueContainer.flexDirection   = 'column';      /* Elemente von oben nach unten anordnen */
+  gui.valueContainer.justifyContent  = 'flex-start'; /* Startpunkt ist oben */
+  
 
   for (var key in data)
   {
     var p = dialogs.addPanel(gui.valueContainer,'cssContainerPanel',1,1,'99%','2em');
         p.backgroundColor = 'white';
-        p.margin = '4px';
-        p.buildGridLayout_templateColumns('14em 1fr');
+        p.margin = '0.49em';
+        p.buildGridLayout_templateColumns('1fr 2fr');
         p.buildGridLayout_templateRows('1fr'); 
         dialogs.addLabel(p,'',1,1,1,1,key,{fontWeight:'bold'}).textAlign = 'left';
         dialogs.addLabel(p,'',2,1,1,1,data[key] ).textAlign = 'left';
@@ -261,7 +264,7 @@ function detailView( data )
            return;
        }
 
-    dialogs.createTable( gui.gridContainer , detailData.result ) ;
+    dialogs.createTable( gui.gridContainer , detailData.result ,['ID','AUSWERTUNG_ZUM'] ) ;
 
     gui.btnExcel.callBack_onClick = function()
                                     {
