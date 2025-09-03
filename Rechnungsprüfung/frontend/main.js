@@ -19,7 +19,9 @@ import { TFEdit,
 import { TFWindow }      from "./tfWebApp/tfWindows.js"; 
 import { TFChart }       from "./tfWebApp/tfObjects.js";
 import { TFDateTime }    from "./tfWebApp/utils.js";
-import {TFgui}           from "./tfWebApp/tfGUI.js";
+import { TFgui }         from "./tfWebApp/tfGUI.js";
+import { TFDataObject }  from "./tfWebApp/tfDbObjects.js";
+
 
 
 var caption1           = '';
@@ -56,11 +58,11 @@ export async function run()
   const loader = new TFLoader({ title: "lade Daten …" , note:"hab's gleich geschafft ..." });
 
 // Splashscreen 5s anzeigen
-await loader.while(TFLoader.wait(10000))
+await loader.while(TFLoader.wait(1000))
 
 
 guiMainWnd = new TFgui( null , 'rechnungspruefungMain' );
-guiMainWnd.btnNewBill.callBack_onClick = newBill;
+guiMainWnd.btnNewBill.callBack_onClick   = newBill;
 updateView();
 
 } 
@@ -131,6 +133,9 @@ guiNewBillDlg.btnEditReport.callBack_onClick = function(){ editReport(this.table
 
 // Button Report löschen ...
 guiNewBillDlg.btnDeleteReport.callBack_onClick = function(){ deleteReport() }
+
+// Button zur Verwaltung der Ausschluss-Liste
+guiNewBillDlg.btnBlacklist.callBack_onClick    = function (){ blackList(this.tableName) }.bind({tableName:selectedTable});
 
 
 // per Default erstmal die Roh-Daten anzeigen ...
@@ -379,6 +384,23 @@ function deleteReport()
 {}
 
 
+// Button Ausschluss-Liste definieren ....
+function blackList( tableName )
+{
+  var gui   = new TFgui(null,'rechnungspruefungBlacklist');
+      gui.selectDatafield.setItems( ___getFieldNames(tableName) );
+      gui.selectDatafield.callBack_onChange = function(){ this.gui.editFilter.items = ___getFieldContent(tableName,this.gui.selectDatafield.value)
+                                                        }.bind({gui:gui})
+      gui.selectOperation.setItems([{caption:'gleich',value:'='} , {caption:'ungleich',value:'<>'} , {caption:'like',value:'like'}]);
+      gui.btnAdd.callBack_onClick = function(){this.gui.listBox.addItem(this.gui.selectDatafield.value + this.gui.selectOperation.value + this.gui.editFilter.value , true )}.bind({gui:gui});
+
+
+  var bList = new TFDataObject('blacklist');
+
+}
+
+
+
 
 
 // Hilfsfunktionen
@@ -391,6 +413,19 @@ function ___getFieldNames(tableName)
   if (response.error) return result;
 
   for (var i=0; i<response.result.length; i++) result.push(response.result[i].name)
+
+  return result;  
+}  
+
+
+function ___getFieldContent(tableName,fieldName)
+{
+  var result   = [];
+  var response = utils.webApiRequest('FETCHRecords' , {sql:"Select distinct "+fieldName+" from " + tableName + " Order by " + fieldName})
+
+  if (response.error) return result;
+
+  for (var i=0; i<response.result.length; i++) result.push(response.result[i][fieldName])
 
   return result;  
 }  

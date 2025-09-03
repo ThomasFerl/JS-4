@@ -1,14 +1,5 @@
-
-import * as globals      from "./tfWebApp/globals.js";
-import * as utils        from "./tfWebApp/utils.js";
-import * as dialogs      from "./tfWebApp/tfDialogs.js";
-import { TForm,
-         TFPanel,
-         TFImage,
-         TPropertyEditor
-       }                        from "./tfWebApp/tfObjects.js";  
-       
-import {TFMediaCollector_thumb} from "./tfMediaCollector_thumb.js";
+import * as utils        from "./utils.js";
+import * as dialogs      from "./tfDialogs.js";
 
 
 export class TFDataObject 
@@ -16,26 +7,30 @@ export class TFDataObject
     #data          = {};
     #original      = {};
     #dirtyFields   = new Set();
+    #tableName     = '';
     #dataBinding   = [];
 
     callBack_onUpdate = null;
 
-    constructor( dbRecord = {} ) 
-    { 
-      const keys = Object.keys(dbRecord);
-
-    // Prüfung: enthält dbRecord **nur** das Feld "ID" dann wird es aus der dB geladen. Dazu muss natürlich eine dB-Instanz mitgegeben werden
-    if (keys.length === 1 && keys[0] === "ID") 
+    constructor( tableName , ID ) 
     {
-      const response = this.load_from_dB(dbRecord.ID);
-      if (!response.error) dbRecord = response.result;
-    }
-
-        for (const field in dbRecord) 
-            {
-             const value = dbRecord[field];
-             this.#defineField(field, value || '');
-         }
+      // Wird die ID übergben, wird der Datensatz geladen und gleichzeitig die Struktur ermittelt.
+      // Wird nur der Tabellen-Name übergeben, wird NUR die Tabellenstruktur ermittelt - Die Daten müssen dan via "load(id)" nachgeladen werden...
+      if(!tableName) {dialogs.showMessage("Ein 'TFDataObject' benötigt zwingend einen Tabellen-Namen ! "); return; }
+      
+      this.#tableName = tableName;
+            
+      if(!ID) 
+      {
+        var response = utils.webApiRequest('STRUCTURE',{tableName:tableName});
+        if(response.error) {showMessage('Fehler beim Abfragen der Tabllenstruktur: '+response.errMsg); return; }
+        for(var i=0; i<response.result.length; i++) this.#defineField( response.result[i]['name'] , '' );
+      }
+      else {
+             var response = this.load_from_dB( ID );
+             if(response.error) {showMessage('Fehler beim Abfragen des Datensatzes mit der ID='+ID+' : '+response.errMsg); return; }
+             for(var key in response.result) this.#defineField( key , response.result[key] || '' );
+           }
     }  
   
    
@@ -70,7 +65,7 @@ export class TFDataObject
   
     load_from_dB(id) 
     {
-      return  utils.webApiRequest('PERSON',{ID:id} );
+      return  utils.webApiRequest('FETCHRECORD',{sql:"Select * from "+tableName+" Where ID="+id} );
     }
 
     load(id) 
@@ -86,13 +81,17 @@ export class TFDataObject
   
     save() 
     { 
-      var response = utils.webApiRequest('SAVEPERSON',{person:this.#data} );
-      if(response.error){
-         dialogs.showMessage(response.errMsg);
-        return false;
+      if((this.ID=='') || (this.ID=='0') )
+      {  
+        var response = utils.webApiRequest('INSERTINTOTABLE',{tableName:this.#tableName, fields:this.#data} );
+        if(response.error){ dialogs.showMessage(response.errMsg); return false; }
+        else this.#data.ID = response.result.lastInsertRowid;    
       }
-                        
-      if(!this.#data.ID) this.#data.ID = response.result.lastInsertRowid;                                   
+      else {  
+             var response = utils.webApiRequest('UPDATETABLE',{tableName:this.#tableName, ID_field:'ID', ID_value:this.ID, fields:this.#data} );
+             if(response.error){ dialogs.showMessage(response.errMsg); return false; }
+      }    
+        
       this.markClean();
       return true;
     }

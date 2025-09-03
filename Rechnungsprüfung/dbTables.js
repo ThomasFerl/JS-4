@@ -30,7 +30,13 @@ tables.push(
    ]});
 
 
-
+tables.push( 
+  {tableName:"blacklist",
+   tableFields:[
+      {fieldName:"BEZEICHNUNG"    , fieldType:"Text" } ,
+      {fieldName:"IDENTIFY"       , fieldType:"Text" } 
+      
+   ]});
 
 
 module.exports.buildTables = function( dB )
