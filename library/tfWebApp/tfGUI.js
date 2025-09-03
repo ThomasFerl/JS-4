@@ -8,11 +8,42 @@ import * as dialogs  from "./tfDialogs.js";
 
 export class TFgui 
 { 
+   dataBinding( dataObject )
+  { debugger;
+    this.dataObject = dataObject;
+    this.dataBindings = [];
+    for(var key in dataObject)  // durchlaufe alle Datenfelder des DataRecords bzw Datenobjekts
+    {
+      var element = this.getElementByFieldName(key);  // suche nach einem gui-Element, das mit diesem Feldnamen übereinstimmt
+      if (element) this.dataBindings.push( {key:key, guiElement:element} );  // bei Treffer wird Databinding-Container gefüllt... 
+    }
+  }
+
+
+  update(direction)
+  { 
+    if (direction.toUpperCase() == 'GUI') 
+     {
+       this.dataBindings.forEach(binding => {
+        this.translateForGUI( binding.key , this.dataObject[binding.key] , binding.guiElement );
+      });
+    } 
+    
+    if (direction.toUpperCase() == 'DATA') 
+     {
+       this.dataBindings.forEach(binding => {
+        this.dataObject[binding.key] = this.translateForData(binding.key, binding.guiElement.value);
+      });
+    }
+  }
+
+
    constructor ( aParent , guiNameOrguiObject , params )
   { 
       this.params              = params || {};
       this.dataBindings        = [];
       this.dataObject          = {};
+
       
       var formData             = null; 
       if (typeof guiNameOrguiObject === 'string') formData  = utils.loadForm(guiNameOrguiObject);
@@ -80,45 +111,20 @@ var proxy = new Proxy(this.guiObjects, {
   }
 
   getElementByFieldName(fieldName)
-  {
+  { 
     // alle guiElemente durchlaufen und nach übereinstimmenden Feldnamen suchen...
-    for (var key in this.guiObjects) {
-      if (this.guiObjects[key].fieldName.toUpperCase() == fieldName.toUpperCase()) {
-        return this.guiObjects[key];
-      }
+    for (var key in this.guiObjects) 
+      {
+        var guiObj = this.guiObjects[key];
+        // besitzt das obj das Property "dataFieldName" ?
+        if(guiObj.hasOwnProperty('dataFieldName'))
+           if (guiObj.dataFieldName.toUpperCase() == fieldName.toUpperCase()) return this.guiObjects[key];
     }
+
     return null;
   }
    
-  dataBinding( dataObject )
-  {
-    this.dataObject = dataObject;
-    this.dataBindings = [];
-    for(var key in dataObject.keys)  // durchlaufe alle Datenfelder des DataRecords bzw Datenobjekts
-    {
-      var element = this.getElementByFieldName(key);  // suche nach einem gui-Element, das mit diesem Feldnamen übereinstimmt
-      if (element) this.dataBindings.push( {key:key, guiElement:element} );  // bei Treffer wird Databinding-Container gefüllt... 
-    }
-  }
-
-
-  update(direction)
-  { debugger;
-    if (direction.toUpperCase() == 'GUI') 
-     {
-       this.dataBindings.forEach(binding => {
-        this.translateForGUI( binding.key , this.dataObject[binding.key] , binding.guiElement );
-      });
-    } 
-    
-    if (direction.toUpperCase() == 'DATA') 
-     {
-       this.dataBindings.forEach(binding => {
-        this.dataObject[binding.key] = this.translateForData(binding.key, binding.guiElement.value);
-      });
-    }
-  }
-
+  
   close()
   {
     if(this.window!=null) this.window.close();

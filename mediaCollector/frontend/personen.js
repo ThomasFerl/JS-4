@@ -17,9 +17,9 @@ export class TPerson extends TFDataObject
     #destDir       = 'mediaCache/persons';
     #portraitPath  = '';
 
-    constructor( tableName , portraitPath = null ) 
+    constructor( dataContainerportraitPath = null ) 
     { 
-      super('PERSON');
+      super('PERSONS');
     
       if(portraitPath) this.#portraitPath = portraitPath;
 
@@ -52,7 +52,7 @@ edit( callback_if_ready )
 
       gui.btnOk.callBack_onClick = function() { this.gui.update('data');
                                                 this.self.save();
-                                                this.self.portraitPanel.imgURL = this.self.portraitURL();
+                                                //this.self.portraitPanel.imgURL = this.self.portraitURL();
                                                 if(this.callback) this.callback();
                                                 this.wnd.close();
                                               }.bind({self:this,gui:gui,wnd:w,callback:callback_if_ready});
@@ -67,7 +67,7 @@ edit( callback_if_ready )
   gui.dataBinding( this );
   gui.update('gui');
   
-  gui.imaage.imgURL = this.portraitURL();
+  //gui.imaage.imgURL = this.portraitURL();
   
 
   
