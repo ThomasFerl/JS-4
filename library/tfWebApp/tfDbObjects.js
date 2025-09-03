@@ -8,7 +8,7 @@ export class TFDataObject
     #original      = {};
     #dirtyFields   = new Set();
     #tableName     = '';
-    #dataBinding   = [];
+  
 
     callBack_onUpdate = null;
 
@@ -31,6 +31,8 @@ export class TFDataObject
              if(response.error) {showMessage('Fehler beim Abfragen des Datensatzes mit der ID='+ID+' : '+response.errMsg); return; }
              for(var key in response.result) this.#defineField( key , response.result[key] || '' );
            }
+
+     
     }  
   
    
@@ -96,35 +98,4 @@ export class TFDataObject
       return true;
     }
    
-
-    bindToGUI( guiObject , fieldName )
-    { // nur wenn fieldName in this.#data existiert ergibt ein Binding sinn
-      if((fieldName in this.#data)) this.#dataBinding.push({guiObject, fieldName});
-    }
-
-    #updateGUI(fieldName)
-    {
-      if(fieldName==undefined) fieldName='*';
-
-      for (const binding of this.#dataBinding) 
-      {
-        if ((binding.fieldName === fieldName)||(fieldName=='*'))  
-        binding.guiObject.value = this.#data[fieldName];
-      }
-    }
-
-    #loadFromGUI(fieldName)
-    {
-       if(fieldName===undefined) fieldName='*';
-       for (const binding of this.#dataBinding) 
-       {
-        if ((binding.fieldName === fieldName)||(fieldName=='*'))  
-        {
-          if(this.callBack_onUpdate!=null) 
-               this.#data[fieldName] = this.callBack_onUpdate(fieldName, binding.guiObject);
-          else this.#data[fieldName] = binding.guiObject.value;
-        }
-      }
-    }
-
 }

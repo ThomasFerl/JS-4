@@ -3,56 +3,25 @@ import * as globals      from "./tfWebApp/globals.js";
 import * as utils        from "./tfWebApp/utils.js";
 import * as dialogs      from "./tfWebApp/tfDialogs.js";
 import { TForm,
-         TFPanel,
-         TFImage,
-         TPropertyEditor
-       }                        from "./tfWebApp/tfObjects.js";  
+         TFPanel}        from "./tfWebApp/tfObjects.js";  
+
+import { TFgui }         from "./tfWebApp/tfGUI.js";         
+import { TFDataObject}   from "./tfWebApp/tfDbObjects.js"
        
 import {TFMediaCollector_thumb} from "./tfMediaCollector_thumb.js";
 
 
-export class TPerson 
+
+export class TPerson extends TFDataObject
 {
-    #data          = {};
-    #original      = {};
-    #dirtyFields   = new Set();
     #destDir       = 'mediaCache/persons';
     #portraitPath  = '';
-   
-    constructor(dbPerson = {} , portraitPath = null) 
+
+    constructor( tableName , portraitPath = null ) 
     { 
-      // enumarable: false macht das Feld „unsichtbar“ für z.B. Object.keys()     
-      Object.defineProperty(this, 'portraitPanel', {
-        value: {}, // dein Panel hier
-        writable: true,
-        configurable: true,
-        enumerable: false  // <-- macht das Feld „unsichtbar“ für z.B. Object.keys()
-      });
-    // portraitPanel.imgURL = this.portraitURL(); 
-
-    // portraitPath ist optional, wenn nicht angegeben, wird es später ermittelt
-    // Bei Listen - Also dem wiederholtem Initialisieren von TPerson-Objekten, wird der 
-    // srtändige Aufruf maximal redundant, so dass nur das ERSTE Listenelemen den Server abfragt
-    // und alle weireren Objekte bekommen die Info mit auf dem  Weg...
-
-    if(portraitPath) this.#portraitPath = portraitPath;
-
-     // Prüfung: enthält dbPerson **nur** das Feld "ID" dann wird es aus der dB geladen. Dazu muss natürlich eine dB-Instanz mitgegeben werden
-     const keys = Object.keys(dbPerson);
-
-    if (keys.length === 1 && keys[0] === "ID") 
-    {
-      const response = this.load_from_dB(dbPerson.ID);
-      if (!response.error) dbPerson = response.result;
-    }
-       
-        for (const field in dbPerson) 
-            {
-             const value = dbPerson[field];
-             this.#defineField(field, value || '');
-             console.log("THIS->" + utils.JSONstringify(this));
-        }
-
+      super('PERSON');
+    
+      if(portraitPath) this.#portraitPath = portraitPath;
 
       this.portraitURL = ()=>
       {
@@ -70,132 +39,47 @@ export class TPerson
         }
       }
     }  
-  
+ 
    
-    #defineField(fieldName, defaultValue) 
-    {
-      // "ERZEUGEN" des Feldnamen innerhalb des lokalen "Data-Containers" 
-      this.#data    [fieldName] = defaultValue || '';
-      this.#original[fieldName] = defaultValue || '';
-     
-      Object.defineProperty(this, fieldName, {
-                                               get: () => this.#data[fieldName],
-                                               set: (val) => {
-                                                               this.#data[fieldName] = val;
-                                                               if (val !== this.#original[fieldName]) this.#dirtyFields.add(fieldName);
-                                                               else                                   this.#dirtyFields.delete(fieldName);
-                                                             },
-                                              enumerable: true
-                                            });
-    }
-  
-    get isDirty() {return this.#dirtyFields.size > 0;}
-    
-  
-    getChangedFields() {return Array.from(this.#dirtyFields);}
-    
-  
-    markClean() 
-    {
-      this.#dirtyFields.clear();
-      Object.assign(this.#original, this.#data);
-    }
-  
-    load_from_dB(id) 
-    {
-      return  utils.webApiRequest('PERSON',{ID:id} );
-    }
-
-    load(id) 
-    {
-       var response = this.load_from_dB(id); 
-       if(response.error){return false;}
-               
-      this.#data = response.result;                                    
-      this.markClean();
-      
-      return true;
-    }
-  
-    save() 
-    { 
-      var response = utils.webApiRequest('SAVEPERSON',{person:this.#data} );
-      if(response.error){
-         dialogs.showMessage(response.errMsg);
-        return false;
-      }
-                        
-      if(!this.#data.ID) this.#data.ID = response.result.lastInsertRowid;                                   
-      this.markClean();
-      return true;
-    }
    
 
 edit( callback_if_ready )
 {
   var caption = this.ID ? 'Person bearbeiten' : 'Neue Person anlegen';
-  var w       =    dialogs.createWindow( null,caption,"80%","80%","CENTER");  
+  var w       =    dialogs.createWindow( null,caption,"100%","100%","CENTER");  
   
-  var gui    =  new TFgui( w , 'personDlg' );
+  var gui     =  new TFgui( w , 'personDlg' , {autoSizeWindow:true} );
 
-      // Hier werden die Datenfelder der Datenbank mit den GUI-Elementen verbunden
-      this.addDataBinding( gui.editFirstName , 'VORNAME' );
-      this.addDataBinding( gui.editName      , 'NAME'    );
-      this.addDataBinding( gui.editAlias1    , 'ALIAS1'  );
-      this.addDataBinding( gui.editAlias2    , 'ALIAS2'  );
-      this.addDataBinding( gui.editAlias3    , 'ALIAS3'  );
+      gui.btnOk.callBack_onClick = function() { this.gui.update('data');
+                                                this.self.save();
+                                                this.self.portraitPanel.imgURL = this.self.portraitURL();
+                                                if(this.callback) this.callback();
+                                                this.wnd.close();
+                                              }.bind({self:this,gui:gui,wnd:w,callback:callback_if_ready});
+
+      gui.bttnAbort.callBack_onClick = function() { this.wnd.close() }.bind({wnd:w}); 
+      gui.btnImageFromClipboard.callBack_onClick = function() { loadpersonImageFromClipboard( this.picture ) }.bind(this);
 
 
+
+  // wenn im GUI-Builder das Datenfeld: "DataFieldName" auf den gültigen Feldamen in der dB-Tabelle gesetzt wurd,
+  // kann das explizit gesetzte DataBinding entfallen.
+  gui.dataBinding( this );
+  gui.update('gui');
   
-  w.buildGridLayout_templateColumns('1fr 1fr 1fr 1fr');
-  w.buildGridLayout_templateRows   ('1fr 1fr 1fr 1fr');
-  // form 
-  var  f      = dialogs.addPanel(_w,'',1,1,3,4); 
- 
-  this.portraitPanel  = new TFPanel( _w  , 4 , 1 , 1 , 3 , {dropTarget:true} ); 
-  this.portraitPanel.imgURL = this.portraitURL();
-  this.portraitPanel.callBack_onDrop = function(e,d) {debugger; this.dropImage(e,d) }.bind(this); 
+  gui.imaage.imgURL = this.portraitURL();
+  
 
   
  // dialogs.addFileUploader  ( p , '*.*' , true , 'mediaCache/persons' , (selectedFiles) => { this.PORTRAIT=selectedFiles.result.savedName});
   
- debugger;
+ 
   var herkunft = [];
   var response = utils.fetchRecords("Select  distinct HERKUNFT from personen order by HERKUNFT");
   if(!response.error) for(var i=0; i<response.result.length; i++) herkunft.push(response.result[i].HERKUNFT);
-  
-      
-  var  c      = dialogs.addPanel(_w,'cssRibbon',4,4,1,1);
-  c.backgroundColor = 'gray';
-  
-  var  clpBtn = dialogs.addButton(c,'',1,1,100,35,'clipbrd');
-       clpBtn.callBack_onClick = function() { loadpersonImageFromClipboard( this.picture ) }.bind(this);
 
-              // aParent      , aData      , aLabels , aAppendix , aExclude , aInpType , URLForm )
-  var inp = new TForm( f      , this.#data , {}      , {}        , ['ID','PORTRAIT']       , {}       , '' );    
-      inp.setLabel('NAME','Name');
-      inp.setLabel('VORNAME','Vorname');
-      inp.setLabel('ALIAS1','Alias #1');
-      inp.setLabel('ALIAS2','Alias #2');
-      inp.setLabel('ALIAS3','Alias #3');
-      inp.setLabel('HERKUNFT','Herkunft');
-      inp.setInputType('HERKUNFT','lookup',{items:herkunft});
-
-      inp.setLabel('GEBURTSJAHR','Geburtsjahr');
-      inp.setLabel('BUSINESSTART','Start Busines');
-      inp.setLabel('BUSINESENDE','Ende Busines');
-      inp.setLabel('RANKING','Ranking (1..10)');
-      inp.setInputType('RANKING','range', {sliderMin:1,sliderMax:10,sliderStep:1,sliderPosition:this.#data.RANKING} );
-      
-      inp.render( true);  
-      
-      inp.callBack_onOKBtn = function(values) {
-                                               for(var i=0; i<values.length; i++) 
-                                               { this.self.#data[values[i].field] = values[i].value }
-                                               this.self.save();  
-                                               this.wnd.close(); 
-                                               if(this.callback) this.callback();
-                                             }.bind( {self:this, wnd:w, inp:inp , img:this.picture , callback:callback_if_ready} )
+  gui.cbHerkunft.items = herkunft;
+  
 }
 
 

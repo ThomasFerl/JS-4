@@ -371,6 +371,8 @@ export class TFObject
     this.callBack_onDrop       = undefined;   
     this.callBack_onDragEnd    = undefined;
 
+    this.dataFieldName         = '';
+
 
    this.render();  
 
@@ -1368,7 +1370,8 @@ getProperties()
 
   properties.push( {level:1, label:'objName',type:'INPUT',value:this.objName} );
   properties.push( {level:1, label:'name',type:'INPUT',value:this.name} );
-  
+  properties.push( {level:1, label:'dataFieldName',type:'INPUT',value:this.dataFieldName || ''} );
+
   properties.push( {level:1, label:'css',type:'LOOKUP',value:this.css || '' , items:utils.getAvailableCSSClasses() || [] } );
   
   properties.push( {level:1, label:'backgroundColor',type:'INPUT',value:this.backgroundColor, dialog:'COLORPICKER'} );
@@ -1420,7 +1423,9 @@ getProperties()
   properties.push( {level:3, label:'display',type:'SELECT',value:this.display || "flex" , items:['block', 'inline', 'inline-block', 'flex', 'inline-flex', 'grid', 'inline-grid', 'none', 'contents', 'table', 'table-row', 'table-cell', 'list-item']} );
   properties.push( {level:3, label:'position',type:'SELECT',value:this.position, items:['static', 'relative', 'absolute', 'fixed', 'sticky'] });
   properties.push( {level:3, label:'flexDirection',type:'SELECT',value:this.flexDirection  || "row", items:["row","column","row-reverse","column-reverse"]} );
+
   
+
 // Grid-Infos holen
   var dim = utils.getGridLayoutDimension(this);
   if(dim) properties.push( {level:4, label:'gridLayout',type:'INPUT',value:dim.gridColumnCount+'x'+dim.gridRowCount} );

@@ -11,6 +11,8 @@ export class TFgui
    constructor ( aParent , guiNameOrguiObject , params )
   { 
       this.params              = params || {};
+      this.dataBindings        = [];
+      this.dataObject          = {};
       
       var formData             = null; 
       if (typeof guiNameOrguiObject === 'string') formData  = utils.loadForm(guiNameOrguiObject);
@@ -53,8 +55,12 @@ export class TFgui
          objects.addComponent( this.dashBoard , c , function(e){   // CallBack on Ready
                                                                  this.guiObjects[e.name] = e;
                                                                }.bind(this) )
-      } 
-      
+      }
+
+ // wird überschrieben, wenn ein Datenfeld abgeleitet, umgerechnet oder getypCastet werden soll...
+ this.translateForGUI  = function ( fieldName , value , guiElement ) { guiElement.value = value; return value };
+ this.translateForData = function ( fieldName , value , guiElement ) { return value };
+
       
  // proxy-Klasse für bequemen Zugriff einrichten ....
 var proxy = new Proxy(this.guiObjects, {
@@ -73,9 +79,45 @@ var proxy = new Proxy(this.guiObjects, {
   return proxy;
   }
 
+  getElementByFieldName(fieldName)
+  {
+    // alle guiElemente durchlaufen und nach übereinstimmenden Feldnamen suchen...
+    for (var key in this.guiObjects) {
+      if (this.guiObjects[key].fieldName.toUpperCase() == fieldName.toUpperCase()) {
+        return this.guiObjects[key];
+      }
+    }
+    return null;
+  }
+   
+  dataBinding( dataObject )
+  {
+    this.dataObject = dataObject;
+    this.dataBindings = [];
+    for(var key in dataObject.keys)  // durchlaufe alle Datenfelder des DataRecords bzw Datenobjekts
+    {
+      var element = this.getElementByFieldName(key);  // suche nach einem gui-Element, das mit diesem Feldnamen übereinstimmt
+      if (element) this.dataBindings.push( {key:key, guiElement:element} );  // bei Treffer wird Databinding-Container gefüllt... 
+    }
+  }
 
 
-
+  update(direction)
+  { debugger;
+    if (direction.toUpperCase() == 'GUI') 
+     {
+       this.dataBindings.forEach(binding => {
+        this.translateForGUI( binding.key , this.dataObject[binding.key] , binding.guiElement );
+      });
+    } 
+    
+    if (direction.toUpperCase() == 'DATA') 
+     {
+       this.dataBindings.forEach(binding => {
+        this.dataObject[binding.key] = this.translateForData(binding.key, binding.guiElement.value);
+      });
+    }
+  }
 
   close()
   {
