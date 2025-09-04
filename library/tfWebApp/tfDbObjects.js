@@ -67,7 +67,7 @@ export class TFDataObject
   
     load_from_dB(id) 
     {
-      return  utils.webApiRequest('FETCHRECORD',{sql:"Select * from "+tableName+" Where ID="+id} );
+      return  utils.webApiRequest('FETCHRECORD',{sql:"Select * from "+this.#tableName+" Where ID="+id} );
     }
 
     load(id) 

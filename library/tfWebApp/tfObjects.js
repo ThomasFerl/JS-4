@@ -3171,14 +3171,23 @@ getItems()
 
 addItem( caption , value )
 {
+  var item = {};
+  if(typeof caption == 'string') 
+   { 
+    item = {value:caption , caption:caption}
+     if (value) item.value = value;
+   }
+   
+  if(typeof caption == 'object') item = caption;
+   
   // prüfen, ob bereits vorhanden ...
-  var ndx = this.items.findIndex( i => i.value == value );  
+  var ndx = this.items.findIndex( i => i.value == item.value );  
   if(ndx<0)   
   {
-    this.items.push( {caption:caption , value:value} );
+    this.items.push( item );
     var option = document.createElement("OPTION");
-    option.text  = caption;
-    option.value = value;
+    option.text  = item.caption;
+    option.value = item.value;
     this.combobox.appendChild(option);
   }
   

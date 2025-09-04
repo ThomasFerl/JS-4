@@ -31,8 +31,10 @@ var guiMainWnd         = null;
 var lastInsertID       = 0;          // der letzte importierte Rechnungs-Datensatz
 var lastSelectedNdx    = -1;         // die zuletzt ausgewählte Rechnung
 var gridReportResults  = null;       // das Grid, in welchem der aktuelle Report dargestellt wird
+
 var selectedReport     = '';         // der akuell ausgewählte Report ...
 var selectedTable      = '';
+var selectedBlackList  = '0';
 
 export function main(capt1)
 {
@@ -107,67 +109,81 @@ function newBill()
 
 function showReports( data )
 {
-   var guiNewBillDlg = new TFgui( null , 'rechnungspruefungAuswertung' );
+  selectedBlackList  = '0';
+  selectedReport     = '0';
+
+   var gui = new TFgui( null , 'rechnungspruefungAuswertung' );
    selectedTable     = data.TABLENAME;
 
    //  Die Liste der möglichen Reports....
-   var select        = guiNewBillDlg.selectReport; // besseres handling
-       select.addItem('Rohdaten anzeigen' , 'RAW');
+   var select        = gui.selectReport; // besseres handling
+       select.addItem('Rohdaten anzeigen' , '0');
 
    var response      = utils.webApiRequest( 'FETCHRECORDS' , {sql:'Select ID ,  REPORTNAME from reports order by REPORTNAME'});
    if(!response.error) 
     for(var i=0; i<response.result.length; i++) select.addItem( response.result[i].REPORTNAME , response.result[i].ID );     
  
    select.callBack_onChange = function( v ) {                                               
-                                             runReport( this.data , this.container , v ); 
-                                            }.bind({data:data, container:guiNewBillDlg.gridContainer});
+                                              selectedReport = v;
+                                              runReport( this.data , this.container ); 
+                                            }.bind({data:data, container:gui.gridContainer});
 
+  
+  // Blacklist befüllen ...                                          
+  var selectBlacklist = gui.selectBlacklist;
+      selectBlacklist.addItem( {caption:'---' , value:0} );     
+ 
+  response  = utils.webApiRequest( 'FETCHRECORDS' , {sql:'Select ID ,  BEZEICHNUNG from blacklist order by BEZEICHNUNG'});
+  if(!response.error) 
+    for(var i=0; i<response.result.length; i++) selectBlacklist.addItem( {caption:response.result[i].BEZEICHNUNG , value:response.result[i].ID} );    
+ 
+   selectBlacklist.callBack_onChange = function( v ) {  
+                                             selectedBlackList = v;                                             
+                                             runReport( this.data , this.container ); 
+                                            }.bind({data:data, container:gui.gridContainer});
 
-// Button: neuen Report erzeugen ...
-guiNewBillDlg.btnAddReport.callBack_onClick = function(){ editReport(this.tableName ) }.bind({tableName:selectedTable})
-
-
-// Button: Report bearbeiten ...
-guiNewBillDlg.btnEditReport.callBack_onClick = function(){ editReport(this.tableName) }.bind({tableName:selectedTable})
-
-
-// Button Report löschen ...
-guiNewBillDlg.btnDeleteReport.callBack_onClick = function(){ deleteReport() }
+// Button zur Verwaltung der Reports
+gui.btnAddReport.callBack_onClick = function(){ editReport(this.tableName ) }.bind({tableName:selectedTable})
+gui.btnEditReport.callBack_onClick = function(){ editReport(this.tableName) }.bind({tableName:selectedTable})
+gui.btnDeleteReport.callBack_onClick = function(){ deleteReport() }
 
 // Button zur Verwaltung der Ausschluss-Liste
-guiNewBillDlg.btnBlacklist.callBack_onClick    = function (){ blackList(this.tableName) }.bind({tableName:selectedTable});
-
+gui.btnAddBlacklist.callBack_onClick    = function (){ editBlackList(this.tableName) }.bind({tableName:selectedTable});
+gui.btnEditBlacklist.callBack_onClick   = function (){ editBlackList(this.tableName) }.bind({tableName:selectedTable});
+gui.btnDeleteBlacklist.callBack_onClick = function (){ deleteBlacklist() };
 
 // per Default erstmal die Roh-Daten anzeigen ...
-runReport(data, guiNewBillDlg.gridContainer , 'RAW' );
+runReport(data, gui.gridContainer  );
 
 
-guiNewBillDlg.btnExcel.callBack_onClick = function(){ ___excelExport( gridReportResults ) }
+gui.btnExcel.callBack_onClick = function(){ ___excelExport( gridReportResults ) }
 
 }
 
 
-function runReport( data , container , mode )
+function runReport( data , container  )
 // Build SQL-Statement
 {
   var sql             = '';
   container.innerHTML = '';
   var tn              = data.TABLENAME;
   var komma           = ' ';
-  selectedReport      = mode;
+  var groupFields     = null;
+  var sumFields       = null;
 
-  if(!isNaN(mode))  // Wenn NUMERISCH dann als ID des Reports interpretieren ....
+  if((selectedReport=="") || (selectedReport=="0"))  sql  = "SELECT * FROM " + tn ; 
+  else
   {
-    var response = utils.webApiRequest('FETCHRECORD',{sql:'Select * from reports Where ID='+mode })
+    var response = utils.webApiRequest('FETCHRECORD',{sql:'Select * from reports Where ID='+selectedReport })
     if(response.error) 
     {
-      dialogs.showMessage(response.errMsg);
+      dialogs.showMessage("Fehler beim Laden des Reports: " + response.errMsg);
       return;
     }
      
     // aus en beiden Feldern "GroupFields" und "SumFields" das SQL-Statement erstellen...
-    var groupFields = JSON.parse(response.result.GROUPFIELDS);
-    var sumFields   = JSON.parse(response.result.SUMFIELDS);
+    groupFields = JSON.parse(response.result.GROUPFIELDS);
+    sumFields   = JSON.parse(response.result.SUMFIELDS);
     
     sql = 'select count(*) as ANZAHL';
     for(var i=0; i<groupFields.length;i++) sql = sql + ', ' + groupFields[i]
@@ -182,9 +198,31 @@ function runReport( data , container , mode )
       }
       
     sql = sql + ' from ' + tn;
-    
-    if(groupFields.length>0)
-    {
+  } 
+
+  // ist excluse-Liste (blackkList) definiert ?
+  if((selectedBlackList!="") && (selectedBlackList!="0"))
+  { 
+       var blackList = new TFDataObject('blacklist');
+           blackList.load(selectedBlackList);
+       var entrys    = JSON.parse(blackList.IDENTIFY); 
+       // gibt es Filter ?
+       var where = ' where ';
+       if(entrys.length>0)
+       for(var i=0; i<entrys.length; i++)
+       {
+         var filter = entrys[i];
+         filter     = filter.replace('\"', "'");
+         filter     = filter.replace('\"', "'");
+         filter     = filter.replace('"', "'");
+
+         if(filter>0) where = ' and ';
+         sql = sql + where + filter; 
+       } 
+  }  
+
+  if(groupFields)
+  {
       sql   = sql + ' GROUP BY ';
       komma = ' ';
        for(var i=0; i<groupFields.length;i++)
@@ -192,14 +230,9 @@ function runReport( data , container , mode )
          if(i>0) komma=', ';
          sql = sql + komma + groupFields[i];
        }   
-    }
-    
-  sql = sql + ' ORDER BY ANZAHL DESC';  
-
-
+       sql = sql + ' ORDER BY ANZAHL DESC';  
   } 
-  else sql  = "SELECT * FROM " + tn;
-
+  
 
   var reportData = utils.webApiRequest('fetchRecords', { sql:sql });
      
@@ -384,19 +417,41 @@ function deleteReport()
 {}
 
 
-// Button Ausschluss-Liste definieren ....
-function blackList( tableName )
+// Button Blackliste-Liste definieren - Wenn 
+function editBlackList( tableName )
 {
+  var blackListData = new TFDataObject('blacklist');
+  
+  if(selectedBlackList != '') blackListData.load(selectedBlackList)
+ 
   var gui   = new TFgui(null,'rechnungspruefungBlacklist');
+      // Select--Box mit Datenfeldern
       gui.selectDatafield.setItems( ___getFieldNames(tableName) );
+      // bei Veränderung soll Daten-Inhalts-Select-Box mit den Merkmalsausprägungen dieses Feldes befüllt werden
       gui.selectDatafield.callBack_onChange = function(){ this.gui.editFilter.items = ___getFieldContent(tableName,this.gui.selectDatafield.value)
                                                         }.bind({gui:gui})
+
+      // Operationen                                                  
       gui.selectOperation.setItems([{caption:'gleich',value:'='} , {caption:'ungleich',value:'<>'} , {caption:'like',value:'like'}]);
-      gui.btnAdd.callBack_onClick = function(){this.gui.listBox.addItem(this.gui.selectDatafield.value + this.gui.selectOperation.value + this.gui.editFilter.value , true )}.bind({gui:gui});
+      
+      // Regel der Listbox hinzufügen
+      gui.btnAdd.callBack_onClick = function(){this.gui.listBox.addItem(this.gui.selectDatafield.value + this.gui.selectOperation.value + '"' + this.gui.editFilter.value + '"' , true )}.bind({gui:gui});
+    
+      // Regel aus der Listbox entfernen ...
+      gui.btnDelete.callBack_onClick = function(){ ___removeField(this.listBox) }.bind({ listBox:gui.listBox });
 
-
-  var bList = new TFDataObject('blacklist');
-
+      //OK
+      gui.btnOk.callBack_onClick = function(){
+                                               this.blackListData.BEZEICHNUNG = this.gui.editBezeichnung.value; 
+                                               this.blackListData.IDENTIFY    = JSON.stringify(this.gui.listBox.getItems('value')); 
+                                               this.blackListData.save();
+                                               this.gui.close();
+                                             }.bind({gui:gui , blackListData:blackListData})
+                              
+      
+      // Abort
+      gui.btnAbort.callBack_onClick = function(){this.gui.close()}.bind({gui:gui})
+     
 }
 
 
