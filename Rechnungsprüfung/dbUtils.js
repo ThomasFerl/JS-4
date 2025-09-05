@@ -2,6 +2,16 @@ const { Parser } = require('node-sql-parser');
 const utils      = require('./nodeUtils');
 
 
+// für Widcards beim "like" sind auch "*" erlaubt.
+// diese müssen hier wieder zurück-gewandelt werden !
+// Schützenhilfe vom CoPilot weil ich mit RegEx auf Kriegsfuß stehe ;-)
+function _convertLikeWildcards(sql) {
+  return sql.replace(/like\s+(['"])(.*?)\1/gi, (match, quote, content) => {
+    const replaced = content.replace(/\*/g, '%');
+    return `LIKE ${quote}${replaced}${quote}`;
+  });
+}
+
 function _extractTableNames(sqlStatement)
 {
   const parser = new Parser();
@@ -60,9 +70,9 @@ module.exports.structure = ( db , sqlStatement) =>
 
 function _fetchValue_from_Query( db , sql , params )
 {
-  if(utils.debug)console.log('fetchValue_from_Query(' + sql +')');   // Vermeidung von Rekursion
+  if(utils.debug)console.log('fetchValue_from_Query(' + _convertLikeWildcards(sql) +')');   // Vermeidung von Rekursion
   try {
-        var query  = db.prepare( sql );
+        var query  = db.prepare( _convertLikeWildcards(sql) );
 
         if(params)  var record  = query.get(params);
         else        var record  = query.get();
@@ -87,9 +97,9 @@ module.exports.fetchValue_from_Query = ( db , sql , params ) =>
 
 function _fetchRecord_from_Query ( db , sql ,  params)
 {
-  if(utils.debug)console.log('fetchRecord_from_Query(' + sql +')');
+  if(utils.debug)console.log('fetchRecord_from_Query(' + _convertLikeWildcards(sql) +')');
     try {
-        var query  = db.prepare( sql );
+        var query  = db.prepare( _convertLikeWildcards(sql) );
 
         if(params)  var record  = query.get(params);
         else        var record  = query.get();
@@ -109,9 +119,9 @@ module.exports.fetchRecord_from_Query = ( db , sql  , params ) =>{
 
 function _fetchRecords_from_Query( db , sql , params )
 {
-  if(utils.debug)console.log('fetchRecords_from_Query ->( db:'+db+' , sql:"' + sql +'")');
+  if(utils.debug)console.log('fetchRecords_from_Query ->( db:'+db+' , sql:"' + _convertLikeWildcards(sql) +'")');
   try {
-      var stmt  = db.prepare( sql );
+      var stmt  = db.prepare( _convertLikeWildcards(sql) );
       
       if(params)  var records  = stmt.all(params);
       else        var records  = stmt.all();

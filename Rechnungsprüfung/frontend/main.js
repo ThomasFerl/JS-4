@@ -60,7 +60,7 @@ export async function run()
   const loader = new TFLoader({ title: "lade Daten …" , note:"hab's gleich geschafft ..." });
 
 // Splashscreen 5s anzeigen
-await loader.while(TFLoader.wait(1000))
+await loader.while(TFLoader.wait(10000))
 
 
 guiMainWnd = new TFgui( null , 'rechnungspruefungMain' );
@@ -143,14 +143,14 @@ function showReports( data )
                                             }.bind({data:data, container:gui.gridContainer});
 
 // Button zur Verwaltung der Reports
-gui.btnAddReport.callBack_onClick = function(){ editReport(this.tableName ) }.bind({tableName:selectedTable})
-gui.btnEditReport.callBack_onClick = function(){ editReport(this.tableName) }.bind({tableName:selectedTable})
-gui.btnDeleteReport.callBack_onClick = function(){ deleteReport() }
+gui.btnAddReport.callBack_onClick = function(){ editReport(this.tableName , null) }.bind({tableName:selectedTable})
+gui.btnEditReport.callBack_onClick = function(){ editReport(this.tableName , selectedReport ) }.bind({tableName:selectedTable})
+gui.btnDeleteReport.callBack_onClick = function(){ deleteReport( selectedReport ) }
 
 // Button zur Verwaltung der Ausschluss-Liste
-gui.btnAddBlacklist.callBack_onClick    = function (){ editBlackList(this.tableName) }.bind({tableName:selectedTable});
-gui.btnEditBlacklist.callBack_onClick   = function (){ editBlackList(this.tableName) }.bind({tableName:selectedTable});
-gui.btnDeleteBlacklist.callBack_onClick = function (){ deleteBlacklist() };
+gui.btnAddBlacklist.callBack_onClick    = function (){ editBlackList(this.tableName , null) }.bind({tableName:selectedTable});
+gui.btnEditBlacklist.callBack_onClick   = function (){ editBlackList(this.tableName , selectedBlackList) }.bind({tableName:selectedTable});
+gui.btnDeleteBlacklist.callBack_onClick = function (){ deleteBlacklist(selectedBlackList) };
 
 // per Default erstmal die Roh-Daten anzeigen ...
 runReport(data, gui.gridContainer  );
@@ -202,7 +202,7 @@ function runReport( data , container  )
 
   // ist excluse-Liste (blackkList) definiert ?
   if((selectedBlackList!="") && (selectedBlackList!="0"))
-  { 
+  { debugger;
        var blackList = new TFDataObject('blacklist');
            blackList.load(selectedBlackList);
        var entrys    = JSON.parse(blackList.IDENTIFY); 
@@ -215,8 +215,7 @@ function runReport( data , container  )
          filter     = filter.replace('\"', "'");
          filter     = filter.replace('\"', "'");
          filter     = filter.replace('"', "'");
-
-         if(filter>0) where = ' and ';
+       
          sql = sql + where + filter; 
        } 
   }  
@@ -237,7 +236,7 @@ function runReport( data , container  )
   var reportData = utils.webApiRequest('fetchRecords', { sql:sql });
      
     if (reportData.error) {
-           dialogs.showMessage('Fehler beim Laden der Berichte: ' + reportData.errMsg);
+           dialogs.showMessage('Das folgende SQL-Statement '+sql+' generiert den Fehler: ' + reportData.errMsg);
            return;
        }
 
@@ -253,8 +252,8 @@ function runReport( data , container  )
 
 function detailView( data )
 {
-  var w   = dialogs.createWindow(null,'Details', "100%" , "100%" , "CENTER")
-  var gui = new TFgui( w , 'rechnungsPruefungReportDetails' , {autoSizeWindow:true} );  // valueContainer & gridContainer
+  var w   = dialogs.createWindow(null,'Details', "70%" , "80%" , "CENTER")
+  var gui = new TFgui( w , 'rechnungsPruefungReportDetails');  // valueContainer & gridContainer
   
   gui.valueContainer.buildFlexBoxLayout();
   gui.valueContainer.overflow        = 'auto';
@@ -342,27 +341,21 @@ function processUploadFiles( files , dropZone , gui )
  
 
 // Button: Report bearbeiten ...  ist ID == null -> neuEingabe
-function editReport( tableName  ) 
+function editReport( tableName , ID ) 
 { 
- var guiDefineReport   = new TFgui( null , 'reportDefinition' );
+ var gui               = new TFgui( null , 'reportDefinition' );
 
- var reportData        = null;  // ist <>null, wenn ein existierender Report bearbeitet werden soll....
- if(selectedReport!='') 
- {
-   var response = utils.webApiRequest('fetchRecord',{sql:"Select * from reports Where ID="+selectedReport});
-   if(!response.error) reportData = response.result;
- }
-
-  // für einen leichteren Umgang ;-)
-  var editReportName    = guiDefineReport.editReportName;
-  var cbReportKategorie = guiDefineReport.cbReportKategorie;
-  var selectDatafield1  = guiDefineReport.selectDatafield1;
-  var selectDatafield2  = guiDefineReport.selectDatafield2;
-  var lbGroupFields     = guiDefineReport.lbGroupFields;
-  var lbSumFields       = guiDefineReport.lbSumFields;
-  var btnAbort          = guiDefineReport.btnAbort;
-  var btnOk             = guiDefineReport.btnOk;
+ var reportData        = new TFDataObject('reports' , ID );
+ if(ID) reportData.load(ID);
  
+  // für einen leichteren Umgang ;-)
+  var editReportName    = gui.editReportName;
+  var cbReportKategorie = gui.cbReportKategorie;
+  var selectDatafield1  = gui.selectDatafield1;
+  var selectDatafield2  = gui.selectDatafield2;
+  var lbGroupFields     = gui.lbGroupFields;
+  var lbSumFields       = gui.lbSumFields;
+
     
   // Combobox mit Kategirien befüllen...
   var response      = utils.webApiRequest( 'FETCHRECORDS' , {sql:"Select Distinct KATEGORIE from reports Order by KATEGORIE"} );
@@ -396,38 +389,60 @@ function editReport( tableName  )
  }
  
 // Button zum Listboxen bestücken....
-guiDefineReport.btnAddToGroup.callBack_onClick = function() { ___addField(this.fieldName.value , this.listBox) }.bind({fieldName:selectDatafield1 , listBox:lbGroupFields })
-guiDefineReport.btnAddToSum.callBack_onClick   = function() { ___addField(this.fieldName.value , this.listBox) }.bind({fieldName:selectDatafield2 , listBox:lbSumFields })
+gui.btnAddToGroup.callBack_onClick = function() { ___addField(this.fieldName.value , this.listBox) }.bind({fieldName:selectDatafield1 , listBox:lbGroupFields })
+gui.btnAddToSum.callBack_onClick   = function() { ___addField(this.fieldName.value , this.listBox) }.bind({fieldName:selectDatafield2 , listBox:lbSumFields })
 
 // Button zum entfernen der Listbox-Einträge ....
-guiDefineReport.btnDelFromGroup.callBack_onClick = function() { ___removeField(this.listBox) }.bind({listBox:lbGroupFields })
-guiDefineReport.btnDelFromSum.callBack_onClick   = function() { ___removeField(this.listBox) }.bind({listBox:lbSumFields })
+gui.btnDelFromGroup.callBack_onClick = function() { ___removeField(this.listBox) }.bind({listBox:lbGroupFields })
+gui.btnDelFromSum.callBack_onClick   = function() { ___removeField(this.listBox) }.bind({listBox:lbSumFields })
 
-// Button zum Abbruch ...
-btnAbort.callBack_onClick = function(){this.gui.close()}.bind({gui:guiDefineReport});
-
-// button zum Speichern ...
-btnOk.callBack_onClick = function(){ ___saveReport( this.gui)}.bind({gui:guiDefineReport})
-
+  //OK  -> Speichern 
+  gui.btnOk.callBack_onClick = function(){
+                                           this.data.REPORTNAME  = gui.editReportName.value;
+                                           this.data.KATEGORIE   = gui.cbReportKategorie.value;
+                                           this.data.GROUPFIELDS = JSON.stringify(gui.lbGroupFields.getItems('value'));
+                                           this.data.SUMFIELDS   = JSON.stringify(gui.lbSumFields.getItems('value'));
+                                           this.data.save();
+                                           this.gui.close();
+                                          }.bind({gui:gui , data:reportData})
+                              
+      
+      // Abort
+      gui.btnAbort.callBack_onClick = function(){this.gui.close()}.bind({gui:gui})
 }
 
 
 // Button Report löschen ...
-function deleteReport() 
+function deleteReport( ID ) 
 {}
 
 
 // Button Blackliste-Liste definieren - Wenn 
-function editBlackList( tableName )
-{
+function editBlackList( tableName , ID)
+{ 
   var blackListData = new TFDataObject('blacklist');
   
-  if(selectedBlackList != '') blackListData.load(selectedBlackList)
+  if(ID) blackListData.load(ID)
  
   var gui   = new TFgui(null,'rechnungspruefungBlacklist');
+      
+      // hartes Umbenennen der in des im GUI definierten Labels...
+      gui.TFLabel121.caption ='Filter definieren';
+
+ //  Eingabefelder ggf. bestücken sofern im Editier-Modus
+ if(blackListData.ID)
+ {
+   gui.editBezeichnung.value = blackListData.BEZEICHNUNG;
+   try {
+        var f = JSON.parse(blackListData.IDENTIFY);
+        for (var i=0; i<f.length; i++) gui.listBox.addItem({caption:f[i],value:f[i]});
+   } catch(e) { }; 
+ }
+ 
       // Select--Box mit Datenfeldern
       gui.selectDatafield.setItems( ___getFieldNames(tableName) );
       // bei Veränderung soll Daten-Inhalts-Select-Box mit den Merkmalsausprägungen dieses Feldes befüllt werden
+      // habe fast Pipi in den Augen bei soviel "Schönheit" ;-)
       gui.selectDatafield.callBack_onChange = function(){ this.gui.editFilter.items = ___getFieldContent(tableName,this.gui.selectDatafield.value)
                                                         }.bind({gui:gui})
 
@@ -435,7 +450,7 @@ function editBlackList( tableName )
       gui.selectOperation.setItems([{caption:'gleich',value:'='} , {caption:'ungleich',value:'<>'} , {caption:'like',value:'like'}]);
       
       // Regel der Listbox hinzufügen
-      gui.btnAdd.callBack_onClick = function(){this.gui.listBox.addItem(this.gui.selectDatafield.value + this.gui.selectOperation.value + '"' + this.gui.editFilter.value + '"' , true )}.bind({gui:gui});
+      gui.btnAdd.callBack_onClick = function(){this.gui.listBox.addItem(this.gui.selectDatafield.value + " " + this.gui.selectOperation.value + ' "' + this.gui.editFilter.value + '"' , true )}.bind({gui:gui});
     
       // Regel aus der Listbox entfernen ...
       gui.btnDelete.callBack_onClick = function(){ ___removeField(this.listBox) }.bind({ listBox:gui.listBox });
@@ -456,6 +471,9 @@ function editBlackList( tableName )
 
 
 
+// Button Filter löschen ...
+function deleteBlacklist( ID ) 
+{}
 
 
 // Hilfsfunktionen
@@ -498,20 +516,6 @@ function ___removeField( listBox )
    for(var i=0; i<selectedItems.length; i++) listBox.removeItem( selectedItems[i] );
 }
 
-
-function  ___saveReport( gui)
-{ 
-  var record = {};
-      record.REPORTNAME  = gui.editReportName.value;
-      record.KATEGORIE   = gui.cbReportKategorie.value;
-      record.GROUPFIELDS = JSON.stringify(gui.lbGroupFields.getItems('value'));
-      record.SUMFIELDS   = JSON.stringify(gui.lbSumFields.getItems('value'));
-
-      if (isNaN(selectedReport)) utils.insertIntoTable('reports',record)
-      else                       utils.updateTable    ('reports' , 'ID' , selectedReport , record );  
-
-   gui.close(); 
-}
 
 
 function ___excelExport( grid )
