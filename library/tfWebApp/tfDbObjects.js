@@ -12,30 +12,35 @@ export class TFDataObject
 
     callBack_onUpdate = null;
 
-    constructor( tableName , ID ) 
+    constructor( tableName , ID , dataContainer) 
     {
       // Wird die ID übergben, wird der Datensatz geladen und gleichzeitig die Struktur ermittelt.
       // Wird nur der Tabellen-Name übergeben, wird NUR die Tabellenstruktur ermittelt - Die Daten müssen dan via "load(id)" nachgeladen werden...
       if(!tableName) {dialogs.showMessage("Ein 'TFDataObject' benötigt zwingend einen Tabellen-Namen ! "); return; }
       
       this.#tableName = tableName;
-            
-      if(!ID) 
+      
+      if(dataContainer)
       {
-        var response = utils.webApiRequest('STRUCTURE',{tableName:tableName});
-        if(response.error) {showMessage('Fehler beim Abfragen der Tabllenstruktur: '+response.errMsg); return; }
-        for(var i=0; i<response.result.length; i++) this.#defineField( response.result[i]['name'] , '' );
+        for(var key in dataContainer) this.#defineField( key , dataContainer[key] || '' );
       }
-      else {
-             var response = this.load_from_dB( ID );
-             if(response.error) {showMessage('Fehler beim Abfragen des Datensatzes mit der ID='+ID+' : '+response.errMsg); return; }
-             for(var key in response.result) this.#defineField( key , response.result[key] || '' );
+      else{
+           if(!ID) 
+           {
+             var response = utils.webApiRequest('STRUCTURE',{tableName:tableName});
+             if(response.error) {showMessage('Fehler beim Abfragen der Tabllenstruktur: '+response.errMsg); return; }
+             for(var i=0; i<response.result.length; i++) this.#defineField( response.result[i]['name'] , '' );
+           }
+            else {
+                   var response = this.load_from_dB( ID );
+                   if(response.error) {showMessage('Fehler beim Abfragen des Datensatzes mit der ID='+ID+' : '+response.errMsg); return; }
+                   for(var key in response.result) this.#defineField( key , response.result[key] || '' );
+                 }
            }
 
-     
-    }  
-  
-   
+    }
+
+
     #defineField(fieldName, defaultValue) 
     {
       // "ERZEUGEN" des Feldnamen innerhalb des lokalen "Data-Containers" 

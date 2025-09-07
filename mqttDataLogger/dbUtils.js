@@ -2,6 +2,16 @@ const { Parser } = require('node-sql-parser');
 const utils      = require('./nodeUtils');
 
 
+// für Widcards beim "like" sind auch "*" erlaubt.
+// diese müssen hier wieder zurück-gewandelt werden !
+// Schützenhilfe vom CoPilot weil ich mit RegEx auf Kriegsfuß stehe ;-)
+function _convertLikeWildcards(sql) {
+  return sql.replace(/like\s+(['"])(.*?)\1/gi, (match, quote, content) => {
+    const replaced = content.replace(/\*/g, '%');
+    return `LIKE ${quote}${replaced}${quote}`;
+  });
+}
+
 function _extractTableNames(sqlStatement)
 {
   const parser = new Parser();
@@ -58,25 +68,11 @@ module.exports.structure = ( db , sqlStatement) =>
 }
 
 
-
-module.exports.schema = ( db , tableName) =>
-{
-  // Schema der Tabelle "meineTabelle" abfragen   
-  const stmt = db.prepare("PRAGMA table_info('"+tableName+"');");
-  const columns = stmt.all();
-  var   res     = [];
-  columns.forEach((column) => {res.push({fieldName:column.name , fieldTyp:column.type , notNull:column.notnull , defaultValue:column.dflt_value , primaryKey:column.pk}); });
-
-  return {error:false, errMsg:'OK',result:res}
-}
-
-
-
 function _fetchValue_from_Query( db , sql , params )
 {
-  if(utils.debug)console.log('fetchValue_from_Query(' + sql +')');   // Vermeidung von Rekursion
+  if(utils.debug)console.log('fetchValue_from_Query(' + _convertLikeWildcards(sql) +')');   // Vermeidung von Rekursion
   try {
-        var query  = db.prepare( sql );
+        var query  = db.prepare( _convertLikeWildcards(sql) );
 
         if(params)  var record  = query.get(params);
         else        var record  = query.get();
@@ -101,9 +97,9 @@ module.exports.fetchValue_from_Query = ( db , sql , params ) =>
 
 function _fetchRecord_from_Query ( db , sql ,  params)
 {
-  if(utils.debug)console.log('fetchRecord_from_Query(' + sql +')');
+  if(utils.debug)console.log('fetchRecord_from_Query(' + _convertLikeWildcards(sql) +')');
     try {
-        var query  = db.prepare( sql );
+        var query  = db.prepare( _convertLikeWildcards(sql) );
 
         if(params)  var record  = query.get(params);
         else        var record  = query.get();
@@ -123,9 +119,9 @@ module.exports.fetchRecord_from_Query = ( db , sql  , params ) =>{
 
 function _fetchRecords_from_Query( db , sql , params )
 {
-  if(utils.debug)console.log('fetchRecords_from_Query ->( db:'+db+' , sql:"' + sql +'")');
+  if(utils.debug)console.log('fetchRecords_from_Query ->( db:'+db+' , sql:"' + _convertLikeWildcards(sql) +'")');
   try {
-      var stmt  = db.prepare( sql );
+      var stmt  = db.prepare( _convertLikeWildcards(sql) );
       
       if(params)  var records  = stmt.all(params);
       else        var records  = stmt.all();
@@ -157,7 +153,7 @@ module.exports.drop = ( db , tableName , idField , idValue ) =>
 
 function _runSQL ( db , statement , params )
 {
-  utils.log("runSQL->"+statement);
+  if(utils.debug)console.log("runSQL("+statement+")");
 
   try{
        var stmt   = db.prepare( statement ); 
@@ -204,26 +200,29 @@ function _createTable( db , tableName , fieldDef )
 
 module.exports.createTable = ( db , tableName , fieldDef ) =>
 {
-  _createTable( db , tableName , fieldDef )
+  return _createTable( db , tableName , fieldDef )
 }
 
 
-function _insertIntoTable( db , tableName , fields )
+function _insertIntoTable(db, tableName, fields) 
 {
-  var fieldNames  = [];
-  var fieldValues = []
-  
-  for(var fieldName in fields ) 
-      if(fieldName.toUpperCase()!="ID") {fieldNames.push(fieldName) , fieldValues.push(fields[fieldName]) };
+  var fieldNames = [];
+  var fieldValues = [];
 
-  var sql = "insert into "+tableName+"("+fieldNames[0] ;
-  for( var i=1; i<fieldNames.length; i++ )  sql=sql+","+fieldNames[i];
-  sql = sql + ") values('"+fieldValues[0]+"'";
-  for( var i=1; i<fieldValues.length; i++ )  sql=sql+", '"+fieldValues[i]+"'";
-  sql= sql + ")"
-  
-  return  _runSQL( db , sql );
+  // ID-Feld ausschließen, falls vorhanden
+  for (var fieldName in fields) {
+    if (fieldName.toUpperCase() != 'ID') {  
+      fieldNames.push(fieldName);
+      fieldValues.push(fields[fieldName]);
+    }
+  }
+
+  // SQL-String korrekt zusammenbauen
+  var sql = "INSERT INTO " + tableName + " (" + fieldNames.join(", ") + ") VALUES ('" + fieldValues.join("', '") + "')";
+
+  return _runSQL(db, sql);
 }
+
 
 
 module.exports.insertIntoTable = ( db , tableName , fields ) =>
@@ -232,29 +231,36 @@ module.exports.insertIntoTable = ( db , tableName , fields ) =>
 }
 
 
-function _insertBatchIntoTable( db , tableName , records )
-// Quelle: chatGPT
-{ 
-  try{
-  const insert = db.transaction((records) =>
-                {
-                  for (const record of records) 
-                  {
-                    var fieldNames = Object.keys(record);
-                    var placeholders = fieldNames.map(() => '?').join(', ');
-                    var sql = `INSERT INTO ${tableName} (${fieldNames.join(', ')}) VALUES (${placeholders})`;
-                    db.prepare(sql).run(...Object.values(record));
-                  }
-                });
+function _insertBatchIntoTable(db, tableName, records) {
+  try {
+    const insert = db.transaction((records) => {
+      for (const record of records) {
+        const fieldNames = Object.keys(record);
 
-  // Führt die Transaktion mit allen Datensätzen aus
-  insert(records);
+        const values = Object.values(record).map(v => {
+          if (v === undefined) return null; // undefined → null
+          if (v === null) return null;
+          if (typeof v === 'object') return JSON.stringify(v); // Objekt → JSON-String
+          if (typeof v === 'boolean') return v ? 1 : 0; // Boolean → Zahl
+          return v; // Zahl oder String bleibt wie er ist
+        });
 
-  return {error:false, errMsg:'OK', result:{} }
+        const placeholders = fieldNames.map(() => '?').join(', ');
+        const sql = `INSERT INTO ${tableName} (${fieldNames.join(', ')}) VALUES (${placeholders})`;
 
+        console.log("SQL:", sql, "VALUES:", JSON.stringify(values));
+        db.prepare(sql).run(...values);
+      }
+    });
+
+    insert(records);
+    return { error: false, errMsg: 'OK', result: {} };
+  } catch (e) {
+    return { error: true, errMsg: e.message, result: {} };
   }
-  catch(e) { return {error:true, errMsg:e.message, result:{} } }
 }
+
+
 
 
 /* Kurze Erklärung zum "..."  Spread-Operator:
@@ -271,10 +277,14 @@ der Aufruf von run(...['value1', 'value2']) zu run('value1', 'value2') wird.
 */
 
 
+
 module.exports.insertBatchIntoTable = ( db , tableName , batch ) =>
 {
     return _insertBatchIntoTable( db , tableName , batch );
 }
+
+
+
 
 
 function _insertIntoTable_if_not_exist( db , tableName , fields , checkUpFieldName )
@@ -309,25 +319,21 @@ module.exports.insertIntoTable_if_not_exist = ( db , tableName , fields , checkU
 }
 
 
+
+
 function _updateTable(db , tableName , ID_field , ID_value , fields )
 {
   var fieldNames  = [];
   var fieldValues = []
   
-  for(var fieldName in fields ) 
-    {
-      if(fieldName!=ID_field) 
-        {
-          fieldNames.push(fieldName) , 
-          fieldValues.push(fields[fieldName]) 
-        };
-  }    
+  for(var fieldName in fields ) {fieldNames.push(fieldName) , fieldValues.push(fields[fieldName]) };
 
   var sql = "update "+tableName+" set "+fieldNames[0]+" = '"+fieldValues[0]+"'";
   for( var i=1; i<fieldNames.length; i++ )  sql=sql+ " , " +fieldNames[i]+"='"+fieldValues[i]+"'" ;
   
   sql= sql + " where "+ID_field+" = '"+ID_value+"'";
   
+  console.log("updateTable: " + sql);
   return  _runSQL( db , sql );
 }
 
@@ -337,37 +343,6 @@ module.exports.updateTable = (db , tableName , ID_field , ID_value , fields ) =>
   return _updateTable(db , tableName , ID_field , ID_value , fields )
 }
     
-
-function _updateBatchInTable(db, tableName, records, keyField) {
-  try {
-       const update = db.transaction((records) => {
-       for (const record of records) 
-       {
-         var fieldNames = Object.keys(record).filter(f => f !== keyField); // Schlüssel-Feld auslassen
-         var setClause = fieldNames.map(f => `${f} = ?`).join(', ');
-         var sql = `UPDATE ${tableName} SET ${setClause} WHERE ${keyField} = ?`;
-
-         db.prepare(sql).run(...fieldNames.map(f => record[f]), record[keyField]);
-       }
-    });
-
-    // Führt die Transaktion mit allen Datensätzen aus
-    update(records);
-
-    return { error: false, errMsg: 'OK', result: {} };
-  } catch (e) {
-    return { error: true, errMsg: e.message, result: {} };
-  }
-}
-
-module.exports.updateBatchInTable = (db, tableName, records, keyField) =>
-  {
-    return _updateBatchInTable(db, tableName, records, keyField)
-  }
-
-
-
-
 
 function _existTable( db , tableName )
 {
@@ -399,6 +374,73 @@ function _existRecord( db , tableName , fieldName , value )
 module.exports.existRecord = ( db , tableName , fieldName , value ) =>
 {
   return _existRecord( db , tableName , fieldName , value );
+}
+
+
+module.exports.migrate = ( db , fs , path , param ) =>
+{
+  console.log("");
+  console.log("dbUtils.migrate() -> param: " + JSON.stringify(param));
+
+  var tableName      = param.tableName;     // Name der Tabelle
+  var fields         = param.fields;        // Felder: {fieldName1:fieldValue1, fieldName2:fieldValue2, ...}
+  var checkUpFields  = param.checkUpFields; // Felder, die auf Existenz geprüft werden sollen [FeldName1,FeldName2,...]
+  var mapping        = param.mapping;       // Mapping der Felder: {fieldName1:mappedFieldName1, fieldName2:mappedFieldName2, ...}
+  var destFields     = {};                  // resultierende Felder unter Berücksichtigung des Mappings
+  var idFieldName    = param.idFieldName;   // ID-Feldname
+  var fileAttachment = param.fileAttachment;// Dateianhang: {fileName:"thumb123.png", fileDir:"/.../",linkedFieldName:"thumb"}
+  
+  var sql            = param.sql;
+
+// {fieldNames.push(fieldName) , fieldValues.push(fields[fieldName]) };
+  // destFields unter Berücksichtigung des Mappings erstellen
+  for(var fn in fields ) 
+ {
+  if(fn!=idFieldName) 
+  {
+     if(mapping[fn]) destFields[mapping[fn]] = fields[fn];
+     else            destFields[fn]          = fields[fn];
+  }
+ }
+ 
+ // Datensatz einfügen...
+ var response = _insertIntoTable_if_not_exist( db , tableName , destFields , checkUpFields);
+
+ if(response.error) return response;
+
+  // ID des eingefügten Datensatzes abrufen
+  var id = response.result.lastInsertRowid;
+
+  // Dateianhang verarbeiten
+  if(fileAttachment)
+  {
+    var sourceFile      = fileAttachment.sourceFile;
+    var extension       = path.extname(sourceFile);
+    // Nur der Dateiname ohne Extension
+    var destFileName    = path.basename(sourceFile, extension);
+        destFileName    = destFileName + '_' + id + extension;
+    var destPath        = path.join(fileAttachment.destPath, destFileName );
+    var linkedFieldName = fileAttachment.linkedFieldName;
+
+    if (!fs.existsSync(fileAttachment.destPath))
+    {
+      console.log('migrate Attachment: ('+fileAttachment.destPath+') not found - create this ...');
+      fs.mkdirSync(fileAttachment.destPath, { recursive: true });
+    } 
+    
+    try {
+      fs.copyFileSync(sourceFile, destPath);
+    }
+    catch (err) {
+      console.error('Error copying file:', err);
+      return {error:true, errMsg:'Error copying file: ' + err.message, result:{} };
+    }
+    
+    // Datentabelle aktualisieren
+    return _runSQL(db, "Update " + tableName + " set " + linkedFieldName + "='" +destFileName+"' Where " + idFieldName + "=" + id);
+  }
+
+
 }
 
 

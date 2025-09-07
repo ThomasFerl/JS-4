@@ -17,12 +17,14 @@ export class TPerson extends TFDataObject
     #destDir       = 'mediaCache/persons';
     #portraitPath  = '';
 
-    constructor( dataContainerportraitPath = null ) 
+    constructor( params ) 
     { 
-      super('PERSONS');
-    
-      if(portraitPath) this.#portraitPath = portraitPath;
+      params = params || {id:'',datContainer:null, portraitPath:null};
 
+      if (params.portraitPath) this.#portraitPath = params.portraitPath;
+
+      super('PERSONS' , params.id , params.dataContainer );
+    
       this.portraitURL = ()=>
       {
         // Um zu verhindern, dass JEDES MAL eine Serveranfrage veranlasst wird, wird der PortraitPath gepuffert ...
@@ -50,6 +52,25 @@ edit( callback_if_ready )
   
   var gui     =  new TFgui( w , 'personDlg' , {autoSizeWindow:true} );
 
+
+  // wenn im GUI-Builder das Datenfeld: "DataFieldName" auf den gültigen Feldamen in der dB-Tabelle gesetzt wurde,
+  // kann das explizit gesetzte DataBinding entfallen.
+  gui.dataBinding( this );
+  gui.update('gui');
+  
+  //gui.imaage.imgURL = this.portraitURL();
+  // dialogs.addFileUploader  ( p , '*.*' , true , 'mediaCache/persons' , (selectedFiles) => { this.PORTRAIT=selectedFiles.result.savedName});
+  
+  // lookUp Liste befüllen
+  var herkunft = [];
+  var response = utils.fetchRecords("Select  distinct HERKUNFT from personen order by HERKUNFT");
+  if(!response.error) for(var i=0; i<response.result.length; i++) herkunft.push(response.result[i].HERKUNFT);
+
+  gui.cbHerkunft.items = herkunft;
+  
+
+
+
       gui.btnOk.callBack_onClick = function() { this.gui.update('data');
                                                 this.self.save();
                                                 //this.self.portraitPanel.imgURL = this.self.portraitURL();
@@ -59,27 +80,6 @@ edit( callback_if_ready )
 
       gui.bttnAbort.callBack_onClick = function() { this.wnd.close() }.bind({wnd:w}); 
       gui.btnImageFromClipboard.callBack_onClick = function() { loadpersonImageFromClipboard( this.picture ) }.bind(this);
-
-
-
-  // wenn im GUI-Builder das Datenfeld: "DataFieldName" auf den gültigen Feldamen in der dB-Tabelle gesetzt wurd,
-  // kann das explizit gesetzte DataBinding entfallen.
-  gui.dataBinding( this );
-  gui.update('gui');
-  
-  //gui.imaage.imgURL = this.portraitURL();
-  
-
-  
- // dialogs.addFileUploader  ( p , '*.*' , true , 'mediaCache/persons' , (selectedFiles) => { this.PORTRAIT=selectedFiles.result.savedName});
-  
- 
-  var herkunft = [];
-  var response = utils.fetchRecords("Select  distinct HERKUNFT from personen order by HERKUNFT");
-  if(!response.error) for(var i=0; i<response.result.length; i++) herkunft.push(response.result[i].HERKUNFT);
-
-  gui.cbHerkunft.items = herkunft;
-  
 }
 
 
@@ -237,8 +237,8 @@ export class TPersonList
       if(response.error) {dialogs.showMessage(response.errMsg);return; }
       else 
         for(var i=0; i<response.result.length; i++) 
-        { 
-            var p = new TPerson(response.result[i] , portraitPath );
+        {   
+            var p = new TPerson({id:response.result[i].ID , dataContainer:response.result[i] , portraitPath:portraitPath });
             
             var t = new TFMediaCollector_thumb( this.personThumbView , {thumbURL:p.portraitURL() , caption:p.VORNAME+' '+p.NAME} );
                 t.person = p;
@@ -254,24 +254,20 @@ export class TPersonList
 
    
     selectedPerson(p)
-    {
+    {debugger;
       this.person            = p;
       this.selected          = p;
       this.imagePanel.imgURL = p.portraitURL();
-
-      dialogs.valueList( panels[11] , '' , [ {Name:'Ferl'},
-                                                  {Vorname:'Thomas'},
-                                                  {geb:'29.10.1966'},
-                                                  {Wohnort:'Schönebeck'}] );
-
-    
+      var vl = [];
+      for(var key in p) vl.push({Name:key, Value:p[key]});
+      dialogs.valueList( this.personGridView , '' , vl );
     }
 
     
     updateGrid_personen()
     { 
         this.personGridView.innerHTML = '';
-        var g = dialogs.createTable(this.personGridView , this.personen , ['ID','ALIAS1','ALIAS2','ALIAS3','GEBURTSJAHR','BUSINESSTART','BUSINESENDE','BEMERKUNGEN','PORTRAIT','portraitURL'] , [] );
+        var g = dialogs.createTable(this.personGridView , this.personen , ['ID','portraitURL'] , [] );
         g.onRowClick=function( selectedRow , itemIndex , jsonData ) { this.selectedPerson(jsonData) }.bind(this);
     } 
     

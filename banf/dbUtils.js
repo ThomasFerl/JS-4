@@ -2,6 +2,16 @@ const { Parser } = require('node-sql-parser');
 const utils      = require('./nodeUtils');
 
 
+// für Widcards beim "like" sind auch "*" erlaubt.
+// diese müssen hier wieder zurück-gewandelt werden !
+// Schützenhilfe vom CoPilot weil ich mit RegEx auf Kriegsfuß stehe ;-)
+function _convertLikeWildcards(sql) {
+  return sql.replace(/like\s+(['"])(.*?)\1/gi, (match, quote, content) => {
+    const replaced = content.replace(/\*/g, '%');
+    return `LIKE ${quote}${replaced}${quote}`;
+  });
+}
+
 function _extractTableNames(sqlStatement)
 {
   const parser = new Parser();
@@ -60,9 +70,9 @@ module.exports.structure = ( db , sqlStatement) =>
 
 function _fetchValue_from_Query( db , sql , params )
 {
-  if(utils.debug)console.log('fetchValue_from_Query(' + sql +')');   // Vermeidung von Rekursion
+  if(utils.debug)console.log('fetchValue_from_Query(' + _convertLikeWildcards(sql) +')');   // Vermeidung von Rekursion
   try {
-        var query  = db.prepare( sql );
+        var query  = db.prepare( _convertLikeWildcards(sql) );
 
         if(params)  var record  = query.get(params);
         else        var record  = query.get();
@@ -87,9 +97,9 @@ module.exports.fetchValue_from_Query = ( db , sql , params ) =>
 
 function _fetchRecord_from_Query ( db , sql ,  params)
 {
-  if(utils.debug)console.log('fetchRecord_from_Query(' + sql +')');
+  if(utils.debug)console.log('fetchRecord_from_Query(' + _convertLikeWildcards(sql) +')');
     try {
-        var query  = db.prepare( sql );
+        var query  = db.prepare( _convertLikeWildcards(sql) );
 
         if(params)  var record  = query.get(params);
         else        var record  = query.get();
@@ -109,9 +119,9 @@ module.exports.fetchRecord_from_Query = ( db , sql  , params ) =>{
 
 function _fetchRecords_from_Query( db , sql , params )
 {
-  if(utils.debug)console.log('fetchRecords_from_Query ->( db:'+db+' , sql:"' + sql +'")');
+  if(utils.debug)console.log('fetchRecords_from_Query ->( db:'+db+' , sql:"' + _convertLikeWildcards(sql) +'")');
   try {
-      var stmt  = db.prepare( sql );
+      var stmt  = db.prepare( _convertLikeWildcards(sql) );
       
       if(params)  var records  = stmt.all(params);
       else        var records  = stmt.all();
@@ -154,9 +164,7 @@ function _runSQL ( db , statement , params )
        if(utils.debug)console.log('SQL - OK');
        return {error:false, errMsg:'OK', result:res};
      }  
-  catch(err) { console.log('SQL - ERROR: ' + err.message);
-               return {error:true, errMsg:err.message, result:{} };
-             }   
+  catch(err) { return {error:true, errMsg:err.message, result:{} };}   
 }
 
 
@@ -192,7 +200,7 @@ function _createTable( db , tableName , fieldDef )
 
 module.exports.createTable = ( db , tableName , fieldDef ) =>
 {
-  _createTable( db , tableName , fieldDef )
+  return _createTable( db , tableName , fieldDef )
 }
 
 
@@ -223,29 +231,36 @@ module.exports.insertIntoTable = ( db , tableName , fields ) =>
 }
 
 
-function _insertBatchIntoTable( db , tableName , records )
-// Quelle: chatGPT
-{ 
-  try{
-  const insert = db.transaction((records) =>
-                {
-                  for (const record of records) 
-                  {
-                    var fieldNames = Object.keys(record);
-                    var placeholders = fieldNames.map(() => '?').join(', ');
-                    var sql = `INSERT INTO ${tableName} (${fieldNames.join(', ')}) VALUES (${placeholders})`;
-                    db.prepare(sql).run(...Object.values(record));
-                  }
-                });
+function _insertBatchIntoTable(db, tableName, records) {
+  try {
+    const insert = db.transaction((records) => {
+      for (const record of records) {
+        const fieldNames = Object.keys(record);
 
-  // Führt die Transaktion mit allen Datensätzen aus
-  insert(records);
+        const values = Object.values(record).map(v => {
+          if (v === undefined) return null; // undefined → null
+          if (v === null) return null;
+          if (typeof v === 'object') return JSON.stringify(v); // Objekt → JSON-String
+          if (typeof v === 'boolean') return v ? 1 : 0; // Boolean → Zahl
+          return v; // Zahl oder String bleibt wie er ist
+        });
 
-  return {error:false, errMsg:'OK', result:{} }
+        const placeholders = fieldNames.map(() => '?').join(', ');
+        const sql = `INSERT INTO ${tableName} (${fieldNames.join(', ')}) VALUES (${placeholders})`;
 
+        console.log("SQL:", sql, "VALUES:", JSON.stringify(values));
+        db.prepare(sql).run(...values);
+      }
+    });
+
+    insert(records);
+    return { error: false, errMsg: 'OK', result: {} };
+  } catch (e) {
+    return { error: true, errMsg: e.message, result: {} };
   }
-  catch(e) { return {error:true, errMsg:e.message, result:{} } }
 }
+
+
 
 
 /* Kurze Erklärung zum "..."  Spread-Operator:
