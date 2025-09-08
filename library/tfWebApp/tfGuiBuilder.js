@@ -67,9 +67,9 @@ export class TFGuiBuilder
     this.menuPanel.buildGridLayout( '4x17' );
 
     var fileOps                   = dialogs.addPanel(this.menuPanel , 'cssContainerPanel',1,1,4,2,{backgroundColor:"rgba(0,0,0,0.14"})     
-        fileOps.buildGridLayout( '5x2' );
+        fileOps.buildGridLayout( '7x2' );
 
-    this.formNameInp              = new TFComboBox( fileOps,1,1,5,1, { items: utils.lsForms() }) ;
+    this.formNameInp              = new TFComboBox( fileOps,1,1,7,1, { items: utils.lsForms() }) ;
 
 
 //-----------------------------------------------------------------------------------------------------------
@@ -139,6 +139,19 @@ var loadBtn                        = dialogs.addButton(fileOps , '' , 4 , 2 , 1 
                                        this.abortBtn.visible = false;
                                        this.hasChanged = false;
                                      }.bind(this);
+
+ this.saveToClipBoard_Btn                       = dialogs.addButton(fileOps , '' , 7 , 2 , 1 , 1 , {glyph:"vector-square",caption:""});
+ this.saveToClipBoard_Btn.height                = '2em';
+ this.saveToClipBoard_Btn.marginTop             = '0.5em';
+ this.saveToClipBoard_Btn.backgroundColor       = 'orange';
+ this.saveToClipBoard_Btn.DOMelement.setAttribute("title", 'Formular in Zwischenablage kopieren');
+ this.saveToClipBoard_Btn.callBack_onClick      = function()
+                                     { 
+                                       var form = this.dashBoard.getConstructionProperties() || {empty:true};
+                                       utils.copyStringToClipboard(JSON.stringify(form));
+                                       dialogs.showMessage('Formular in die Zwischenablage kopiert!');
+                                     }.bind(this);
+
 
 //-----------------------------------------------------------------------------------------------------------                                        
      var propToollDiv = dialogs.addPanel( this.menuPanel , 'cssContainerPanel' , 1 , 8 , 4 , 2);                                    

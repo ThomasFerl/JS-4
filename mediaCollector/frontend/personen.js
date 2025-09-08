@@ -11,6 +11,8 @@ import { TFDataObject}   from "./tfWebApp/tfDbObjects.js"
 import {TFMediaCollector_thumb} from "./tfMediaCollector_thumb.js";
 
 
+import * as forms        from "./forms.js";
+
 
 export class TPerson extends TFDataObject
 {
@@ -47,10 +49,9 @@ export class TPerson extends TFDataObject
 
 edit( callback_if_ready )
 {
-  var caption = this.ID ? 'Person bearbeiten' : 'Neue Person anlegen';
-  var w       =    dialogs.createWindow( null,caption,"100%","100%","CENTER");  
-  
-  var gui     =  new TFgui( w , 'personDlg' , {autoSizeWindow:true} );
+  var caption =  this.ID ? 'Person bearbeiten' : 'Neue Person anlegen';
+  var w       =  dialogs.createWindow( null,caption,"100%","100%","CENTER");  
+  var gui     =  new TFgui( w , forms.form('personDlg') , {autoSizeWindow:true} );
 
 
   // wenn im GUI-Builder das Datenfeld: "DataFieldName" auf den gültigen Feldamen in der dB-Tabelle gesetzt wurde,
@@ -99,8 +100,7 @@ dropImage( e , data )  // onDrop ( event , data )
  
     if (data.json) 
     {
-      debugger
-      var response = utils.webApiRequest('PORTRAITFROMFILE' , {ID_FILE:data.json.mediaFile.ID , fnPortrait:this.ID+"_"+Date.now() } );
+       var response = utils.webApiRequest('PORTRAITFROMFILE' , {ID_FILE:data.json.mediaFile.ID , fnPortrait:this.ID+"_"+Date.now() } );
       if (response.error) 
       {
         dialogs.showMessage(response.errMsg);
@@ -254,7 +254,7 @@ export class TPersonList
 
    
     selectedPerson(p)
-    {debugger;
+    {
       this.person            = p;
       this.selected          = p;
       this.imagePanel.imgURL = p.portraitURL();
