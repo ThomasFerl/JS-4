@@ -9,7 +9,7 @@ import * as dialogs  from "./tfDialogs.js";
 export class TFgui 
 { 
    dataBinding( dataObject )
-  { debugger;
+  {
     this.dataObject = dataObject;
     this.dataBindings = [];
     for(var key in dataObject)  // durchlaufe alle Datenfelder des DataRecords bzw Datenobjekts
@@ -43,7 +43,7 @@ export class TFgui
       this.params              = params || {};
       this.dataBindings        = [];
       this.dataObject          = {};
-
+      this.window              = {};
       
       var formData             = null; 
       if (typeof guiNameOrguiObject === 'string') formData  = utils.loadForm(guiNameOrguiObject);
@@ -123,11 +123,15 @@ var proxy = new Proxy(this.guiObjects, {
 
     return null;
   }
-   
-  
+
+  getWindow()
+  {
+    return this.window;
+  }
+
   close()
   {
-    if(this.window!=null) this.window.close();
+    this.getWindow().close();
   }
 
 }

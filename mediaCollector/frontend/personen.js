@@ -48,10 +48,10 @@ export class TPerson extends TFDataObject
    
 
 edit( callback_if_ready )
-{
-  var caption =  this.ID ? 'Person bearbeiten' : 'Neue Person anlegen';
-  var w       =  dialogs.createWindow( null,caption,"100%","100%","CENTER");  
-  var gui     =  new TFgui( w , forms.form('personDlg') , {autoSizeWindow:true} );
+{ debugger;
+  var gui         =  new TFgui( null , forms.personDlg , {autoSizeWindow:true} );
+  var w           =  gui.getWindow();
+  w.caption.text  =  this.ID ? 'Person bearbeiten' : 'Neue Person anlegen';
 
 
   // wenn im GUI-Builder das Datenfeld: "DataFieldName" auf den gültigen Feldamen in der dB-Tabelle gesetzt wurde,
@@ -64,7 +64,7 @@ edit( callback_if_ready )
   
   // lookUp Liste befüllen
   var herkunft = [];
-  var response = utils.fetchRecords("Select  distinct HERKUNFT from personen order by HERKUNFT");
+  var response = utils.fetchRecords("Select  distinct HERKUNFT from persons order by HERKUNFT");
   if(!response.error) for(var i=0; i<response.result.length; i++) herkunft.push(response.result[i].HERKUNFT);
 
   gui.cbHerkunft.items = herkunft;
@@ -76,10 +76,11 @@ edit( callback_if_ready )
                                                 this.self.save();
                                                 //this.self.portraitPanel.imgURL = this.self.portraitURL();
                                                 if(this.callback) this.callback();
-                                                this.wnd.close();
-                                              }.bind({self:this,gui:gui,wnd:w,callback:callback_if_ready});
+                                                this.gui.close();
+                                              }.bind({self:this,gui:gui,callback:callback_if_ready});
 
-      gui.bttnAbort.callBack_onClick = function() { this.wnd.close() }.bind({wnd:w}); 
+      gui.bttnAbort.callBack_onClick = function() {this.gui.close();}.bind({gui:gui}); 
+
       gui.btnImageFromClipboard.callBack_onClick = function() { loadpersonImageFromClipboard( this.picture ) }.bind(this);
 }
 
@@ -259,8 +260,8 @@ export class TPersonList
       this.selected          = p;
       this.imagePanel.imgURL = p.portraitURL();
       var vl = [];
-      for(var key in p) vl.push({Name:key, Value:p[key]});
-      dialogs.valueList( this.personGridView , '' , vl );
+     // for(var key in p) vl.push({Name:key, Value:p[key]});
+     // dialogs.valueList( this.personGridView , '' , vl );
     }
 
     
@@ -290,7 +291,7 @@ export class TPersonList
         PORTRAIT     : ''};
       
         var p = new TPerson(aPerson);
-        p.edit(function(){this.updateView_personen()}.bind(this));
+        p.edit(function(){this.updateGrid_personen()}.bind(this));
     } 
 
 
@@ -298,7 +299,7 @@ export class TPersonList
     { 
      if(!this.selected) {dialogs.showMessage('Bitte zuerst eine Person auswählen!'); return;}
 
-     this.selected.edit(function(){this.updateView_personen()}.bind(this));
+     this.selected.edit(function(){this.updateGrid_personen()}.bind(this));
     } 
 
     
