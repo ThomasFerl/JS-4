@@ -5,6 +5,7 @@ import * as utils        from "./tfWebApp/utils.js";
 import * as dialogs      from "./tfWebApp/tfDialogs.js";
 import * as app          from "./tfWebApp/tfWebApp.js"; 
 import * as sysadmin     from "./tfWebApp/tfSysAdmin.js";
+import * as forms        from "./forms.js";
 
 
 // Anwendungsspezifische Einbindungen
@@ -57,13 +58,14 @@ export function main(capt1)
 export async function run()
 { 
   var ws       = app.startWebApp(caption1,caption2).activeWorkspace;
+
   const loader = new TFLoader({ title: "lade Daten …" , note:"hab's gleich geschafft ..." });
 
 // Splashscreen 5s anzeigen
 await loader.while(TFLoader.wait(10000))
 
 
-guiMainWnd = new TFgui( null , 'rechnungspruefungMain' );
+guiMainWnd = new TFgui( null , forms.rechnungspruefungMain);
 guiMainWnd.btnNewBill.callBack_onClick   = newBill;
 updateView();
 
@@ -90,7 +92,7 @@ function updateView()
 function newBill()
 { 
   lastInsertID      = 0;
-  var guiNewBillDlg = new TFgui( null , 'addBillDlg' );
+  var guiNewBillDlg = new TFgui( null , forms.addBillDlg );
    dialogs.addFileUploader( guiNewBillDlg.dropZone , '*.*' , true , 'testUpload' , function(selectedFiles) {processUploadFiles(selectedFiles , this.dropZone , this.gui )}.bind({dropZone: guiNewBillDlg.dropZone , gui:guiNewBillDlg}) );
 
    guiNewBillDlg.btnOk.callBack_onClick = function() {
@@ -112,7 +114,7 @@ function showReports( data )
   selectedBlackList  = '0';
   selectedReport     = '0';
 
-   var gui = new TFgui( null , 'rechnungspruefungAuswertung' );
+   var gui = new TFgui( null , forms.rechnungspruefungAuswertung );
    selectedTable     = data.TABLENAME;
 
    //  Die Liste der möglichen Reports....
@@ -161,8 +163,8 @@ gui.btnExcel.callBack_onClick = function(){ ___excelExport( gridReportResults ) 
 }
 
 
-function runReport( data , container  )
-// Build SQL-Statement
+
+function runReport_GROUP( data , container  )
 {
   var sql             = '';
   container.innerHTML = '';
@@ -202,7 +204,7 @@ function runReport( data , container  )
 
   // ist excluse-Liste (blackkList) definiert ?
   if((selectedBlackList!="") && (selectedBlackList!="0"))
-  { debugger;
+  { 
        var blackList = new TFDataObject('blacklist');
            blackList.load(selectedBlackList);
        var entrys    = JSON.parse(blackList.IDENTIFY); 
@@ -215,6 +217,8 @@ function runReport( data , container  )
          filter     = filter.replace('\"', "'");
          filter     = filter.replace('\"', "'");
          filter     = filter.replace('"', "'");
+
+         if(i>0) where = ' and ';
        
          sql = sql + where + filter; 
        } 
@@ -249,11 +253,105 @@ function runReport( data , container  )
 
 
 
+function runReport_PIVOT( data , container  )
+{
+  var sql             = '';
+  container.innerHTML = '';
+  var tn              = data.TABLENAME;
+  var groupFields     = null;
+  var sumFields       = null;
+
+  var response = utils.webApiRequest('FETCHRECORD',{sql:'Select * from reports Where ID='+selectedReport })
+    if(response.error) 
+    {
+      dialogs.showMessage("Fehler beim Laden des Reports: " + response.errMsg);
+      return;
+    }
+
+    // ein SQL-Statement bauen, welches nur aus den Gruppierungsfeldern und EINEM Summenfeld - bestehend aus den Summierungsfeldern - aufgebaut ist ...
+
+    groupFields = JSON.parse(response.result.GROUPFIELDS);
+    sumFields   = JSON.parse(response.result.SUMFIELDS);
+    
+    sql = '';
+    for(var i=0; i<groupFields.length;i++)
+      if(i==0) sql = 'select ' + groupFields[i]
+      else     sql = sql + ', '+ groupFields[i];  
+  
+     if (sumFields.length==1) sql = sql + ', ('+sumFields[0]
+     else
+         for(var i=0; i<sumFields.length;i++) 
+            if(i==0) sql = sql+ ', ('+sumFields[i]
+            else     sql = sql+ '+'  +sumFields[i] 
+     
+     sql = sql + ') as sum';       
+
+    sql = sql + ' from ' + tn;
+ 
+  // ist Filter-Liste (blackkList) definiert ?
+  if((selectedBlackList!="") && (selectedBlackList!="0"))
+  {
+       var blackList = new TFDataObject('blacklist');
+           blackList.load(selectedBlackList);
+       var entrys    = JSON.parse(blackList.IDENTIFY); 
+       // gibt es Filter ?
+       var where = ' where ';
+       if(entrys.length>0)
+       for(var i=0; i<entrys.length; i++)
+       {
+         var filter = entrys[i];
+         filter     = filter.replace('\"', "'");
+         filter     = filter.replace('\"', "'");
+         filter     = filter.replace('"', "'");
+
+         if(i>0) where = ' and ';
+       
+         sql = sql + where + filter; 
+       } 
+  }  
+
+  var reportData = utils.webApiRequest('fetchRecords', { sql:sql });
+     
+    if (reportData.error) {
+           dialogs.showMessage('Das folgende SQL-Statement '+sql+' generiert den Fehler: ' + reportData.errMsg);
+           return;
+       }
+
+  var pivotTable = utils.pivot( reportData.result , groupFields[1] ,groupFields[0] , 'sum');  
+debugger;
+    gridReportResults = dialogs.createTable( container , pivotTable ) ;
+    gridReportResults.onRowClick = function( selectedRow , itemIndex , rowData ) 
+      {
+         dialogs.showMessage( JSON.stringify(rowData) )  
+      };
+}
+
+
+
+
+function runReport( data , container  )
+{
+ if((selectedReport=="") || (selectedReport=="0"))  { runReport_GROUP( data , container  ); return } 
+ 
+ var response = utils.webApiRequest('FETCHRECORD',{sql:'Select * from reports Where ID='+selectedReport })
+  if(response.error) 
+    {
+      dialogs.showMessage("Fehler beim Laden des Reports: " + response.errMsg);
+      return;
+    }
+
+  if (response.result.KATEGORIE.toUpperCase() == 'PIVOT') runReport_PIVOT( data , container );
+  else                                                    runReport_GROUP( data , container );      
+
+}
+
+
+
 
 function detailView( data )
 {
   var w   = dialogs.createWindow(null,'Details', "70%" , "80%" , "CENTER")
-  var gui = new TFgui( w , 'rechnungsPruefungReportDetails');  // valueContainer & gridContainer
+  var gui = new TFgui( w , forms.rechnungsPruefungReportDetails);  // valueContainer & gridContainer
   
   gui.valueContainer.buildFlexBoxLayout();
   gui.valueContainer.overflow        = 'auto';
@@ -343,7 +441,7 @@ function processUploadFiles( files , dropZone , gui )
 // Button: Report bearbeiten ...  ist ID == null -> neuEingabe
 function editReport( tableName , ID ) 
 { 
- var gui               = new TFgui( null , 'reportDefinition' );
+ var gui               = new TFgui( null , forms.reportDefinition );
 
  var reportData        = new TFDataObject('reports' , ID );
  if(ID) reportData.load(ID);
@@ -399,7 +497,7 @@ gui.btnDelFromSum.callBack_onClick   = function() { ___removeField(this.listBox)
   //OK  -> Speichern 
   gui.btnOk.callBack_onClick = function(){
                                            this.data.REPORTNAME  = gui.editReportName.value;
-                                           this.data.KATEGORIE   = gui.cbReportKategorie.value;
+                                           this.data.KATEGORIE   = gui.cbReportKategorie.value || 'Gruppierung';
                                            this.data.GROUPFIELDS = JSON.stringify(gui.lbGroupFields.getItems('value'));
                                            this.data.SUMFIELDS   = JSON.stringify(gui.lbSumFields.getItems('value'));
                                            this.data.save();
@@ -424,7 +522,7 @@ function editBlackList( tableName , ID)
   
   if(ID) blackListData.load(ID)
  
-  var gui   = new TFgui(null,'rechnungspruefungBlacklist');
+  var gui   = new TFgui(null, forms.rechnungspruefungBlacklist);
       
       // hartes Umbenennen der in des im GUI definierten Labels...
       gui.TFLabel121.caption ='Filter definieren';

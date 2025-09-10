@@ -48,13 +48,25 @@ export class THTMLTable
    this.onRowClick     = null;
    this.onRowDblClick  = null;
    this.bindDataset    = null;
+   this.isArray        = Array.isArray(aJsonData[0]) ;
    var  isDrawing      = true;
    
    if(aJsonData)
    {
      this.jsonData     = aJsonData;
-     // caption basieren auf Feldnamen
+     // caption basieren auf Feldnamen oder 1. Zeile
      var firstDataItem = this.jsonData[0];
+
+     if( this.isArray )
+       for(var i=0; i<firstDataItem.length; i++)
+       {
+         console.log('field : '+ firstDataItem[i]);
+         if(excludeFields) isDrawing = (excludeFields.indexOf(firstDataItem[i])<0)
+         else              isDrawing = true;
+
+        if(isDrawing) this.fields.push( new TFieldDef( firstDataItem[i] , firstDataItem[i] , firstDataItem[i] ));
+       }
+     else
      for (var key in firstDataItem)
      {
        console.log('field : '+ key);
@@ -221,7 +233,9 @@ selectReverse()
     cell.className    = "tftd"; 
     cell.style.height = '2em';
     if(this.fields[j].columnWidth!='') cell.style.width = this.fields[j].columnWidth;
-    cell.innerHTML    = content[fieldname];
+    
+    if(this.isArray)  cell.innerHTML    = content[j];
+    else              cell.innerHTML    = content[fieldname];
   }
 
   row.addEventListener("click", function(event) { this.onRowClickEvent( event , this )}.bind(this) );

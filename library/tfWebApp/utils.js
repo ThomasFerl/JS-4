@@ -278,6 +278,46 @@ export function containing( key , list )
 }
 
 
+
+export function pivot(daten, xField, yField, sumXY) 
+{
+  const matrix = [];
+  const xSet = new Set();
+  const ySet = new Set();
+
+  // Distinct-Werte sammeln
+  daten.forEach(row => {
+    xSet.add(row[xField]);
+    ySet.add(row[yField]);
+  });
+
+  const xValues = Array.from(xSet);
+  const yValues = Array.from(ySet);
+
+  // Summierfunktion
+  const sum = (xVal, yVal) => {
+    return daten
+      .filter(row => row[xField] === xVal && row[yField] === yVal)
+      .reduce((acc, row) => acc + (row[sumXY] || 0), 0);
+  };
+
+  // Kopfzeile
+  matrix.push(['', ...xValues]);
+
+  // Matrix-Zeilen
+  yValues.forEach(yVal => {
+    const row = [yVal];
+    xValues.forEach(xVal => {
+      row.push(sum(xVal, yVal));
+    });
+    matrix.push(row);
+  });
+
+  return matrix;
+}
+
+
+
 // -----------------------------------------------------------------------------------------------------------------------------
 
 
@@ -1554,14 +1594,32 @@ export function updateTable( tableName , ID_field , ID_value ,  fields ,  etc )
 }
 
 
-export function _copyStringToClipboard (str) 
+
+export function copyObjToClipboard(obj) 
+{
+  const json = JSON.stringify(obj, null, 2);
+
+  // Entferne Anführungszeichen von Schlüsseln
+  const jsObject = json.replace(/"([^"]+)":/g, '$1:');
+
+  // Kopiere in Zwischenablage
+  navigator.clipboard.writeText(jsObject)
+    .then(() => console.log("Objekt erfolgreich kopiert!"))
+    .catch(err => alert("Fehler beim Kopieren:", err));
+}
+
+
+
+
+
+export function copyStringToClipboard (str) 
 {
   log( 'utils.copyStringToClipboard('+str+')' );
   
   navigator.clipboard
     .writeText(str)
     .then(() => {
-      alert("Inhalt in Zwischenablage kopiert");
+      console.log("Inhalt in Zwischenablage kopiert");
     })
     .catch(() => {
       alert("Inhalt konnte nicht in die Zwischenablage kopiert werden !");
@@ -1569,7 +1627,7 @@ export function _copyStringToClipboard (str)
 }
 
 
-export function copyStringToClipboard (str) 
+export function _copyStringToClipboard (str) 
 {
   let text = str;
  
