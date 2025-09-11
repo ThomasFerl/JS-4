@@ -79,7 +79,7 @@ function updateView()
   // alle Archiv-Einträge lesen...
   var response = utils.webApiRequest('FETCHRECORDS',{sql:"Select * from billArchive"})
   
-  var table    = dialogs.createTable( guiMainWnd.gridPanel , response.result , '' , ''); 
+  var table    = dialogs.createTable( guiMainWnd.gridPanel , response.result ,["ID"  , "ARCPATH" , "TABLENAME"	, "IMPORTED"	,	 "DESCRIPTION2"	, "DESCRIPTION3" ] , {DESCRIPTION2:"Beschreibung",ORGFILENAME:"Datei-Name"}); 
       table.onRowClick = function( selectedRow , itemIndex , rowData ) 
       {
         if(lastSelectedNdx==itemIndex) { showReports(rowData) }
@@ -90,21 +90,25 @@ function updateView()
   
 
 function newBill()
-{ 
+{
   lastInsertID      = 0;
-  var guiNewBillDlg = new TFgui( null , forms.addBillDlg );
-   dialogs.addFileUploader( guiNewBillDlg.dropZone , '*.*' , true , 'testUpload' , function(selectedFiles) {processUploadFiles(selectedFiles , this.dropZone , this.gui )}.bind({dropZone: guiNewBillDlg.dropZone , gui:guiNewBillDlg}) );
+  var gui  = new TFgui( null , forms.addBillDlg );
+  var bill = new TFDataObject( "billArchive" );
 
-   guiNewBillDlg.btnOk.callBack_onClick = function() {
-                                                       if(lastInsertID==0) {dialogs.showMessage("Bitte erst eine Excel-Datei hochladen !");return;}
-                                                       var bez = this.bezeichnung;
-                                                       var id  = lastInsertID;
-                                                       utils.webApiRequest('UPDATETABLE',{tableName:"billArchive",ID_field:'ID', ID_Value:id, fields:{DESCRIPTION1:bez}})
-                                                       updateView();
-                                                       this.gui.close();
-                                                       }.bind({bezeichnung:guiNewBillDlg.editBezeichnung.value, gui:guiNewBillDlg})
+  gui.dataBinding( bill );
 
-   guiNewBillDlg.btnAbort.callBack_onClick = function() {this.gui.close()}.bind({gui:guiNewBillDlg}) 
+   dialogs.addFileUploader( gui.dropZone , '*.*' , true , 'testUpload' , function(selectedFiles) {processUploadFiles(selectedFiles , this.dropZone , this.gui )}.bind({dropZone: gui.dropZone , gui:gui}) );
+
+   gui.btnOk.callBack_onClick = function() {
+                                            if(lastInsertID==0) {dialogs.showMessage("Bitte erst eine Excel-Datei hochladen !");return;}
+                                            this.gui.update('data');
+                                            this.bill.ID = lastInsertID;
+                                            this.bill.update({ignoreEmptyValues:true});
+                                            updateView();
+                                            this.gui.close();
+                                           }.bind({bill:bill, gui:gui})
+
+   gui.btnAbort.callBack_onClick = function() {this.gui.close()}.bind({gui:gui}) 
 
 }
     
@@ -317,10 +321,9 @@ function runReport_PIVOT( data , container  )
            return;
        }
 
-  var pivotTable = utils.pivot( reportData.result , groupFields[1] ,groupFields[0] , 'sum');  
-debugger;
-    gridReportResults = dialogs.createTable( container , pivotTable ) ;
-    gridReportResults.onRowClick = function( selectedRow , itemIndex , rowData ) 
+  var pivotTable                   = utils.pivot( reportData.result , groupFields[1] ,groupFields[0] , 'sum');  
+      gridReportResults            = dialogs.createTable( container , pivotTable ) ;
+      gridReportResults.onRowClick = function( selectedRow , itemIndex , rowData ) 
       {
          dialogs.showMessage( JSON.stringify(rowData) )  
       };

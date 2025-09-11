@@ -317,7 +317,7 @@ export const addBillDlg =
     {
       objName: "TFEdit",
       name: "editBezeichnung",
-      dataFieldName: "",
+      dataFieldName: "DESCRIPTION1",
       css: "cssContainerPanel",
       backgroundColor: "rgb(242, 242, 242)",
       color: "rgb(0, 0, 0)",
