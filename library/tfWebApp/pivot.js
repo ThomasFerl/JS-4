@@ -1,3 +1,4 @@
+
 /**
  * TFPivotGrid.js – schlankes Pivot-Grid ohne Frameworks
  * ------------------------------------------------------
@@ -30,7 +31,7 @@
 (function factory(root, name){
   /**
    * Minimaler UMD-Wrapper: definiert global (window[name]) und liefert ESM default.
-   */
+   */   
   class TFPivotGrid {
     /**
      * @param {HTMLElement} container

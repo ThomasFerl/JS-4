@@ -1415,3 +1415,62 @@ html, body {
   color: #d33; text-decoration: underline;
 }
 
+
+
+
+/*PIVOT-Tabelle */
+
+:root{
+    --bg: #0b0c10;            /* dunkles Theme – gern anpassen */
+    --card: #121319;
+    --muted: #7e8596;
+    --fg: #e8ebf1;
+    --accent: #5cc8ff;
+    --grid-border: #222734;
+    --hover: #1b1f2a;
+    --sticky: #111522e6;      /* leicht transparent für sticky header */
+    --radius: 14px;
+  }
+
+  .pivotBody{margin:0;background:var(--bg);color:var(--fg);font:14px/1.4 system-ui, Segoe UI, Roboto, Arial;}
+  .pivotWrap{padding:20px; display:grid; gap:16px; max-width: 1200px; margin: 0 auto;}
+  .pivotTitle{font-size:20px; font-weight:600;}
+  .pivotGrid{
+    background:var(--card);
+    border:1px solid var(--grid-border);
+    border-radius:var(--radius);
+    overflow:auto;
+    box-shadow: 0 12px 30px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.04);
+  }
+
+  .pivotTable{border-collapse:separate; border-spacing:0; width: max-content; min-width:100%;}
+  .pivotTh, .pivotTd{
+    border-right:1px solid var(--grid-border);
+    border-bottom:1px solid var(--grid-border);
+    padding:10px 12px;
+    white-space:nowrap;
+    vertical-align:middle;
+    position:relative;
+  }
+
+  .pivotTh{font-weight:600; color:var(--muted); background:var(--sticky); backdrop-filter: blur(6px);}
+  .pivotTh.top{position:sticky; top:0; z-index:3;}
+  .pivotTh.left, td.left{position:sticky; left:0; z-index:2; background:linear-gradient(90deg, var(--sticky), transparent 98%);}
+  .pivotTh.corner{z-index:4; border-right:1px solid var(--grid-border);}
+  .pivotTh:nth-child(even) td{background:rgba(255,255,255,.01);}
+
+  .pivotTd.value{ text-align:right; font-variant-numeric: tabular-nums; cursor:pointer; }
+  .pivotTd.value:hover, td.value:focus{ outline: none; background:var(--hover); }
+  .pivotTd.total, th.total{ background: linear-gradient(180deg, #1c2130, #161a26); font-weight:700; color:#cfe9ff; }
+  .pivotLegend{color:var(--muted); font-size:12px;}
+  .pivotChip{display:inline-block; height:10px; width:10px; border-radius:50%; margin-right:6px; box-shadow: 0 0 0 1px rgba(255,255,255,.08) inset;}
+  .pivotHint{ color: var(--muted); }
+  
+  .pivotTooltip{
+    position:absolute; top:-8px; right:-8px; transform:translateY(-100%);
+    background:#0f1320; color:#cfe9ff; padding:6px 8px; border-radius:8px; font-size:12px;
+    border:1px solid #1f2a42; white-space:nowrap; box-shadow:0 6px 18px rgba(0,0,0,.4);
+    opacity:0; pointer-events:none; transition:.15s ease;
+  }
+
+  .pivotTd.value:hover .tooltip, td.value:focus .tooltip{opacity:1;}

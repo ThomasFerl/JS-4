@@ -23,6 +23,9 @@ import { TFDateTime }    from "./tfWebApp/utils.js";
 import { TFgui }         from "./tfWebApp/tfGUI.js";
 import { TFDataObject }  from "./tfWebApp/tfDbObjects.js";
 
+import TFPivotGrid       from "./tfWebApp/pivot.js";
+
+
 
 
 var caption1           = '';
@@ -321,12 +324,35 @@ function runReport_PIVOT( data , container  )
            return;
        }
 
-  var pivotTable                   = utils.pivot( reportData.result , groupFields[1] ,groupFields[0] , 'sum');  
-      gridReportResults            = dialogs.createTable( container , pivotTable ) ;
-      gridReportResults.onRowClick = function( selectedRow , itemIndex , rowData ) 
-      {
-         dialogs.showMessage( JSON.stringify(rowData) )  
-      };
+  var pivotTable     = utils.pivot( reportData.result , groupFields[1] ,groupFields[0] , 'sum');  
+debugger;
+
+const demo = {
+  rows: [
+    { id: 'cc100', label: 'KST 100 – Verwaltung' },
+    { id: 'cc200', label: 'KST 200 – Vertrieb' },
+    { id: 'cc300', label: 'KST 300 – Produktion' },
+  ],
+  cols: [
+    { id: 'q1', label: 'Q1' },
+    { id: 'q2', label: 'Q2' },
+    { id: 'q3', label: 'Q3' },
+    { id: 'q4', label: 'Q4' },
+  ],
+  values: {
+    'cc100|q1': 12034, 'cc100|q2': 15440, 'cc100|q3': 14110, 'cc100|q4': 16880,
+    'cc200|q1': 22010, 'cc200|q2': 19990, 'cc200|q3': 24500, 'cc200|q4': 23040,
+    'cc300|q1': 40500, 'cc300|q2': 39800, 'cc300|q3': 42220, 'cc300|q4': 45090,
+  }
+};
+
+  var grid           = new TFPivotGrid( container.DOMelement , {
+                                                                  showTotals : true,
+                                                                  heatmap    : true,
+                                                                  density    : 'compact',
+                                                                  onCellClick: ({rowId, colId}) => openDetails(rowId, colId)
+                                                               });
+  grid.setData(demo).render();
 }
 
 
