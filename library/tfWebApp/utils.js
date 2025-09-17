@@ -279,43 +279,6 @@ export function containing( key , list )
 
 
 
-export function pivot(daten, xField, yField, sumXY) 
-{
-  const matrix = [];
-  const xSet = new Set();
-  const ySet = new Set();
-
-  // Distinct-Werte sammeln
-  daten.forEach(row => {
-    xSet.add(row[xField]);
-    ySet.add(row[yField]);
-  });
-
-  const xValues = Array.from(xSet);
-  const yValues = Array.from(ySet);
-
-  // Summierfunktion
-  const sum = (xVal, yVal) => {
-    return daten
-      .filter(row => row[xField] === xVal && row[yField] === yVal)
-      .reduce((acc, row) => acc + (row[sumXY] || 0), 0);
-  };
-
-  // Kopfzeile
-  matrix.push(['', ...xValues]);
-
-  // Matrix-Zeilen
-  yValues.forEach(yVal => {
-    const row = [yVal];
-    xValues.forEach(xVal => {
-      row.push(sum(xVal, yVal));
-    });
-    matrix.push(row);
-  });
-
-  return matrix;
-}
-
 
 
 // -----------------------------------------------------------------------------------------------------------------------------
@@ -1609,6 +1572,30 @@ export function copyObjToClipboard(obj)
 }
 
 
+export async function read_CSV_fromClipboard() {
+  try {
+    const text = await navigator.clipboard.readText();
+    const lines = text.trim().split("\n");
+    const headers = lines[0].split("\t").map(h => h.trim());
+
+    const data = lines.slice(1).map(line => {
+      const values = line.split("\t").map(v => v.trim());
+      const obj = {};
+      headers.forEach((key, i) => {
+        obj[key] = values[i] ?? null;
+      });
+      return obj;
+    });
+
+    return data;
+  } catch (err) {
+    alert("Fehler beim Lesen der Zwischenablage: " + err);
+    return null;
+  }
+}
+
+
+
 
 
 
@@ -2261,4 +2248,58 @@ export function getAvailableCSSClasses()
 export function getComputedStyleValue(dom, prop) 
 {
   return window.getComputedStyle(dom)[prop];
+}
+
+
+export function printContent( c )
+{
+  const container = c.DOMelement;
+
+   const popup = window.open('', '', 'fullscreen=yes')
+
+   if (!popup) {
+    alert("Popup-Blocker aktiv? Bitte erlauben.");
+    return;
+  }
+
+  // HTML-Grundstruktur vorbereiten
+  const doc = popup.document;
+  doc.open();
+  doc.write('<!DOCTYPE html><html><head><title>Pivot-Druck</title></head><body></body></html>');
+  doc.close();
+
+  // Styles übernehmen (nur eigene)
+  const style = doc.createElement('style');
+  style.textContent = [...document.styleSheets]
+    .map(sheet => {
+      try {
+        return [...sheet.cssRules].map(rule => rule.cssText).join('\n');
+      } catch (e) {
+        return ''; // Fremde Domains ignorieren
+      }
+    })
+    .join('\n');
+  doc.head.appendChild(style);
+
+  // Inhalt klonen
+  const clone = container.cloneNode(true);
+  doc.body.appendChild(clone);
+
+  // Optional: Vollbild
+  doc.body.style.margin = "0";
+  doc.body.style.padding = "20px";
+  doc.body.style.fontFamily = "sans-serif";
+  doc.body.style.background = "white";
+
+  
+setTimeout(() => {
+    try {
+      popup.focus();
+      popup.print();
+      popup.close();
+    } catch (e) {
+      console.warn("Popup konnte nicht automatisch verarbeitet werden:", e);
+    }
+  }, 1000);
+
 }

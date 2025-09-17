@@ -64,7 +64,7 @@ try {
   var newRecord = dbUtils.insertIntoTable(dB,'billArchive',{ORGFILENAME :orgFileName,
                                             ARCPATH     :dest,
                                             TABLENAME   :tableName,
-                                            IMPORTED    :new TFDateTime().excelTimestamp, 
+                                            IMPORTED    :new TFDateTime().formatDateTime() , 
                                             DESCRIPTION1:"unbenannter Datenimport vom "+new TFDateTime().formatDateTime() 
                                           });
   

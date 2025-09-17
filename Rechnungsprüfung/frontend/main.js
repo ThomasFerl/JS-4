@@ -24,7 +24,6 @@ import { TFDateTime }    from "./tfWebApp/utils.js";
 import { TFgui }         from "./tfWebApp/tfGUI.js";
 import { TFDataObject }  from "./tfWebApp/tfDbObjects.js";
 
-// import { TFPivotGrid }   from "./tfWebApp/pivot.js" 
 
 
 
@@ -35,11 +34,17 @@ var guiMainWnd         = null;
 
 var lastInsertID       = 0;          // der letzte importierte Rechnungs-Datensatz
 var lastSelectedNdx    = -1;         // die zuletzt ausgewählte Rechnung
+var lastInsertedClipbrd= {};
 var gridReportResults  = null;       // das Grid, in welchem der aktuelle Report dargestellt wird
 
 var selectedReport     = '';         // der akuell ausgewählte Report ...
 var selectedTable      = '';
 var selectedBlackList  = '0';
+var selectedBill       = null;
+
+var cbReport           = null;
+var cbFilter           = null;
+var gridContainer      = null;
 
 export function main(capt1)
 {
@@ -65,15 +70,28 @@ export async function run()
 
   const loader = new TFLoader({ title: "lade Daten …" , note:"hab's gleich geschafft ..." });
 
-// Splashscreen 5s anzeigen
-await loader.while(TFLoader.wait(10000))
+  // Splashscreen 5s anzeigen
+  await loader.while(TFLoader.wait(1000))
+    
+  ws.buildGridLayout("21x21")
+  var btn= dialogs.addButton(ws.handle,"",1,21,2,1,{caption:"Start",glyph:"table-list"});
+      btn.backgroundColor = 'gray';
+      btn.callBack_onClick = function(){  startApp() } ;  
 
-
-guiMainWnd = new TFgui( null , forms.rechnungspruefungMain);
-guiMainWnd.btnNewBill.callBack_onClick   = newBill;
-updateView();
-
+  ws.handle.DOMelement.style.backgroundImage='url("'+globals.backgroundImage+'")';
+  ws.handle.DOMelement.style.backgroundSize ='cover';
+  
+  startApp();
 } 
+
+
+function startApp()
+{
+  guiMainWnd = new TFgui( null , forms.rechnungspruefungMain);
+  guiMainWnd.btnNewBill.callBack_onClick   = newBill;
+  updateView(); 
+}
+
 
 
 function updateView()
@@ -86,7 +104,7 @@ function updateView()
   var table    = dialogs.createTable( guiMainWnd.gridPanel , response.result ,["ID"  , "ARCPATH" , "TABLENAME"	, "IMPORTED"	,	 "DESCRIPTION2"	, "DESCRIPTION3" ] , {DESCRIPTION2:"Beschreibung",ORGFILENAME:"Datei-Name"}); 
       table.onRowClick = function( selectedRow , itemIndex , rowData ) 
       {
-        if(lastSelectedNdx==itemIndex) { showReports(rowData) }
+        if(lastSelectedNdx==itemIndex) { selectedBill = rowData; showReports() }
         lastSelectedNdx=itemIndex;
          
       };
@@ -104,53 +122,88 @@ function newBill()
    dialogs.addFileUploader( gui.dropZone , '*.*' , true , 'testUpload' , function(selectedFiles) {processUploadFiles(selectedFiles , this.dropZone , this.gui )}.bind({dropZone: gui.dropZone , gui:gui}) );
 
    gui.btnOk.callBack_onClick = function() {
-                                            if(lastInsertID==0) {dialogs.showMessage("Bitte erst eine Excel-Datei hochladen !");return;}
-                                            this.gui.update('data');
-                                            this.bill.ID = lastInsertID;
-                                            this.bill.update({ignoreEmptyValues:true});
-                                            updateView();
-                                            this.gui.close();
+                                            if(lastInsertID)
+                                            {  
+                                              this.gui.update('data');
+                                              this.bill.ID = lastInsertID;
+                                              this.bill.update({ignoreEmptyValues:true});
+                                              updateView();
+                                              this.gui.close();
+                                              return;
+                                            }
+                                            if(lastInsertedClipbrd!={})
+                                            { 
+                                              utils.webApiRequest('PROCESSCSVDATA',{data:lastInsertedClipbrd,description:this.gui.editBezeichnung.value},'POST')
+                                              updateView();
+                                              this.gui.close();
+                                              return;
+                                            }
+                                             dialogs.showMessage("Bitte erst eine Excel-Datei hochladen oder per Zwischenablage einfügen !");
+
                                            }.bind({bill:bill, gui:gui})
 
    gui.btnAbort.callBack_onClick = function() {this.gui.close()}.bind({gui:gui}) 
 
+   gui.TFButton132.callBack_onClick = function() {  gui.dropZone.innerHTML = '';
+                                                    utils.read_CSV_fromClipboard().then(data=>{ if(data){ 
+                                                                                                          dialogs.createTable(gui.dropZone,data);
+                                                                                                          lastInsertedClipbrd = data;
+                                                                                                          lastInsertID = '';
+                                                                                                        } 
+                                                                                                 
+                                                                                              });
+                                                    
+                                                 }
+
+
+
 }
-    
 
-function showReports( data )
+
+function availableReports()
 {
-  selectedBlackList  = '0';
-  selectedReport     = '0';
-
-   var gui = new TFgui( null , forms.rechnungspruefungAuswertung );
-   selectedTable     = data.TABLENAME;
-
-   //  Die Liste der möglichen Reports....
-   var select        = gui.selectReport; // besseres handling
-       select.addItem('Rohdaten anzeigen' , '0');
+  cbReport.setItems();
+  cbReport.addItem('Rohdaten anzeigen' , '0');
 
    var response      = utils.webApiRequest( 'FETCHRECORDS' , {sql:'Select ID ,  REPORTNAME from reports order by REPORTNAME'});
    if(!response.error) 
-    for(var i=0; i<response.result.length; i++) select.addItem( response.result[i].REPORTNAME , response.result[i].ID );     
+    for(var i=0; i<response.result.length; i++) cbReport.addItem( response.result[i].REPORTNAME , response.result[i].ID );     
  
-   select.callBack_onChange = function( v ) {                                               
+   cbReport.callBack_onChange = function( v ) {                                               
                                               selectedReport = v;
-                                              runReport( this.data , this.container ); 
-                                            }.bind({data:data, container:gui.gridContainer});
+                                              runReport(); 
+                                              };
+
+}
+
+
+function showReports()
+{
+   var gui           = new TFgui( null , forms.rechnungspruefungAuswertung );
+
+    // besseres handling -> global verfügbar machen ...
+   gridContainer      = gui.gridContainer;
+   cbReport           = gui.selectReport;
+   selectedTable      = selectedBill.TABLENAME;
+   selectedBlackList  = '0';
+   selectedReport     = '0';
+
+   //  Die Liste der möglichen Reports....
+   availableReports();
 
   
   // Blacklist befüllen ...                                          
   var selectBlacklist = gui.selectBlacklist;
       selectBlacklist.addItem( {caption:'---' , value:0} );     
  
-  response  = utils.webApiRequest( 'FETCHRECORDS' , {sql:'Select ID ,  BEZEICHNUNG from blacklist order by BEZEICHNUNG'});
+  var response  = utils.webApiRequest( 'FETCHRECORDS' , {sql:'Select ID ,  BEZEICHNUNG from blacklist order by BEZEICHNUNG'});
   if(!response.error) 
     for(var i=0; i<response.result.length; i++) selectBlacklist.addItem( {caption:response.result[i].BEZEICHNUNG , value:response.result[i].ID} );    
  
    selectBlacklist.callBack_onChange = function( v ) {  
                                              selectedBlackList = v;                                             
-                                             runReport( this.data , this.container ); 
-                                            }.bind({data:data, container:gui.gridContainer});
+                                             runReport(); 
+                                            };
 
 // Button zur Verwaltung der Reports
 gui.btnAddReport.callBack_onClick = function(){ editReport(this.tableName , null) }.bind({tableName:selectedTable})
@@ -163,10 +216,10 @@ gui.btnEditBlacklist.callBack_onClick   = function (){ editBlackList(this.tableN
 gui.btnDeleteBlacklist.callBack_onClick = function (){ deleteBlacklist(selectedBlackList) };
 
 // per Default erstmal die Roh-Daten anzeigen ...
-runReport(data, gui.gridContainer  );
+runReport();
 
 
-gui.btnExcel.callBack_onClick = function(){ ___excelExport( gridReportResults ) }
+gui.btnExcel.callBack_onClick = function(){ utils.printContent(this.container); /*___excelExport( gridReportResults ) */}.bind({container:gui.gridContainer})
 
 }
 
@@ -325,28 +378,20 @@ function runReport_PIVOT( data , container  )
            return;
        }
 
-  var pivotTable     = utils.pivot( reportData.result , groupFields[1] ,groupFields[0] , 'sum');  
-
-debugger;
-
-const grid = pivot.drawPivotGrid( container.DOMelement , {} , {
-  values: [
-    { caption: "Umsatz ∑", format: v => v.toLocaleString("de-DE") + " €" },
-    { caption: "Menge ∑" }
-  ],
-  compact: false,
-  stickyToolbar: true
-});
-
+  var pivotTable  = pivot.calcPivotData( reportData.result , groupFields[1] ,groupFields[0] , 'sum');  
+  
+  // Übergabe an TFPivotGrid
+  container.overflow = 'auto';
+  pivot.renderPivotData(container.DOMelement , pivotTable , (x,xValue,y,yValue)=>{showPivotDetails(x,xValue,y,yValue)});
   
 }
 
 
 
 
-function runReport( data , container  )
+function runReport()
 {
- if((selectedReport=="") || (selectedReport=="0"))  { runReport_GROUP( data , container  ); return } 
+ if((selectedReport=="") || (selectedReport=="0"))  { runReport_GROUP( selectedBill , gridContainer  ); return } 
  
  var response = utils.webApiRequest('FETCHRECORD',{sql:'Select * from reports Where ID='+selectedReport })
   if(response.error) 
@@ -355,18 +400,18 @@ function runReport( data , container  )
       return;
     }
 
-  if (response.result.KATEGORIE.toUpperCase() == 'PIVOT') runReport_PIVOT( data , container );
-  else                                                    runReport_GROUP( data , container );      
+  if (response.result.KATEGORIE.toUpperCase() == 'PIVOT') runReport_PIVOT( selectedBill , gridContainer );
+  else                                                    runReport_GROUP( selectedBill , gridContainer );      
 
 }
 
 
 
-
-function detailView( data )
+function detailView()
 {
-  var w   = dialogs.createWindow(null,'Details', "70%" , "80%" , "CENTER")
-  var gui = new TFgui( w , forms.rechnungsPruefungReportDetails);  // valueContainer & gridContainer
+  var data = selectedBill;
+  var w    = dialogs.createWindow(null,'Details', "70%" , "80%" , "CENTER")
+  var gui  = new TFgui( w , forms.rechnungsPruefungReportDetails);  // valueContainer & gridContainer
   
   gui.valueContainer.buildFlexBoxLayout();
   gui.valueContainer.overflow        = 'auto';
@@ -449,7 +494,6 @@ function processUploadFiles( files , dropZone , gui )
   dropZone.innerHTML = '';
   utils.drawSymbol('circle-check' , dropZone , 'green' , '100%' );
   updateView();
-
 }
  
 
@@ -527,7 +571,12 @@ gui.btnDelFromSum.callBack_onClick   = function() { ___removeField(this.listBox)
 
 // Button Report löschen ...
 function deleteReport( ID ) 
-{}
+{
+  if(ID=="0") {dialogs.showMessage("Bitte zuerst den zu löschenden Bericht auswählen !"); return;}
+  dialogs.ask("nachgefragt","Soll die ausgewählte Auswertung gelöscht werden ?",()=>{utils.webApiRequest("DROP",{tableName:'reports' , ID_field:'ID' ,ID_value:ID});
+                                        
+                                                                                    });
+}
 
 
 // Button Blackliste-Liste definieren - Wenn 
@@ -587,6 +636,26 @@ function editBlackList( tableName , ID)
 // Button Filter löschen ...
 function deleteBlacklist( ID ) 
 {}
+
+
+
+function showPivotDetails(fieldName1,value1,fieldName2,value2)
+{
+    var w   = dialogs.createWindow(null,'Details', "70%" , "80%" , "CENTER")
+  
+    var sql = "select * from " + selectedTable + " Where "+fieldName1+"='"+value1+"' AND " + fieldName2 + "='"+value2+"'"
+
+    var detailData = utils.webApiRequest('fetchRecords', { sql:sql });
+     
+    if (detailData.error) {
+           dialogs.showMessage('Fehler beim Laden der Details: ' + detailData.errMsg);
+           return;
+       }
+
+    if( detailData.result.length == 0) {dialogs.showMessage('Für diese Konstellation aus '+fieldName1+'('+value1+')  und '+fieldName2+'('+value2+') gibt es keine Fälle !'); w.close(); return;}   
+
+    dialogs.createTable( w.hWnd , detailData.result ,['ID','AUSWERTUNG_ZUM'] ) ;
+}
 
 
 // Hilfsfunktionen

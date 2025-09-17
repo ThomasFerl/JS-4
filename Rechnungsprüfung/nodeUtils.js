@@ -1,3 +1,4 @@
+const globals           = require('./backendGlobals.js')
 var childProc           = require('child_process');
 var axios               = require('axios');
 const excelJS           = require('exceljs');
@@ -742,6 +743,28 @@ module.exports.getTextFile = function( fs , fileName )
   else                         return {error:true, errMsg:'File not found', result:'' };
   } catch(err) { return {error:true, errMsg:err.message, result:"" }; } 
 }
+
+
+module.exports.saveTextFile = function( path , fs , fileName , content )
+{
+  const headers = Object.keys(content[0]);
+  const csvContent = [
+    headers.join("\t"), // Tab-getrennt
+    ...content.map(row => headers.map(h => row[h]).join("\t"))
+  ].join("\n");
+
+  if(!fileName) fileName = `csv_${Date.now()}_${Math.floor(Math.random() * 100000)}.csv`;
+  const filePath = path.join(__dirname, globals.archivePath , fileName );    // Archivordner
+
+  try {
+        fs.writeFileSync(filePath, csvContent);
+        console.log("CSV gespeichert unter:", filePath);
+        return fileName;
+  }
+  catch(e) {console.error(e.errMsg); return ''; }  
+}
+
+
 
 
 

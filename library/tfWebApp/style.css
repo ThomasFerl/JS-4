@@ -1452,3 +1452,35 @@ html, body {
 
 /* Compact mode */
 .pg-compact .pg-th, .pg-compact .pg-td { padding: .28rem .35rem; }
+
+
+
+
+/* PIVOT - TABELLE */
+
+ .pivot-table {
+      border-collapse: collapse;
+      width: 100%;
+      margin-top: 20px;
+    }
+    .pivot-table th, .pivot-table td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: center;
+      cursor: pointer;
+    }
+    .pivot-header {
+      background-color: #f0f0f0;
+    }
+    .pivot-row-header {
+      background-color: #e0f7fa;
+      font-weight: bold;
+    }
+    .pivot-col-header {
+      background-color: #ffe0b2;
+      font-weight: bold;
+    }
+    .pivot-sum-cell {
+      background-color: #dcedc8;
+      font-weight: bold;
+    }
