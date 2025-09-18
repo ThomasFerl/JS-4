@@ -12,6 +12,7 @@ import { TFWindow   } from "./tfWindows.js";
 var symbolsList      = [];
 var symbolObjMapping = [];
 
+export var ready     = false;     
 
 export function symbolGroups()
 {
@@ -124,6 +125,7 @@ export async function init()
     // symbol-Liste löschen
     symbolsList      = [];
     symbolObjMapping = [];
+    ready            = false;
     
     // ermittle alle Symbol-gruppen
     const symbolGroups =  webApiRequest('LSSYMBOLGROUPS', {}).result;
@@ -132,7 +134,9 @@ export async function init()
     {  
       var s = new TFSymbols(symbolGroups[i]); 
       symbolsList.push( s );
-    }  
+    } 
+    
+     ready          = true;
 }
 
 

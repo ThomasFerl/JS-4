@@ -839,8 +839,8 @@ html, body {
 /*Padding rausnehmen und stattdessen über die margin-top & margin-left -Eigenschaften der Childs die Position steuern...*/
 .cssContainerPanel     
 {
-   margin            : 4px;
-   padding           : 4px;
+   margin            : 3px;
+   padding           : 3px;
    border            : none;
    background-Color  : transparent;
    align-items       : center;
@@ -856,8 +856,8 @@ html, body {
 {
    width             : 100%;   
    height            : 100%;
-   margin            : 4px;
-   padding           : 4px;
+   margin            : 0px;
+   padding           : 0px;
    border            : none;
    background-Color  : transparent;
    display           : flex; /* Flexbox-Layout */
@@ -1217,7 +1217,7 @@ html, body {
 {
    position        : sticky;
    top             : 0; /* Fixiert den Kopf am oberen Rand */
-   padding         : 0;
+   padding         : 4px;
    border          : 0.5px solid #999a9b;  
 	background-color: #54585d;
 	color           : #ffffff;
@@ -1229,7 +1229,7 @@ html, body {
 
 .tftd 
 {
-	padding      : 0;
+	padding      : 4px;
    border       : 0.5px solid #999a9b;  
    text-align   : left;
    white-space  : nowrap; 

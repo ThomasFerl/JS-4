@@ -6,11 +6,15 @@ import { TFGuiBuilder } from "./tfGuiBuilder.js";
 import { TFScreen }     from "./tfObjects.js";
 import { TFWorkSpace }  from "./tfObjects.js";
 import { TFWindow   }   from "./tfWindows.js";
+import { TFLoader }      from "./tfObjects.js";
 
 
 
 export function login( callBackIfOK , bypass ) 
 {// vorsichtshalber ...
+
+  symbols.init();
+
   if (globals.Screen==null) globals.setScreen( new TFScreen() ) ;
 
   if(bypass && callBackIfOK ) {callBackIfOK(); return}
@@ -107,12 +111,13 @@ export function login( callBackIfOK , bypass )
                                     globals.Screen.HTML=""; 
                                     return;
                                  }
-                              
-                              // blank screen
-                              globals.Screen.HTML=""; 
-                              callBackIfOK();  
 
-                            }.bind({usr:inpUsr,pwd:inpPwd})
+                             
+                                const loader = new TFLoader({ title: "lade Symbole …" , note:"hab's gleich geschafft ..." });
+                                loader.while(TFLoader.wait(1000)).then(function(){  this.loginDlg.remove();   this.callBackIfOK() }.bind({loginDlg:loginDlg, callBackIfOK:this.callBackIfOK}))
+                             
+
+                            }.bind({usr:inpUsr,pwd:inpPwd,callBackIfOK:callBackIfOK})
 
    var b = dialogs.addButton( btns , "cssAbortBtn01"  , 3 , 2 , 1 , 1 ,"Abbrechen" );
        b.callBack_onClick = function() 
@@ -311,8 +316,6 @@ export class TFWebApp
    
    this.keepAlive = setInterval( function() {if(this.active) utils.webApiRequest('keepAlive' , '' )}.bind( this ) , 60000 );
  
-   symbols.init();
-
   }
   
 
