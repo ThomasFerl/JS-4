@@ -137,81 +137,9 @@ export class TPersonList
       this.personThums = [];
       this.selected    = null;
 
-      this.personenWnd = dialogs.createWindow( null,'Personen','80%','80%','CENTER');
-      this.personenWnd.buildGridLayout_templateColumns('1fr');
-      this.personenWnd.buildGridLayout_templateRows   ('4em 1fr');
+      var gui = new TFgui( null , forms.personList );
 
-      // ----------------ButtonPanel + Button-----------------------------------------
-      this.menuPanel    = dialogs.addPanel(this.personenWnd.hWnd,'',1,1,1,1);
-      this.menuPanel.buildGridLayout_templateColumns('10em 10em 10em 10em 1fr 10em');
-      this.menuPanel.buildGridLayout_templateRows   ('1fr');
-
-      this.btnAddPerson    = dialogs.addButton(this.menuPanel,'',1,1,1,1, {caption:'neu',glyph:'person-circle-plus'});
-      this.btnAddPerson.height='3em';
-      this.btnAddPerson.callBack_onClick = function(){this.newPerson()}.bind(this);
-      
-      this.btnEditPerson   = dialogs.addButton(this.menuPanel,'',2,1,1,1,{caption:'bearbeiten',glyph:'person-circle-check'});
-      this.btnEditPerson.height='3em';
-      this.btnEditPerson.callBack_onClick = function(){this.editPerson()}.bind(this);
-
-      this.btnDeletePerson = dialogs.addButton(this.menuPanel,'',3,1,1,1,{caption:'löschen',glyph:'person-circle-minus'});
-      this.btnDeletePerson.height='3em';
-
-      this.btnCloseWnd     = dialogs.addButton(this.menuPanel,'',6,1,1,1,{caption:'schließen',glyph:'right-from-bracket'});
-      this.btnCloseWnd.callBack_onClick = function(){this.personenWnd.close()}.bind(this);
-      this.btnCloseWnd.height='3em';
-      
-      //-------------------------------------------------------------------------------
-
-      // Hilfscontainer zur Platzaufteilung                    
-      var hlpContainer1 = dialogs.addPanel(this.personenWnd.hWnd,'cssContainerPanel',1,2,1,1);
-          hlpContainer1.buildGridLayout_templateColumns('1fr 1fr 1fr');
-          hlpContainer1.buildGridLayout_templateRows('1fr');
-
-      var hlpContainer2 = dialogs.addPanel(hlpContainer1,'cssContainerPanel',1,1,2,1);
-          hlpContainer2.buildGridLayout_templateColumns('1fr');
-          hlpContainer2.buildGridLayout_templateRows('2em 1fr');    
-
-      // ----------------linke Seite: FilterPanel + personListPanel
-      this.filterPanel     = dialogs.addPanel(hlpContainer2,'',1,1,1,1);
-      this.personPanel     = dialogs.addPanel(hlpContainer2,'',1,2,1,1);
-      //-------------------------------------------------------------------------------
-      this.filterPanel.buildGridLayout_templateColumns('1fr 2em 2em'); 
-      this.filterPanel.buildGridLayout_templateRows   ('1fr');
-      this.filterPanel.overflow = 'hidden';
-      this.filterPanel.padding = '0';
-
-      var btnListView  = dialogs.addButton(this.filterPanel,'',2,1,1,1,{glyph:'align-justify' , glyphColor:'black'});
-          btnListView.backgroundColor = 'gray';
-          btnListView.margin='0';
-          btnListView.marginRight='4px';
-          
-          btnListView.color = 'black';
-          btnListView.callBack_onClick = function(){ 
-                                                    this.personThumbView.setInvisible();
-                                                    this.personGridView.setVisible();
-                                                  }.bind(this);
-      
-      var btnThumbView = dialogs.addButton(this.filterPanel,'',3,1,1,1,{glyph:'users-line' , glyphColor:'black'});
-          btnThumbView.backgroundColor = 'gray';
-          btnThumbView.margin='0';
-          btnThumbView.marginLeft='4px';
-          btnThumbView.callBack_onClick = function(){ 
-                                                    this.personThumbView.setVisible();
-                                                    this.personGridView.setInvisible();
-                                                  }.bind(this);
-
-      var hlpContainer3 = dialogs.addPanel(hlpContainer1,'cssContainerPanel',3,1,1,1);
-          hlpContainer3.buildGridLayout_templateColumns('1fr');
-          hlpContainer3.buildGridLayout_templateRows('1fr 1fr');    
-
-      // ----------------rechte Seite: Portrait + mediaReferenzen
-      this.imagePanel      = dialogs.addPanel(hlpContainer3,'',1,1,1,1);
-      this.personMediaPanel= dialogs.addPanel(hlpContainer3,'',1,2,1,1);
-      //---------------------------------------------------------------------------
-      // Das personMediaPanel ist ein Container für das listViewPanel und dem thumbViewPanel
-      // die jeweils wechselseitig angezeigt werden. Beide sind überlagert und werden via hide & show gesteuert
-
+      this.personPanel = gui.gridContainer;
       this.personPanel.buildBlockLayout();
       this.personPanel.position='relative';
       this.personPanel.overflow = 'hidden';
@@ -223,6 +151,23 @@ export class TPersonList
       this.personGridView = dialogs.addPanel(this.personPanel,'cssContainerPanel',1,1,'100%','100%');
       this.personGridView.position='relative';
       this.personGridView.setVisible();
+
+
+
+      gui.btnNew.callBack_onClick      = function(){this.newPerson()}.bind(this);
+      gui.btnEdit.callBack_onClick     = function(){this.editPerson()}.bind(this);
+      gui.btnDelete.callBack_onClick   = function(){dialogs.showMessage('Noch nicht implementiert!')}.bind(this);
+      gui.btnListView.callBack_onClick = function(){ 
+                                                    this.personThumbView.setInvisible();
+                                                    this.personGridView.setVisible();
+                                                  }.bind(this);
+      
+
+
+      gui.btnThumbView.callBack_onClick = function(){ 
+                                                    this.personThumbView.setVisible();
+                                                    this.personGridView.setInvisible();
+                                                  }.bind(this);
 
       this.loadPersons();
 
@@ -275,23 +220,8 @@ export class TPersonList
     
     newPerson()
     {
-      var aPerson = {
-        ID           : 0,
-        NAME         : '',
-        VORNAME      : '',
-        ALIAS1       : '',
-        ALIAS2       : '',
-        ALIAS3       : '',
-        GEBURTSJAHR  : null,
-        HERKUNFT     : '',
-        BUSINESSTART : null,
-        BUSINESENDE  : null,
-        RANKING      : 0,
-        BEMERKUNGEN  : '' ,
-        PORTRAIT     : ''};
-      
-        var p = new TPerson(aPerson);
-        p.edit(function(){this.updateGrid_personen()}.bind(this));
+       var p = new TPerson();
+       p.edit(function(){this.updateGrid_personen()}.bind(this));
     } 
 
 
