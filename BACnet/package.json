@@ -1,7 +1,5 @@
 {
   "dependencies": {
-    "@bacnet-js/device": "^0.5.0",
-    "bacstack": "^0.0.1-beta.14",
-    "node-bacnet": "^0.2.4"
+    "bacstack": "^0.0.1-beta.14"
   }
 }

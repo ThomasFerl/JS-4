@@ -78,7 +78,7 @@ export function run()
       dashBoard  = l.dashBoard; 
 
       menuContainer.backgroundColor = 'gray';
-      menuContainer.buildGridLayout_templateColumns('10em 10em 10em 10em 10em 10em 10em 10em 10em 10em 10em 10em 1fr ');
+      menuContainer.buildGridLayout_templateColumns('10em 10em 10em 10em 10em 10em 10em 10em 10em 10em 10em 1fr ');
       menuContainer.buildGridLayout_templateRows('1fr');
 
  
@@ -194,17 +194,6 @@ var   btn10 = dialogs.addButton( menuContainer , "" , 10 , 1 , 1 , 1 , "ask me" 
       {
         dialogs.ask( "Frage" , "Wollen Sie das wirklich ?" , ()=>{dialogs.showMessage( "JA" , null , null )} , ()=>{dialogs.showMessage( "NEIN" , null , null )} );
       }
-
-
-var   btn11 = dialogs.addButton( menuContainer , "" , 11 , 1 , 1 , 1 , "draw.io"  );
-      btn11.heightPx = 35;
-      btn11.callBack_onClick = function() 
-      {
-        var w = dialogs.createWindow(null , "Draw.io Import" , '80%' , '80%' , 'CENTER' );
-        utils.loadSVG_from_drawIO( w.hWnd , './svg/test_drawio.svg');
-      }
-
-
 
       testContainer1.buildGridLayout_templateRows('repeat(10,1fr)');
       testContainer1.buildGridLayout_templateColumns('1fr');

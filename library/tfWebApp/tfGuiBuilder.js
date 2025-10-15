@@ -148,7 +148,7 @@ var loadBtn                        = dialogs.addButton(fileOps , '' , 4 , 2 , 1 
  this.saveToClipBoard_Btn.callBack_onClick      = function()
                                      { 
                                        var form = this.dashBoard.getConstructionProperties() || {empty:true};
-                                       utils.copyObjToClipboard( form , this.formNameInp.value);
+                                       utils.copyObjToClipboard(form);
                                        dialogs.showMessage('Formular in die Zwischenablage kopiert!');
                                      }.bind(this);
 
