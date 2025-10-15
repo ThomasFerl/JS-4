@@ -1558,12 +1558,14 @@ export function updateTable( tableName , ID_field , ID_value ,  fields ,  etc )
 
 
 
-export function copyObjToClipboard(obj) 
+export function copyObjToClipboard(obj , objName) 
 {
   const json = JSON.stringify(obj, null, 2);
 
   // Entferne Anführungszeichen von Schlüsseln
-  const jsObject = json.replace(/"([^"]+)":/g, '$1:');
+  let jsObject = json.replace(/"([^"]+)":/g, '$1:');
+
+  if(objName) jsObject = 'export const '+objName+' = ' + jsObject;
 
   // Kopiere in Zwischenablage
   navigator.clipboard.writeText(jsObject)
@@ -2303,3 +2305,85 @@ setTimeout(() => {
   }, 1000);
 
 }
+
+
+
+// Lädt demo.svg, macht es responsiv und hängt Click-Handler an bestimmte IDs.
+export async function loadSVG_from_drawIO(container, svgUrl) {
+  // 1) SVG laden
+  const res = await fetch(svgUrl);
+  if (!res.ok) throw new Error(`SVG konnte nicht geladen werden: ${res.status} ${res.statusText}`);
+  const svgText = await res.text();
+
+  // 2) In den SVG-DOM parsen
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(svgText, 'image/svg+xml');
+  let svgEl = doc.documentElement;
+
+  // 3) Sicherheit: <script>-Tags entfernen
+  svgEl.querySelectorAll('script').forEach(s => s.remove());
+
+  // 4) Feste Breite/Höhe entfernen
+  svgEl.removeAttribute('width');
+  svgEl.removeAttribute('height');
+
+  // 5) Style und Skalierung setzen
+  svgEl.setAttribute('style', 'width:100%; height:100%; display:block;');
+  svgEl.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+
+  // 6) In den Container einsetzen
+  container.innerHTML = '';
+  svgEl = document.importNode(svgEl, true);
+  container.appendChild(svgEl);
+
+  // 7) viewBox automatisch setzen, wenn nicht vorhanden
+  if (!svgEl.hasAttribute('viewBox')) {
+    try {
+      const bbox = svgEl.getBBox();
+      svgEl.setAttribute('viewBox', `0 0 ${bbox.width} ${bbox.height}`);
+    } catch (e) {
+      console.warn('viewBox konnte nicht automatisch gesetzt werden:', e);
+    }
+  }
+
+  // 8) Interaktionen verdrahten
+  wireInteractions(svgEl);
+}
+
+// Hier definierst du, welche Elemente klickbar sein sollen
+function wireInteractions(svgRoot) 
+{
+  // Beispiel: auf konkrete IDs hören
+  const clickableIds = ['pump1', 'valve2', 'boilerA']; // <== an deine IDs anpassen
+  clickableIds.forEach(id => {
+    const el = svgRoot.querySelector('#' + CSS.escape(id));
+    if (!el) return;
+    // Für Gruppen ggf. Pointer-Events aktivieren:
+    // el.style.pointerEvents = 'bounding-box';
+    el.classList.add('clickable');
+    el.setAttribute('tabindex', '0'); // Tastaturfokus (Barrierefreiheit)
+
+    const onClick = (ev) => {
+      ev.stopPropagation();
+      el.classList.toggle('active');           // optisches Feedback
+      console.log(`Klick auf ${id}`);          // hier deine Logik
+      // Beispiel: Status umschalten, Meldungen senden usw.
+    };
+    const onKey = (ev) => {
+      if (ev.key === 'Enter' || ev.key === ' ') { onClick(ev); }
+    };
+
+    el.addEventListener('click', onClick);
+    el.addEventListener('keydown', onKey);
+  });
+
+  // Bonus: Event Delegation über data-Attribute
+  svgRoot.addEventListener('click', (ev) => {
+    const node = ev.target.closest('[data-action]');
+    if (!node) return;
+    const action = node.getAttribute('data-action');
+    console.log('Delegierter Klick auf Action:', action);
+    // switch(action) { case 'open-valve': ... }
+  });
+}
+
