@@ -148,7 +148,7 @@ var loadBtn                        = dialogs.addButton(fileOps , '' , 4 , 2 , 1 
  this.saveToClipBoard_Btn.callBack_onClick      = function()
                                      { 
                                        var form = this.dashBoard.getConstructionProperties() || {empty:true};
-                                       utils.copyObjToClipboard(form);
+                                       utils.copyObjToClipboard( form , this.formNameInp.value);
                                        dialogs.showMessage('Formular in die Zwischenablage kopiert!');
                                      }.bind(this);
 
@@ -264,6 +264,7 @@ var gridCtrlPanel = dialogs.addPanel(  this.menuPanel , 'cssContainerPanel' , 1 
       this.___createToolboxItem( 'square-check'     , 'BTN'     , 2,4)
       this.___createToolboxItem( 'font'             , 'LABEL'   , 3,4)
       this.___createToolboxItem( 'clock'            , 'CLOCK'   , 4,4)
+
       this.___createToolboxItem( 'pen-clip'         , 'INPUT'         , 1,5)
       this.___createToolboxItem( 'calendar-days'    , 'INPUT_DATETIME', 2,5)
       this.___createToolboxItem( 'calendar-days'    , 'INPUT_DATE'    , 3,5)
@@ -273,13 +274,14 @@ var gridCtrlPanel = dialogs.addPanel(  this.menuPanel , 'cssContainerPanel' , 1 
       this.___createToolboxItem( 'indent'           , 'COMBOBOX', 1,6)
       this.___createToolboxItem( 'indent'           , 'SELECT'  , 2,6)
       this.___createToolboxItem( 'list'             , 'LISTBOX' , 3,6)
-      
       this.___createToolboxItem( 'square-check'     , 'CHECKBOX', 4,6)
 
       this.___createToolboxItem('check-double'      , 'CHECKLISTBOX' , 1,7)
       this.___createToolboxItem('image'             , 'IMAGE'  , 2,7)
       this.___createToolboxItem('sliders'           , 'SLIDER' , 3,7)
-      //this.___createToolboxItem('*'                 , '*'      , 4,7)
+      this.___createToolboxItem('window-minimize'   , '*'      , 4,7)
+      this.___createToolboxItem('window-minimize'   , '*'      , 5,7)
+      this.___createToolboxItem('window-minimize'   , '*'      , 6,7)
       
       this.setGridLayout( 21 , 21 );
 
@@ -1015,5 +1017,4 @@ if (item.dialog=='COLORPICKER')
 
 
    
-
 
