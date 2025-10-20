@@ -138,7 +138,7 @@ export class TFMediaCollector_editSet
     }  
           
 dropThumbImage(e,d)      
-{ 
+{ debugger;
    this.mediaSet.ID_THUMB = d.json.ID; 
    this.thumbContainer.imgURL = d.json.url;  
 }

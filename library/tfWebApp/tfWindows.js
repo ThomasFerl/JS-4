@@ -180,7 +180,7 @@ export class TFWindow extends TFObject
           this.resizeAnimationRunning = true;
           this.__animateResize();
       }
-  }.bind(this));
+  }.bind(this) , { passive: false });
 
     
   

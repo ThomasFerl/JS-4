@@ -25,13 +25,16 @@ Eingabefeld - Typen
 <textarea>
 */
 
-import * as globals   from "./globals.js";
-import * as utils     from "./utils.js";
+import  * as globals   from "./globals.js";
+import  * as symbols   from "./symbols.js";  
+import  * as utils     from "./utils.js";
 
 import { TFDateTime } from "./utils.js";
 import { TFWindow   } from "./tfWindows.js";
 import { THTMLTable } from "./tfGrid.js";
 import { TFTreeView } from "./tfTreeView.js"; 
+
+import  {TFSymbolBrowser} from "./symbols.js"; 
 
 import { TFCheckBox, 
          TFileUploadPanel, 
@@ -40,10 +43,13 @@ import { TFCheckBox,
          TFPanel,
          TFEdit,
          TFComboBox,
+         TFSelectBox,
          TFButton,
          TFMenu,
          TPropertyEditor,
          TFileDialog,
+         TFListBox,
+         TFColorDialog, 
          TFListCheckbox } from "./tfObjects.js";
 
 var   splash  = {panel:null, imgPanel:null, msgPanel:null, msg:'...' , activ:false};
@@ -135,9 +141,10 @@ export function setButton( ctrl , settings )
 }
 
 
-export function addLabel( aParent , className , left , top , width , height , text )
+export function addLabel( aParent , className , left , top , width , height , text , params)
 {
-  var params = {caption:text};
+  if(!params) params = {};
+      params.caption = text;
   if (className) params.css = className;
   
   if (width==null) width = (text.length+1)+'em';
@@ -147,18 +154,18 @@ export function addLabel( aParent , className , left , top , width , height , te
 }
 
 
-export function addButton( aParent , className , left , top , width , height , decoration  )
+export function addButton( aParent , className , left , top , width , height , decoration , params )
 {
   var capt  = '';
   var glyph = '';
-  
+ 
   if(utils.isJSON(decoration)) 
   {
     capt  = decoration.caption;
     glyph = decoration.glyph;
   } else capt = decoration;
   
-  var params = {};
+  if(!params) params = {};
   if (className) params.css              = className;     
   if (capt)      params.caption          = capt;
   if (glyph)     params.glyph            = glyph;
@@ -169,9 +176,11 @@ export function addButton( aParent , className , left , top , width , height , d
 }
 
 
-export function addImage( aParent , className , left , top , width , height , imgURL )
+export function addImage( aParent , left , top , width , height , imgURL , params )
 {
-  return new TFImage( aParent , left , top , width , height , {imgURL:imgURL} );
+  if (!params) params = {};
+  params.imgURL = imgURL || '';
+  return new TFImage( aParent , left , top , width , height , params );
 }   
 
 
@@ -183,13 +192,13 @@ export function lineBreak(aParent)
 }
 
 
-export function addPanel( aParent , className , left , top ,width , height , dontRegister )
+export function addPanel( aParent , className , left , top ,width , height , params )
 {
-  var params = {stretch:true};
-  if (className)    params.css           = className;
-  if (!dontRegister) params.dontRegister = false;
-  else params.dontRegister               = true; 
-   
+  if(!params) params = {};
+      params.stretch = true;
+  if (className)  params.css           = className;
+                  params.dontRegister  = params.dontRegister || false; // wenn true, dann wird das Panel nicht in der globalen Liste registriert
+  
   return new TFPanel( aParent , left , top , width , height , params );
 }
 
@@ -199,7 +208,7 @@ export function addInput( aParent , left , top , textLength  , labelText , appen
   if(!params) params = {};
 
   if (labelText)  params.caption    = labelText;
-  if (textLength) params.editLength = textLength;
+  if (textLength) params.editLength = 'auto';
   if (appendix)   params.appendix   = appendix;
   if (preset)     params.value      = preset;
 
@@ -208,7 +217,7 @@ export function addInput( aParent , left , top , textLength  , labelText , appen
 }
 
 
-export function addDateTimePicker( aParent , left , top , labelText , preset , dontRegister , params)
+export function addDateTimePicker( aParent , left , top , labelText , preset , params)
 {
  
   if(!params) var params = {};
@@ -226,7 +235,7 @@ export function addDateTimePicker( aParent , left , top , labelText , preset , d
 
 
 
-export function addDatePicker( aParent , left , top , labelText , preset , dontRegister , params)
+export function addDatePicker( aParent , left , top , labelText , preset , params)
 {
  
   if(!params) var params = {};
@@ -242,7 +251,7 @@ export function addDatePicker( aParent , left , top , labelText , preset , dontR
 }
 
 
-export function addTimePicker( aParent , left , top , labelText , preset , dontRegister , params)
+export function addTimePicker( aParent , left , top , labelText , preset , params)
 {
  
   if(!params) var params = {};
@@ -268,7 +277,6 @@ export function addFileUploader( parent , fileTyp , multiple , destDir , onUploa
 export function addCombobox( aParent , left , top , textLength  , labelText , appendix , preset , items , params )
 {
   if(!params) params = {};
-
   if (labelText)  params.caption    = labelText;
   if (textLength) params.editLength = textLength;
   if (appendix)   params.appendix   = appendix;
@@ -278,6 +286,23 @@ export function addCombobox( aParent , left , top , textLength  , labelText , ap
   return new TFComboBox( aParent , left , top  , 1 , 1 , params );
 
 }
+
+
+export function addSelectBox( aParent , left , top , textLength  , labelText , appendix , preset , items , params )
+{
+  if(!params) params = {};
+  if (labelText)  params.caption    = labelText;
+  if (textLength) params.editLength = textLength;
+  if (appendix)   params.appendix   = appendix;
+  if (preset)     params.value      = preset;
+  if (items)      params.items      = items;
+
+  return new TFSelectBox( aParent , left , top  , 1 , 1 , params );
+
+}
+
+
+
 
 export function addCheckBox( aParent , left , top , labelText , preset , params )
 {
@@ -290,9 +315,18 @@ export function addCheckBox( aParent , left , top , labelText , preset , params 
    return new TFCheckBox( aParent , left , top , 1 , 1 , params );
 }
 
-export function addListCheckbox(aParent , items )
+export function addListBox( aParent , left , top , width , height , items, params )
 {
-  var params = {items:items};
+  if(!params) params = {};
+  params.items = items || [];
+  return  new TFListBox( aParent , left , top , width , height , params );
+}
+
+
+export function addListCheckbox(aParent , items , params)
+{
+  if(!params) params = {};
+  params.items = items;
 
       aParent.buildGridLayout_templateColumns('1fr' , {stretch:true});
       aParent.buildGridLayout_templateRows   ('1fr' , {stretch:true});
@@ -697,113 +731,23 @@ export function newPropertyEditor( aParent , properties , btnSave , callBack_onS
 
 export function getProperties( obj )
 {
-  var properties = [];
-
-  properties.push( {label:'objName',type:'string',value:obj.objName} );
-  properties.push( {label:'name',type:'INPUT',value:obj.name} );
-
-  properties.push( {label:'css',type:'INPUT',value:obj.css || ''} );
-
-
-  // Position im GRID-LAYOUT
-  properties.push( {label:'gridLeft',type:'INPUT',value:obj.gridLeft} );
-  properties.push( {label:'gridTop',type:'INPUT',value:obj.gridTop} );
-  properties.push( {label:'gridWidth',type:'INPUT',value:obj.gridWidth} );
-  properties.push( {label:'gridHeight',type:'INPUT',value:obj.gridHeight} ); 
-
-  // Nach Initial-Positionierung -> nachträgliche Änderungen der Geometrie
-  properties.push( {label:'left',type:'INPUT',value:obj.left} );
-  properties.push( {label:'top',type:'INPUT',value:obj.top} );
-  properties.push( {label:'width',type:'INPUT',value:obj.width} );
-  properties.push( {label:'height',type:'INPUT',value:obj.height} );
-  properties.push( {label:'caption',type:'INPUT',value:obj.caption} ); 
-  properties.push( {label:'value',type:'INPUT',value:obj.value} ); 
-  properties.push( {label:'prompt',type:'INPUT',value:obj.prompt} ); 
-  properties.push( {label:'appendix',type:'INPUT',value:obj.appendix} ); 
-
-
-
-  properties.push( {label:'margin',type:'INPUT',value:obj.margin || '0px'} );
-  properties.push( {label:'marginLeft',type:'INPUT',value:obj.marginLeft || '0px'} );
-  properties.push( {label:'marginRight',type:'INPUT',value:obj.marginRight || '0px'} );
-  properties.push( {label:'marginTop',type:'INPUT',value:obj.marginTop || '0px'} );
-  properties.push( {label:'marginBottom',type:'INPUT',value:obj.marginBottom || '0px'} );
-
-  properties.push( {label:'padding',type:'INPUT',value:obj.padding || '0px'} );
-  properties.push( {label:'paddingTop',type:'INPUT',value:obj.paddingTop || '0px'} );
-  properties.push( {label:'paddingLeft',type:'INPUT',value:obj.paddingLeft || '0px'} );
-  properties.push( {label:'paddingRight',type:'INPUT',value:obj.paddingRight || '0px'} );
-  properties.push( {label:'paddingBottom',type:'INPUT',value:obj.paddingBottom || '0px'} );
-
-  properties.push( {label:'borderWidth',type:'INPUT',value:obj.borderWidth || '0px'} );
-  properties.push( {label:'borderColor',type:'INPUT',value:obj.borderColor || '0px'} );
-  properties.push( {label:'borderRadius',type:'INPUT',value:obj.borderRadius || '0px'} );
-  properties.push( {label:'shadow',type:'INPUT',value:obj.shadow} );
-  
-  properties.push( {label:'overflow',type:'COMBOBOX',value:obj.overflow, items:["auto","hidden"] || 'auto'} );
-  properties.push( {label:'stretch',type:'COMBOBOX',value:obj.stretch, items:["JA","NEIN"] || 'JA'} );
-  properties.push( {label:'visible',type:'COMBOBOX',value:obj.visible, items:["JA","NEIN"] || 'JA'} );
-
-  properties.push( {label:'backgroundColor',type:'INPUT',value:obj.backgroundColor} );
-  properties.push( {label:'color',type:'INPUT',value:obj.color} );  
-
-  return properties;
+  return obj.getProperties();
 }
-
 
 
 export function setProperties( obj , properties )
-{
-  for(var i=0; i<properties.length; i++)
+{ 
+  // Properties vom PropertyEditor in property-Objekt für TFObject umwandeln
+  var propObj    = {};
+
+  for (var i=0; i<properties.length; i++ )
   {
-    var p = properties[i];
-    if(p.value)
-    {  
-     if(p.label=='name'    ) obj.name = p.value;
-     if(p.label=='caption' ) obj.caption = p.value;
-
-     if(p.label=='value'   ) obj.value = p.value;
-     if(p.label=='prompt'  ) obj.prompt = p.value;
-     if(p.label=='appendix') obj.appendix = p.value;
-
-     if(p.label=='css') obj.css = p.value;
-     
-     if(p.label=='gridLeft') obj.gridLeft = p.value;
-     if(p.label=='gridTop')  obj.gridTop  = p.value;  
-     if(p.label=='gridWidth') obj.gridWidth  = p.value;
-     if(p.label=='gridHeight') obj.gridHeight  = p.value;
-
-     if(p.label=='left') obj.left = p.value;
-     if(p.label=='top') obj.top = p.value;
-     if(p.label=='width') obj.width = p.value;
-     if(p.label=='height') obj.height = p.value;
-
-     if(p.label=='margin') obj.margin = p.value;
-     if(p.label=='marginLeft') obj.marginLeft = p.value;
-     if(p.label=='marginRight') obj.marginRight = p.value;
-     if(p.label=='marginTop') obj.marginTop = p.value;
-     if(p.label=='marginBottom') obj.marginBottom = p.value;
-
-     if(p.label=='padding') obj.padding = p.value;
-     if(p.label=='paddingTop') obj.paddingTop = p.value;
-     if(p.label=='paddingLeft') obj.paddingLeft = p.value;
-     if(p.label=='paddingRight') obj.paddingRight = p.value;
-     if(p.label=='paddingBottom') obj.paddingBottom = p.value;
-
-
-     if(p.label=='borderWidth') obj.borderWidth = p.value;
-     if(p.label=='borderColor') obj.borderColor = p.value;
-     if(p.label=='borderRadius') obj.borderRadius = p.value;
-     if(p.label=='shadow') obj.shadow = p.value;
-
-     if(p.label=='overflow') obj.overflow = p.value;
-     if(p.label=='stretch') obj.params.stretch = p.value;
-     if(p.label=='visible') obj.visible = p.value;
-     if(p.label=='backgroundColor') obj.backgroundColor = p.value;
-     if(p.label=='color') obj.color = p.value;
-    } 
-  }  
+    var item = properties[i];
+    propObj[item.label]=item.value;
+  } 
+  obj.setProperties(propObj);  
 }
+
 
 export function fileDialog( rootPath, mask , multiple , callBackOnSelect , onSelectionChanged )
 {
@@ -1008,32 +952,57 @@ export function showImage( url , caption )
   }
 
 
-  export async function browseSymbols()
-  {  
-    var w            = new TFWindow( null , 'Symbol-Browser' , '80%' , '80%' , 'CENTER' );
-    var svgContainer = w.hWnd;
-
-   var svgs = utils.webApiRequest('LSSYMBOLS' , {} ).result;
   
-   for(var i=0; i<svgs.length; i++)
-   { 
-     var p = addImage( svgContainer , "" , 1 , 1 , "77px" , "77px" );
-     
-     var svg = utils.webApiRequest('SYMBOL',{symbolName:svgs[i]} ); 
-
-        if (!svg.error) 
-          {
-            p.svgContent = svg.result;
-            p.dataBinding = {svg:svg.result , name:svgs[i]};
-            p.callBack_onClick = function(e, d ) { var wnd = new TFWindow( svgContainer , d.name  , '25%' , '25%' , 'CENTER' ); 
-                                                   var img = addImage( wnd.hWnd ,  '' , 1, 1, '100%' , '100%' );                                       
-                                                       img.svgContent = d.svg;
-                                                 };
-          }
-          await utils.processMessages();    
-    }      
+  export async function browseSymbols(path , callBack_onSelection )
+  {  
+     var s=new TFSymbolBrowser();
+     if(callBack_onSelection) s.callback_onOkClicked = callBack_onSelection;
+     else s.callback_onOkClicked = (items)=>{alert(JSON.stringify(items))} 
   }
+   
 
+   
+export function _colorPicker(currentColor, callback_onColorChanged) 
+{
+  const colors = [
+    "#000000", "#444444", "#888888", "#cccccc", "#ffffff",
+    "#ff0000", "#00ff00", "#0000ff", "#ffff00", "#ff00ff", "#00ffff",
+    "#800000", "#008000", "#000080", "#808000", "#800080", "#008080"
+  ];
+
+  let wnd = createWindow(null,"Farbauswahl","200px","200px","CENTER");
+  debugger;
+  let inp = wnd.hWnd.DOMelement;
+  inp.style.display               = 'grid';
+  inp.style.gridTemplateColumns   = "repeat(8, 20px)";
+  inp.style.gap                   = "4px";
+  inp.style.padding               = "10px";
+  inp.style.background            = "#f0f0f0";
+  inp.style.border                = "1px solid #ccc";
+  inp.style.width                 = "max-content";
+  inp.style.height                = "max-content";
+  inp.value                       = currentColor || '#000000';
+  inp.style.display               = 'none';
+
+  inp.onchange = () => 
+  {
+    if (callback_onColorChanged) callback_onColorChanged(inp.value);
+    inp.remove(); // optional: aufräumen
+  };
+
+  document.body.appendChild(inp);
+  inp.click(); // Muss direkt im Event-Handler stehen!
+}
+
+
+
+export function colorPicker(currentColor, callback_onColorChanged)
+{
+  const dlg = new TFColorDialog(currentColor, color => {
+                                                         if (callback_onColorChanged) callback_onColorChanged(color);
+                                                       });
+ 
+}
 
   export function createMenu( menuItems)
   {

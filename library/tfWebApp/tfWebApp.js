@@ -1,14 +1,20 @@
 import * as globals     from "./globals.js";
 import * as utils       from "./utils.js";
 import * as dialogs     from "./tfDialogs.js";
+import * as symbols     from "./symbols.js";
+import { TFGuiBuilder } from "./tfGuiBuilder.js";
 import { TFScreen }     from "./tfObjects.js";
 import { TFWorkSpace }  from "./tfObjects.js";
 import { TFWindow   }   from "./tfWindows.js";
+import { TFLoader }      from "./tfObjects.js";
 
 
 
 export function login( callBackIfOK , bypass ) 
 {// vorsichtshalber ...
+
+  symbols.init();
+
   if (globals.Screen==null) globals.setScreen( new TFScreen() ) ;
 
   if(bypass && callBackIfOK ) {callBackIfOK(); return}
@@ -67,14 +73,14 @@ export function login( callBackIfOK , bypass )
    
 
    var inpUsr = dialogs.addInput(loginDlg ,2 , 3 , 14 , "Benutzer" , "" , "");
-       inpUsr.caption.color     = 'lightgray';
-       inpUsr.caption.fontStyle = 'italic';
+       inpUsr.editCaption.color     = 'lightgray';
+       inpUsr.editCaption.fontStyle = 'italic';
        inpUsr.marginLeft = '1em';
        inpUsr.marginTop  = 0;
 
    var inpPwd = dialogs.addInput(loginDlg ,2 , 5 , 14 , "Passwort" , "" , "" , {type:"password"});
-       inpPwd.caption.color     = 'lightgray';
-       inpPwd.caption.fontStyle = 'italic';
+       inpPwd.editCaption.color     = 'lightgray';
+       inpPwd.editCaption.fontStyle = 'italic';
        inpPwd.marginLeft = '1em';
        inpPwd.marginTop = 0;
 
@@ -105,17 +111,18 @@ export function login( callBackIfOK , bypass )
                                     globals.Screen.HTML=""; 
                                     return;
                                  }
-                              
-                              // blank screen
-                              globals.Screen.HTML="<F5> Restart ..."; 
-                              callBackIfOK();  
 
-                            }.bind({usr:inpUsr,pwd:inpPwd})
+                             
+                                const loader = new TFLoader({ title: "lade Symbole …" , note:"hab's gleich geschafft ..." });
+                                loader.while(TFLoader.wait(1000)).then(function(){  this.loginDlg.remove();   this.callBackIfOK() }.bind({loginDlg:loginDlg, callBackIfOK:this.callBackIfOK}))
+                             
+
+                            }.bind({usr:inpUsr,pwd:inpPwd,callBackIfOK:callBackIfOK})
 
    var b = dialogs.addButton( btns , "cssAbortBtn01"  , 3 , 2 , 1 , 1 ,"Abbrechen" );
        b.callBack_onClick = function() 
                             {
-                              alert("Anmeldung wurde abgebrochen - Neustart mit <F5>");
+                              alert("Anmeldung wurde abgebrochen - Neustart mit F5");
                             }                  
 
                           
@@ -218,6 +225,11 @@ export function setVar( varName , value)
 }
 
 
+export function guiBuilder()
+{
+  new TFGuiBuilder();
+}
+
 export function help(url) 
 {
   /*
@@ -296,12 +308,14 @@ export class TFWebApp
    this.clientHeight    =  globals.Screen.height;
    this.active          =  true;
 
-   
-   window.addEventListener('focus', function() { utils.log('Focus') ; this.active = true; }.bind(this) );
-   window.addEventListener('blur' , function() { utils.log('Blur')  ; this.active = false; }.bind(this) );
+   this.keyHandler      = null;
 
+   
+   window.addEventListener('focus'  , function() { utils.log('Focus') ; this.active = true; }.bind(this) );
+   window.addEventListener('blur'   , function() { utils.log('Blur')  ; this.active = false; }.bind(this) );
+   
    this.keepAlive = setInterval( function() {if(this.active) utils.webApiRequest('keepAlive' , '' )}.bind( this ) , 60000 );
-    
+ 
   }
   
 

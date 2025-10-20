@@ -12,6 +12,11 @@ module.exports.logging  = new TFLogging();
 // if (!Buffer.from) var { Buffer } = require("node:buffer");
 
 
+module.exports.getSymbolPath = (symbolName) =>
+{
+   return global.symbolPath (group)
+}
+
 module.exports.log = (s) =>
 {
   if(this.debug) console.log(s);

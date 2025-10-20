@@ -6,6 +6,7 @@ import * as dialogs      from "./tfWebApp/tfDialogs.js";
 import * as app          from "./tfWebApp/tfWebApp.js"; 
 import * as sysadmin     from "./tfWebApp/tfSysAdmin.js";
 
+
 // Anwendungsspezifische Einbindungen
 import { TFEdit, 
          TForm,
@@ -48,8 +49,10 @@ export function main(capt1)
   globals.sysMenu.push( {caption:'Benutzer' , action:function(){sysadmin.adminUser()} } );
   globals.sysMenu.push( {caption:'Berechtigungen' , action:function(){sysadmin.adminGrants()} } );
   globals.sysMenu.push( {caption:'Info' , action:function(){app.sysInfo()} } );
+  globals.sysMenu.push( {caption:'API-Test (nur in der Entwicklungsphase)' , action:function(){app.APItest()} } );
   globals.sysMenu.push( {caption:'Symbol-Bibliothek (nur in der Entwicklungsphase)' , action:function(){dialogs.browseSymbols()} } );
-  globals.sysMenu.push( {caption:'Abbrechen' , action:function(){} } );
+  globals.sysMenu.push( {caption:'GUI Builder (nur in der Entwicklungsphase)' , action:function(){app.guiBuilder()} } );
+    globals.sysMenu.push( {caption:'Abbrechen' , action:function(){} } );
   
   app.login( ()=>{  caption2 = 'Willkommen ' + globals.session.userName ; run() });
   
@@ -57,12 +60,10 @@ export function main(capt1)
 
 
 export function run()
-{ debugger;
-   //  document.document.requestFullscreen();
+{ 
+      var ws = app.startWebApp(caption1,caption2).activeWorkspace;
 
-    var ws = app.startWebApp(caption1,caption2).activeWorkspace;
-
-    var l  = dialogs.setLayout( ws.handle , {gridCount:28,head:3,left:14} )
+      var l  = dialogs.setLayout( ws.handle , {gridCount:28,head:3,left:14} )
   
       menuContainer = l.head;
 
@@ -77,7 +78,7 @@ export function run()
       dashBoard  = l.dashBoard; 
 
       menuContainer.backgroundColor = 'gray';
-      menuContainer.buildGridLayout_templateColumns('10em 10em 10em 10em 10em 10em 10em 10em 10em 10em 10em 1fr ');
+      menuContainer.buildGridLayout_templateColumns('10em 10em 10em 10em 10em 10em 10em 10em 10em 10em 10em 10em 1fr ');
       menuContainer.buildGridLayout_templateRows('1fr');
 
  
@@ -175,6 +176,7 @@ var   btn9 = dialogs.addButton( menuContainer , "" , 9 , 1 , 1 , 1 , "Property-E
                                                         {label:"PLZ",value:"39218",type:"text",items:[]},
                                                         {label:"Ort",value:"Schönebeck",type:"text",items:[]},
                                                         {label:"favFastfood",value:"Pizza",type:"text",items:["Pizza","Pommes","Döner","HotDog","Sushi"]},
+                                                        {label:"favFastfood",value:"Pizza",type:"lookup",items:["Pizza","Pommes","Döner","HotDog","Sushi"]},
                                                         {label:"level",value:"90",type:"range",items:[]},
                                                         {label:"online",value:"true",type:"boolean",items:[]}];
 
@@ -192,6 +194,17 @@ var   btn10 = dialogs.addButton( menuContainer , "" , 10 , 1 , 1 , 1 , "ask me" 
       {
         dialogs.ask( "Frage" , "Wollen Sie das wirklich ?" , ()=>{dialogs.showMessage( "JA" , null , null )} , ()=>{dialogs.showMessage( "NEIN" , null , null )} );
       }
+
+
+var   btn11 = dialogs.addButton( menuContainer , "" , 11 , 1 , 1 , 1 , "draw.io"  );
+      btn11.heightPx = 35;
+      btn11.callBack_onClick = function() 
+      {
+        var w = dialogs.createWindow(null , "Draw.io Import" , '80%' , '80%' , 'CENTER' );
+        utils.loadSVG_from_drawIO( w.hWnd , './svg/ich.svg');
+      }
+
+
 
       testContainer1.buildGridLayout_templateRows('repeat(10,1fr)');
       testContainer1.buildGridLayout_templateColumns('1fr');
@@ -269,11 +282,11 @@ var   btn10 = dialogs.addButton( menuContainer , "" , 10 , 1 , 1 , 1 , "ask me" 
 const points = [];
 
 // Punkte initialisieren
-for (let i = 0; i < 10; i++) {    
+for (let i = 0; i < 100; i++) {    
     const p = {
         x: Math.round(Math.random() * 200), // Zufällige Startposition (x)
         y: Math.round(Math.random() * 200), // Zufällige Startposition (y)
-        radius: 7,                          // Radius des Punkts
+        radius:  Math.round(Math.random() * 7),                          // Radius des Punkts
         dx: Math.random() * 2,              // Geschwindigkeit in x-Richtung
         dy: Math.random() * 2,              // Geschwindigkeit in y-Richtung
         width: 500,                         // Standardbreite

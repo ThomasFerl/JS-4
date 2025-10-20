@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+ <head>
+  <title>tfWebApp #1st Step</title>
+  <link rel="stylesheet" href="./tfWebApp/style.css">
+  <meta charset="UTF-8">
+  <script src="./lib/math.min.js"></script>
+</head>
+
+
+  <script>
+   
+   var m = ""; 
+   function init()
+   {
+    import("./main.js").then( function(module) {m = module.main("Funktionsplotter","kleines Beispiel in JS")} )
+    document.body.innerHTML = m ;
+   } 
+
+</script> 
+
+</head>
+  <body onload="init()"></body>
+</html>

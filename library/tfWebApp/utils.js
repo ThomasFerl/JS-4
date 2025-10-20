@@ -1,4 +1,6 @@
 import * as globals   from "./globals.js";
+import * as symbols   from './symbols.js';
+
 
 const debug              = globals.debug;
 
@@ -36,7 +38,17 @@ export function getYearList(startDate, endDate)
   return yearList;
 }
 
+ export function getParentWindow( childElement )
+ {
+   if(!childElement) return globals.webApp.activeWorkspace || globals.Screen;
 
+    while (childElement.parent != null)
+   {
+     if(childElement.parent.constructor.name == 'TFWindow') return childElement.parent;
+     childElement = childElement.parent;
+   }
+   return null;
+ }
 
 export function isHTMLElement(element) 
 {
@@ -85,6 +97,44 @@ export function JSONstringify(obj)
 }
 
 
+
+export function drawSymbol( symbolName, container, color, size , symbolGroup) 
+{
+  let dom = null;
+  if(isHTMLElement(container)) dom = container;
+  else                         dom = container.DOMelement;
+  
+  // Container vorbereiten
+  /*
+  dom.style.overflow = 'hidden';
+  dom.style.padding = '0';
+  dom.style.margin = '0';
+  dom.style.borderWidth = '0';
+  dom.style.borderColor = 'transparent';
+*/
+  // Symbol einfügen (symbolName wie "OK", size z. B. "77%" oder Zahl)
+  symbols.draw(dom, symbolName, size , symbolGroup );
+  
+  
+  // Optional: Farbe setzen
+  if (color) {
+    const svg = dom.querySelector('svg');
+    if (svg) {
+      const elements = svg.querySelectorAll('*');
+      elements.forEach(el => {
+        const tag = el.tagName.toLowerCase();
+        if (['path', 'rect', 'circle', 'ellipse', 'polygon', 'line', 'polyline', 'g', 'use'].includes(tag)) {
+          el.setAttribute('fill', color);
+          if (el.hasAttribute('stroke')) el.setAttribute('stroke', color);
+        }
+      });
+    }
+  }
+}
+
+
+
+/*   ALTE LOGIK 
 
 export function drawSymbol( symbolName , container , color , size )
 { 
@@ -141,7 +191,7 @@ export function prepareSVG(svg, container, color , size)
 
 }
 
-
+*/
 
 
 export function evaluate( exp )
@@ -226,6 +276,9 @@ export function containing( key , list )
 {
  return  list.some(element => element.toUpperCase() == key.toUpperCase());
 }
+
+
+
 
 
 // -----------------------------------------------------------------------------------------------------------------------------
@@ -899,6 +952,32 @@ export function rgbToHex(r, g, b)
 }
 
 
+export function rgbStringToHex(rgbString) 
+{
+    // Beispiel: "rgb(255, 0, 128)"
+    const rgb = rgbString.match(/\d+/g); // Extrahiert die Zahlen
+    if (!rgb || rgb.length !== 3) return null;
+
+    return "#" + rgb.map(x => {
+        const hex = parseInt(x).toString(16);
+        return hex.length === 1 ? "0" + hex : hex;
+    }).join("");
+}
+
+
+export function hexToRgbString(hexString) 
+{
+    // Beispiel: "#ff0080"
+    const hex = hexString.replace("#", "");
+    if (hex.length !== 6) return null;
+
+    const r = parseInt(hex.substring(0, 2), 16);
+    const g = parseInt(hex.substring(2, 4), 16);
+    const b = parseInt(hex.substring(4, 6), 16);
+
+    return `rgb(${r}, ${g}, ${b})`;
+}
+
 
 // Konvertiert RGB in HSL
 export function darkenColor(color, amount) 
@@ -1212,6 +1291,52 @@ export function webApiRequest( _cmd , _param , getOrPost )
 
 
 
+export async function webApiRequestAsync(_cmd, _param = {}, getOrPost = 'GET') 
+{
+  const session = globals.session?.ID;
+  let url, options;
+
+  if (getOrPost.toUpperCase() === 'GET') 
+  {
+    url = buildURL(_cmd, _param);
+    options = { method: 'GET' };
+  } else 
+   {
+    url = globals.URL_webAppPOSTrequest();
+    options = {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ session, cmd: _cmd, param: _param })
+    };
+  }
+
+  try {
+    const response = await fetch(url, options);
+    const text     = await response.text();
+
+    let json;
+    try {
+      json = JSON.parse(text);
+    } catch (err) {
+      return { error: false, errMsg: 'OK', result: text };
+    }
+
+    if (json.errMsg && json.errMsg.toUpperCase() === 'INVALID SESSION') {
+      alert('<B>S</B>itzung abgelaufen !', {
+        glyp: 'fa-solid fa-person-walking-arrow-right',
+        button: ['OK']
+      });
+      document.body.innerHTML = 'Applikation beendet  - Neustart mit F5 ';
+      return { error: true, errMsg: json.errMsg, result: {} };
+    }
+
+    if ('result' in json) return json;
+    else return { error: false, errMsg: 'OK', result: json };
+  } catch (err) {
+    return { error: true, errMsg: err.message, result: {} };
+  }
+}
+
 
 
 
@@ -1344,6 +1469,35 @@ if(scriptTags.length>1)
 
 
 
+export function saveForm(formName , formData )
+{
+   return  webApiRequest( 'SAVEFORM', {formName:formName, formData:formData} , 'POST' )
+}
+
+export function lsForms()
+{ 
+  var response = webApiRequest('LSFORMS' , {} ); 
+  if (response.error) return [];
+  else
+      {
+        var r = [];
+        for( var i=0; i<response.result.length; i++) r.push(response.result[i]['FORMNAME'])
+        return r;
+      }                
+}  
+
+export function loadForm(formName)
+{ 
+  var response = webApiRequest('LOADFORM' , {formName:formName} ); 
+  if (response.error) return [];
+  var r = {};
+  try
+  { r = JSON.parse(response.result['FORMDATA'])
+    return r;
+  }  
+  catch { return {} }
+  
+}  
 
 
 export function fetchRecord( sql , etc )
@@ -1392,14 +1546,69 @@ export function insertIntoTable( tableName , fields , etc )
 }
 
 
-export function _copyStringToClipboard (str) 
+
+export function updateTable( tableName , ID_field , ID_value ,  fields ,  etc )
+{
+  var _etc = false;
+   if(etc) _etc=true;
+   
+   var response = webApiRequest( 'UPDATETABLE' , {tableName:tableName , ID_field:ID_field, ID_value:ID_value, fields:fields  , etc:_etc} );
+   return response;
+}
+
+
+
+export function copyObjToClipboard(obj , objName) 
+{
+  const json = JSON.stringify(obj, null, 2);
+
+  // Entferne Anführungszeichen von Schlüsseln
+  let jsObject = json.replace(/"([^"]+)":/g, '$1:');
+
+  if(objName) jsObject = 'export const '+objName+' = ' + jsObject;
+
+  // Kopiere in Zwischenablage
+  navigator.clipboard.writeText(jsObject)
+    .then(() => console.log("Objekt erfolgreich kopiert!"))
+    .catch(err => alert("Fehler beim Kopieren:", err));
+}
+
+
+export async function read_CSV_fromClipboard() {
+  try {
+    const text = await navigator.clipboard.readText();
+    const lines = text.trim().split("\n");
+    const headers = lines[0].split("\t").map(h => h.trim());
+
+    const data = lines.slice(1).map(line => {
+      const values = line.split("\t").map(v => v.trim());
+      const obj = {};
+      headers.forEach((key, i) => {
+        obj[key] = values[i] ?? null;
+      });
+      return obj;
+    });
+
+    return data;
+  } catch (err) {
+    alert("Fehler beim Lesen der Zwischenablage: " + err);
+    return null;
+  }
+}
+
+
+
+
+
+
+export function copyStringToClipboard (str) 
 {
   log( 'utils.copyStringToClipboard('+str+')' );
   
   navigator.clipboard
     .writeText(str)
     .then(() => {
-      alert("Inhalt in Zwischenablage kopiert");
+      console.log("Inhalt in Zwischenablage kopiert");
     })
     .catch(() => {
       alert("Inhalt konnte nicht in die Zwischenablage kopiert werden !");
@@ -1407,7 +1616,7 @@ export function _copyStringToClipboard (str)
 }
 
 
-export function copyStringToClipboard (str) 
+export function _copyStringToClipboard (str) 
 {
   let text = str;
  
@@ -1935,6 +2144,9 @@ export function keys_toUpperCase(jsn)
 
 export function isMovieFile(ext)
 {
+    // besitzt ext einen vorangestellten Punkt ?
+    if(ext.indexOf('.')==0) ext = ext.substring(1);
+
    for(var i=0; i<globals.movieFileExtensions.length; i++)
    {
      if(ext.toUpperCase()==globals.movieFileExtensions[i].toUpperCase()) return true;
@@ -1956,7 +2168,7 @@ export function isImageFile(ext)
 
 // parst eine Zeichenkette in ein JSON-Objekt - siehe Beispiel unten
 export function parseToJSON(inputStr)  
-  { debugger;
+  {
     let result = {};
     let pairs = inputStr.split(";").map(pair => pair.trim()).filter(pair => pair); // Aufteilen & leere Elemente entfernen
 
@@ -2001,3 +2213,176 @@ console.log(jsonObj);
     Land: "DE"
 }
 */
+
+
+// utils.js
+
+/**
+ * Liefert eine alphabetisch sortierte Liste aller verwendbaren CSS-Klassen
+ * aus den aktuell eingebundenen Stylesheets (sofern zugreifbar).
+ *
+ * Rückgabe:  string[] Array mit CSS-Klassen-Selektoren (z. B. ".myClass")
+ */
+export function getAvailableCSSClasses() 
+{
+  const result = new Set();
+
+  Array.from(document.styleSheets).forEach(sheet => {
+    try {
+      const rules = sheet.cssRules || sheet.rules;
+      for (const rule of rules) {
+        if (rule.selectorText) {
+          rule.selectorText
+            .split(',')
+            .map(sel => sel.trim())
+            .filter(sel => sel.startsWith('.'))
+            .forEach(sel => result.add(sel));
+        }
+      }
+    } catch (err) {
+      console.warn("CSS-Klassen konnten nicht ausgelesen werden (CORS):", sheet.href);
+    }
+  });
+  return Array.from(result).sort();
+};
+
+
+export function getComputedStyleValue(dom, prop) 
+{
+  return window.getComputedStyle(dom)[prop];
+}
+
+
+export function printContent( c )
+{
+  const container = c.DOMelement;
+
+   const popup = window.open('', '', 'fullscreen=yes')
+
+   if (!popup) {
+    alert("Popup-Blocker aktiv? Bitte erlauben.");
+    return;
+  }
+
+  // HTML-Grundstruktur vorbereiten
+  const doc = popup.document;
+  doc.open();
+  doc.write('<!DOCTYPE html><html><head><title>Pivot-Druck</title></head><body></body></html>');
+  doc.close();
+
+  // Styles übernehmen (nur eigene)
+  const style = doc.createElement('style');
+  style.textContent = [...document.styleSheets]
+    .map(sheet => {
+      try {
+        return [...sheet.cssRules].map(rule => rule.cssText).join('\n');
+      } catch (e) {
+        return ''; // Fremde Domains ignorieren
+      }
+    })
+    .join('\n');
+  doc.head.appendChild(style);
+
+  // Inhalt klonen
+  const clone = container.cloneNode(true);
+  doc.body.appendChild(clone);
+
+  // Optional: Vollbild
+  doc.body.style.margin = "0";
+  doc.body.style.padding = "20px";
+  doc.body.style.fontFamily = "sans-serif";
+  doc.body.style.background = "white";
+
+  
+setTimeout(() => {
+    try {
+      popup.focus();
+      popup.print();
+      popup.close();
+    } catch (e) {
+      console.warn("Popup konnte nicht automatisch verarbeitet werden:", e);
+    }
+  }, 1000);
+
+}
+
+
+
+// Lädt demo.svg, macht es responsiv und hängt Click-Handler an bestimmte IDs.
+export async function loadSVG_from_drawIO(container, svgUrl) {
+  // 1) SVG laden
+  const res = await fetch(svgUrl);
+  if (!res.ok) throw new Error(`SVG konnte nicht geladen werden: ${res.status} ${res.statusText}`);
+  const svgText = await res.text();
+
+  // 2) In den SVG-DOM parsen
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(svgText, 'image/svg+xml');
+  let svgEl = doc.documentElement;
+
+  // 3) Sicherheit: <script>-Tags entfernen
+  svgEl.querySelectorAll('script').forEach(s => s.remove());
+
+  // 4) Feste Breite/Höhe entfernen
+  svgEl.removeAttribute('width');
+  svgEl.removeAttribute('height');
+
+  // 5) Style und Skalierung setzen
+  svgEl.setAttribute('style', 'width:100%; height:100%; display:block;');
+  svgEl.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+
+  // 6) In den Container einsetzen
+  container.innerHTML = '';
+  svgEl = document.importNode(svgEl, true);
+  container.appendChild(svgEl);
+
+  // 7) viewBox automatisch setzen, wenn nicht vorhanden
+  if (!svgEl.hasAttribute('viewBox')) {
+    try {
+      const bbox = svgEl.getBBox();
+      svgEl.setAttribute('viewBox', `0 0 ${bbox.width} ${bbox.height}`);
+    } catch (e) {
+      console.warn('viewBox konnte nicht automatisch gesetzt werden:', e);
+    }
+  }
+
+  // 8) Interaktionen verdrahten
+  wireInteractions(svgEl);
+}
+
+// Hier definierst du, welche Elemente klickbar sein sollen
+function wireInteractions(svgRoot) 
+{
+  // Beispiel: auf konkrete IDs hören
+  const clickableIds = ['pump1', 'valve2', 'boilerA']; // <== an deine IDs anpassen
+  clickableIds.forEach(id => {
+    const el = svgRoot.querySelector('#' + CSS.escape(id));
+    if (!el) return;
+    // Für Gruppen ggf. Pointer-Events aktivieren:
+    // el.style.pointerEvents = 'bounding-box';
+    el.classList.add('clickable');
+    el.setAttribute('tabindex', '0'); // Tastaturfokus (Barrierefreiheit)
+
+    const onClick = (ev) => {
+      ev.stopPropagation();
+      el.classList.toggle('active');           // optisches Feedback
+      console.log(`Klick auf ${id}`);          // hier deine Logik
+      // Beispiel: Status umschalten, Meldungen senden usw.
+    };
+    const onKey = (ev) => {
+      if (ev.key === 'Enter' || ev.key === ' ') { onClick(ev); }
+    };
+
+    el.addEventListener('click', onClick);
+    el.addEventListener('keydown', onKey);
+  });
+
+  // Bonus: Event Delegation über data-Attribute
+  svgRoot.addEventListener('click', (ev) => {
+    const node = ev.target.closest('[data-action]');
+    if (!node) return;
+    const action = node.getAttribute('data-action');
+    console.log('Delegierter Klick auf Action:', action);
+    // switch(action) { case 'open-valve': ... }
+  });
+}

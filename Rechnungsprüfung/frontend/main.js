@@ -1,0 +1,47 @@
+
+import * as globals      from "./tfWebApp/globals.js";
+import * as dialogs      from "./tfWebApp/tfDialogs.js";
+import * as app          from "./tfWebApp/tfWebApp.js"; 
+import * as sysadmin     from "./tfWebApp/tfSysAdmin.js";
+
+
+// Anwendungsspezifische Einbindungen
+import { rpGlasCOM}      from "./rechnungsPruefung_GLASCOM.js";
+
+
+var caption1           = '';
+var caption2           = '';
+
+export function main(capt1)
+{
+  caption1 = capt1;
+  caption2 = '';
+  
+  globals.sysMenu.push( {caption:'Benutzer' , action:function(){sysadmin.adminUser()} } );
+  globals.sysMenu.push( {caption:'Berechtigungen' , action:function(){sysadmin.adminGrants()} } );
+  globals.sysMenu.push( {caption:'Info' , action:function(){app.sysInfo()} } );
+  globals.sysMenu.push( {caption:'API-Test (nur in der Entwicklungsphase)' , action:function(){app.APItest()} } );
+  globals.sysMenu.push( {caption:'Symbol-Bibliothek (nur in der Entwicklungsphase)' , action:function(){dialogs.browseSymbols()} } );
+  globals.sysMenu.push( {caption:'GUI Builder (nur in der Entwicklungsphase)' , action:function(){app.guiBuilder()} } );
+  globals.sysMenu.push( {caption:'Abbrechen' , action:function(){} } );
+  
+  app.login( ()=>{  caption2 = 'Willkommen ' + globals.session.userName ; run() });
+  
+}  
+
+
+export async function run()
+{ 
+  var ws       = app.startWebApp(caption1,caption2).activeWorkspace;
+
+  ws.buildGridLayout("21x21")
+  var btn= dialogs.addButton(ws.handle,"",1,21,2,1,{caption:"Start",glyph:"table-list"});
+      btn.backgroundColor = 'gray';
+      btn.callBack_onClick = function(){  new rpGlasCOM(); } ;  
+
+  ws.handle.DOMelement.style.backgroundImage='url("'+globals.backgroundImage+'")';
+  ws.handle.DOMelement.style.backgroundSize ='cover';
+  
+  new rpGlasCOM();
+} 
+

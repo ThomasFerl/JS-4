@@ -6,7 +6,22 @@ import * as chartJS  from "./chart.js";
 import { TFWindow   } from "./tfWindows.js"; 
 import { TFTreeView  }from "./tfTreeView.js"; 
 import { THTMLTable } from "./tfGrid.js";
+import { addButton, addLabel, addPanel, createWindow } from "./tfDialogs.js";
 
+const fontList = [
+  "Arial", "Verdana", "Helvetica", "Tahoma", "Trebuchet MS",
+  "Times New Roman", "Georgia", "Garamond", "Courier New", "Lucida Console",
+  "Comic Sans MS", "Impact", "Segoe UI", "Calibri", "Cambria",
+  "Fira Code", "Roboto", "Open Sans", "Lato", "Monaco"
+];
+
+let objCounter = {};
+function countObj( objName )
+{
+  if(!objCounter[objName]) objCounter[objName] = 0;
+  objCounter[objName]++;
+  return objName + objCounter[objName];
+}
 
 function assignMouseEventData( e , obj )
 {
@@ -141,7 +156,8 @@ export class TFMenu
     });
   }
 
- 
+
+
   run(event) {
     event.preventDefault();
   
@@ -260,6 +276,7 @@ export class TFObject
           // damit der Prozess trotzdem funktioniert...
           // Es wird ein "Minimal-Objekt"als Parent erstellt ...
           this.parent               = {isTFObject:false};  // erstellung eines Minimal-Objektes mit den notw. Properties
+          this.parent.name          = 'HTMLelement';
           this.parent.objName       = 'HTMLelement';
           this.parent.layout        = function(){return window.getComputedStyle(this.parent.DOMelement).getPropertyValue("display").toUpperCase()}.bind(this);
   
@@ -278,7 +295,8 @@ export class TFObject
                this.parent       = aParent; 
                this.parentWidth  = parent.clientWidth
                this.parentHeight = parent.clientHeight;
-               if(this.parent.childList) this.parent.childList.push(this);
+               if(!params.dontRegister)
+                  if(this.parent.childList) this.parent.childList.push(this);
         }  
 
     // Params aufbereiten / ergänzen 
@@ -304,6 +322,7 @@ export class TFObject
   
     this.isTFObject   = true;
     this.objName      = this.constructor.name;  
+    this.name         = countObj(this.objName);
     this.ID           = this.objName + Date.now()+Math.round(Math.random()*100);
     this.dataBinding  = {};
     this.childList    = [];
@@ -352,6 +371,8 @@ export class TFObject
     this.callBack_onDrop       = undefined;   
     this.callBack_onDragEnd    = undefined;
 
+    this.dataFieldName         = '';
+
 
    this.render();  
 
@@ -371,7 +392,74 @@ export class TFObject
 
     this.DOMelement.setAttribute('ID'   ,  this.ID );
 
-    if(this.isDragable) 
+    if(this.isDragable)     this.setDragable(); // das element "dragable" machen
+    if (this.isDropTarget)  this.setDropTarget(); 
+    
+
+    this.left   = this.params.left;
+    this.top    = this.params.top;
+    this.width  = this.params.width;
+    this.height = this.params.height;  
+
+    if(this.params.backgroundColor) this.backgroundColor = this.params.backgroundColor;
+    if(this.params.color)           this.color           = this.params.color;
+    if(this.params.fontSize)        this.fontSize        = this.params.fontSize;
+    if(this.params.fontWeight)      this.fontWeight      = this.params.fontWeight;
+    if(this.params.gap)             this.gap             = this.params.gap;
+    if(this.params.placeItems)      this.placeItems      = this.params.placeItems;
+    if(this.params.justifyContent)  this.justifyContent  = this.params.justifyContent;
+    if(this.params.alignItems)      this.alignItems      = this.params.alignItems;
+    if(this.params.flexDirection)   this.flexDirection   = this.params.flexDirection;
+    if(this.params.overflow)        this.overflow        = this.params.overflow;
+    if(this.params.display)         this.display         = this.params.display;
+    if(this.params.opacity)         this.opacity         = this.params.opacity;
+    if(this.params.shadow)          this.shadow          = this.params.shadow;
+    if(this.params.borderRadius)    this.borderRadius    = this.params.borderRadius;
+    if(this.params.borderWidth)     this.borderWidth     = this.params.borderWidth;
+    if(this.params.borderColor)     this.borderColor     = this.params.borderColor;
+    if(this.params.padding)         this.padding         = this.params.padding;
+    if(this.params.paddingTop)      this.paddingTop      = this.params.paddingTop;
+    if(this.params.paddingLeft)     this.paddingLeft     = this.params.paddingLeft;
+    if(this.params.paddingRight)    this.paddingRight    = this.params.paddingRight;
+    if(this.params.paddingBottom)   this.paddingBottom   = this.params.paddingBottom;
+    if(this.params.margin)          this.margin          = this.params.margin;
+    if(this.params.marginTop)       this.marginTop       = this.params.marginTop;
+    if(this.params.marginLeft)      this.marginLeft      = this.params.marginLeft;
+    if(this.params.marginRight)     this.marginRight     = this.params.marginRight;
+    if(this.params.marginBottom)    this.marginBottom    = this.params.marginBottom;
+    if(this.params.gridTemplateAreas) this.gridTemplateAreas = this.params.gridTemplateAreas;
+    if(this.params.blur)            this.blur            = this.params.blur;
+
+
+    this.DOMelement.tfObjInstance =  this;   
+    this.DOMelement.data          =  this;   // obsolet
+   
+          this.DOMelement.addEventListener('wheel', function(e) {if (this.callBack_onWheel) this.callBack_onWheel(e, this.dataBinding);}.bind(this));
+          this.DOMelement.addEventListener('click', function(e) {if (this.callBack_onClick) this.callBack_onClick(e, this.dataBinding);}.bind(this));
+          this.DOMelement.addEventListener('dblclick', function(e) {if (this.callBack_onDblClick) this.callBack_onDblClick(e, this.dataBinding);}.bind(this));
+          this.DOMelement.addEventListener('mousemove', function(e) {if (this.callBack_onMouseMove) this.callBack_onMouseMove(e, this.dataBinding);}.bind(this));
+          this.DOMelement.addEventListener('mouseleave', function(e) {if (this.callBack_onMouseOut) this.callBack_onMouseOut(e, this.dataBinding);}.bind(this));
+      
+          if(this.popupMenu) { this.addPopupMenu(this.popupMenu)}
+          else this.DOMelement.addEventListener('contextmenu', (e)=>{e.preventDefault();
+                                                                     if( this.callBack_onClick) this.callBack_onClick (e,this.dataBinding) 
+                                                                    });   
+          
+                                                                    this.DOMelement.addEventListener('mousedown', function(e) {if (this.callBack_onMouseDown) this.callBack_onMouseDown(e, this.dataBinding);}.bind(this));                                                     
+          this.DOMelement.addEventListener('mouseup', function(e) {if (this.callBack_onMouseUp) this.callBack_onMouseUp(e, this.dataBinding);}.bind(this));                                                     
+          this.DOMelement.addEventListener('contextmenu', function(e) {if (this.callBack_onContextMenu) this.callBack_onContextMenu(e, this.dataBinding);}.bind(this));                                                     
+          
+          this.DOMelement.addEventListener('keydown', function(e) { if (this.callBack_onKeyDown) this.callBack_onKeyDown(e, this.dataBinding);}.bind(this));                                                     
+          this.DOMelement.addEventListener('keyup', function(e) {if (this.callBack_onKeyUp) this.callBack_onKeyUp(e, this.dataBinding);}.bind(this));                                                     
+  } 
+
+
+  setDragable()
+  {
+    this.isDragable        = true;
+    this.params.isDragable = true;
+    if(!this.DOMelement) return;
+    else
     { // das element "dragable" machen
       this.DOMelement.setAttribute('draggable', true);
       
@@ -394,9 +482,16 @@ export class TFObject
                                                            if( this.callBack_onDragEnd) this.callBack_onDragEnd(e);
                                                          });  
 
-    }
-    
-    if (this.isDropTarget) 
+    } 
+  }
+
+
+  setDropTarget()
+  {
+    this.isDropTarget       = true;
+    this.params.dropTarget  = true;
+    if(!this.DOMelement) return;
+    else
     {
       this.DOMelement.addEventListener("dragover", (e) => {
         e.preventDefault();
@@ -405,7 +500,6 @@ export class TFObject
     
       this.DOMelement.addEventListener("drop", (e) => {
         e.preventDefault();
-    
         const items = e.dataTransfer.items;
         const dropResult = {};
         let pending = 0;
@@ -449,64 +543,8 @@ export class TFObject
       });
     }
     
+  }
 
-    this.left   = this.params.left;
-    this.top    = this.params.top;
-    this.width  = this.params.width;
-    this.height = this.params.height;  
-
-    if(this.params.backgroundColor) this.backgroundColor = this.params.backgroundColor;
-    if(this.params.color)           this.color           = this.params.color;
-    if(this.params.fontSize)        this.fontSize        = this.params.fontSize;
-    if(this.params.fontWeight)      this.fontWeight      = this.params.fontWeight;
-    if(this.params.gap)             this.gap             = this.params.gap;
-    if(this.params.placeItems)      this.placeItems      = this.params.placeItems;
-    if(this.params.justifyContent)  this.justifyContent  = this.params.justifyContent;
-    if(this.params.alignItems)      this.alignItems      = this.params.alignItems;
-    if(this.params.flexDirection)   this.flexDirection   = this.params.flexDirection;
-    if(this.params.overflow)        this.overflow        = this.params.overflow;
-    if(this.params.display)         this.display         = this.params.display;
-    if(this.params.opacity)         this.opacity         = this.params.opacity;
-    if(this.params.shadow)          this.shadow          = this.params.shadow;
-    if(this.params.borderRadius)    this.borderRadius    = this.params.borderRadius;
-    if(this.params.borderWidth)     this.borderWidth     = this.params.borderWidth;
-    if(this.params.borderColor)     this.borderColor     = this.params.borderColor;
-    if(this.params.padding)         this.padding         = this.params.padding;
-    if(this.params.paddingTop)      this.paddingTop      = this.params.paddingTop;
-    if(this.params.paddingLeft)     this.paddingLeft     = this.params.paddingLeft;
-    if(this.params.paddingRight)    this.paddingRight    = this.params.paddingRight;
-    if(this.params.paddingBottom)   this.paddingBottom   = this.params.paddingBottom;
-    if(this.params.margin)          this.margin          = this.params.margin;
-    if(this.params.marginTop)       this.marginTop       = this.params.marginTop;
-    if(this.params.marginLeft)      this.marginLeft      = this.params.marginLeft;
-    if(this.params.marginRight)     this.marginRight     = this.params.marginRight;
-    if(this.params.marginBottom)    this.marginBottom    = this.params.marginBottom;
-    if(this.params.gridTemplateAreas) this.gridTemplateAreas = this.params.gridTemplateAreas;
-    if(this.params.blur)            this.blur            = this.params.blur;
-
-
-    this.DOMelement.data =  this;   
-   
-          this.DOMelement.addEventListener('wheel', function(e) {if (this.callBack_onWheel) this.callBack_onWheel(e, this.dataBinding);}.bind(this));
-          this.DOMelement.addEventListener('click', function(e) {if (this.callBack_onClick) this.callBack_onClick(e, this.dataBinding);}.bind(this));
-          this.DOMelement.addEventListener('dblclick', function(e) {if (this.callBack_onDblClick) this.callBack_onDblClick(e, this.dataBinding);}.bind(this));
-          this.DOMelement.addEventListener('mousemove', function(e) {if (this.callBack_onMouseMove) this.callBack_onMouseMove(e, this.dataBinding);}.bind(this));
-          this.DOMelement.addEventListener('mouseleave', function(e) {if (this.callBack_onMouseOut) this.callBack_onMouseOut(e, this.dataBinding);}.bind(this));
-          
-          console.log(this.constructor.name+" popup:"+this.popupMenu);
-
-          if(this.popupMenu) { this.addPopupMenu(this.popupMenu)}
-          else this.DOMelement.addEventListener('contextmenu', (e)=>{e.preventDefault();
-                                                                     if( this.callBack_onClick) this.callBack_onClick (e,this.dataBinding) 
-                                                                    });   
-          
-                                                                    this.DOMelement.addEventListener('mousedown', function(e) {if (this.callBack_onMouseDown) this.callBack_onMouseDown(e, this.dataBinding);}.bind(this));                                                     
-          this.DOMelement.addEventListener('mouseup', function(e) {if (this.callBack_onMouseUp) this.callBack_onMouseUp(e, this.dataBinding);}.bind(this));                                                     
-          this.DOMelement.addEventListener('contextmenu', function(e) {if (this.callBack_onContextMenu) this.callBack_onContextMenu(e, this.dataBinding);}.bind(this));                                                     
-          
-          this.DOMelement.addEventListener('keydown', function(e) { if (this.callBack_onKeyDown) this.callBack_onKeyDown(e, this.dataBinding);}.bind(this));                                                     
-          this.DOMelement.addEventListener('keyup', function(e) {if (this.callBack_onKeyUp) this.callBack_onKeyUp(e, this.dataBinding);}.bind(this));                                                     
-  } 
 
   addPopupMenu(p)
   {  
@@ -519,6 +557,28 @@ export class TFObject
                                                           });   
   } 
 
+  setParent( newParent )
+  {
+    
+    if(this.parent === newParent) return; // nichts zu tun, wenn der Parent gleich bleibt
+
+    //aus der childListe des Parents entfernen ...
+    if(this.parent && this.parent.childList)
+      {
+        const index = this.parent.childList.indexOf(this);
+        if (index > -1) 
+        {
+          this.parent.childList.splice(index, 1);
+          // nur in ChildList eintragen, wenn es auch in einer childlist ist bzw. war. 
+          // für Hilfsobjekte gilt "dontRegister=true" und die ziehen nur aum DOM-Ebene um ;-)
+          newParent.childList.push(this);
+        }  
+      } 
+
+    newParent.appendChild(this.DOMelement);
+    
+    this.parent = newParent;
+  }
 
   set id(value)
   {
@@ -532,15 +592,22 @@ export class TFObject
   }
 
 
-  set css(value)
+  getComputedStyleValue(propertyName)
   {
-    this.DOMelement.className = value;
+    return utils.getComputedStyleValue( this.DOMelement , propertyName );
   }
 
 
+  set css(value)
+  { 
+    this.params.css = value;
+    if (this.DOMelement) this.DOMelement.className = value;
+  }
+
   get css()
   {
-    return this.DOMelement.className;
+    if(this.DOMelement) return this.DOMelement.className;
+    else                return this.params.css;                    
   }
 
   set left( value )
@@ -585,13 +652,18 @@ export class TFObject
 
   get width()
   {
-    if(this.hasGridLayout()) return this.gridWidth;
-    else                     return this.widthPx;
+    var result = 0;
+    if(this.hasGridLayout()) result = this.gridWidth;
+    else                     result = this.widthPx;
+    
+     if (this.DOMelement.style.width)  result = this.DOMelement.style.width;
+
+    return result;
   } 
 
 
   set height( value )
-  {
+  { 
     if(this.hasGridLayout())
     {   
       if (typeof value === 'string') 
@@ -604,12 +676,17 @@ export class TFObject
      else this.heightPx = value;
   } 
 
+
   get height()
   {
-    if(this.hasGridLayout()) return this.gridHeight;
-    else                     return this.heightPx;
+    var result = 0;
+    if(this.hasGridLayout()) result = this.gridHeight;
+    else                     result = this.heightPx;
+
+    if ( this.DOMelement.style.height )  result = this.DOMelement.style.height;
+
+    return result;
   } 
-   
 
   set zIndex( value )
   {
@@ -618,7 +695,7 @@ export class TFObject
 
   get zIndex()
   {
-    return this.DOMelement.style.zIndex;
+    return this.DOMelement?.style.zIndex || this.getComputedStyleValue('zIndex');
   }
 
 
@@ -659,7 +736,7 @@ export class TFObject
   {
     //var rect = this.DOMelement.getBoundingClientRect();
     //return Math.round(rect.width);
-    return this.DOMelement.clientWidth;
+    return this.DOMelement.offsetWidth; //clientWidth;
   } 
 
 
@@ -674,7 +751,7 @@ export class TFObject
   {
     //var rect = this.DOMelement.getBoundingClientRect();
     //return  Math.round(rect.height);
-    return this.DOMelement.clientHeight;
+    return this.DOMelement.offsetHeight; //clientHeight;
  } 
 
 
@@ -682,9 +759,10 @@ export class TFObject
 
   set gridLeft( g )
   {
+      var w = this.gridWidth;
       this.grid.left = parseInt(g, 10);
       this.DOMelement.style.gridColumnStart  = this.grid.left;
-      this.DOMelement.style.gridColumnEnd    = this.grid.left +  this.grid.width;
+      this.DOMelement.style.gridColumnEnd    = this.grid.left +  w;
     }           
   
     get gridLeft()
@@ -696,9 +774,10 @@ export class TFObject
   
     set gridTop( g )
     {
+       var h = this.gridHeight;
        this.grid.top = parseInt(g, 10);
        this.DOMelement.style.gridRowStart = this.grid.top;  
-       this.DOMelement.style.gridRowEnd   = this.grid.top + this.grid.height;
+       this.DOMelement.style.gridRowEnd   = this.grid.top + h;
     }           
   
     get gridTop()
@@ -709,7 +788,7 @@ export class TFObject
   
     set gridWidth( g )
     {
-       this.grid.width = parseInt(g, 10);
+      this.grid.width = parseInt(g, 10);
        this.DOMelement.style.gridColumnEnd = this.gridLeft +  this.grid.width;
     }           
   
@@ -723,14 +802,14 @@ export class TFObject
   
     set gridHeight( g )
     {
-       this.grid.height        = g
+       this.grid.height  = parseInt(g,10)
        this.DOMelement.style.gridRowEnd = this.gridTop + this.grid.height;
     }           
   
     get gridHeight()
     {
-      this.grid.width = this.DOMelement.style.gridRowEnd - this.gridTop;
-      return  this.grid.width;
+      this.grid.height = parseInt(this.DOMelement.style.gridRowEnd,10) - this.gridTop;
+      return  this.grid.height;
     }     
   
 
@@ -744,67 +823,77 @@ export class TFObject
       this.DOMelement.style.gridTemplateAreas = value;
     }
 
-  
-get fontSize()
-{
-  return this.DOMelement.style.fontSize;
-}
 
 set fontSize(value) 
 {
-  this.DOMelement.style.fontSize = value;
-}
+  this.params.fontSize = value;
+  if(this.DOMelement) this.DOMelement.style.fontSize = value;
+} 
 
-
-get fontWeight()  
+get fontSize() 
 {
-  return this.DOMelement.style.fontWeight;
+  if(this.DOMelement) return this.DOMelement.style.fontSize || this.getComputedStyleValue('fontSize');
+  else                return this.params.fontSize;
 }
 
 set fontWeight(value)
 {
+  this.params.fontWeight = value;
   this.DOMelement.style.fontWeight = value;
 }
 
+get fontWeight() 
+{
+  if(this.DOMelement) return this.DOMelement?.style.fontWeight || this.getComputedStyleValue('fontWeight');
+  else                return this.params.fontWeight;
+}
 
 set gap(value)
 {
-  this.DOMelement.style.gap = value;
+  this.params.gap = value;
+  if(this.DOMelement) this.DOMelement.style.gap = value;
 }
 
 get gap()
 {
-  return this.DOMelement.style.gap;
+  if(this.DOMelement) return this.DOMelement.style.gap;
+  else                return this.params.gap;
 }
 
-  buildGridLayout( gridSizeOrTemplate )
-  {
+
+buildGridLayout( gridSizeOrTemplate )
+{
     utils.buildGridLayout( this , gridSizeOrTemplate , {stretch:this.params.stretch} );
-
-  }    
+}    
 
  
-  buildGridLayout_templateColumns(template)
-  {
+buildGridLayout_templateColumns(template)
+{
    utils.buildGridLayout_templateColumns( this , template , {stretch:this.params.stretch}  );
-  }  
+}  
 
  
-  buildGridLayout_templateRows(template)
-  {
+buildGridLayout_templateRows(template)
+{
    utils.buildGridLayout_templateRows( this , template , {stretch:this.params.stretch}  );
-  }  
+}  
 
-  buildBlockLayout() 
-  {
+buildBlockLayout() 
+{
     utils.buildBlockLayout( this );
+}
+
+buildFlexBoxLayout() 
+{
+   utils.buildFlexBoxLayout( this );
+}
+   
+
+appendChild(aDOMelement)
+  {
+    this.DOMelement.appendChild(aDOMelement);
   }
 
-  buildFlexBoxLayout() 
-  {
-   utils.buildFlexBoxLayout( this );
-  }
-   
 
   // der unterschied zwischen hide/show  u. setInvisible/setVisible besteht darin, dass ersteres das Objekt unsichtbar macht und es im Hintergrund noch existiert
   // während setInvisible/setVisible das Objekt aus dem DOM-Baum entfernt und wieder einfügt
@@ -824,14 +913,26 @@ get gap()
   show()
   {
     this.DOMelement.style.visibility = 'visible';
+    this.setVisible()
   }
 
 
   setVisible()
   {
-    this.DOMelement.style.display = 'block';  
+    this.DOMelement.style.display = 'grid';  
   }
 
+
+  set visible(value)
+  { 
+    if(value) this.show();
+    else this.setInvisible();
+  }
+
+  get visible()
+  {
+    return this.DOMelement.style.display !== 'none' && this.DOMelement.style.visibility !== 'hidden';
+  }
 
   set innerHTML(html)
   {
@@ -846,289 +947,333 @@ get gap()
 
   set display(value)
   {
-    this.DOMelement.style.display = value;  
+    this.params.display = value;
+    if(this.DOMelement) this.DOMelement.style.display = value;  
   }
 
 
-  get display()
+  get display() 
   {
-    return this.DOMelement.style.display;  
+    if(this.DOMelement) return this.DOMelement.style.display || this.getComputedStyleValue('display');
+    else                return this.params.display;
   }
 
 
   set position(value)
   {
-    this.DOMelement.style.position = value;  
+    this.params.position = value;
+    if(this.DOMelement) this.DOMelement.style.position = value;  
   }
 
 
   get position()
   {
-    return this.DOMelement.style.position;  
+    if(this.DOMelement) return this.DOMelement.style.position || this.getComputedStyleValue('position');
+    else                return this.params.position;  
   }
 
 
 
 set placeItems(value)
   {
-    this.DOMelement.style.placeItems = value;
+    this.params.placeItems = value;
+    if(this.DOMelement) this.DOMelement.style.placeItems = value;
   }
-
 
  get placeItems()
   {
-    return this.DOMelement.style.placeItems;
+    if(this.DOMelement) return this.DOMelement.style.placeItems || this.getComputedStyleValue('placeItems');
+    else                return this.params.placeItems; 
   }
+
 
   set justifyContent(value)
   {
-    this.DOMelement.style.justifyContent = value;  
+    this.params.justifyContent = value;
+    if(this.DOMelement) this.DOMelement.style.justifyContent = value;  
   }
 
 
   get justifyContent()
   {
-    return this.DOMelement.style.justifyContent;  
+    if(this.DOMelement) return this.DOMelement.style.justifyContent || this.getComputedStyleValue('justifyContent');
+    else                return this.params.justifyContent;
   }
 
 
   set alignItems(value)
   {
-    this.DOMelement.style.alignItems = value;  
+    this.params.alignItems = value; 
+    if(this.DOMelement) this.DOMelement.style.alignItems = value;  
   }
 
 
   get alignItems()
   {
-    return this.DOMelement.style.alignItems;  
+    if(this.DOMelement) return this.DOMelement.style.alignItems || this.getComputedStyleValue('alignItems');  
+    else                return this.params.alignItems;
   }
 
 
   set flexDirection(value)  
   {
-    this.DOMelement.style.flexDirection = value;
+    this.params.flexDirection = value;
+    if(this.DOMelement) this.DOMelement.style.flexDirection = value;
   }
  
 
   get flexDirection()   
   {
-    return this.DOMelement.style.flexDirection;
+    if(this.DOMelement) return this.DOMelement.style.flexDirection || this.getComputedStyleValue('flexDirection');
+    else                return this.params.flexDirection;
   }
   
 
+ set overflow(value) 
+  {
+    this.params.overflow = value;   
+    if(this.DOMelement) this.DOMelement.style.overflow = value;
+  }
+
   get overflow()  
-  {     
-    return this.DOMelement.style.overflow;  
+  {   
+    var v = '';  
+    if(this.DOMelement) v = this.DOMelement.style.overflow || this.getComputedStyleValue('overflow');  
+    else                v = this.params.overflow;
+
+    console.log("get overflow: " + v);
+    if(v=='') v= "auto";
+
+    return v;
   }
 
-  set overflow(value) 
+  set backgroundColor(value)
   {
-    this.DOMelement.style.overflow = value;
-  }
-
-
-  appendChild(aDOMelement)
-  {
-    this.DOMelement.appendChild(aDOMelement);
-  }
-
- set backgroundColor(value)
-  {
+    this.params.backgroundColor = value;
     if(this.DOMelement) this.DOMelement.style.backgroundColor = value;
   } 
 
   get backgroundColor()
   {
-    var r=undefined;
-    if(this.DOMelement)  r = this.DOMelement.style.backgroundColor;
-    return r;
+    if(this.DOMelement) return this.DOMelement.style.backgroundColor || this.getComputedStyleValue('backgroundColor');
+    else                return this.params.backgroundColor;
   } 
 
   set color(value)
   {
+    this.params.color = value;
     if(this.DOMelement) this.DOMelement.style.color = value;
   } 
 
   get color()
   {
-    var r=undefined;
-    if(this.DOMelement)  r = this.DOMelement.style.color;
-    return r;
+    if(this.DOMelement) return this.DOMelement.style.color || this.getComputedStyleValue('color');
+                        return this.params.color;
   } 
 
   
   set margin( value ) 
-  {
+  { 
+    this.params.margin = this.margin;
     if(this.DOMelement) this.DOMelement.style.margin = value;
   }
 
 
   get margin()
   {
-    return this.DOMelement.style.margin;
+    if(this.DOMelement) return this.DOMelement.style.margin || this.getComputedStyleValue('margin');
+    else                return this.params.margin;
   }
 
 
   set marginTop( value ) 
   {
+    this.params.marginTop = value;
     if(this.DOMelement) this.DOMelement.style.marginTop = value;
   }
 
-
   get marginTop()
   {
-    return this.DOMelement.style.marginTop;
+    if(this.DOMelement) return this.DOMelement.style.marginTop || this.getComputedStyleValue('marginTop');
+    else                return this.params.marginTop;
   }
+
 
   set marginLeft( value ) 
   {
+    this.params.marginLeft = value;
     if(this.DOMelement) this.DOMelement.style.marginLeft = value;
   }
 
 
   get marginLeft()
   {
-    return this.DOMelement.style.marginLeft;
+    if(this.DOMelement) return this.DOMelement.style.marginLeft || this.getComputedStyleValue('marginLeft');
+    else                return this.params.marginLeft;
   }
 
 
   set marginRight( value ) 
   {
+    this.params.marginRight = value;
     if(this.DOMelement) this.DOMelement.style.marginRight = value;
   }
 
 
   get marginRight()
   {
-    return this.DOMelement.style.marginRight;
+    if(this.DOMelement) return this.DOMelement.style.marginRight  || this.getComputedStyleValue('marginRight');
+    else                return this.params.marginRight;
   }
 
 
-set marginBottom( value ) 
+  set marginBottom( value ) 
   {
+    this.params.marginBottom = value;
     if(this.DOMelement) this.DOMelement.style.marginBottom = value;
   }
 
 
   get marginBottom()
   {
-    return this.DOMelement.style.marginBottom;
+    if(this.DOMelement) return this.DOMelement.style.marginBottom || this.getComputedStyleValue('marginBottom');
+    else                return this.params.marginBottom;
   }
+
 
   set padding( value ) 
   {
+    this.params.padding = value; 
     if(this.DOMelement) this.DOMelement.style.padding = value;
   }
 
   get padding()
   {
-    return this.DOMelement.style.padding;
+    if(this.DOMelement) return this.DOMelement.style.padding || this.getComputedStyleValue('padding');
+    else                return this.params.padding; 
   }
 
   set paddingTop( value )   
   {
+    this.params.paddingTop = value;
     if(this.DOMelement) this.DOMelement.style.paddingTop = value; 
   }
 
-
   get paddingTop()
   {
-    return this.DOMelement.style.paddingTop;
+    if(this.DOMelement) return this.DOMelement.style.paddingTop || this.getComputedStyleValue('paddingTop');
+    else                return this.params.paddingTop;
   }
 
   set paddingLeft( value )
   {
+    this.params.paddingLeft;
     if(this.DOMelement) this.DOMelement.style.paddingLeft = value;
   }
 
   get paddingLeft()
   {
-    return this.DOMelement.style.paddingLeft;
+    if(this.DOMelement) return this.DOMelement.style.paddingLeft || this.getComputedStyleValue('paddingLeft');
+    else                return this.params.paddingLeft;
   }
+
 
   set paddingRight( value )
   {
+    this.params.paddingRight = value;  
     if(this.DOMelement) this.DOMelement.style.paddingRight = value;
   }
 
   get paddingRight()
   {
-    return this.DOMelement.style.paddingRight;
+    if(this.DOMelement) return this.DOMelement.style.paddingRight || this.getComputedStyleValue('paddingRight');
+    else                return this.params,this.paddingRight;
   }
+
 
   set paddingBottom( value )
   {
+    this.params.paddingBottom = value; 
     if(this.DOMelement) this.DOMelement.style.paddingBottom = value;
   }
 
   get paddingBottom()
   {
-    return this.DOMelement.style.paddingBottom;
+    if(this.DOMelement) return this.DOMelement.style.paddingBottom || this.getComputedStyleValue('paddingBottom');
+    else                return this.params.paddingBottom;
   }
 
   set borderWidth( value )
   {
-    if(this.DOMelement) this.DOMelement.style.borderWidth = value;
+    this.params.borderWidth = value;
+    if(this.DOMelement) this.DOMelement.style.border = value + " solid " + this.borderColor;
   }
+
+
 
   get borderWidth()
   {
-    return this.DOMelement.style.borderWidth;
+    if(this.DOMelement) return this.DOMelement.style.borderWidth || this.getComputedStyleValue('borderWidth');
+    else                return this.params.borderWidth;
   }
 
   set borderColor( value )
   {
+    this.params.borderColor = value;   
     if(this.DOMelement) this.DOMelement.style.borderColor = value;
   }
 
   get borderColor()
   {
-    return this.DOMelement.style.borderColor;
+    if(this.DOMelement) return this.DOMelement.style.borderColor || this.getComputedStyleValue('borderColor');
+    else                return this.params.borderColor;
   }
 
   set borderRadius(value) 
   {
-    if (this.DOMelement) {
-        this.DOMelement.style.borderRadius = typeof value === 'string' ? value : value + 'px';
-    }
-}
+    this.params.borderRadius = value;
+    if (this.DOMelement) this.DOMelement.style.borderRadius = typeof value === 'string' ? value : value + 'px';
+  }
 
 
   get borderRadius()
   {
-    return this.DOMelement.style.borderRadius;
+    if(this.DOMelement) return this.DOMelement.style.borderRadius || this.getComputedStyleValue('borderRadius');
+    else                return this.params.borderRadius;
   }
 
 
 set blur(value)
 {
+  this.params.blur = value;
   if(this.DOMelement) this.DOMelement.style.filter = 'blur('+value+'px)';
 }
 
 get blur()
 {
-  return this.DOMelement.style.filter;
+  if(this.DOMelement) return this.DOMelement.style.filter || 0;
+  else                return this.params.blur;
 }
 
 
 set opacity(value)  
 {
+  this.params.opacity = value;
   if(this.DOMelement) this.DOMelement.style.opacity = value;
 }
 
 get opacity()
 {
-  return this.DOMelement.style.opacity;
+  if(this.DOMelement) return this.DOMelement.style.opacity || this.getComputedStyleValue('opacity');
+  else                return this.params.opacity;
 }
 
 
+set shadow(value) 
+{
+    this.params.shadow = value;
 
-
-
-  set shadow(value) 
-  {
     this._shadowDepth = value;
-
     if (value === 0) {
         // Schatten entfernen
         if (this.DOMelement) this.DOMelement.style.boxShadow = 'none';
@@ -1141,10 +1286,12 @@ get opacity()
     }
 }
 
-  get shadow()
-  { 
-    return this._shadowDepth; 
-  }  
+get shadow() 
+{
+  if (this._shadowDepth != null) return this._shadowDepth;
+  else                           return this.params.shadow;
+}
+
 
 
   async fadeOut(duration , callBack_when_ready )
@@ -1216,20 +1363,163 @@ get opacity()
   }
 
 
+// alle Properties in einer einzigen JSON-Struktur zurückgeben...
+getProperties()
+{ 
+  var properties = [];
 
-  destroy()
+  properties.push( {level:1, label:'objName',type:'INPUT',value:this.objName} );
+  properties.push( {level:1, label:'name',type:'INPUT',value:this.name} );
+  properties.push( {level:1, label:'dataFieldName',type:'INPUT',value:this.dataFieldName || ''} );
+
+  properties.push( {level:1, label:'css',type:'LOOKUP',value:this.css || '' , items:utils.getAvailableCSSClasses() || [] } );
+  
+  properties.push( {level:1, label:'backgroundColor',type:'INPUT',value:this.backgroundColor, dialog:'COLORPICKER'} );
+  properties.push( {level:1, label:'color',type:'INPUT',value:this.color , dialog:'COLORPICKER'} ); 
+  properties.push( {level:2, label:'borderColor',type:'INPUT',value:this.borderColor, dialog:'COLORPICKER'} ); 
+  properties.push( {level:2, label:'borderWidth',type:'INPUT',value:this.borderWidth} ); 
+  properties.push( {level:2, label:'borderRadius',type:'INPUT',value:this.borderRadius} ); 
+  properties.push( {level:2, label:'shadow',type:'INPUT',value:this.shadow} ); 
+  properties.push( {level:3, label:'opacity',type:'INPUT',value:this.opacity} ); 
+  properties.push( {level:3, label:'blur',type:'INPUT',value:this.blur} ); 
+  //properties.push( {level:3, label:'innerHTML',type:'INPUT',value:this.innerHTML} ); 
+  properties.push( {level:3, label:'placeItems',type:'SELECT',value:this.placeItems , items:['start','end','center','stretch','baseline']} ); 
+  properties.push( {level:3, label:'justifyContent',type:'SELECT',value:this.justifyContent, items:['flex-start','flex-end','center','space-between','space-around','space-evenly','start','end','left','right']} ); 
+  properties.push( {level:3, label:'alignItems',type:'SELECT',value:this.alignItems, items:['stretch','flex-start','flex-end','center','baseline','start','end']} ); 
+                                                 
+  // Position im GRID-LAYOUT
+  properties.push( {level:3, label:'gridLeft',type:'INPUT',value:this.gridLeft} );
+  properties.push( {level:3, label:'gridTop',type:'INPUT',value:this.gridTop} );
+  properties.push( {level:3, label:'gridWidth',type:'INPUT',value:this.gridWidth} );
+  properties.push( {level:3, label:'gridHeight',type:'INPUT',value:this.gridHeight} ); 
+  properties.push( {level:3, label:'gap',type:'INPUT',value:this.gap} ); 
+
+  // Nach Initial-Positionierung -> nachträgliche Änderungen der Geometrie
+  properties.push( {level:1, label:'left',type:'INPUT',value:this.left} );
+  properties.push( {level:1, label:'top',type:'INPUT',value:this.top} );
+  properties.push( {level:1, label:'width',type:'INPUT',value:this.width} );
+  properties.push( {level:1, label:'height',type:'INPUT',value:this.height} );
+  properties.push( {level:3, label:'zIndex',type:'INPUT',value:this.zIndex} );
+
+  properties.push( {level:1, label:'margin',type:'INPUT',value:this.margin || '0px'} );
+  properties.push( {level:2, label:'marginLeft',type:'INPUT',value:this.marginLeft || '0px'} );
+  properties.push( {level:2, label:'marginRight',type:'INPUT',value:this.marginRight || '0px'} );
+  properties.push( {level:2, label:'marginTop',type:'INPUT',value:this.marginTop || '0px'} );
+  properties.push( {level:2, label:'marginBottom',type:'INPUT',value:this.marginBottom || '0px'} );
+
+  properties.push( {level:1, label:'padding',type:'INPUT',value:this.padding || '0px'} );
+  properties.push( {level:2, label:'paddingTop',type:'INPUT',value:this.paddingTop || '0px'} );
+  properties.push( {level:2, label:'paddingLeft',type:'INPUT',value:this.paddingLeft || '0px'} );
+  properties.push( {level:2, label:'paddingRight',type:'INPUT',value:this.paddingRight || '0px'} );
+  properties.push( {level:2, label:'paddingBottom',type:'INPUT',value:this.paddingBottom || '0px'} );
+
+  properties.push( {level:1, label:'borderWidth',type:'INPUT',value:this.borderWidth || '0px'} );
+  properties.push( {level:2, label:'borderColor',type:'INPUT',value:this.borderColor || '0px'} );
+  properties.push( {level:2, label:'borderRadius',type:'INPUT',value:this.borderRadius || '0px'} );
+  properties.push( {level:2, label:'shadow',type:'INPUT',value:this.shadow} );
+  
+  properties.push( {level:1, label:'overflow',type:'SELECT',value:this.overflow || "auto" , items:["hidden","auto"] } );
+  properties.push( {level:3, label:'visible',type:'SELECT',value:this.visible || "true"  , items:["true","false"] } );
+  properties.push( {level:3, label:'display',type:'SELECT',value:this.display || "flex" , items:['block', 'inline', 'inline-block', 'flex', 'inline-flex', 'grid', 'inline-grid', 'none', 'contents', 'table', 'table-row', 'table-cell', 'list-item']} );
+  properties.push( {level:3, label:'position',type:'SELECT',value:this.position, items:['static', 'relative', 'absolute', 'fixed', 'sticky'] });
+  properties.push( {level:3, label:'flexDirection',type:'SELECT',value:this.flexDirection  || "row", items:["row","column","row-reverse","column-reverse"]} );
+
+  
+
+// Grid-Infos holen
+  var dim = utils.getGridLayoutDimension(this);
+  if(dim) properties.push( {level:4, label:'gridLayout',type:'INPUT',value:dim.gridColumnCount+'x'+dim.gridRowCount} );
+
+ // console.log("get Properties: " + JSON.stringify(properties))
+  
+  return properties;
+}
+
+getConstructionProperties()
+{
+  const properties = this.getProperties();
+  const propObj = {};
+
+  for (const { label, value } of properties) { propObj[label] = value; }
+
+  console.log(' - getConstructionProperties:');
+  console.log('  ' + propObj.objName + "("+propObj.name+") -> ");
+  console.log(JSON.stringify(propObj));
+
+  // Rekursiv alle Kinder durchgehen
+  var childs = [];
+  if (this.childList && this.childList.length > 0)
+     for(var i=0; i<this.childList.length; i++) 
+     {
+       var child = this.childList[i];
+       console.log('dive in recursion for child: ' + child.objName + '('+child.name+') ....' ); 
+       childs.push(child.getConstructionProperties());
+     }  
+  
+  console.log('');
+  console.log('');   
+  console.log('---> Children: ' + JSON.stringify(childs));    
+  
+  propObj.children = childs;   
+  
+  return propObj;
+}
+
+
+
+setProperties( properties )
+{
+  var propertyObject = {};
+  
+  if (Array.isArray(properties)) propertyObject = Object.assign({}, ...properties);
+  else propertyObject = properties;
+
+  for (let key in propertyObject) 
+  if (key in this)
+    { 
+      console.log('set property "'+key+'" to "'+propertyObject[key]+'"');
+      if(propertyObject[key] != null) this[key] = propertyObject[key];
+    }    
+}
+
+
+removeChild( child )
+{
+  if(!child) return;
+
+  // finde das childObjekt in "meiner" childList ...
+ var idx = this.childList.indexOf(child);
+     if (idx > -1) this.childList.splice(idx, 1); // Element aus dem childListArray entfernen
+}
+
+
+remove()
+{
+  // alle "meine" childObjekte löschen
+  while(this.childList.lenth>0)
   {
-    while(this.childList.lenth>0)
-    {
-      var o=this.childList.pop();
-      o.destroy();
-      o=null;
-    }
-    
-    if(utils.isHTMLElement(this.parent)) this.parent.removeChild(this.DOMelement);
-    else this.parent.DOMelement.removeChild(this.DOMelement); 
-    
+    var o=this.childList.pop();
+    o.remove();
+    o=null;
   }
+
+  // "mich selbst" aus childListe "meines" parents entfernen ... 
+  if (this.parent)
+  {  
+     if(utils.isHTMLElement(this.parent)) this.parent.removeChild(this.DOMelement);
+     else this.parent.removeChild(this)
+  }   
+  
+  // HTML-Element aus DOM entfernen  
+  this.DOMelement.remove();
+}
+
+
+destroy()
+{
+  this.remove;  
+}
+
 }   //end class ...
 
 
@@ -1249,35 +1539,52 @@ export class TFSlider extends TFObject
     
     // this.render() wird von bereits von der TFObjects Basisklasse aufgerufen
     // alles was jetzt passiert passiert NACH "unserem" this.render()
-   
   }  
+
+   getProperties()
+   {
+    var properties = super.getProperties();
+    properties.push( {level:1, label:'caption',type:'INPUT',value:this.caption} );
+    properties.push( {level:1, label:'sliderMin',type:'INPUT',value:this.slider.min} ); 
+    properties.push( {level:1, label:'sliderMax',type:'INPUT',value:this.slider.max} );
+    properties.push( {level:1, label:'sliderStep',type:'INPUT',value:this.slider.step} );
+    properties.push( {level:1, label:'value',type:'INPUT',value:this.slider.value} );
+
+    return properties;
+  } 
+   
+    
 
   render()
   { 
     super.render();
-
+    this.build();
+  }
+  
+  build()
+  {
+    this.innerHTML             = '';
     this.onChange              = null;
     this.display               = 'flex';
     this.alignItems            = 'center';
     this.justifyContent        = 'center'; 
     this.overflow              = 'hidden';
     this.backgroundColor       = this.params.backgroundColor;
-    this.caption               = null;
+    this.sliderCaption         = null;
     
    
     var s = null;
 
     if(this.params.caption)
     {
-      this.buildGridLayout_templateColumns(this.params.captionLength+'em 1fr');
+      this.buildGridLayout_templateColumns(this.params.captionLength || this.params.caption.length +'em 1fr');
       this.buildGridLayout_templateRows('1fr');
-      this.caption = new TFLabel(this , 1 , 1 , 1 , 1 , {caption:this.params.caption,labelPosition:'LEFT'} );
-      if(this.params.fontSize) this.caption.fontSize = this.params.fontSize;
-      this.caption.textAlign  = 'LEFT';
-      this.caption.fontWeight = 'bold';
-      this.caption.marginLeft = '0.5em';
-      
-      s = new TFPanel(this , 2 , 1 , 1 , 1 , {css:"cssContainerPanel"} );
+      this.sliderCaption = new TFLabel(this , 1 , 1 , 1 , 1 , {caption:this.params.caption,labelPosition:'LEFT' , dontRegister:true} );
+      if(this.params.fontSize) this.sliderCaption.fontSize = this.params.fontSize;
+      this.sliderCaption.textAlign  = 'LEFT';
+      this.sliderCaption.fontWeight = 'bold';
+      this.sliderCaption.marginLeft = '0.5em';
+      s = new TFPanel(this , 2 , 1 , 1 , 1 , {css:"cssContainerPanel" ,  dontRegister:true} );
     } else s=this; 
 
     s.overflow = 'hidden';
@@ -1315,6 +1622,22 @@ export class TFSlider extends TFObject
   {
     return this.slider.value;
   }
+
+  set caption( value )
+  {
+    if(this.sliderCaption) this.sliderCaption.caption = value;
+    else
+    {
+      this.params.caption = value;
+      this.build(); // neu aufbauen, damit die Caption angezeigt wird
+    }
+  }
+
+  get caption()
+  {
+    if(this.sliderCaption) return this.sliderCaption.caption || '';
+    else return '';
+  }  
 
  
 }
@@ -1361,7 +1684,7 @@ export class TFLabel extends TFObject
 
   set textAlign( value )
   {
-    
+    if(!value) value = 'center'; 
     this.__ta = value;
     if(value.toUpperCase() == 'LEFT')
     {
@@ -1390,8 +1713,23 @@ get textAlign()
   return this.__ta;
 } 
 
+set font(value) 
+{
+  if (!value) value = 'Arial, sans-serif'; // Default-Font
+  if (this.paragraph) {
+    this.paragraph.style.fontFamily = value;
+  }
+}
+
+get font() {
+  const raw = this.paragraph?.style.fontFamily || this.getComputedStyleValue?.('fontFamily') || '';
+  return raw.split(',')[0].trim().replace(/^["']|["']$/g, '');
+}
+
+
 set fontSize( value )
 {
+  if (!value) value = '1em'; // Default-FontSize
   this.paragraph.style.fontSize = value;
 }
 
@@ -1402,6 +1740,7 @@ get fontSize()
 
 set color( value )  
 {
+  if (!value) value = 'black'; // Default-FontColor
   this.paragraph.style.color = value;
 }
 
@@ -1410,10 +1749,20 @@ get color()
   return this.paragraph.style.color;
 }
 
-setTextIndent( value )
+
+getProperties()
 {
-  this.paragraph.style.paddingLeft = value;
-}  
+    var properties = super.getProperties();
+    properties.push( {level:1, label:'caption',type:'INPUT',value:this.caption} );
+    properties.push( {level:1, label:'textAlign',type:'INPUT',value:this.textAlign} ); 
+    properties.push( {level:1, label:'color',type:'INPUT',value:this.color , dialog:'COLORPICKER'} );
+    properties.push( {level:1, label:'font',type:'LOOKUP',value:this.font,items:fontList , dialog:'FONTDIALOG'} );
+    properties.push( {level:1, label:'fontWeight',type:'INPUT',value:this.fontWeight} );
+    properties.push( {level:1, label:'fontSize',type:'INPUT',value:this.fontSize} );
+
+
+    return properties;
+ } 
 
 
 
@@ -1436,9 +1785,10 @@ export class TFImage extends TFObject
     this.position = 'relative';
     this.overflow = 'hidden';
 
-    var p=this.params;
-    p.preventGrid=true;
-    p.css = "cssImageContainer";
+    var p              = this.params;
+        p.preventGrid  = true;
+        p.css          = "cssImageContainer";
+        p.dontRegister = true;
 
     this.imgContainer = new TFPanel(this , 1 , 1 , '100%' , '100%' , p );
     this.imgContainer.overflow = 'hidden';
@@ -1496,6 +1846,18 @@ export class TFImage extends TFObject
    {
      return this.__URL;
    }
+
+getProperties()
+{
+    var properties = super.getProperties();
+    properties.push( {level:1, label:'imgURL',type:'INPUT',value:this.imgURL , dialog:'FILEPICKER'} );
+    return properties;
+ } 
+
+
+
+
+
 } 
 
 //---------------------------------------------------------------------------
@@ -1586,9 +1948,16 @@ export class TFButton extends TFObject
 render()
 {
    super.render();
+   this.build()
+}   
 
-   this.margin = 0;
-   this.padding = 0;
+
+build()
+{     
+   this.innerHTML = '';
+   this.btnText  = null;
+   this.btnGlyph = null;
+
    var h = this.heightPx + 'px';
 
    if(this.params.glyph && this.params.caption)
@@ -1611,15 +1980,16 @@ render()
 
     if(this.params.caption)
     {
-     var capt = new TFLabel( this , 2 , 1 , 1 , 1 , {caption:this.params.caption,labelPosition:'CENTER',css:"cssButtonText"} );
-      capt.margin = 0;
-      capt.padding = 0;
+      this.btnText = new TFLabel( this , 2 , 1 , 1 , 1 , {caption:this.params.caption,labelPosition:'CENTER',css:"cssButtonText" ,  dontRegister:true} );
+      this.btnText.margin  = 0;
+      this.btnText.padding = 0;
     } 
 
    if(this.params.glyph)
     {
-      var imgPanel = new TFPanel( this , 1 , 1 , 1 , 1 , {css:"cssContainerPanel"} );
-      utils.drawSymbol( this.params.glyph , imgPanel , this.params.glyphColor || this.color || "lightgray" , "77%");
+      this.btnGlyph = new TFPanel( this , 1 , 1 , 1 , 1 , {css:"cssContainerPanel" ,  dontRegister:true} );
+      this.btnGlyph.overflow = 'hidden';
+      utils.drawSymbol( this.params.glyph , this.btnGlyph , this.params.glyphColor || this.color || "lightgray" , "104%");
     }  
 
  } 
@@ -1627,13 +1997,49 @@ render()
 
  set caption( txt )
  {
-   this.buttonText.textContent  = txt;
+   this.params.caption = txt;
+   this.build() ;
  }
 
  get caption() 
  {
-  return this.buttonText.textContent ; 
+  return this.params.caption ; 
  }
+
+
+set glyph( g )
+ { 
+   this.params.glyph = g;
+   this.build() ;
+ }
+
+ get glyph() 
+ {
+  return this.params.glyph ; 
+ }
+
+
+ set glyphColor( c )
+ {
+   this.params.glyphColor = c;
+   this.build();
+ }
+
+ get glyphColor()
+ {
+    return this.params.glyphColor;
+ }
+
+ getProperties()
+{
+    var properties = super.getProperties();
+    properties.push( {level:1, label:'caption',type:'INPUT',value:this.caption} );
+    properties.push( {level:1, label:'glyph',type:'INPUT',value:this.glyph,dialog:'SYMBOLPICKER'} );
+    properties.push( {level:1, label:'glyphColor',type:'INPUT',value:this.glyphColor, dialog:'COLORPICKER'} );
+    
+    return properties;
+ }
+ 
 }  
 
 //---------------------------------------------------------------------------
@@ -1728,9 +2134,16 @@ export class TFCheckBox extends TFObject
   render()
   {
     super.render();
-    
-    if(this.params.checkboxLeft) utils.buildGridLayout_templateColumns(this , '2em '+this.params.captionLength+'em 1fr');
-    else                    utils.buildGridLayout_templateColumns(this , this.params.captionLength+'em  2em 1fr');
+    this.build();
+  }
+
+  build()
+  {
+    this.innerHTML = '';
+
+    if(this.params.checkboxLeft) utils.buildGridLayout_templateColumns(this , '2em '+ this.params.captionLength || this.params.caption.length +'em 1fr');
+    else                         utils.buildGridLayout_templateColumns(this , this.params.captionLength || this.params.caption.length +'em  2em 1fr');
+
     utils.buildGridLayout_templateRows(this ,'1fr');
    
     if(this.params.checkboxLeft) this.gridTemplateAreas    = ' "checkbox editLabel" ';
@@ -1776,12 +2189,178 @@ export class TFCheckBox extends TFObject
   }
 
 
+  set caption( value )
+  {
+    if(this.label) this.label.textContent = value;
+    else {
+           this.params.caption = value;
+           this.build();
+    }
+  }  
+
+  get caption()
+  {
+    if(this.label) return this.label.textContent || '';
+    else return '';   
+  }
+
+  getProperties()
+ {
+    var properties = super.getProperties();
+    properties.push( {level:1, label:'checked',type:'SELECT',value:this.checked,items:['true','false']} );
+    properties.push( {level:1, label:'caption',type:'INPUT',value:this.caption} );
+    return properties;
+ }
+
+
 }
+
+//---------------------------------------------------------------------------
+export class TFListBox extends TFObject
+{
+  render()
+  {
+    super.render();
+    this.items = [];
+    if(this.params.items) this.items = this.params.items;
+
+    this.listbox           = document.createElement('select');
+    this.listbox.className = 'cssListBox';
+    this.listbox.id        = this.ID+'1'
+    this.listbox.multiple  = true;
+    this.appendChild(this.listbox);
+    this.listbox.addEventListener('change', function(event) 
+    {
+      const htmlElement = event.target;
+      const selectedOptions = Array.from(htmlElement.selectedOptions);
+      const selectedValues = selectedOptions.map(option => option.value);
+      if (this.callBack_onChange) this.callBack_onChange(selectedValues);
+    }.bind(this));
+
+    if(this.params.items) this.addItems(this.params.items);
+  }
+  
+  addItem( item , unique)
+  { 
+   // ist Item ein String ?
+   if(typeof item == 'string') item = {value:item , caption:item}
+
+   // es sind nur eindeutige Einträge erlaubt....
+   if(unique)
+   {
+    // vor Einfügen prüfen 
+     var ndx = this.items.findIndex( i => i.value == item.value );
+     if (ndx>=0) return;
+   }   
+    
+    this.items.push(item);
+    var option = document.createElement('option');
+    option.value = item.value || item.text || item.caption;
+    option.textContent = item.text || item.caption;
+    option.selected = item.selected || false;
+    this.listbox.appendChild(option);
+
+  }
+
+
+  getItems( what )
+  {
+    var result = [];
+    for (var i = 0; i < this.items.length; i++)
+    {
+      var item = this.items[i];
+      if(what) result.push( item[what] )
+      else     result.push( item );  
+    }
+    return result;
+  }
+
+  removeItem( item )
+  {
+    var ndx = this.items.indexOf(item);
+    if(ndx>=0)
+    {
+      this.items.splice(ndx, 1);
+      this.listbox.remove(ndx);
+    }
+  }
+
+  addItems( items )
+  {
+    this.items = items;
+    this.listbox.innerHTML = ''; // Clear existing options
+    for (var i = 0; i < this.items.length; i++)
+    {
+      var item = this.items[i];
+      var option = document.createElement('option');
+      option.value = item.value || item.text || item.caption;
+      option.textContent = item.text || item.caption;
+      option.selected = item.selected || false;
+      this.listbox.appendChild(option);
+    }
+  }
+
+  set itemIndex( ndx )
+  {
+    if (ndx < 0 || ndx >= this.items.length) return;
+    this.listbox.selectedIndex = ndx;
+    this.listbox.scrollTop = ndx * this.listbox.options[ndx].offsetHeight; // Scroll to the selected item
+  }
+
+  get itemIndex()
+  {
+    if (this.listbox.selectedIndex < 0 || this.listbox.selectedIndex >= this.items.length) return -1;
+    return this.listbox.selectedIndex;
+  }
+
+  focus( ndx )
+  {
+    if (ndx < 0 || ndx >= this.items.length) return;
+    this.itemIndex = ndx;
+    this.listbox.focus(); // Set focus to the listbox
+    this.listbox.scrollTop = ndx * this.listbox.options[ndx].offsetHeight; // Scroll to the selected item
+  }
+
+  get selectedItems()
+  { 
+    var selectedItems = [];
+    for (var i = 0; i < this.listbox.options.length; i++)
+    {
+      if (this.listbox.options[i].selected)
+      {
+        selectedItems.push(this.items[i]);
+      }
+    }
+    return selectedItems;
+  }
+
+  set selectedItems( items )
+  {
+    this.listbox.selectedIndex = -1; // Deselect all options        
+    for (var i = 0; i < this.listbox.options.length; i++)
+    {
+      this.listbox.options[i].selected = false; // Deselect all options
+      for (var j = 0; j < items.length; j++)
+      {
+        if (this.listbox.options[i].value === items[j].value || this.listbox.options[i].textContent === items[j].text || this.listbox.options[i].textContent === items[j].caption)
+        {   
+          this.listbox.options[i].selected = true; // Select matching options
+          this.listbox.selectedIndex = i; // Set the selected index to the last matched item
+          this.listbox.scrollTop = i * this.listbox.options[i].offsetHeight; // Scroll to the last matched item
+          break; // Exit the inner loop once a match is found
+        }
+      }
+    }
+  }
+
+}
+
+
 
 //---------------------------------------------------------------------------
 export class TFListCheckbox extends TFObject
 {
-  __render()
+  build()
   {
     this.innerHTML = '';  
 
@@ -1834,7 +2413,7 @@ export class TFListCheckbox extends TFObject
     this.overflow = 'auto';
     this.backgroundColor = 'rgba(0,0,0,0.1)';
    
-    this.__render();
+    this.build();
  }
 
 focus( ndx )
@@ -1848,20 +2427,20 @@ focus( ndx )
   addItem( item )
   {
     this.items.push(item);
-    this.__render();
+    this.build();
   }   
 
   removeItem( item )  
   {
     var ndx = this.items.indexOf(item);
     if(ndx>=0) this.items.splice(ndx,1);
-    this.__render();
+    this.build();
   }
 
   addItems( items )
   {
     this.items = items;
-    this.__render();
+    this.build();
   }
 
 
@@ -1965,8 +2544,8 @@ export class TFEdit extends TFObject
         params.value            = params.value           || "";
         params.labelPosition    = params.labelPosition   || "LEFT";
         params.appendix         = params.appendix        || "";
-        params.captionLength    = (params.captionLength  || params.caption.length)+1;
-        params.appendixLength   = (params.appendixLength || params.appendix.length)+1;
+        params.captionLength    = (params.captionLength  || (params.caption.length/2))+1;
+        params.appendixLength   = (params.appendixLength || (params.appendix.length/2))+1;
         params.editLength       = params.editLength      || "auto";
         params.justifyEditField = params.justifyEdit     || 'right';
         params.type             = params.type            || 'text';
@@ -1980,6 +2559,12 @@ export class TFEdit extends TFObject
   render()
   {
     super.render(); 
+    this.build();
+  }
+
+  build()
+  {
+    this.innerHTML = '';
     this.combobox  = null; 
     this.lookUp    = null;
     this.padding   = 0;
@@ -2025,20 +2610,20 @@ utils.buildGridLayout_templateRows   (this , gridTemplate.rows    );
 
 if(gridTemplate.caption) 
   {
-    this.caption  = new TFLabel(this , gridTemplate.caption.left , gridTemplate.caption.top , gridTemplate.caption.width , gridTemplate.caption.height , {caption:this.params.caption  , labelPosition:'LEFT'});
-    this.caption.fontWeight = 'bold';
-    this.margin             =  0;
-    this.caption.marginLeft = '0.5em';
-    this.caption.textAlign  = 'LEFT';
-    this.caption.alignItems = 'end';
+    this.editCaption            = new TFLabel(this , gridTemplate.caption.left , gridTemplate.caption.top , gridTemplate.caption.width , gridTemplate.caption.height , {caption:this.params.caption  , labelPosition:'LEFT' ,  dontRegister:true});
+    this.editCaption.fontWeight = 'bold';
+    this.editCaption.margin     =  0;
+    this.editCaption.marginLeft = '0.5em';
+    this.editCaption.textAlign  = 'LEFT';
+    this.editCaption.alignItems = 'end';
   }  
 
 if(gridTemplate.apx) 
   {
-    this.appendix = new TFLabel(this , gridTemplate.apx.left     , gridTemplate.apx.top    , gridTemplate.apx.width      , gridTemplate.apx.height     , {caption:this.params.appendix , labelPosition:'LEFT'});
-    this.appendix.textAlign = 'LEFT';
-    this.appendix.alignItems = 'end';
-    this.appendix.marginLeft = '0.25em';
+    this.editApendix = new TFLabel(this , gridTemplate.apx.left     , gridTemplate.apx.top    , gridTemplate.apx.width      , gridTemplate.apx.height     , {caption:this.params.appendix , labelPosition:'LEFT' ,  dontRegister:true});
+    this.editApendix.textAlign = 'LEFT';
+    this.editApendix.alignItems = 'end';
+    this.editApendix.marginLeft = '0.25em';
   }     
     
     // keine Items vorhanden --> normales Inputfeld  
@@ -2069,14 +2654,13 @@ if(gridTemplate.apx)
      this.input.style.margin           = '0.5px';
      if(this.params.editLength) 
       {
-        if(this.params.editLength != 'auto') this.input.style.width = this.params.editLength+'em';
+        if(this.params.editLength != 'auto') this.input.style.minWidth = this.params.editLength+'em';
         else                                 this.input.style.width = '99%'; 
 
         if(this.params.justifyEditField =='left') this.input.style.justifySelf = 'start';
         else                                      this.input.style.justifySelf = 'end'; 
 
       } 
-    
 
       if(this.params.lookUp)
       { 
@@ -2159,6 +2743,124 @@ if(gridTemplate.apx)
     if(this.lookUp) return this.lookUp.enabled;
     else                   return !this.input.disabled;
   }
+
+
+  set caption( txt )
+  { 
+    this.params.caption       = txt;
+    this.params.captionLength = txt.length + 1;
+    this.build(); 
+  }
+
+  get caption()
+  {
+    return this.params.caption || '';
+  }
+
+
+  set captionLength( len )
+  { 
+    if(len=='' || len==null || len=='0' || len==0 || len=='auto') len = this.params.caption.length + 1;
+    this.params.captionLength = len;
+    this.build();
+  } 
+
+  
+  get captionLength()
+  {
+   return  this.params.captionLength || '0'; 
+  }
+
+  set editLength( len )
+  { 
+    this.params.editLength = len;
+    this.build();          
+  }
+
+  get editLength()
+  {
+   return this.params.editLength || 'auto';
+  }
+
+
+  set appendix( txt )
+  {
+    this.params.appendix = txt;
+    this.build();
+  }
+
+
+  get appendix()
+  {
+    return this.params.appendix || '';
+  }
+
+
+  set appendixLength( len )
+  {
+    this.params.appendixLength = len;
+    this.build();
+  }
+ 
+ 
+  get appendixLength()
+  {
+    return this.params.appendixLength || '0';
+  }
+
+  set labelPosition( pos )
+  {
+   this.params.labelPosition = pos;
+   this.build();
+  }
+  
+  get labelPosition()
+  {
+    return this.params.labelPosition || 'left';
+  }
+
+  set justifyEditField( pos )
+  {
+    this.params.justifyEditField = pos;
+    this.build();
+  }
+
+  get justifyEditField()
+  {
+    return this.params.justifyEditField || 'left';
+  }
+
+
+  set type( t )
+  {
+    // dummy - tut NIX
+    // der Typ kann im Nachgang nicht verändert werden...
+    // aber im Sinne der Setter/Getter Logik bauen wir hier eine Einbahnstraße ...
+  }  
+
+
+  get type()
+  {
+    return this.params.type || 'text';
+  }  
+
+
+
+   getProperties()
+ {
+    var properties = super.getProperties();
+    properties.push( {level:1, label:'caption',type:'INPUT',value:this.caption} );
+    properties.push( {level:2, label:'captionLength',type:'INPUT',value:this.captionLength} );
+    properties.push( {level:1, label:'value'  ,type:'INPUT',value:this.value} );
+    properties.push( {level:2, label:'editLength'  ,type:'INPUT',value:this.editLength} );
+    properties.push( {level:1, label:'appendix'  ,type:'INPUT',value:this.appendix} );
+    properties.push( {level:2, label:'appendixLength',type:'INPUT',value:this.appendixLength} );
+    properties.push( {level:1, label:'labelPosition'  ,type:'SELECT',value:this.checked,items:['left','top']} );
+    properties.push( {level:1, label:'justifyEditField'  ,type:'SELECT',value:this.checked,items:['left','right']} );
+    properties.push( {level:99, label:'typ'               ,type:'INPUT',value:this.type} );
+    return properties;
+ }
+
   
 }  //end class ...
 
@@ -2296,6 +2998,17 @@ this.parent.appendChild(this.container);
     this.onChange(v);
   }
 
+ set value(v) 
+  {
+    this.setValue(v);
+  }
+
+  get value()
+  { 
+    return this.getValue();
+  }
+
+
   addOption(opt) {
     this.options.push(opt);
     this.renderOptions(this.input.value);
@@ -2315,21 +3028,50 @@ this.parent.appendChild(this.container);
     return !this.input.disabled;
   }
 
-  setOptions(list) {
+  setOptions(list) 
+  {
     this.options = list;
     this.renderOptions(this.input.value);
   }
+
+   getOptions() 
+   {
+     return this.options;    
+   }
+
 }
-
-
-
-
-
 
 
 //--------------------------------------------------------------------------- 
 
 export class TFComboBox extends TFEdit
+{
+   constructor (parent , left , top , width , height , params )
+  { 
+    if(!params)       params       = {};
+    if(!params.items) params.items = [];
+    params.lookUp                  = true;
+    super(parent , left , top , width , height , params );
+  }
+
+
+ set items( items )
+ {
+   this.params.items = items;
+   if(this.params.lookUp) this.lookUp.setOptions(items);
+ }    
+ 
+ get items()
+ {
+   if(this.params.lookUp) return this.lookUp.getOptions();
+   else                   return this.params.items;
+ }
+
+}
+
+
+
+export class TFSelectBox extends TFEdit
 {
   constructor (parent , left , top , width , height , params )
   {
@@ -2340,15 +3082,16 @@ export class TFComboBox extends TFEdit
   }
 
 
-
   render()
   {
     this.items = [];
     super.render();
-    
-    if(this.params.items) this.setItems (this.params.items);
+   
     this.combobox = this.input;  // nur aus Gründen der besseren Lesbarkeit / Anwendbarkeit
-    this.__render();
+   
+   if(this.params.items.length > 0) this.setItems (this.params.items);
+   else                             this.__render();
+    
     this.combobox.addEventListener('change',  function() { 
       if(this.callBack_onChange)
       {
@@ -2372,6 +3115,8 @@ export class TFComboBox extends TFEdit
   {
     if(!this.combobox) return;
 
+    var savedValue = this.combobox.value;
+
     this.combobox.innerHTML = '';
     for(var i=0; i<this.items.length; i++)
     {
@@ -2389,6 +3134,8 @@ export class TFComboBox extends TFEdit
       option.value = v;
       this.combobox.appendChild(option);
     }
+
+    this.combobox.value = savedValue;
   } 
 
   set text( txt )
@@ -2424,14 +3171,23 @@ getItems()
 
 addItem( caption , value )
 {
+  var item = {};
+  if(typeof caption == 'string') 
+   { 
+    item = {value:caption , caption:caption}
+     if (value) item.value = value;
+   }
+   
+  if(typeof caption == 'object') item = caption;
+   
   // prüfen, ob bereits vorhanden ...
-  var ndx = this.items.findIndex( i => i.value == value );  
+  var ndx = this.items.findIndex( i => i.value == item.value );  
   if(ndx<0)   
   {
-    this.items.push( {caption:caption , value:value} );
+    this.items.push( item );
     var option = document.createElement("OPTION");
-    option.text  = caption;
-    option.value = value;
+    option.text  = item.caption;
+    option.value = item.value;
     this.combobox.appendChild(option);
   }
   
@@ -2999,6 +3755,8 @@ export class TFAnalogClock extends TFPanel
 
   __tick()
     {       if(!this.ctx) return;
+            if( this.secHandLength < 1 ) return;
+            
 
             var date   = new Date();
 
@@ -3699,7 +4457,7 @@ export class TForm
 
 
 export class TPropertyEditor
-//  properties = [{label:"Beschriftung" , value:"Wert" , type:"text" , items:["item1" , "item2" , ... , "itemx"] } , {} , {} ]
+//  properties = [{level:1, label:"Beschriftung" , value:"Wert" , type:"text" , items:["item1" , "item2" , ... , "itemx"] } , {} , {} ]
 {
   constructor( aParent , aProperties , aBtnSave , aCallBack_onSave )
   {
@@ -3707,16 +4465,39 @@ export class TPropertyEditor
     this.properties       = aProperties;
     this.btnSave          = aBtnSave;
     this.callBack_onSave  = aCallBack_onSave;  
+    this.callBack_onDialog= null;
+    this._level           = 999;
 
     if(this.btnSave)
     this.btnSave.callBack_onClick = function() { this.save() }.bind(this);
   }  
+
+  set level( aLevel )
+  {
+    this._level = aLevel;
+    this.render();
+  }
+
+  get level()
+  {
+    return this._level;
+  }
 
 
   setProperties( properties )
   {
     this.properties = properties;
     this.render();
+  }
+
+  set visible( value)
+  {
+    this.parent.visible = value;
+  }
+
+  get visible()
+  {
+    return this.parent.visible;
   }
   
   
@@ -3729,43 +4510,83 @@ export class TPropertyEditor
    for (var i=0; i<this.properties.length; i++ )
   {
      var item   = this.properties[i];
-     var select = item.items || [];
+     var select = item.items || [];   // falls Select - oder Combobox vorliegt...
+     var dlg    = item.dialog;
+     var w      = 2;
+     if(dlg) w=1;
 
+     
+     if(item.level > this._level) continue;  // nur die Items rendern, die auf der aktuellen Ebene liegen
+   
      var p = new TFPanel( this.parent , 0 , 0 , '99%' , '2.4em' , {css:"cssValueListPanel"});   // Dimension sind bereits im css definiert
          p.isGridLayout    = true;  // kommt vom css
          p.backgroundColor = (i % 2) != 0 ? "RGB(240,240,240)" : "RGB(255,255,255)"; 
+         
      var l = new TFLabel( p , 2 , 2 , 1, 1 , {css:"cssBoldLabel" , caption:item.label} );
          l.textAlign = 'left';
 
-     if(item.type.toUpperCase()=='TEXT')
+     if((item.type.toUpperCase()=='TEXT') || (item.type.toUpperCase()=='INPUT'))
      { 
-        if(select.length > 0) item.control = new TFComboBox( p , 3 , 2 , 1 , 1 , {value:item.value , items:item.items} )
-        else                  item.control = new TFEdit    ( p , 3 , 2 , 1 , 1 , {value:item.value} );
+        if(select.length > 0) item.control = new TFComboBox( p , 3 , 2 , w , 1 , {value:item.value , items:item.items} )
+        else                  item.control = new TFEdit    ( p , 3 , 2 , w , 1 , {value:item.value} );
      }  
 
      if(item.type.toUpperCase()=='SELECT')
-      item.control = new TFComboBox( p , 3 , 2 , 1 , 1 , {value:item.value , items:item.items} )
+      item.control = new TFSelectBox( p , 3 , 2 , w , 1 , {value:item.value , items:item.items} )
    
+     
+     if(item.type.toUpperCase()=='LOOKUP')
+      item.control = new TFComboBox(p , 3, 2 , w , 1 ,   {lookUp:true,items:item.items,value:item.value});  
+      
+
+
    if(item.type.toUpperCase()=='DATE')
-    item.control = new TFEdit(p ,3,2,1,1,{type:"date",value:item.value});  
+    item.control = new TFEdit(p ,3,2,w,1,{type:"date",value:item.value});  
  
    if(item.type.toUpperCase()=='TIME')
-    item.control = new TFEdit(p ,3,2,1,1,{type:"time",value:item.value});  
+    item.control = new TFEdit(p ,3,2,w,1,{type:"time",value:item.value});  
    
    if(item.type.toUpperCase()=='DATETIME')
-    item.control = new TFEdit(p ,3,2,1,1,{type:"datetime-local",value:item.value});  
+    item.control = new TFEdit(p ,3,2,w,1,{type:"datetime-local",value:item.value});  
    
    
    if(item.type.toUpperCase()=='RANGE')
-    item.control = new TFSlider(p ,3,2,1,1,{value:item.value});
+    item.control = new TFSlider(p ,3,2,w,1,{value:item.value});
 
 
    if((item.type.toUpperCase()=='CHECKBOX') || (item.type.toUpperCase()=='BOOLEAN'))
-    item.editControl = new TFCheckBox(p,3,2,1,1,{value:item.value});
+    item.control = new TFCheckBox(p,3,2,w,1,{value:item.value});
+
+  // falls das Element mit einem Dialog verknüpft ist ....
+  if(dlg)
+  {
+    var btn = new TFButton(p,4,2,1,1,{glyph:"whmcs"});
+        btn.backgroundColor = "rgba(0,0,0,0.5)";
+        btn.height          = '1.7em';
+        btn.margin          = '2px';
+        btn.borderRadius    = '2px';
+
+        btn.dataBinding = {item:item}
+        btn.callBack_onClick = function (e,d) {if ( this.callBack_onDialog) this.callBack_onDialog(d.item) }.bind(this)
+  }
+
+
+
+ }
+
  }
 
 
- }
+propertyControlByName( name )
+{
+  for (var i=0; i<this.properties.length; i++ )
+  {
+    var item = this.properties[i];
+    if (item.label.toUpperCase() == name.toUpperCase()) return item.control;
+  }  
+  return null;
+} 
+
 
 
 save()
@@ -3775,17 +4596,18 @@ save()
   for (var i=0; i<this.properties.length; i++ )
   {
     var item = this.properties[i];
-        if (item.control) 
-        {
-           item.value = item.control.value;
+    if(item.level > this._level) continue;  // nur die Items auf der aktuellen Ebene speichern
+      if (item.control) 
+      {
+        item.value = item.control.value;
            p.push({label:item.label , value:item.value});
-        }   
+      }   
   }  
     if(this.callBack_onSave) this.callBack_onSave(p)
 }    
 
-}  // end of class TPropertyEditor
 
+}  // end of class TPropertyEditor
 
 
 
@@ -3978,7 +4800,289 @@ export class TFileDialog
 }
 
 
+export function addComponent(parent , component , callBackOnCreate )
+{ 
+  var compType = (component.objName || '').toUpperCase();
+  var c = null;
+ 
+  if(compType === 'TFPANEL') 
+  { 
+    c = new TFPanel(parent, component.left, component.top, component.width, component.height, {} );
+    c.buildGridLayout(component.gridLayout)
+    c.setProperties(component);
+    if(callBackOnCreate) callBackOnCreate(c);
+  }
+
+  if(compType === 'TFBUTTON') 
+  { 
+    c = new TFButton(parent, component.left, component.top, component.width, component.height, {} );
+    c.setProperties(component);
+    if(callBackOnCreate) callBackOnCreate(c);
+  }
+
+  if(compType === 'TFLABEL') 
+  { 
+    c = new TFLabel(parent, component.left, component.top, component.width, component.height, {} );
+    c.setProperties(component);
+    if(callBackOnCreate) callBackOnCreate(c);
+  }
+
+  if(compType === 'TFEDIT') 
+  { 
+    var t = 'text';
+    if(component.hasOwnProperty('typ')) t = component.typ;
+    c = new TFEdit(parent, component.left, component.top, component.width, component.height, {type:t} );
+    c.setProperties(component);
+    if(callBackOnCreate) callBackOnCreate(c);
+  }
+
+  if(compType === 'TFCHECKBOX') 
+  { 
+     c = new TFCheckBox(parent, component.left, component.top, component.width, component.height, {} );
+    c.setProperties(component);
+    if(callBackOnCreate) callBackOnCreate(c);
+  } 
+
+  if(compType === 'TFSLIDER') 
+  { 
+     c = new TFSlider(parent, component.left, component.top, component.width, component.height, {} );
+     c.setProperties(component);
+     if(callBackOnCreate) callBackOnCreate(c);
+  }
+
+  if(compType === 'TFANALOGCLOCK') 
+  { 
+     c = new TFAnalogClock(parent, component.left, component.top, component.width, component.height, {} );
+     c.setProperties(component);
+     if(callBackOnCreate) callBackOnCreate(c);
+  }
+
+  if(compType === 'TFCOMBOBOX') 
+  { 
+     c = new TFComboBox(parent, component.left, component.top, component.width, component.height, {} );
+     c.setProperties(component);
+     if(callBackOnCreate) callBackOnCreate(c);
+  }
+
+    if(compType === 'TFSELECTBOX') 
+  { 
+     c = new TFSelectBox(parent, component.left, component.top, component.width, component.height, {} );
+     c.setProperties(component);
+     if(callBackOnCreate) callBackOnCreate(c);
+  }
+
+  if(compType === 'TFLISTBOX') 
+  { 
+     c = new TFListBox(parent, component.left, component.top, component.width, component.height, {} );
+     c.setProperties(component);
+     if(callBackOnCreate) callBackOnCreate(c);
+  }
+
+
+  if(compType === 'TFLISTCHECKBOX') 
+  { 
+     c = new TFListCheckbox(parent, component.left, component.top, component.width, component.height, {} );
+     c.setProperties(component);
+     if(callBackOnCreate) callBackOnCreate(c);
+  }
+
+
+  if(compType === 'TFIMAGE') 
+  { 
+     c = new TFImage(parent, component.left, component.top, component.width, component.height, {} );
+     c.setProperties(component);
+     if(callBackOnCreate) callBackOnCreate(c);
+  }
 
 
 
 
+  if(c!=null)
+    if(component.hasOwnProperty('children') && Array.isArray(component.children))
+      {
+        component.children.forEach(child => {addComponent(c, child , callBackOnCreate || null );})
+      }
+}
+
+
+
+
+
+export class TFColorDialog 
+{
+  constructor(initialColor = '#000000', onSelect = null) 
+  { 
+    this.onSelect = onSelect;
+
+    this.colors = [
+    // Grauabstufungen
+    "#000000", "#333333", "#444444", "#666666", "#888888", "#999999", "#cccccc", "#e6e6e6", "#f2f2f2", "#ffffff",
+
+    // Rottöne
+    "#800000", "#ff0000", "#ff3300", "#ff6600", "#ff9999", "#ffcc00", "#ffccff", "#ff0033",
+
+    // Grüntöne
+    "#008000", "#00ff00", "#33ff00", "#66ff00", "#99ff99", "#ccff00", "#00ff33",
+
+    // Blautöne
+    "#000080", "#0033ff", "#0000ff", "#0066ff", "#9999ff", "#00ccff", "#00ffff",
+
+    // Gelb-/Orangetöne
+    "#808000", "#999900", "#ccff00", "#ffff00",
+
+    // Pink-/Violetttöne
+    "#800080", "#990099", "#cc00ff", "#ff00ff", "#ff00cc", "#3300ff", "#6600ff",
+
+    // Türkis-/Cyan-/Mischfarben
+    "#008080", "#009999", "#00ffcc", "#00ff66"];
+    
+    this.colorPanels = []; 
+    this.dlgWnd      = createWindow(null,"colorPicker","20%","25%","CENTER");
+    this.dlgWnd.buildGridLayout_templateColumns('1fr');
+    this.dlgWnd.buildGridLayout_templateRows('1fr 3.5em');
+
+    var body                 = addPanel(this.dlgWnd.hWnd,'cssContainerPanel',1,1,1,1);
+        body.backgroundColor = "rgba(0,0,0,0.07)"
+      
+    var footer    = addPanel(this.dlgWnd.hWnd,'cssContainerPanel',1,2,1,1);
+        footer.buildGridLayout_templateColumns("1fr 1fr 1fr 1fr 1fr 1fr");
+        footer.buildGridLayout_templateRows('1fr');
+        footer.marginLeft   = '4px';
+        footer.marginRight  = '4px';
+        footer.marginBottom = '4px'; 
+
+    this.currentColor = addPanel(footer,"",6,1,2,1);
+    this.currentColor.backgroundColor = initialColor;
+
+    this.currentRGB       = addLabel(footer,"",4,1,2,2,"");
+    this.currentRGB.color = 'gray';
+    this.currentRGB.size  = '0.77em';
+
+
+    var btnOk        = addButton(footer,'',1,1,1,1,{glyph:"circle-check"});
+        btnOk.height = '2em';
+        btnOk.width  = '3em';
+        btnOk.callBack_onClick =  function(){if(onSelect) onSelect(this.currentColor.backgroundColor) ; this.dlgWnd.close() }.bind(this);
+
+    var btnAbort  = addButton(footer,'cssAbortBtn01',2,1,1,1,{glyph:"circle-xmark"});
+        btnAbort.height = '2em';
+        btnAbort.width  = '3em';
+        btnAbort.callBack_onClick = function(){this.dlgWnd.close()}.bind(this);
+
+
+    var btnPicker = addButton(footer,'',3,1,1,1,{glyph:"magnifying-glass"});
+        btnPicker.height           = '2em';
+        btnPicker.width            = '3em';
+        btnPicker.backgroundColor  = 'gray';
+        btnPicker.callBack_onClick = function(){ 
+                                                 this.input.value = utils.rgbStringToHex(this.currentColor.backgroundColor);
+                                                 this.input.click();
+                                               }.bind(this); 
+
+    
+    body.buildGridLayout("7x7");
+    var gx=0; 
+    var gy=1;
+    for(var c=0; c<this.colors.length;c++)
+    {
+      gx++;
+      if(gx>7){gx=1;gy++}
+      var cp = new TFPanel(body,gx,gy,1,1,{css:'csContainerPanel'});
+          this.colorPanels.push(cp);
+          
+          cp.shadow          = '4';
+          cp.margin          = '2px';
+          cp.borderColor     = 'rgba(0,0,0,0.77)';
+          cp.borderWidth     = '1px';
+          cp.borderRadius    = '2px';
+          cp.backgroundColor = this.colors[c];
+          cp.callBack_onClick = function()
+                                          { 
+                                            this.self.colorPanels.forEach((p)=>{p.borderWidth='1px'}) 
+                                            this.cp.borderWidth='3px'
+                                            this.self.currentColor.backgroundColor = this.cp.backgroundColor;
+                                            this.self.currentRGB.caption           = this.cp.backgroundColor; 
+                                          }.bind({self:this,cp:cp})
+
+    }  
+     
+     this.input                     = document.createElement('input');
+     this.input.type                = 'color';
+     this.input.style.position      = 'fixed';
+     this.input.style.opacity       = '0';        // bleibt unsichtbar
+     this.input.style.pointerEvents = 'auto';
+     this.input.value               = utils.rgbStringToHex(initialColor);
+
+    // Event für Auswahl
+    this.input.addEventListener('input', function() {
+                                                      this.currentColor.backgroundColor = this.input.value;
+                                                      this.currentRGB.caption           = utils.hexToRgbString(this.input.value);
+                                                    }.bind(this));
+    this.dlgWnd.hWnd.appendChild(this.input);
+  }  
+
+}
+
+
+
+export class TFLoader 
+{
+  constructor( params )
+  {
+    params      = params || {}
+    this.title  = params.title || "Lade Daten …";
+    this.note   = params.note || "Bitte einen Moment Geduld.";
+    this.parent = params.parent || document.body;
+    this.overlay = null;
+  }
+
+  show() 
+  {
+    if (this.overlay) return;
+    const overlay = document.createElement('div');
+    overlay.className = 'tf-loader';
+    overlay.innerHTML = `
+      <div class="tf-loader-card">
+        <svg class="tf-spinner" viewBox="0 0 50 50">
+          <g class="ring">
+            <circle class="path" cx="25" cy="25" r="20" fill="none" stroke="currentColor" stroke-width="4"/>
+          </g>
+        </svg>
+        <div class="tf-loader-title">${this.title}</div>
+        <div class="tf-loader-note">${this.note}</div>
+      </div>`;
+    this.parent.appendChild(overlay);
+    this.overlay = overlay;
+  }
+
+  hide() 
+  {
+    if (!this.overlay) return;
+    this.overlay.remove();
+    this.overlay = null;
+  }
+
+  /** Loader sichtbar, solange Promise läuft */
+ async while(promise, { minMs = 0 } = {}) 
+ {
+    this.show();
+    const start = Date.now();
+    try {
+         const value      = await promise;                           // warte auf Promise
+         const elapsed    = Date.now() - start;
+         const remaining  = Math.max(0, minMs - elapsed);
+      if (remaining > 0) { await TFLoader.wait(remaining); }         // ggf. Mindestzeit auffüllen
+      
+      return value;
+    } finally {
+      this.hide();
+    }
+  }
+
+  /** Kleine Helferfunktion: Promise, das nach ms auflöst */
+  static wait(ms) 
+  {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+}

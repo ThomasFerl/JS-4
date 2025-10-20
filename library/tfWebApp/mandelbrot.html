@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Mandelbrot & Julia – WebWorker Edition</title>
+<style>
+  :root{
+    --bg:#0b0c10; --fg:#e8ebf1; --card:#121319; --muted:#9aa3b2; --accent:#5cc8ff; --border:#222734;
+  }
+  html,body{height:100%;}
+  body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.4 system-ui,Segoe UI,Roboto,Arial}
+  #wrap{position:fixed; inset:0; display:grid; grid-template-rows:auto 1fr;}
+  header{display:flex; gap:12px; align-items:center; padding:10px 12px; background:linear-gradient(180deg,#111520,#0b0c10); border-bottom:1px solid var(--border); box-shadow:0 6px 18px rgba(0,0,0,.35)}
+  header .title{font-weight:700}
+  .controls{display:flex; gap:10px; align-items:center; flex-wrap:wrap; color:var(--muted)}
+  .controls label{display:flex; align-items:center; gap:6px; background:var(--card); padding:6px 8px; border:1px solid var(--border); border-radius:10px}
+  .controls input[type="range"]{width:160px}
+  .btn{background:var(--card); color:var(--fg); border:1px solid var(--border); border-radius:10px; padding:6px 10px; cursor:pointer}
+  .btn:hover{outline:1px solid #2a3040}
+  #canvas{width:100%; height:100%; display:block; background:black; cursor:grab}
+  #canvas.dragging{cursor:grabbing}
+  .hud{position:fixed; right:10px; bottom:10px; pointer-events:none; background:#0f1320d0; border:1px solid #1f2945; border-radius:10px; padding:6px 10px; color:#cfe9ff; font-size:12px; max-width: 60ch}
+  .hint{margin-left:auto; color:var(--muted)}
+  .kbd{border:1px solid var(--border); border-bottom-color:#000; background:#0f1320; padding:0 6px; border-radius:6px; color:#cfe9ff}
+  .cval{color:#cfe9ff; background:#0f1320; border:1px solid #1f2945; padding:4px 6px; border-radius:8px; font-variant-numeric: tabular-nums;}
+</style>
+</head>
+<body>
+<div id="wrap">
+  <header>
+    <div class="title">Mandelbrot ⇄ Julia</div>
+    <div class="controls">
+      <label>Iterationen <input id="iter" type="range" min="50" max="5000" step="10" value="800"><span id="iterVal">800</span></label>
+      <label>Glättung <input id="smooth" type="checkbox" checked></label>
+      <label>Palette
+        <select id="palette">
+          <option value="ocean">Ocean</option>
+          <option value="fire">Fire</option>
+          <option value="twilight">Twilight</option>
+          <option value="gray">Gray</option>
+        </select>
+      </label>
+      <label>Julia <input id="julia" type="checkbox"></label>
+      <span id="cval" class="cval" title="Aktueller Julia-Parameter c">c = 0.000000 + 0.000000i</span>
+      <button class="btn" id="reset">Reset</button>
+      <button class="btn" id="share">Link kopieren</button>
+    </div>
+    <div class="hint">Zoomen: Mausrad · Pannen: Ziehen · Klick: setzt <i>c</i> (im Mandelbrot-Modus aktiviert das Julia) · <span class="kbd">R</span> Reset · <span class="kbd">S</span> Snapshot</div>
+  </header>
+  <canvas id="canvas"></canvas>
+  <div class="hud" id="hud">—</div>
+</div>
+<script>
+(function(){
+  const canvas = document.getElementById('canvas');
+  const ctx = canvas.getContext('2d', { alpha:false });
+  const hud = document.getElementById('hud');
+  const iterInput = document.getElementById('iter');
+  const iterVal = document.getElementById('iterVal');
+  const smoothInput = document.getElementById('smooth');
+  const paletteSel = document.getElementById('palette');
+  const juliaChk = document.getElementById('julia');
+  const cval = document.getElementById('cval');
+  const resetBtn = document.getElementById('reset');
+  const shareBtn = document.getElementById('share');
+
+  function resize(){
+    const dpr = Math.max(1, window.devicePixelRatio || 1);
+    const w = Math.floor(canvas.clientWidth * dpr);
+    const h = Math.floor(canvas.clientHeight * dpr);
+    if (canvas.width !== w || canvas.height !== h){
+      canvas.width = w; canvas.height = h; scheduleRender();
+    }
+  }
+  new ResizeObserver(resize).observe(canvas);
+
+  const state = {
+    cx: -0.75, cy: 0.0,
+    scale: 3.5,
+    maxIter: +iterInput.value,
+    smooth: smoothInput.checked,
+    palette: paletteSel.value,
+    mode: 'M',
+    jc_re: 0.0,
+    jc_im: 0.0,
+  };
+
+  function screenToWorld(clientX, clientY){
+    const dpr = Math.max(1, window.devicePixelRatio || 1);
+    const rect = canvas.getBoundingClientRect();
+    const x = (clientX - rect.left) * dpr;
+    const y = (clientY - rect.top) * dpr;
+    const wx = state.cx + (x - canvas.width/2) * (state.scale/canvas.width);
+    const wy = state.cy - (y - canvas.height/2) * (state.scale/canvas.width);
+    return { wx, wy };
+  }
+
+  let dragging=false, moved=false, downX=0, downY=0, lastX=0, lastY=0;
+  canvas.addEventListener('pointerdown', e=>{ dragging=true; moved=false; downX=lastX=e.clientX; downY=lastY=e.clientY; canvas.setPointerCapture(e.pointerId); canvas.classList.add('dragging');});
+  canvas.addEventListener('pointerup', e=>{ 
+    if(dragging){ canvas.releasePointerCapture(e.pointerId); }
+    canvas.classList.remove('dragging');
+    if(!moved){
+      const { wx, wy } = screenToWorld(e.clientX, e.clientY);
+      if(state.mode==='M'){
+        state.mode='J'; juliaChk.checked = true;
+        state.jc_re = wx; state.jc_im = wy;
+      } else {
+        state.jc_re = wx; state.jc_im = wy;
+      }
+      scheduleRender(); queueHashUpdate();
+    }
+    dragging=false; 
+  });
+  canvas.addEventListener('pointercancel', ()=>{ dragging=false; canvas.classList.remove('dragging');});
+  canvas.addEventListener('pointermove', e=>{
+    if(!dragging) return; 
+    const dpr = Math.max(1, window.devicePixelRatio || 1);
+    const dx = (e.clientX - lastX) * state.scale / (canvas.width/dpr);
+    const dy = (e.clientY - lastY) * state.scale / (canvas.width/dpr);
+    if(Math.abs(e.clientX - downX) > 3 || Math.abs(e.clientY - downY) > 3) moved=true;
+    state.cx -= dx; state.cy += dy; lastX = e.clientX; lastY = e.clientY; scheduleRender(); queueHashUpdate();
+  });
+  canvas.addEventListener('wheel', e=>{
+    e.preventDefault();
+    const dpr = Math.max(1, window.devicePixelRatio || 1);
+    const rect = canvas.getBoundingClientRect();
+    const x = (e.clientX - rect.left) * dpr; 
+    const y = (e.clientY - rect.top) * dpr;
+    const wx = state.cx + (x - canvas.width/2) * (state.scale/canvas.width);
+    const wy = state.cy - (y - canvas.height/2) * (state.scale/canvas.width);
+    const zoom = Math.exp(-e.deltaY * 0.0015);
+    state.scale /= zoom;
+    state.cx = wx - (x - canvas.width/2) * (state.scale/canvas.width);
+    state.cy = wy + (y - canvas.height/2) * (state.scale/canvas.width);
+    scheduleRender(); queueHashUpdate();
+  }, { passive:false });
+
+  iterInput.addEventListener('input', ()=>{ state.maxIter = +iterInput.value; iterVal.textContent = state.maxIter; scheduleRender(); queueHashUpdate(); });
+  smoothInput.addEventListener('change', ()=>{ state.smooth = smoothInput.checked; scheduleRender(); queueHashUpdate(); });
+  paletteSel.addEventListener('change', ()=>{ state.palette = paletteSel.value; scheduleRender(); queueHashUpdate(); });
+  juliaChk.addEventListener('change', ()=>{ state.mode = juliaChk.checked ? 'J' : 'M'; scheduleRender(); queueHashUpdate(); });
+  resetBtn.addEventListener('click', resetView);
+  shareBtn.addEventListener('click', copyShareLink);
+  window.addEventListener('keydown', e=>{
+    if(e.key.toLowerCase()==='r'){ resetView(); }
+    if(e.key.toLowerCase()==='s'){ snapshot(); }
+  });
+
+  function resetView(){
+    state.cx = -0.75; state.cy = 0.0; state.scale = 3.5;
+    scheduleRender(); queueHashUpdate();
+  }
+
+  function snapshot(){
+    const url = canvas.toDataURL('image/png');
+    const a = document.createElement('a'); a.href=url; a.download = 'fractal.png'; a.click();
+  }
+
+  // --- URL Hash persistence ---
+  function toB64url(str){ return btoa(str).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''); }
+  function fromB64url(str){ str=str.replace(/-/g,'+').replace(/_/g,'/'); while(str.length%4) str+='='; return atob(str); }
+  function stateToHash(){
+    const obj = { cx:state.cx, cy:state.cy, scale:state.scale, i:state.maxIter, s:state.smooth?1:0, p:state.palette, m:state.mode };
+    if(state.mode==='J') { obj.jr = state.jc_re; obj.ji = state.jc_im; }
+    return '#' + toB64url(JSON.stringify(obj));
+  }
+  function applyHash(hash){
+    try{
+      if(!hash || hash.length<2) return false;
+      const json = fromB64url(hash.slice(1));
+      const o = JSON.parse(json);
+      if(typeof o.cx==='number') state.cx=o.cx;
+      if(typeof o.cy==='number') state.cy=o.cy;
+      if(typeof o.scale==='number') state.scale=o.scale;
+      if(typeof o.i==='number') state.maxIter=o.i;
+      state.smooth = !!o.s;
+      if(typeof o.p==='string') state.palette=o.p;
+      if(o.m==='J' || o.m==='M') state.mode=o.m;
+      if(typeof o.jr==='number') state.jc_re=o.jr;
+      if(typeof o.ji==='number') state.jc_im=o.ji;
+      iterInput.value = state.maxIter; iterVal.textContent = state.maxIter;
+      smoothInput.checked = state.smooth; paletteSel.value = state.palette;
+      juliaChk.checked = (state.mode==='J');
+      scheduleRender();
+      return true;
+    }catch(e){ console.warn('Hash parse error', e); return false; }
+  }
+  let hashTimer = null;
+  function queueHashUpdate(){
+    if(hashTimer) return; hashTimer = setTimeout(()=>{ hashTimer=null; history.replaceState(null,'', stateToHash()); }, 120);
+  }
+  function copyShareLink(){
+    try{
+      const url = new URL(window.location.href);
+      url.hash = stateToHash();
+      navigator.clipboard.writeText(url.toString());
+      hud.textContent = 'Link in die Zwischenablage kopiert';
+      setTimeout(updateHUD, 1000);
+    }catch(e){ console.warn(e); }
+  }
+  window.addEventListener('hashchange', ()=>{ applyHash(location.hash); });
+
+  // --- WebWorker Rendering ---
+  let worker = null;
+  let workerBusy = false;
+  let rerenderQueued = false;
+
+  function makeWorker(){
+    if(worker) return worker;
+    const code = `self.onmessage = (e) => {\n  const { type, W, H, state } = e.data;\n  if (type !== 'render') return;\n  const cx = state.cx, cy = state.cy, scale = state.scale;\n  const maxIter = state.maxIter|0;\n  const smooth = !!state.smooth;\n  const palette = state.palette;\n  const mode = state.mode;\n  const jc_re = state.jc_re, jc_im = state.jc_im;\n\n  function paletteColor(t){\n    if(palette==='gray'){ const v=Math.floor(255*t); return [v,v,v]; }\n    if(palette==='fire'){ const r=Math.min(255,Math.floor(255*(3*t))); const g=Math.min(255,Math.floor(255*Math.max(0,3*t-1))); const b=Math.min(255,Math.floor(255*Math.max(0,3*t-2))); return [r,g,b]; }\n    if(palette==='twilight'){ const r=Math.floor(255*Math.pow(t,0.6)); const g=Math.floor(120*Math.pow(t,0.9)); const b=Math.floor(255*(1-Math.pow(1-t,2))); return [r,g,b]; }\n    const r=Math.floor(255*Math.pow(t,0.35)*0.6); const g=Math.floor(255*Math.pow(t,0.55)); const b=Math.floor(255*(0.4+0.6*t)); return [r,g,b];\n  }\n\n  const invW = 1 / W;\n  const scalePerPixel = scale * invW;\n  const tile = 64;\n  for (let y0=0; y0<H; y0+=tile){\n    const yEnd = Math.min(H, y0+tile);\n    const height = yEnd - y0;\n    const buf = new Uint8ClampedArray(W*height*4);\n    let idx = 0;\n    for (let y=y0; y<yEnd; y++){\n      const imStart = cy - (y - H/2) * scalePerPixel;\n      for (let x=0; x<W; x++){\n        const reStart = cx + (x - W/2) * scalePerPixel;\n        let zr, zi, cr, ci;\n        if (mode==='J'){ zr=reStart; zi=imStart; cr=jc_re; ci=jc_im; } else { zr=0; zi=0; cr=reStart; ci=imStart; }\n        let n=0; let zr2=zr*zr, zi2=zi*zi;\n        while (zr2 + zi2 <= 4.0 && n < maxIter){\n          zi = 2*zr*zi + ci;\n          zr = zr2 - zi2 + cr;\n          zr2 = zr*zr; zi2 = zi*zi;\n          n++;\n        }\n        if (n >= maxIter){ buf[idx++]=0; buf[idx++]=0; buf[idx++]=0; buf[idx++]=255; }\n        else {\n          let t;\n          if (smooth){\n            const log_zn = Math.log(zr2 + zi2)/2;\n            const nu = Math.log(log_zn/Math.log(2))/Math.log(2);\n            const smoothIter = n + 1 - nu;\n            t = (smoothIter % 256) / 256;\n          } else { t = n / maxIter; }\n          const [r,g,b] = paletteColor(t);\n          buf[idx++]=r; buf[idx++]=g; buf[idx++]=b; buf[idx++]=255;\n        }\n      }\n    }\n    self.postMessage({ type:'stripe', yStart:y0, height, W, buffer:buf.buffer }, [buf.buffer]);\n  }\n  self.postMessage({ type:'done' });\n};`;
+    const blob = new Blob([code], { type: 'application/javascript' });
+    const url = URL.createObjectURL(blob);
+    worker = new Worker(url);
+    worker.onmessage = (e)=>{
+      const msg = e.data;
+      if (msg.type === 'stripe'){
+        const { yStart, height, W, buffer } = msg;
+        const arr = new Uint8ClampedArray(buffer);
+        const imgData = new ImageData(arr, W, height);
+        ctx.putImageData(imgData, 0, yStart);
+      } else if (msg.type === 'done'){
+        workerBusy = false;
+        updateHUD();
+        if (rerenderQueued){ rerenderQueued=false; scheduleRender(); }
+      }
+    };
+    return worker;
+  }
+
+  function scheduleRender(){
+    makeWorker();
+    if (workerBusy){ rerenderQueued = true; return; }
+    workerBusy = true;
+    hud.textContent = 'Rendering…';
+    const W = canvas.width, H = canvas.height;
+    const payload = { cx:state.cx, cy:state.cy, scale:state.scale, maxIter:state.maxIter|0, smooth:!!state.smooth, palette:state.palette, mode:state.mode, jc_re:state.jc_re, jc_im:state.jc_im };
+    worker.postMessage({ type:'render', W, H, state: payload });
+  }
+
+  function updateHUD(){
+    const modeTxt = state.mode==='J'
+      ? `Julia  c = ${state.jc_re.toFixed(6)} ${state.jc_im>=0?'+':'-'} ${Math.abs(state.jc_im).toFixed(6)}i`
+      : 'Mandelbrot';
+    cval.textContent = `c = ${state.jc_re.toFixed(6)} ${state.jc_im>=0?'+':'-'} ${Math.abs(state.jc_im).toFixed(6)}i`;
+    hud.textContent = `Modus: ${modeTxt}  |  Center: (${state.cx.toFixed(8)}, ${state.cy.toFixed(8)})  |  Scale: ${state.scale.toExponential(3)}  |  Iterationen: ${state.maxIter}`;
+  }
+
+  function init(){
+    function fit(){
+      const rect = document.getElementById('wrap').getBoundingClientRect();
+      canvas.style.width = `${rect.width}px`;
+      canvas.style.height = `${rect.height - document.querySelector('header').offsetHeight}px`;
+      resize();
+    }
+    new ResizeObserver(fit).observe(document.body);
+    fit();
+    iterVal.textContent = state.maxIter;
+    if(!applyHash(location.hash)){
+      history.replaceState(null,'', stateToHash());
+    }
+    scheduleRender();
+  }
+  init();
+})();
+</script>
+</body>
+</html>

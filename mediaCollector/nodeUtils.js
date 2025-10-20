@@ -12,6 +12,11 @@ module.exports.logging  = new TFLogging();
 // if (!Buffer.from) var { Buffer } = require("node:buffer");
 
 
+module.exports.getSymbolPath = (symbolName) =>
+{
+   return global.symbolPath (group)
+}
+
 module.exports.log = (s) =>
 {
   if(this.debug) console.log(s);
@@ -750,15 +755,6 @@ exports.getImageFile = async( fs , path , img , req , res  ) =>
         svg: 'image/svg+xml',
        };
   
-    // existiert das File ? 
-    if( !fs.existsSync(img) )
-    { 
-       res.set('Content-Type', 'text/plain');
-       res.send("missing fileName"); 
-       return;
-    }
-    console.log( 'try to load "' + img +'"');
-
     var type      = mime[path.extname(img).slice(1)] || 'text/plain';
      
     try
@@ -871,7 +867,6 @@ module.exports.httpRequest = async function (url)
 }
 
 
-
 module.exports.buildFileGUID = function( fs , path , fileInfo_or_fileFullName )
 {
   var name = '';
@@ -966,13 +961,6 @@ module.exports.analyzeFile=function(fs,path,filePath)
     }
   return {error:false,errMsg:'OK',result:result};  
 }
-
-
-
-
-
-
-
 
 
 

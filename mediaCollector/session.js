@@ -25,8 +25,10 @@ module.exports.userLogin=function( etcDB , remoteIP , userName , passwd )
   }
 
   usr=response.result;
+
+  //console.log('user: ' + JSON.stringify(usr));
   
-  if(passwd!=usr.passwd)
+  if(passwd!=(usr.passwd || usr.PASSWD))
   {
     console.log('wrong password');
     return {error:true, errMsg:"wrong password", session:{}, grants:[]}

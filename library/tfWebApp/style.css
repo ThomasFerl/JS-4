@@ -229,6 +229,58 @@ html, body {
   } 
 
 
+.grid-container {
+    display: grid;
+    gap: 0; /* Kein Abstand zwischen den Grid-Linien */
+    position: relative;
+  }
+  
+
+  .grid-svg {
+    position: fixed; 
+  }
+
+  .grid-line {
+    background-color: rgba(0, 0, 0, 0.1); /* Helle Farbe für die Grid-Linien */
+    position: absolute;
+  }
+  
+  .grid-line.horizontal {
+    height: 1px;
+    width: 100%;
+  }
+  
+  .grid-line.vertical {
+    width: 1px;
+    height: 100%;
+  }
+  
+
+  .dragHelper {
+      position: fixed;
+      justify-content: center;
+      align-items: center;
+      font-size: 20px;
+      border: 2px solid gray;
+      background-color: rgba(0, 0, 0, 0.1 );
+      z-index: 1000;
+  }
+
+
+  .toolboxItem {
+      margin:0.25em;
+      background-color: rgb(177, 177, 177);
+      border-color: black;
+      color: black;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 1em;
+  } 
+
+
+
+
 .cssHiddenPanel
 {
    display:none;
@@ -787,8 +839,8 @@ html, body {
 /*Padding rausnehmen und stattdessen über die margin-top & margin-left -Eigenschaften der Childs die Position steuern...*/
 .cssContainerPanel     
 {
-   margin            : 4px;
-   padding           : 4px;
+   margin            : 3px;
+   padding           : 3px;
    border            : none;
    background-Color  : transparent;
    align-items       : center;
@@ -804,8 +856,8 @@ html, body {
 {
    width             : 100%;   
    height            : 100%;
-   margin            : 4px;
-   padding           : 4px;
+   margin            : 0px;
+   padding           : 0px;
    border            : none;
    background-Color  : transparent;
    display           : flex; /* Flexbox-Layout */
@@ -955,8 +1007,8 @@ html, body {
    align-items       : center; /* Vertikal zentrieren */    
    overflow          : hidden;
    display           : grid;
-   grid-template-columns: 4px 1fr 1fr 4px;
-   grid-template-rows   : 4px 1fr 4px;
+   grid-template-columns: 1px 1fr 1fr 2em;
+   grid-template-rows   : 1px 1fr 1px;
  } 
 
 
@@ -1110,7 +1162,18 @@ html, body {
    background-color: rgb(166, 239, 209);
 }
 
- 
+
+.cssListBox
+{
+   width        : 100%;
+   height       : 100%;
+   padding      : 0.25em; 
+   background   : white;
+   color        : #000000;
+   border       : 1px solid gray;
+   border-radius: 4px;
+   margin       : 0;
+}
 
 .cssComboBox
 {
@@ -1154,7 +1217,7 @@ html, body {
 {
    position        : sticky;
    top             : 0; /* Fixiert den Kopf am oberen Rand */
-   padding         : 0;
+   padding         : 4px;
    border          : 0.5px solid #999a9b;  
 	background-color: #54585d;
 	color           : #ffffff;
@@ -1166,7 +1229,7 @@ html, body {
 
 .tftd 
 {
-	padding      : 0;
+	padding      : 4px;
    border       : 0.5px solid #999a9b;  
    text-align   : left;
    white-space  : nowrap; 
@@ -1307,3 +1370,117 @@ html, body {
 
    /*border          : 1px solid black; */
 }
+
+
+.tf-loader {
+  position: fixed; inset: 0; display: grid; place-items: center;
+  background: rgba(0,0,0,.15); backdrop-filter: blur(4px);
+  z-index: 9999;
+}
+.tf-loader-card {
+  padding: 14px 18px; border-radius: 14px; background: #fff; color: #111;
+  box-shadow: 0 10px 30px rgba(0,0,0,.15); text-align: center; font-family: system-ui,sans-serif;
+}
+.tf-loader-title { font-size: 15px; margin: 8px 0 6px; }
+.tf-loader-note  { font-size: 13px; opacity: .75; }
+
+/* Spinner */
+.tf-spinner { width: 56px; height: 56px; margin: 4px auto 10px; }
+@keyframes tf-spin { to { transform: rotate(360deg); } }
+@keyframes tf-dash {
+  0% { stroke-dasharray: 1 200; stroke-dashoffset: 0; }
+  50% { stroke-dasharray: 90 200; stroke-dashoffset: -35; }
+  100% { stroke-dasharray: 90 200; stroke-dashoffset: -124; }
+}
+.tf-spinner .ring { transform-origin: 50% 50%; animation: tf-spin 1.2s linear infinite; }
+.tf-spinner .path { stroke-linecap: round; animation: tf-dash 1.2s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .tf-spinner .ring, .tf-spinner .path { animation: none; }
+}
+
+
+.tf-loader-progressbar {
+  width: 100%; height: 6px; background: #eee; border-radius: 3px; overflow: hidden;
+  margin-top: 8px;
+}
+.tf-loader-progressbar-inner {
+  height: 100%; width: 0%; background: #3b82f6; transition: width .2s ease;
+}
+.tf-loader-percent {
+  font-size: 12px; margin-top: 4px; opacity: .7;
+}
+.tf-loader-cancel {
+  margin-top: 10px; font-size: 13px; cursor: pointer;
+  color: #d33; text-decoration: underline;
+}
+
+
+
+
+/*pivotGrid = PIVOT-Tabelle */
+
+/* ===== PivotGrid scoped styles (prefix: pg-) ===== */
+
+.pg-root { font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji"; font-size: 14px; color: #1f2937; }
+.pg-card { border: 1px solid #e5e7eb; border-radius: 12px; box-shadow: 0 1px 2px rgba(0,0,0,.04); overflow: hidden; background: #fff; }
+.pg-toolbar { display: flex; gap: .5rem; align-items: center; padding: .5rem .75rem; border-bottom: 1px solid #f3f4f6; background: #fafafa; position: sticky; top: 0; z-index: 2; }
+.pg-toolbar .pg-badge { font-size: 12px; padding: .15rem .4rem; border: 1px solid #e5e7eb; border-radius: 6px; background: #fff; }
+.pg-btn { cursor: pointer; border: 1px solid #e5e7eb; background: #fff; padding: .35rem .55rem; border-radius: 8px; user-select: none; }
+.pg-btn:hover { background: #f9fafb; }
+.pg-btn:active { transform: translateY(1px); }
+
+
+.pg-table-wrap { width: 100%; overflow: auto; }
+.pg-table { border-collapse: separate; border-spacing: 0; width: max-content; min-width: 100%; }
+.pg-th, .pg-td { border-right: 1px solid #f3f4f6; border-bottom: 1px solid #f3f4f6; padding: .45rem .5rem; white-space: nowrap; }
+.pg-th { background: #f8fafc; font-weight: 600; position: sticky; top: 40px; z-index: 1; }
+.pg-rowhdr { position: sticky; left: 0; background: #f8fafc; z-index: 1; font-weight: 600; }
+.pg-grand { background: #fff7ed; font-weight: 700; }
+.pg-subtotal { background: #f3f4f6; font-weight: 600; }
+.pg-num { text-align: right; font-variant-numeric: tabular-nums; }
+
+
+.pg-toggle { cursor: pointer; margin-right: .35rem; opacity: .8; }
+.pg-toggle::before { content: '▸'; display: inline-block; width: 1em; text-align: center; }
+.pg-toggle.pg-open::before { content: '▾'; }
+
+
+.pg-footer { display:flex; justify-content: space-between; align-items:center; padding:.5rem .75rem; border-top:1px solid #f3f4f6; background:#fafafa; font-size:12px; color:#6b7280; }
+.pg-pill { padding:.1rem .4rem; border:1px solid #e5e7eb; border-radius:999px; background:#fff; }
+
+
+/* Compact mode */
+.pg-compact .pg-th, .pg-compact .pg-td { padding: .28rem .35rem; }
+
+
+
+
+/* PIVOT - TABELLE */
+
+ .pivot-table {
+      border-collapse: collapse;
+      width: 100%;
+      margin-top: 20px;
+    }
+    .pivot-table th, .pivot-table td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: center;
+      cursor: pointer;
+    }
+    .pivot-header {
+      background-color: #f0f0f0;
+    }
+    .pivot-row-header {
+      background-color: #e0f7fa;
+      font-weight: bold;
+    }
+    .pivot-col-header {
+      background-color: #ffe0b2;
+      font-weight: bold;
+    }
+    .pivot-sum-cell {
+      background-color: #dcedc8;
+      font-weight: bold;
+    }
