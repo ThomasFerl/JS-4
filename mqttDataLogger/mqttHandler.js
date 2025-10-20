@@ -11,7 +11,9 @@ module.exports.setup = (_dB ) => { dB = _dB; }
 
 module.exports.onMessage = (topic, payload) =>
 {
-    utils.log('onMessage -> Topic: '+topic+' / Payload: '+payload);
+   utils.log('. '); 
+   utils.log('-------------------mqttHandler.onMessage-----------------'); 
+   utils.log('onMessage -> Topic: '+topic+' / Payload: '+payload);
 
     // 0. Prüfen, ob das Topic mit "$SYS" beginnt, da es sich dabei um interne Systemnachrichten handelt
     if (topic.startsWith('$SYS')) { return; }
@@ -21,13 +23,17 @@ module.exports.onMessage = (topic, payload) =>
     var descr=''; 
     if (parts.length>3) descr=parts[0]+'/'+parts[1]+'/'+parts[2]
 
+    utils.log('descr: '+descr);
+   
+    // 1. Prüfen, ob das Topic bereits in der Datenbank existiert
+    //    Wenn nicht, dann in die Datenbank eintragen
     var ID_Topic = null;
-    // prüfen, ob das ankommende Topic schon existiert....
     var response = dbUtils.fetchValue_from_Query(dB, "SELECT ID FROM mqttTopics WHERE topic = '"+topic+"'" )
     if (response.error) { console.error('Fehler beim Prüfen des Topics:' + response.errMsg); return; }
 
     if (response.result=='')
     {
+       utils.log('Topic nicht gefunden, registriere neues Topic: '+topic);
        response = dbUtils.insertIntoTable(dB, 'mqttTopics', {topic:topic,descr:descr});
        if (response.error) { console.error('Fehler beim Regisstrieren des Topics:', response.errMsg); return; }
       
@@ -35,6 +41,8 @@ module.exports.onMessage = (topic, payload) =>
        utils.log('Topic '+topic+' wurde unter der ID:' +ID_Topic+' registriert.');    
     }
     else ID_Topic = response.result;
+
+    utils.log('ID_Topic: '+ID_Topic);
 
     //safePayload
     var dtStr = '';
@@ -46,7 +54,11 @@ module.exports.onMessage = (topic, payload) =>
         return;
     }
 
+    utils.log('Payload.timestamp: '+dtStr);
+
     var dt = new utils.TFDateTime(dtStr)
+
+    utils.log('Excel-Timestamp: '+dt.excelTimestamp + ' / DateTime: '+dt.formatDateTime());
 
     dbUtils.insertIntoTable(dB,'mqttPayloads',{ID_Topic:ID_Topic,payload:payload.toString(),sync:0,DT:dt.dateTime()});
 
