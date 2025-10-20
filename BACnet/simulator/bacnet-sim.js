@@ -24,18 +24,14 @@ const IP = Object.values(interfaces)
 // === Configuration ===
 const DEVICE_ID = 12345; // Device Instance
 const VENDOR_ID = 260;   // optional
-const UDP_PORT = 47808;  // default BACnet UDP port
+const UDP_PORT = 47809;  // default BACnet UDP port
 const DEVICE_NAME = 'JS-BACnet-Sim';
 const ANNOUNCE_IAM_ON_START = true;           // send I-Am on startup
 const TEMP_UPDATE_INTERVAL_MS = 5000;         // temperature update interval
 const COV_DEADBAND = 0.1;                     // change >= deadband triggers notification
 
-
-
-
-
-
-
+// Wenn YABE auf demselben Rechner läuft:
+const YABE_TARGET = { address: '10.102.111.139', port: 47808 }; // alternativ: { address: '<deine_LAN_IP>', port: 47808 }
 
 
 // === Simulated Objects ===
@@ -63,7 +59,7 @@ const client = new Bacnet({
   apduTimeout: 6000,
   interface: IP,
   port: UDP_PORT,
-  broadcastAddress: '255.255.255.255'
+  broadcastAddress: '10.102.255.255'
 });
 
 setTimeout(() => {
@@ -72,7 +68,7 @@ setTimeout(() => {
     0x05,
     Bacnet.enum.Segmentation.SEGMENTATION_NONE,
     VENDOR_ID,
-    '10.102.111.255',
+    '10.102.255.255',
   );
   console.log('[I-Am] sent directly to localhost');
 }, 1000);
@@ -84,7 +80,7 @@ setTimeout(() => {
 function sendIAm(unicastAddress) {
   try {
     const segNone = Bacnet.enum.Segmentation?.SEGMENTATION_NONE ?? 3;
-    const target = unicastAddress || '255.255.255.255'; // <-- Broadcast, wenn keine Zieladresse angegeben
+    const target = unicastAddress || YABE_TARGET; // <-- Broadcast, wenn keine Zieladresse angegeben
     if (typeof client.iAmResponse === 'function') {
       client.iAmResponse(DEVICE_ID, 0x05, segNone, VENDOR_ID, target);
       console.log(`[I-Am] broadcast sent to ${target}: deviceId=${DEVICE_ID}`);

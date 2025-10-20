@@ -1,0 +1,36 @@
+Contemporary Control Systems, Inc. (CC) has developed the BACnet Discovery Tool (BDT) that is used to communicate with BACnet devices from a Windows PC.  
+BDT is referred to as "Licensed Software" and is licensed under this End User License Agreement (EULA).  By accepting the terms of the EULA, CC grants you
+a non-exclusive license to use the BDT for communicating with BACnet devices. By selecting the "I accept the agreement" button, you acknowledge that you have
+read this agreement and agree to be bound by its terms and conditions. 
+
+1.            Built on the Open Source BACnet Stack 
+BDT utilizes the Open Source BACnet Stack from Steve Karg. Portions of BDT are copyright (C) 2005 Steve Karg. The source code for the Open Source BACnet Stack can be downloaded at
+https://sourceforge.net/projects/bacnet/ .
+
+2.            Portions of this code are from the open source project CPlot and carry the following: Copyright (c) 2003, Todd Clements. The source code for CPlot can be found at 
+https://sourceforge.net/p/cplot/wiki/Home/ .
+
+3.            Trademarks
+Contemporary Controls, BASautomation, and CTRLink, are trademarks or registered trademarks of Contemporary Control Systems, Inc.   BACnet is a
+registered trademark of the American Society of Heating, Refrigerating, and Air-Conditioning Engineers Inc. (ASHRAE).  
+Powered by Niagara Framework are trademarks of Tridium, Inc.  Other product names may be trademarks or registered trademarks of their respective companies.
+
+4.            Ownership
+The Licensed Software is owned by Contemporary Controls  You are  not allowed to rename the BDT application or modify any portion of it. 
+Some portions of the installer include DLLs from Microsoft. These DLLs are owned by Microsoft Corporation.
+
+5.            Assurances by You 
+When using BDT you can discover BACnet devices, read and write BACnet objects. As such you can modify the operating behavior of BACnet controllers. 
+Appropriate safety precautions must always be taken when operating or maintaining equipment connected to the Licensed Software. CC assumes no
+responsibility or liability for any injury or damage to any persons or property resulting from the use by you of the Licensed Software. Further, you
+represent and warrant that you will take appropriate precautions, establish appropriate procedures and post appropriate notices to ensure that persons
+and property are not harmed in the event of an error, malfunction or unexpected operation of the Licensed Software .
+
+6.            Warranty and Limitations
+The Licensed Software is provided "as-is" with no expressed or implied warranty of any kind.  There is no warranty to the suitability of the Licensed
+Software for any specific application. IN NO EVENT WILL CC BE LIABLE FOR ANY DAMAGES INCLUDING LOST PROFITS, LOST SAVINGS, OR OTHER INCIDENTAL OR
+CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OR INABILITY TO USE THE LICENSED SOFTWARE EVEN IF CC HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES,
+OR FOR ANY CLAIM BY ANY PARTY.
+
+THE ABOVE WARRANTY IS IN LIEU OF ANY AND ALL OTHER WARRANTIES, EXPRESSED OR IMPLIED OR STATUTORY, INCLUDING THE WARRANTIES OF MERCHANTABILITY, FITNESS
+FOR PARTICULAR PURPOSE OR USE, TITLE AND NONINFRINGEMENT.
