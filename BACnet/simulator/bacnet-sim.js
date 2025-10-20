@@ -14,6 +14,12 @@
  */
 
 const Bacnet = require('bacstack');
+const os = require('os');
+const interfaces = os.networkInterfaces();
+const IP = Object.values(interfaces)
+  .flat()
+  .find(i => i.family === 'IPv4' && !i.internal)?.address;
+
 
 // === Configuration ===
 const DEVICE_ID = 12345; // Device Instance
@@ -23,6 +29,14 @@ const DEVICE_NAME = 'JS-BACnet-Sim';
 const ANNOUNCE_IAM_ON_START = true;           // send I-Am on startup
 const TEMP_UPDATE_INTERVAL_MS = 5000;         // temperature update interval
 const COV_DEADBAND = 0.1;                     // change >= deadband triggers notification
+
+
+
+
+
+
+
+
 
 // === Simulated Objects ===
 const objects = {
@@ -47,7 +61,7 @@ const subscribers = [];
 // Create bacstack client (acts as both client/server)
 const client = new Bacnet({
   apduTimeout: 6000,
-  interface: '10.102.111.139', // oder deine reale LAN-IP!
+  interface: IP,
   port: UDP_PORT,
   broadcastAddress: '255.255.255.255'
 });
@@ -58,7 +72,7 @@ setTimeout(() => {
     0x05,
     Bacnet.enum.Segmentation.SEGMENTATION_NONE,
     VENDOR_ID,
-    '127.0.0.1'
+    '10.102.111.255',
   );
   console.log('[I-Am] sent directly to localhost');
 }, 1000);
