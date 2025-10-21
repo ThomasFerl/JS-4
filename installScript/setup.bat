@@ -61,7 +61,12 @@ exit /b 1
 
 rem ============================================================
 :Init
-if "%VERBOSE%"=="1" (echo on) else (echo off)
+if "%VERBOSE%"=="1" (
+  echo on
+) else (
+  echo off
+)
+
 
 rem SUBDIR normalisieren: / -> \ ; führende \ entfernen
 set "SUBDIR=%SUBDIR_RAW:/=\%"
@@ -89,7 +94,7 @@ if "%USE_NSSM%"=="1" if not exist "%NSSM%" (
   exit /b 6
 )
 
-rem Arbeitsverzeichnis vorbereiten
+echo Arbeitsverzeichnis vorbereiten ...
 for /f "tokens=1-4 delims=/:. " %%a in ("%date% %time%") do set TS=%%a%%b%%c_%%d
 set "WORK=%TEMP%\repo_tmp_%TS%"
 set "ZIP=%WORK%\repo.zip"
@@ -117,10 +122,12 @@ echo [Extract] Entpacke mit WinRAR …
 "%WINRAR%" x -idq -y "%ZIP%" "%EXTRACT%\"
 if errorlevel 1 (echo [ERROR] Entpacken fehlgeschlagen & exit /b 11)
 
-rem Top-Level im ZIP ermitteln (z. B. JS-4-main)
+echo Top-Level im ZIP ermitteln ...
 set "TOPDIR="
 for /f "delims=" %%D in ('dir /ad /b "%EXTRACT%"') do if not defined TOPDIR set "TOPDIR=%%D"
 if not defined TOPDIR (echo [ERROR] Kein Top-Level-Verzeichnis im Archiv gefunden & exit /b 12)
+
+echo Top-Level-Dir : !TOPDIR! 
 
 rem Quelle = nur der gewünschte Unterordner
 set "SRC_SUBDIR=%EXTRACT%\%TOPDIR%\%SUBDIR%"
@@ -134,59 +141,55 @@ exit /b 0
 
 rem ============================================================
 :CopySubdir
-echo [Copy] Spiegel "%SUBDIR%" -> "%DEST_PATH%"
-robocopy "%SRC_SUBDIR%" "%DEST_PATH%" *.* /MIR /R:2 /W:2 /NFL /NDL /NP
-set "RC=%ERRORLEVEL%"
-if %RC% GEQ 8 (echo [ERROR] robocopy Fehler %RC% & exit /b %RC%)
+echo kopiere Inhalt von "%SUBDIR%" nach "%DEST_PATH%"
+xcopy "%SRC_SUBDIR%" "%DEST_PATH%"\ /E /I /Y >nul
+echo Kopiervorgang beendet ...
 exit /b 0
 
 rem ============================================================
 :LinkTfWebApp
-rem Quelle der Bibliothek aus dem Repo
+echo verlinke Frontend-Bibliothek aus dem Repo
 set "TF_SRC=%EXTRACT%\%TOPDIR%\library\tfWebApp"
 set "TF_LINK=%DEST_PATH%\frontend\tfWebApp"
 
-rem Zentrale Ablage initial befüllen (nur wenn noch nicht vorhanden)
+echo Quelle der tfWepApp - Bibiothek : !TF_SRC! 
+echo physisches Ziel im lok. System : !CENTRAL_TF!
+
+echo physisches Ziel im lok. System initial befüllen ^(falls nicht vorhanden^)
 if not exist "%CENTRAL_TF%" (
-  if exist "%TF_SRC%" (
-    echo [tfWebApp] Erzeuge zentrale Ablage: %CENTRAL_TF%
-    robocopy "%TF_SRC%" "%CENTRAL_TF%" *.* /MIR /R:2 /W:2 /NFL /NDL /NP
-    set "RCSEED=%ERRORLEVEL%"
-    if %RCSEED% GEQ 8 echo [WARN] Seed tfWebApp: robocopy RC=%RCSEED%
-  ) else (
-    echo [WARN] tfWebApp-Quelle im Repo fehlt: %TF_SRC%
-  )
-)
+  echo !CENTRAL_TF!  existiert nicht und wird jetzt aus dem Repo kopiert...
+  echo kopiere Bibliothek
+  xcopy "%TF_SRC%" "%CENTRAL_TF%" /E /I /Y >nul
+ )
 
-rem Projekt-Frontend vorbereiten
-mkdir "%DEST_PATH%\frontend" >nul 2>nul
 
-rem Vorhandenen Ordner/Link entfernen (nur Link/Ordner, nicht CENTRAL_TF)
+echo Vorhandenen Ordner/Link entfernen ^(nur Link/Ordner, nicht !CENTRAL_TF! ^)
 if exist "%TF_LINK%" (
   echo [tfWebApp] Entferne vorhandenen tfWebApp-Link/Ordner …
   rmdir "%TF_LINK%" >nul 2>nul
 )
 
-rem (Optional) Laufwerke vergleichen, damit mklink /J nicht ins Leere läuft
+echo Laufwerke vergleichen, damit mklink /J nicht ins Leere läuft
 set "DRIVE_DEST=%DEST_PATH:~0,2%"
 set "DRIVE_CENT=%CENTRAL_TF:~0,2%"
+
+echo Ziel-Laufwerk : !DRIVE_DEST!
+echo Quell-Laufwerk : !DRIVE_CENT!
+
+
 if /I not "%DRIVE_DEST%"=="%DRIVE_CENT%" (
-  echo [tfWebApp] Anderes Laufwerk – kopiere statt verlinken.
-  robocopy "%CENTRAL_TF%" "%TF_LINK%" *.* /MIR /R:2 /W:2 /NFL /NDL /NP
-  set "RCTF=%ERRORLEVEL%"
-  if %RCTF% GEQ 8 (echo [ERROR] tfWebApp: robocopy RC=%RCTF% & exit /b %RCTF%)
-  echo [tfWebApp] KOPIERT (kein Link).
+  echo Ein symbolischer Link funktioniert nur innerhalb eines Laufwerks. Daher wird der Inhalt physisch kopiert...
+  xcopy "%CENTRAL_TF%" "%TF_LINK%" /E /I /y >nul
+  echo [tfWebApp] KOPIERT ^(kein Link^).
   exit /b 0
 )
 
 echo [tfWebApp] Erzeuge Junction: "%TF_LINK%" -> "%CENTRAL_TF%"
 mklink /J "%TF_LINK%" "%CENTRAL_TF%"
 if errorlevel 1 (
-  echo [WARN] mklink /J fehlgeschlagen (anderes Laufwerk/Rechte?). Fallback: Kopieren.
-  robocopy "%CENTRAL_TF%" "%TF_LINK%" *.* /MIR /R:2 /W:2 /NFL /NDL /NP
-  set "RCTF=%ERRORLEVEL%"
-  if %RCTF% GEQ 8 (echo [ERROR] tfWebApp: robocopy RC=%RCTF% & exit /b %RCTF%)
-  echo [tfWebApp] KOPIERT (kein Link).
+  echo [WARN] mklink /J fehlgeschlagen ^(anderes Laufwerk/Rechte?^). Fallback: Kopieren.
+  xcopy "%CENTRAL_TF%" "%TF_LINK%" /E /I /y >nul
+  echo [tfWebApp] KOPIERT ^(kein Link^).
 ) else (
   echo [tfWebApp] Junction OK.
 )
@@ -239,13 +242,13 @@ if not "%USE_NSSM%"=="1" (
   exit /b 0
 )
 
-rem (Optional) Adminrechte prüfen
-rem net session >nul 2>&1
-rem if errorlevel 1 (
-rem   echo [ERROR] Dienstinstallation erfordert Administratorrechte.
-rem   echo Bitte Eingabeaufforderung als Administrator starten.
-rem   exit /b 30
-rem )
+echo Adminrechte prüfen ...
+ net session >nul 2>&1
+ if errorlevel 1 (
+  echo [ERROR] Dienstinstallation erfordert Administratorrechte.
+  echo Bitte Eingabeaufforderung als Administrator starten.
+  exit /b 30
+ )
 
 set "LOG_DIR=%DEST_PATH%\logs"
 mkdir "%LOG_DIR%" >nul 2>nul
@@ -278,31 +281,72 @@ exit /b 0
 
 rem ============================================================
 :ResolveNodeNpm
+rem Robuste Ermittlung von node.exe und npm.cmd
+setlocal ENABLEDELAYEDEXPANSION
 set "NODE_CMD="
 set "NPM_CMD="
 
+rem --- node.exe suchen (erster Treffer) ---
 for /f "delims=" %%P in ('where node 2^>nul') do (
   if not defined NODE_CMD set "NODE_CMD=%%~fP"
 )
-if not defined NODE_CMD if exist "C:\Program Files\nodejs\node.exe" set "NODE_CMD=C:\Program Files\nodejs\node.exe"
-if not defined NODE_CMD if exist "C:\Program Files (x86)\nodejs\node.exe" set "NODE_CMD=C:\Program Files (x86)\nodejs\node.exe"
-if not defined NODE_CMD (
-  echo [ERROR] Node.js (node.exe) nicht gefunden. Bitte installieren oder PATH korrigieren.
-  exit /b 1
+
+echo Ergebnis der node Suche:
+echo node = "!NODE_CMD!"
+
+rem Bereinigen: Anführungszeichen und # entfernen (falls mal „schmutzige“ Ausgabe)
+if defined NODE_CMD (
+  set "NODE_CMD=!NODE_CMD:"=!"
+  set "NODE_CMD=!NODE_CMD:#=!"
 )
 
+
+echo Ergebnis der node Bereinigung:
+echo node = "!NODE_CMD!"
+
+
+if not defined NODE_CMD (
+  echo [ERROR] Node.js ^(node.exe^) nicht gefunden. Bitte installieren oder PATH korrigieren.
+  endlocal & exit /b 1
+)
+
+rem --- npm suchen (erster Treffer) ---
 for /f "delims=" %%P in ('where npm 2^>nul') do (
   if not defined NPM_CMD set "NPM_CMD=%%~fP"
 )
-if not defined NPM_CMD if exist "C:\Program Files\nodejs\npm.cmd" set "NPM_CMD=C:\Program Files\nodejs\npm.cmd"
-if not defined NPM_CMD if exist "C:\Program Files (x86)\nodejs\npm.cmd" set "NPM_CMD=C:\Program Files (x86)\nodejs\npm.cmd"
-if not defined NPM_CMD (
-  echo [ERROR] npm nicht gefunden. Bitte Node/npm installieren oder PATH korrigieren.
-  exit /b 2
+
+echo Ergebnis der npm Suche:
+echo npm = "!NPM_CMD!"
+
+
+rem Bereinigen
+if defined NPM_CMD (
+  set "NPM_CMD=!NPM_CMD:"=!"
+  set "NPM_CMD=!NPM_CMD:#=!"
 )
 
-echo [Init] NODE_CMD="%NODE_CMD%"
-echo [Init] NPM_CMD ="%NPM_CMD%"
+rem Fallbacks für npm
+if not defined NPM_CMD (
+  if exist "C:\Program Files\nodejs\npm.cmd" (
+    set "NPM_CMD=C:\Program Files\nodejs\npm.cmd"
+  )
+)
+if not defined NPM_CMD (
+  if exist "C:\Program Files (x86)\nodejs\npm.cmd" (
+    set "NPM_CMD=C:\Program Files (x86)\nodejs\npm.cmd"
+  )
+)
+if not defined NPM_CMD (
+  echo [ERROR] npm nicht gefunden. Bitte Node/npm installieren oder PATH korrigieren.
+  endlocal & exit /b 2
+)
+
+echo [Init] NODE_CMD="!NODE_CMD!"
+echo [Init] NPM_CMD ="!NPM_CMD!"
+endlocal & (
+  set "NODE_CMD=%NODE_CMD%"
+  set "NPM_CMD=%NPM_CMD%"
+)
 exit /b 0
 
 rem ============================================================
