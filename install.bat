@@ -10,6 +10,9 @@ set "DEST_ROOT=C:\nodeJS"
 REM Pfad zu WinRAR
 set "WINRAR=C:\Program Files\WinRAR\WinRAR.exe"
 
+REM Pfad zur webApp-Library
+set "LIB=/library"
+
 if "%~1"=="" (
   echo [ERROR] Bitte SUBDIR ^(relativer Pfad im Repo^) angeben.
   echo   Beispiel: "prototyp" oder "src\tools"
