@@ -39,6 +39,27 @@ tables.push(
    ]});
 
 
+tables.push( 
+  {tableName:"quantityAdjustment",
+   tableFields:[
+      {fieldName:"ORT"         , fieldType:"Text" } ,
+      {fieldName:"PRODUKT"     , fieldType:"Text" } ,
+      {fieldName:"DATAFIELD"   , fieldType:"Text" } ,
+      {fieldName:"ADJUSTMENT"  , fieldType:"Text" } ,
+      {fieldName:"VALUE"       , fieldType:"REAL" } ,
+      
+   ]});
+
+   
+tables.push( 
+  {tableName:"usedAdjustments",
+   tableFields:[
+      {fieldName:"ID_ADJUSTMENT" , fieldType:"INT" } ,
+      {fieldName:"TABLENAME"     , fieldType:"Text" } 
+   ]});
+
+
+
 module.exports.buildTables = function( dB )
 {
    for(var i=0; i< tables.length; i++)

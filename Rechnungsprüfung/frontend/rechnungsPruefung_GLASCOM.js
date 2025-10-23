@@ -54,9 +54,10 @@ constructor()
 {
    var gui                            = new TFgui( null , forms.rechnungspruefungMain);
    this.#billContainer                = gui.gridPanel;
-   gui.btnNewBill.callBack_onClick    = function() {this.addNewBill()}.bind(this);
-   gui.btnDeleteBill.callBack_onClick = ()=>{dialogs.showMessage('Diese Funktion ist aktuell noch nicht implementiert !');};
+   gui.btnNewBill.callBack_onClick    = function(){this.addNewBill()}.bind(this);
+   gui.bntDeleteBill.callBack_onClick = function(){dialogs.showMessage('Diese Funktion ist aktuell noch nicht implementiert !');}.bind(this);
    gui.btnEnd.callBack_onClick        = function(){this.close()}.bind(gui);
+   gui.btnSetup.callBack_onClick      = function(){this.setupDlg()}.bind(this);
 
    this.updateView(); 
 }
@@ -72,9 +73,10 @@ updateView()
   var table    = dialogs.createTable( this.#billContainer , response.result ,["ID"  , "ARCPATH" , "TABLENAME"	, "IMPORTED"	,	 "DESCRIPTION2"	, "DESCRIPTION3" ] , {DESCRIPTION2:"Beschreibung",ORGFILENAME:"Datei-Name"}); 
       table.onRowClick = function( selectedRow , itemIndex , rowData ) 
       {
-        if(this.#lastSelectedNdx==itemIndex) { this.#selectedBill = rowData; this.showReports() }
+        this.#selectedBill      = rowData;
+        this.#selectedTable     = this.#selectedBill.TABLENAME;
+        if(this.#lastSelectedNdx==itemIndex) { this.showReports() }
         this.#lastSelectedNdx=itemIndex;
-         
       }.bind(this);
 }
   
@@ -181,7 +183,6 @@ showReports()
    this.#reportContainer   = gui.gridContainer;
    this.#cbReport          = gui.selectReport;
    this.#cbFilter          = gui.selectBlacklist;
-   this.#selectedTable     = this.#selectedBill.TABLENAME;
    this.#selectedBlackList = '0';
    this.#selectedReport    = '0';
 
@@ -639,7 +640,6 @@ deleteReport( ID )
 }
 
 
-
 showPivotDetails(fieldName1,value1,fieldName2,value2)
 {
     var w   = dialogs.createWindow(null,'Details', "70%" , "80%" , "CENTER")
@@ -659,7 +659,160 @@ showPivotDetails(fieldName1,value1,fieldName2,value2)
 }
 
 
+setupDlg()
+{
+  var gui = new TFgui( null , 'setupDlg' );
+  
+  gui.btnImportRules.callBack_onClick     = function(){dialogs.showMessage('Platzhalter noch nicht implementiert...'); return }.bind(this)
+  gui.btnAdjustmentRules.callBack_onClick = function(){ this.setupAdjustmentRules() }.bind(this);
+  gui.btnClose.callBack_onClick           = function(){this.close()}.bind(gui)
+  
+}  
+
+
+setupAdjustmentRules()
+{
+   var gui = new TFgui( null , 'setupAdjustment' );
+
+  this.___updateAdjustmentRules(gui.container);
+
+   gui.btnAdd.callBack_onClick      = function(){this.self.addMengenKorrektur( gui.container ); this.self.___updateAdjustmentRules(this.gui.container)}.bind({self:this, gui:gui} );
+   gui.btnDelete.callBack_onClick   = function(){this.self.delMengenKorrektur( gui.container ); this.self.___updateAdjustmentRules(this.gui.container)}.bind({self:this, gui:gui} );
+   gui.btnClose.callBack_onClick    = function(){this.close()}.bind(gui);
+   
+
+}
+
+
+
+addMengenKorrektur( container )
+{
+  // Wurde Tabelle gewählt ...
+  if (!this.#selectedTable)
+  {
+    dialogs.showMessage('Bitte zuerst die anzuwendene Tabelle auswählen !');
+    return;
+  }
+
+  // Wurde eine gültige Tabelle gewählt ...
+  // Dazu datafields mit Datenfeldern der akt, Tabelle bestücken ...
+ var dataFields = this.___getFieldNames(this.#selectedTable);
+ 
+ // ist das Datenfeld "ORT" und das Datenfeld "PRODUKT" in den Datenfeldern enthalten ?
+ const containsOrt      = dataFields.some(field => field.toLowerCase() === "ort");
+ if (!containsOrt) 
+ {
+    dialogs.showMessage('Bitte eine gültige Tabelle auswählen (Das Feld "ORT" muss enthalten sein) !');
+    return;
+ }
+
+ const containsProdukt  = dataFields.some(field => field.toLowerCase() === "produkt");
+ if (!containsProdukt ) 
+ {
+    dialogs.showMessage('Bitte eine gültige Tabelle auswählen (Das Feld "PRODUKT" muss enthalten sein) !');
+    return;
+ }
+
+  var gui = new TFgui( null , 'Mengenkorrekturen' );
+  var dlg = gui.window;
+      dlg.caption = 'Setup';
+
+  var adjustment = new TFDataObject('quantityAdjustment');    
+
+    // Comboboxen mit Kategirien befüllen...
+    // 1.Ort
+    var response      = utils.webApiRequest( 'FETCHRECORDS' , {sql:"Select Distinct Ort from "+this.#selectedTable+" Order by Ort"} );
+    if(!response.error)
+    {
+      var items = [];
+      for(var i=0; i<response.result.length;i++) items.push(response.result[i].ORT)
+      gui.selectOrt.setItems(items);
+    }
+
+     // 1.Produkt
+    var response      = utils.webApiRequest( 'FETCHRECORDS' , {sql:"Select Distinct PRODUKT from "+this.#selectedTable+" Order by PRODUKT"} );
+    if(!response.error)
+    {
+      var items = [];
+      for(var i=0; i<response.result.length;i++) items.push(response.result[i].PRODUKT)
+      gui.selectProdukt.setItems(items);
+    }
+
+    // anzuwenden auf Datenfeld ... (Übernahme der bereits oben ermittelten Felder)
+    gui.selectDatenfeld.setItems(dataFields);
+
+    // Operationen...
+    gui.selectOperation.setItems(['erhöht','reduziert']);
+
+    gui.btnOk.callBack_onClick = function(){ debugger;
+                                            var op = this.gui.selectOperation.value=='erhöht'?"+":"-"; 
+                                            this.adjustment.ORT        = this.gui.selectOrt.value;
+                                            this.adjustment.PRODUKT    = this.gui.selectProdukt.value;
+                                            this.adjustment.value      = this.gui.editValue.value;
+                                            this.adjustment.ADJUSTMENT = op;
+                                            this.adjustment.save();
+                                            this.gui.close();
+                                            this.self.___updateAdjustmentRules(this.container);
+                                           }.bind({self:this,gui:gui,adjustment:adjustment,container:container})
+
+    gui.btnAbort.callBack_onClick = function(){ this.close()}.bind(gui)
+}
+
+
+delMengenKorrektur( container )
+{dialogs.ask("Soll diese Regel wirklich gelöscht werden ?")}
+
+
 // Hilfsfunktionen
+
+
+___updateAdjustmentRules( container )
+{ 
+   container.innerHTML = '';
+   container.padding   = 0;
+   container.overflow  = 'auto';
+
+   utils.buildBlockLayout(container);
+
+   var response = utils.webApiRequest('FETCHRECORDS' , {sql:"Select * from quantityAdjustment order by ID"});
+   if (response.error) {dialogs.showMessage(response.errMsg);return}
+
+   var rules = [];
+
+   for(var i=0; i<response.result.length; i++)
+   {
+     var rule = dialogs.addPanel(container,'',1,1,'99%','4em', {margin:'4px',backgroundColor:'white'});
+         rule.buildGridLayout_templateColumns('1fr 7em');
+         rule.buildGridLayout_templateRows('1fr 1fr');
+         rule.dataBinding = response.result[i];
+         rules.push(rule);
+         rule.callBack_onClick = function(e){ debugger;
+                                             for(var j=0; j<this.length; j++) this[j].backgroundColor = "white";
+                                             e.currentTarget.data.backgroundColor =  "rgb(168, 243, 181)";
+                                           }.bind(rules)
+
+         var adj = response.result[i].ADJUSTMENT == '+'? "erhöht" : "verringert";
+         dialogs.addLabel(rule,'',1,1,1,1,'Das Datenfeld ['+response.result[i].DATAFIELD+'] wird um den Betrag ['+response.result[i].VALUE+'] '+adj).textAlign='left';
+         dialogs.addLabel(rule,'',1,2,1,1,'wenn der Ort gleich ['+response.result[i].ORT+'] und das Produkt ['+response.result[i].PRODUKT+'] ist.').textAlign='left';
+         var btn = dialogs.addButton(rule,'',2,1,1,2,'anwenden');
+             btn.dataBinding = response.result[i];
+             btn.callBack_onClick = function(event,dataBinding){this.runAdjustment(dataBinding)}.bind(this)
+   }
+
+
+
+
+
+}
+
+
+runAdjustment( adjustment )
+{
+   
+}
+
+
+
 
 ___getFieldNames(tableName)
 {
@@ -710,4 +863,5 @@ ___excelExport( grid )
   utils.POSTrequest('JSN2EXCEL', { worksheetName:'Tabelle1' , data:grid.jsonData, excludeFields:[] , fieldTitles:[] } , "download_"+globals.session.userName+"_"+Date.now().toString() );
 }
   
+
 }
