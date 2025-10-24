@@ -25,7 +25,7 @@ export function main(capt1)
   globals.sysMenu.push( {caption:'GUI Builder (nur in der Entwicklungsphase)' , action:function(){app.guiBuilder()} } );
   globals.sysMenu.push( {caption:'Abbrechen' , action:function(){} } );
   
-  app.login( ()=>{  caption2 = 'Willkommen ' + globals.session.userName ; run() });
+  app.login( ()=>{  caption2 = 'Willkommen ' + globals.session.userName ; run() } , true);
   
 }  
 

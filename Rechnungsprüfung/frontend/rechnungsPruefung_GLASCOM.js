@@ -57,7 +57,7 @@ constructor()
    gui.btnNewBill.callBack_onClick    = function(){this.addNewBill()}.bind(this);
    gui.bntDeleteBill.callBack_onClick = function(){dialogs.showMessage('Diese Funktion ist aktuell noch nicht implementiert !');}.bind(this);
    gui.btnEnd.callBack_onClick        = function(){this.close()}.bind(gui);
-   gui.btnSetup.callBack_onClick      = function(){this.setupDlg()}.bind(this);
+   gui.btnSetup.callBack_onClick      = function(){this.setupAdjustmentRules() }.bind(this);
 
    this.updateView(); 
 }
@@ -659,25 +659,22 @@ showPivotDetails(fieldName1,value1,fieldName2,value2)
 }
 
 
-setupDlg()
-{
-  var gui = new TFgui( null , 'setupDlg' );
-  
-  gui.btnImportRules.callBack_onClick     = function(){dialogs.showMessage('Platzhalter noch nicht implementiert...'); return }.bind(this)
-  gui.btnAdjustmentRules.callBack_onClick = function(){ this.setupAdjustmentRules() }.bind(this);
-  gui.btnClose.callBack_onClick           = function(){this.close()}.bind(gui)
-  
-}  
-
 
 setupAdjustmentRules()
 {
-   var gui = new TFgui( null , 'setupAdjustment' );
+  // Wurde Tabelle gewählt ...
+  if (!this.#selectedTable)
+  {
+    dialogs.showMessage('Bitte zuerst die Tabelle auswählen, für die die Anpassung vorgenommen werden soll !');
+    return;
+  }
 
-  this.___updateAdjustmentRules(gui.container);
+  var gui = new TFgui( null , 'setupAdjustment' );
 
-   gui.btnAdd.callBack_onClick      = function(){this.self.addMengenKorrektur( gui.container ); this.self.___updateAdjustmentRules(this.gui.container)}.bind({self:this, gui:gui} );
-   gui.btnDelete.callBack_onClick   = function(){this.self.delMengenKorrektur( gui.container ); this.self.___updateAdjustmentRules(this.gui.container)}.bind({self:this, gui:gui} );
+  this.___updateAdjustmentRules(gui.container , gui );
+
+   gui.btnAdd.callBack_onClick      = function(){this.self.addMengenKorrektur( this.gui.container ); this.self.___updateAdjustmentRules(this.gui.container , this.gui )}.bind({self:this, gui:gui} );
+   gui.btnDelete.callBack_onClick   = function(){this.self.delMengenKorrektur( this.gui );           this.self.___updateAdjustmentRules(this.gui.container , this.gui )}.bind({self:this, gui:gui} );
    gui.btnClose.callBack_onClick    = function(){this.close()}.bind(gui);
    
 
@@ -687,13 +684,6 @@ setupAdjustmentRules()
 
 addMengenKorrektur( container )
 {
-  // Wurde Tabelle gewählt ...
-  if (!this.#selectedTable)
-  {
-    dialogs.showMessage('Bitte zuerst die anzuwendene Tabelle auswählen !');
-    return;
-  }
-
   // Wurde eine gültige Tabelle gewählt ...
   // Dazu datafields mit Datenfeldern der akt, Tabelle bestücken ...
  var dataFields = this.___getFieldNames(this.#selectedTable);
@@ -748,25 +738,33 @@ addMengenKorrektur( container )
                                             var op = this.gui.selectOperation.value=='erhöht'?"+":"-"; 
                                             this.adjustment.ORT        = this.gui.selectOrt.value;
                                             this.adjustment.PRODUKT    = this.gui.selectProdukt.value;
-                                            this.adjustment.value      = this.gui.editValue.value;
+                                            this.adjustment.DATAFIELD  = this.gui.selectDatenfeld.value;
+                                            this.adjustment.VALUE      = this.gui.editValue.value;
                                             this.adjustment.ADJUSTMENT = op;
                                             this.adjustment.save();
                                             this.gui.close();
-                                            this.self.___updateAdjustmentRules(this.container);
+                                            this.self.___updateAdjustmentRules(this.container , this.gui );
                                            }.bind({self:this,gui:gui,adjustment:adjustment,container:container})
 
     gui.btnAbort.callBack_onClick = function(){ this.close()}.bind(gui)
 }
 
 
-delMengenKorrektur( container )
-{dialogs.ask("Soll diese Regel wirklich gelöscht werden ?")}
+delMengenKorrektur( gui )
+{
+  var rule = gui.btnDelete.dataBinding;
+  if(!rule.ID){dialogs.showMessage("Bitte zuerst die zu löschende Regel auswählen !");return;}
+
+
+  dialogs.ask("Löschen der Regel","Soll die ausgewählte Regel (ID:"+rule.ID+") wirklich gelöscht werden ? " , function(){this.self.___deleteAdjusmentRule(this.rule.ID , this.gui )}.bind({self:this,rule:rule , gui:gui})  );
+
+}
 
 
 // Hilfsfunktionen
 
 
-___updateAdjustmentRules( container )
+___updateAdjustmentRules( container , gui )
 { 
    container.innerHTML = '';
    container.padding   = 0;
@@ -786,31 +784,38 @@ ___updateAdjustmentRules( container )
          rule.buildGridLayout_templateRows('1fr 1fr');
          rule.dataBinding = response.result[i];
          rules.push(rule);
-         rule.callBack_onClick = function(e){ debugger;
-                                             for(var j=0; j<this.length; j++) this[j].backgroundColor = "white";
+         rule.callBack_onClick = function(e){ 
+                                             for(var j=0; j<this.rules.length; j++) this.rules[j].backgroundColor = "white";
                                              e.currentTarget.data.backgroundColor =  "rgb(168, 243, 181)";
-                                           }.bind(rules)
+                                             this.gui.btnDelete.dataBinding = e.currentTarget.data.dataBinding;
+                                           }.bind({rules:rules,gui:gui})
 
          var adj = response.result[i].ADJUSTMENT == '+'? "erhöht" : "verringert";
          dialogs.addLabel(rule,'',1,1,1,1,'Das Datenfeld ['+response.result[i].DATAFIELD+'] wird um den Betrag ['+response.result[i].VALUE+'] '+adj).textAlign='left';
          dialogs.addLabel(rule,'',1,2,1,1,'wenn der Ort gleich ['+response.result[i].ORT+'] und das Produkt ['+response.result[i].PRODUKT+'] ist.').textAlign='left';
+
          var btn = dialogs.addButton(rule,'',2,1,1,2,'anwenden');
-             btn.dataBinding = response.result[i];
-             btn.callBack_onClick = function(event,dataBinding){this.runAdjustment(dataBinding)}.bind(this)
+               btn.dataBinding = response.result[i];
+               btn.callBack_onClick = function(event,dataBinding){this.self.___runAdjustment(dataBinding.ID , this.gui )}.bind({self:this,gui:gui})
    }
-
-
-
-
-
 }
 
 
-runAdjustment( adjustment )
+___deleteAdjusmentRule( rule , gui )
 {
-   
+  utils.webApiRequest('DELETERULE', {ID_rule:rule} )
+  this.___updateAdjustmentRules( gui.container , gui )
 }
 
+
+___runAdjustment( idRule  , gui  )
+{
+   var response =utils.webApiRequest('RUNRULE', { ID_rule:idRule, tableName:this.#selectedTable } )
+   if (response.error) dialogs.showMessage(response.errMsg);
+
+
+  this.___updateAdjustmentRules( gui.container , gui )
+}
 
 
 

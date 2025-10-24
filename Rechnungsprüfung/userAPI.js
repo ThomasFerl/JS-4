@@ -3,6 +3,7 @@ const utils               = require('./nodeUtils.js');
 const dbUtils             = require('./dbUtils.js');
 const procExcelFiles      = require('./processExcelFiles.js');
 const { TFDateTime }      = require('./nodeUtils.js');
+const { error } = require('console');
 
 var   dB           = {}; // lokale Kopie der Arbeits-Datenbank - wird via startBackend() initialisiert ....   
 var   etc          = {}; // lokale Kopie der Konfigurations-Datenbank - wird via startBackend() initialisiert ....   
@@ -46,6 +47,41 @@ if( CMD=='TEST')
 {
   setTimeout(()=>{console.log("TEST")},1000)
   return {error:false,errMsg:"OK",result:42}
+}
+
+
+if( CMD=='DELETERULE') 
+{
+  return dbUtils.runSQL(dB,"Delete From quantityAdjustment Where ID="+param.ID_rule);
+}
+
+
+if( CMD=='RUNRULE') 
+{
+  var sql    ='';
+  var ruleID = param.ID_rule;
+  var table  = param.tableName;
+
+  // zuerst prüfen, ob diese Regel bereits angewendet wurde ...
+  var response = dbUtils.fetchValue_from_Query(dB,"Select count(*) from usedAdjustments Where TABLENAME='"+table+"' AND ID_ADJUSTMENT="+ruleID);
+  if (response.error) return response;
+
+  if (response.result>0) return {error:true, errMsg:"Diese Regel wurde bereits angewendet !", result:""}
+
+  response = dbUtils.fetchRecord_from_Query(dB,"Select * from quantityAdjustment Where ID="+ruleID);
+  if (response.error) return response;
+
+  if (!response.result.ID)  return {error:true, errMsg:"Diese Regel wurde nicht gefunden !", result:""} 
+
+  var rule = response.result;
+
+  sql = "Update "+table+" set "+rule.DATAFIELD+" = " + rule.DATAFIELD + " " +rule.ADJUSTMENT + " " + rule.VALUE + " Where ORT='"+rule.ORT+"' AND PRODUKT='"+rule.PRODUKT+"'"; 
+
+  response = dbUtils.insertIntoTable(dB,'usedAdjustments',{ID_ADJUSTMENT:rule.ID,TABLENAME:table});
+  if (response.error) return response;
+
+  return dbUtils.runSQL(dB,sql);
+  
 }
 
 
