@@ -50,6 +50,15 @@ if( CMD=='TEST')
 }
 
 
+if( CMD=='LSRULES') 
+{
+  var tn = param.tableName || '';
+  return dbUtils.fetchRecords_from_Query(dB,"SELECT r.*, (SELECT COUNT(*) FROM usedAdjustments WHERE ID_ADJUSTMENT = r.ID AND TABLENAME = '"+param.tableName+"') AS CNT FROM quantityAdjustment r ORDER BY r.ID");
+}
+
+
+
+
 if( CMD=='DELETERULE') 
 {
   return dbUtils.runSQL(dB,"Delete From quantityAdjustment Where ID="+param.ID_rule);

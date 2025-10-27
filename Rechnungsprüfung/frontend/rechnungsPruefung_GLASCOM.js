@@ -765,14 +765,14 @@ delMengenKorrektur( gui )
 
 
 ___updateAdjustmentRules( container , gui )
-{ 
+{  
    container.innerHTML = '';
    container.padding   = 0;
    container.overflow  = 'auto';
 
    utils.buildBlockLayout(container);
 
-   var response = utils.webApiRequest('FETCHRECORDS' , {sql:"Select * from quantityAdjustment order by ID"});
+   var response = utils.webApiRequest('LSRULES' , {tableName:this.#selectedTable});
    if (response.error) {dialogs.showMessage(response.errMsg);return}
 
    var rules = [];
@@ -794,9 +794,15 @@ ___updateAdjustmentRules( container , gui )
          dialogs.addLabel(rule,'',1,1,1,1,'Das Datenfeld ['+response.result[i].DATAFIELD+'] wird um den Betrag ['+response.result[i].VALUE+'] '+adj).textAlign='left';
          dialogs.addLabel(rule,'',1,2,1,1,'wenn der Ort gleich ['+response.result[i].ORT+'] und das Produkt ['+response.result[i].PRODUKT+'] ist.').textAlign='left';
 
-         var btn = dialogs.addButton(rule,'',2,1,1,2,'anwenden');
-               btn.dataBinding = response.result[i];
-               btn.callBack_onClick = function(event,dataBinding){this.self.___runAdjustment(dataBinding.ID , this.gui )}.bind({self:this,gui:gui})
+         if(response.result[i].CNT == '0') { 
+                                             var btn = dialogs.addButton(rule,'',2,1,1,2,'anwenden');
+                                             btn.dataBinding = response.result[i];
+                                             btn.callBack_onClick = function(event,dataBinding){
+                                                                                                 this.self.___runAdjustment(dataBinding.ID , this.gui )
+                                                                                                 this.self.___updateAdjustmentRules(this.container,this.gui)
+                                                                                                }.bind({self:this,gui:gui,container:container})
+                                           }
+                                      else { var btn = dialogs.addButton(rule,'',2,1,1,2,'angewendet').backgroundColor = 'gray'; }         
    }
 }
 
