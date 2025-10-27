@@ -669,7 +669,7 @@ setupAdjustmentRules()
     return;
   }
 
-  var gui = new TFgui( null , 'setupAdjustment' );
+  var gui = new TFgui( null , forms.setupAdjustment );
 
   this.___updateAdjustmentRules(gui.container , gui );
 
@@ -703,7 +703,7 @@ addMengenKorrektur( container )
     return;
  }
 
-  var gui = new TFgui( null , 'Mengenkorrekturen' );
+  var gui = new TFgui( null , forms.Mengenkorrekturen );
   var dlg = gui.window;
       dlg.caption = 'Setup';
 
