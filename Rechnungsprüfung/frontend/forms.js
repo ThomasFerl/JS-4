@@ -3846,7 +3846,7 @@ export const Mengenkorrekturen = {
       position: "static",
       flexDirection: "row",
       gridLayout: "2x1",
-      caption: "für den Ort",
+      caption: "für den Ortsteil",
       captionLength: "17",
       value: null,
       editLength: "auto",

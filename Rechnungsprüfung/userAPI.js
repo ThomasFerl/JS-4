@@ -49,14 +49,45 @@ if( CMD=='TEST')
   return {error:false,errMsg:"OK",result:42}
 }
 
+if( CMD=='DELBILL') 
+{
+  var response = dbUtils.fetchRecord_from_Query(dB,'Select * from billArchive Where ID='+param.ID);
+  if (response.error) return response;
+
+  // der Lesbarkeit halber ...
+  var bill = response.result;
+
+  // Tabelle löschen....
+  dbUtils.runSQL(dB,'Drop Table '+bill.TABLENAME)
+
+  // Verknüpfungen zur Tabelle löschen 
+  dbUtils.runSQL(dB,"Delete from usedAdjustments Where TABLENAME='"+bill.TABLENAME+"'");  
+
+  // Archiv-File löschen....
+  var fn = path.resolve(globals.archivePath , bill.ARCPATH);
+  console.log('resolve: ' + fn);
+  fs.unlinkSync(fullPath, (err) => {
+  if (err) {
+    console.error(`Fehler beim Löschen der Datei: ${err.message}`);
+  } else {
+           console.log(`Datei erfolgreich gelöscht: ${fullPath}`);  
+           // Datensatz löschen...
+           dbUtils.runSQL(dB,'Delete from billArchive Where ID='+bill.ID);
+  }
+});
+
+
+  return {error:false,errMsg:'OK',result:{}}
+}
+
+
+
 
 if( CMD=='LSRULES') 
 {
   var tn = param.tableName || '';
   return dbUtils.fetchRecords_from_Query(dB,"SELECT r.*, (SELECT COUNT(*) FROM usedAdjustments WHERE ID_ADJUSTMENT = r.ID AND TABLENAME = '"+param.tableName+"') AS CNT FROM quantityAdjustment r ORDER BY r.ID");
 }
-
-
 
 
 if( CMD=='DELETERULE') 
@@ -84,7 +115,7 @@ if( CMD=='RUNRULE')
 
   var rule = response.result;
 
-  sql = "Update "+table+" set "+rule.DATAFIELD+" = " + rule.DATAFIELD + " " +rule.ADJUSTMENT + " " + rule.VALUE + " Where ORT='"+rule.ORT+"' AND PRODUKT='"+rule.PRODUKT+"'"; 
+  sql = "Update "+table+" set "+rule.DATAFIELD+" = " + rule.DATAFIELD + " " +rule.ADJUSTMENT + " " + rule.VALUE + " Where  (Ort || ' / ' || Ortsteil) ='"+rule.ORT+"' AND PRODUKT='"+rule.PRODUKT+"'"; 
 
   response = dbUtils.insertIntoTable(dB,'usedAdjustments',{ID_ADJUSTMENT:rule.ID,TABLENAME:table});
   if (response.error) return response;

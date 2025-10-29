@@ -55,7 +55,7 @@ constructor()
    var gui                            = new TFgui( null , forms.rechnungspruefungMain);
    this.#billContainer                = gui.gridPanel;
    gui.btnNewBill.callBack_onClick    = function(){this.addNewBill()}.bind(this);
-   gui.bntDeleteBill.callBack_onClick = function(){dialogs.showMessage('Diese Funktion ist aktuell noch nicht implementiert !');}.bind(this);
+   gui.bntDeleteBill.callBack_onClick = function(){this.deleteBill()}.bind(this);
    gui.btnEnd.callBack_onClick        = function(){this.close()}.bind(gui);
    gui.btnSetup.callBack_onClick      = function(){this.setupAdjustmentRules() }.bind(this);
 
@@ -135,6 +135,27 @@ addNewBill()
                                                     
                                                  }.bind(this)
 }
+
+
+deleteBill()
+{
+  // Wurde Tabelle gewählt ...
+  if (!this.#selectedTable)
+  {
+    dialogs.showMessage('Bitte zuerst die zu löschende Rechnung auswählen !');
+    return;
+  }
+
+  dialogs.ask("Rechnung löschen!",
+              "Soll die ausgewählte Rechnung '"+this.#selectedBill.DESCRIPTION1+"' wirklich gelöscht werden ?",
+             function(){
+                        var response = utils.webApiRequest('DELBILL',{ID:this.#selectedBill.ID});
+                        if (response.error) dialogs.showMessage(response.errMsg);
+                        this.updateView();
+             }.bind(this))
+} 
+
+
 
 
 loadAvailableReports()
@@ -414,7 +435,7 @@ detailView( data )
     var p = dialogs.addPanel(gui.valueContainer,'cssContainerPanel',1,1,'99%','2em');
         p.backgroundColor = 'white';
         p.margin = '0.49em';
-        p.buildGridLayout_templateColumns('1fr 2fr');
+        p.buildGridLayout_templateColumns('1fr 1fr');
         p.buildGridLayout_templateRows('1fr'); 
         dialogs.addLabel(p,'',1,1,1,1,key,{fontWeight:'bold'}).textAlign = 'left';
         dialogs.addLabel(p,'',2,1,1,1,data[key] ).textAlign = 'left';
@@ -689,7 +710,7 @@ addMengenKorrektur( container )
  var dataFields = this.___getFieldNames(this.#selectedTable);
  
  // ist das Datenfeld "ORT" und das Datenfeld "PRODUKT" in den Datenfeldern enthalten ?
- const containsOrt      = dataFields.some(field => field.toLowerCase() === "ort");
+ const containsOrt      = dataFields.some(field => field.toLowerCase() === "ortsteil");
  if (!containsOrt) 
  {
     dialogs.showMessage('Bitte eine gültige Tabelle auswählen (Das Feld "ORT" muss enthalten sein) !');
@@ -702,20 +723,19 @@ addMengenKorrektur( container )
     dialogs.showMessage('Bitte eine gültige Tabelle auswählen (Das Feld "PRODUKT" muss enthalten sein) !');
     return;
  }
-
   var gui = new TFgui( null , forms.Mengenkorrekturen );
   var dlg = gui.window;
       dlg.caption = 'Setup';
 
   var adjustment = new TFDataObject('quantityAdjustment');    
 
-    // Comboboxen mit Kategirien befüllen...
+    // Comboboxen mit Kategorien befüllen...
     // 1.Ort
-    var response      = utils.webApiRequest( 'FETCHRECORDS' , {sql:"Select Distinct Ort from "+this.#selectedTable+" Order by Ort"} );
+    var response      = utils.webApiRequest( 'FETCHRECORDS' , {sql:"SELECT DISTINCT ( Ort || ' / ' || Ortsteil ) as ORT from "+this.#selectedTable+" Order by Ort,Ortsteil"} );
     if(!response.error)
     {
       var items = [];
-      for(var i=0; i<response.result.length;i++) items.push(response.result[i].ORT)
+      for(var i=0; i<response.result.length;i++) if(response.result[i].ORT) items.push(response.result[i].ORT)
       gui.selectOrt.setItems(items);
     }
 
@@ -734,7 +754,7 @@ addMengenKorrektur( container )
     // Operationen...
     gui.selectOperation.setItems(['erhöht','reduziert']);
 
-    gui.btnOk.callBack_onClick = function(){ debugger;
+    gui.btnOk.callBack_onClick = function(){ 
                                             var op = this.gui.selectOperation.value=='erhöht'?"+":"-"; 
                                             this.adjustment.ORT        = this.gui.selectOrt.value;
                                             this.adjustment.PRODUKT    = this.gui.selectProdukt.value;
@@ -818,10 +838,8 @@ ___runAdjustment( idRule  , gui  )
 {
    var response =utils.webApiRequest('RUNRULE', { ID_rule:idRule, tableName:this.#selectedTable } )
    if (response.error) dialogs.showMessage(response.errMsg);
-
-
-  this.___updateAdjustmentRules( gui.container , gui )
-}
+   utils.wait(500).then(function(){this.self.___updateAdjustmentRules( this.gui.container , this.gui );}.bind({self:this,gui:gui}))
+  }
 
 
 
@@ -845,7 +863,7 @@ ___getFieldContent(tableName,fieldName)
 
   if (response.error) return result;
 
-  for (var i=0; i<response.result.length; i++) result.push(response.result[i][fieldName])
+  for (var i=0; i<response.result.length; i++) if(response.result[i][fieldName]) result.push(response.result[i][fieldName])
 
   return result;  
 }  
