@@ -4,6 +4,8 @@ import * as dialogs      from "./tfWebApp/tfDialogs.js";
 import * as app          from "./tfWebApp/tfWebApp.js"; 
 import * as sysadmin     from "./tfWebApp/tfSysAdmin.js";
 
+import { TFSreadSheet}   from "./tfWebApp/tfSpreadSheet.js";
+
 
 // Anwendungsspezifische Einbindungen
 import { rpGlasCOM}      from "./rechnungsPruefung_GLASCOM.js";
@@ -25,7 +27,7 @@ export function main(capt1)
   globals.sysMenu.push( {caption:'GUI Builder (nur in der Entwicklungsphase)' , action:function(){app.guiBuilder()} } );
   globals.sysMenu.push( {caption:'Abbrechen' , action:function(){} } );
   
-  app.login( ()=>{  caption2 = 'Willkommen ' + globals.session.userName ; run() } , false);  // kein Bypass
+  app.login( ()=>{  caption2 = 'Willkommen ' + globals.session.userName ; run() } , true);  // kein Bypass
    
 }  
 
@@ -33,6 +35,25 @@ export function main(capt1)
 export async function run()
 { 
   var ws       = app.startWebApp(caption1,caption2).activeWorkspace;
+
+  var wnd = dialogs.createWindow(null,'SpreadSheet', '50%' , '50%' , 'CENTER' );
+  var sd  = {
+              head :   'x x x x x x x x x', 
+              rows : [ 'x x x x x x x x x',
+                       'x x x x x x x x x',
+                       'x x x x x x x x x',
+                       'x x x x x x x x x',
+                       'x x x x x x x x x']
+
+            };
+
+  var spr = new TFSreadSheet( wnd.hWnd , sd );
+  
+
+
+return;
+
+
 
   ws.buildGridLayout("21x21")
   var btn= dialogs.addButton(ws.handle,"",1,21,2,1,{caption:"Start",glyph:"table-list"});
