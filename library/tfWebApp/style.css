@@ -852,6 +852,22 @@ html, body {
 }    
 
 
+.cssSpreadSheetCell     
+{
+   margin            : -1px;
+   padding           : 0px;
+   border            : 1px solid rgba(0, 0, 0, 0.1);
+   background-Color  : white;
+   align-items       : center;
+   justify-content   : center;
+   display           : flex;
+   flex-Flow         : wrap;
+   float             : left;
+   overflow          : hidden;
+}    
+
+
+
 .cssHTMLTableContainerPanel     
 {
    width             : 100%;   

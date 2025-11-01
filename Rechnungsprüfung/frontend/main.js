@@ -38,16 +38,18 @@ export async function run()
 
   var wnd = dialogs.createWindow(null,'SpreadSheet', '50%' , '50%' , 'CENTER' );
   var sd  = {
-              head :   'x x x x x x x x x', 
-              rows : [ 'x x x x x x x x x',
-                       'x x x x x x x x x',
-                       'x x x x x x x x x',
-                       'x x x x x x x x x',
-                       'x x x x x x x x x']
-
+              head :   'x x x x x x x x x x', 
+              rows : [ 'x x x x x x x x x x',
+                       'x x x x x x x x x x',
+                       'x x x x x x x x x x',
+                       'x x x x x x x x x x',
+                       'x x x x x x x x x x']
             };
 
   var spr = new TFSreadSheet( wnd.hWnd , sd );
+  var c = null;
+  for(var row=1; row<spr.rowCount; row++)
+      for(var col=1; col<spr.colCount; col++)  c=spr.cells[col][row]   //spr.cells[col][row].value = col+'/'+row;   
   
 
 
