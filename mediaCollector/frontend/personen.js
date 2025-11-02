@@ -34,7 +34,7 @@ export class TPerson extends TFDataObject
         {
           if(this.#portraitPath  == '')
           {  
-            var response = utils.webApiRequest('portraitURL' , {portrait:''} );
+            var response = utils.webApiRequest('portraitURL' , {portrait:this.PORTRAIT} );
             if(response.error) {dialogs.showMessage(response.errMsg); return '';}
             this.#portraitPath = response.result;
           }  
@@ -48,7 +48,7 @@ export class TPerson extends TFDataObject
    
 
 edit( callback_if_ready )
-{ debugger;
+{ 
   var gui         =  new TFgui( null , forms.personDlg , {autoSizeWindow:true} );
   var w           =  gui.getWindow();
   w.caption.text  =  this.ID ? 'Person bearbeiten' : 'Neue Person anlegen';
@@ -59,8 +59,8 @@ edit( callback_if_ready )
   gui.dataBinding( this );
   gui.update('gui');
   
-  //gui.imaage.imgURL = this.portraitURL();
-  // dialogs.addFileUploader  ( p , '*.*' , true , 'mediaCache/persons' , (selectedFiles) => { this.PORTRAIT=selectedFiles.result.savedName});
+  gui.image.imgURL = this.portraitURL();
+  dialogs.addFileUploader  ( p , '*.*' , true , 'mediaCache/persons' , (selectedFiles) => { this.PORTRAIT=selectedFiles.result.savedName});
   
   // lookUp Liste befüllen
   var herkunft = [];

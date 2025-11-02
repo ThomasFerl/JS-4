@@ -1,11 +1,15 @@
 const useHTTPS          = true;
+const useNTLM           = false;
 const port              = '4040';
 
 const http        = require('http');
 const https       = require('https');
 
 const express     = require('express');
-const ntlm        = require('express-ntlm');
+
+const ntlm        = null;
+if(useNTLM) ntlm  = require('express-ntlm');
+
 const multer      = require('multer');
 const bodyParser  = require('body-parser');
 
@@ -298,7 +302,8 @@ webAPI.setup( dB , etc );
 // Erhöhen der Größenbeschränkung
 webApp.use(bodyParser.json      ({ limit: '50mb'                 }));  // Für JSON-Anfragen
 webApp.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));  // Für URL-kodierte Anfragen
-webApp.use(ntlm());
+
+if(useNTLM) webApp.use(ntlm());
 
      
 webApp.use( ( req , res , next ) =>
@@ -335,7 +340,10 @@ webApp.use( express.static( globals.staticPath()  ) );
 webApp.get('/userLogin'                    ,  userLogin );
 webApp.get('/userLoginx/:username/:passwd' ,  userLoginx );
 webApp.get('/DEBUG'                        ,  handleDebug );
+
+if(useNTLM )
 webApp.get('/ntlm'                         ,  handleNTLM );
+
 webApp.get('/x'                            ,  handleRequest );
 
 
