@@ -49,7 +49,7 @@ export async function run()
   var spr = new TFSreadSheet( wnd.hWnd , sd );
   var c = null;
   for(var row=1; row<spr.rowCount; row++)
-      for(var col=1; col<spr.colCount; col++)  c=spr.cells[col][row]   //spr.cells[col][row].value = col+'/'+row;   
+      for(var col=1; col<spr.colCount; col++)  c=spr.cells[col][row].value = 'xyz' //spr.cells[col][row].value = col+'/'+row;   
   
 
 

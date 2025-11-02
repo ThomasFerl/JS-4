@@ -3,17 +3,25 @@ import { TFPanel }    from "./tfObjects.js";
 import * as utils     from "./utils.js";
 import { TFDateTime } from "./utils.js";
 
-class TFCell {
-  constructor(aParent, l, t, w, h) {
+class TFCell 
+{
+  constructor(aParent, l, t, w, h) 
+  {
     this.parent = aParent;
     this.obj    = new TFPanel(aParent, l, t, w, h, { css: "cssSpreadSheetCell" });
     this._value = null;
   }
-  set value(v) {
+  
+  set value(v) 
+  {
     this._value = v;
     this.obj.innerHTML = v;
   }
-  get value() { return this._value; }
+  
+  get value() 
+  { 
+    return this._value; 
+  }
 }
 
 export class TFSreadSheet 
@@ -31,6 +39,7 @@ export class TFSreadSheet
 
     // Grid-Größe aus dem Plan ermitteln
     const headPlan = (buildingPlan.head || "x").split(" ");
+    
     let colCount = 0;
     for (let i = 0; i < headPlan.length; i++) colCount += ___numColumns(headPlan[i]);
     let rowCount = (buildingPlan.rows || []).length + 1;
@@ -43,8 +52,9 @@ export class TFSreadSheet
 
     // HEAD (Zeile 1)
     let l = 1;
-    for (let i = 0; i < headPlan.length; i++) {
-      const w = ___numColumns(headPlan[i]);
+    for (let i = 0; i < headPlan.length; i++) 
+    {
+      const w    = ___numColumns(headPlan[i]);
       const cell = new TFCell(this.parent, l, 1, w, 1);
       this.head.push(cell);
       this._cellByCoord.set(this._key(l, 1), cell);
@@ -53,11 +63,13 @@ export class TFSreadSheet
 
     // BODY (ab Zeile 2)
     const rows = buildingPlan.rows || [];
-    for (let j = 0; j < rows.length; j++) {
+    for (let j = 0; j < rows.length; j++) 
+    {
       const row = rows[j].split(" ");
-      let lx = 1;
-      for (let i = 0; i < row.length; i++) {
-        const w = ___numColumns(row[i]);
+      let   lx  = 1;
+      for (let i = 0; i < row.length; i++) 
+      {
+        const w    = ___numColumns(row[i]);
         const cell = new TFCell(this.parent, lx, j + 2, w, 1);
         this.body.push(cell);
         this._cellByCoord.set(this._key(lx, j + 2), cell);
@@ -66,8 +78,8 @@ export class TFSreadSheet
     }
 
     // ---------- geschachtelter Proxy: table.cells[x][y] ----------
-    this.cells = new Proxy({}, {
-      get: (_t1, xProp) => {
+    this.cells = new Proxy({}, { 
+      get: (_t1, xProp) => { debugger;
         const x = this._toIndex(xProp);
         if (x == null) return undefined;
 
