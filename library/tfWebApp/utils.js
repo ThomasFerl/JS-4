@@ -1763,70 +1763,80 @@ Mit .split(' ') wird die Zeichenkette in ein Array aufgeteilt, und die Länge di
 
 
 
-export function buildGridLayout( parent , gridSizeOrTemplate , params )
-{
-  var rowCount      =  1;
-  var colCount      =  1;
-  var gridSize      =  1;
-  var gridTemplate  =  '';
+export function buildGridLayout(parent, gridSizeOrTemplate, params) {
+  var rowCount = 1;
+  var colCount = 1;
+  var gridSize = 1;
+  var gridTemplate = ''; debugger;
 
-  if(!params) params = {stretch:true};
-      
-  if(!isNaN(gridSizeOrTemplate))
-  {
+  if (!params) params = { stretch: true };
+  if (params.stretch==undefined) params.stretch = true;
+
+  // Optional: Mindesthöhe pro Zeile (z. B. 30px)
+  const minRowHeight = params.minRowHeight || null;
+  const maxHeight = params.maxHeight || parent.heightPx +'px';
+
+  if (!isNaN(gridSizeOrTemplate)) {
     gridSize = gridSizeOrTemplate;
-    log('buildGridLayout  based on gridSize='+gridSize);
-    // Die Anzahl der Zeilen und Spalten ermitteln, die den Container ausfüllen sollen
-    colCount = Math.floor(this.width / gridSize) - 1; // Anzahl GridColumns pro Spalte
-    rowCount = Math.floor(this.height / gridSize) - 1; // Anzahl GridRows pro Zeile
+    log('buildGridLayout based on gridSize=' + gridSize);
+    colCount = Math.floor(this.width / gridSize) - 1;
+    rowCount = Math.floor(this.height / gridSize) - 1;
+  } else {
+    gridTemplate = gridSizeOrTemplate;
+    log('buildGridLayout based on Template=' + gridTemplate);
+
+    var tst = gridTemplate.split('x');
+    if (tst.length == 2) {
+      log('Dimensionsvorgabe (cols x rows) erkannt');
+      try {
+        colCount = parseInt(tst[0]);
+        rowCount = parseInt(tst[1]);
+      } catch {}
+    } else {
+      var arr = gridTemplate.split('"');
+      rowCount = Math.round((arr.length - 1) / 2);
+      var firstRow = arr[1];
+      colCount = firstRow.split(' ').length;
+    }
   }
-  else
-      {
-            gridTemplate = gridSizeOrTemplate;
-            log('buildGridLayout  based on Template='+gridTemplate);
-            
-            //zuerst prüfen auf "cols x rows"
-            var tst = gridTemplate.split('x'); 
-            if(tst.length==2) 
-            {
-              log('Dimensionsvorgabe (cols x rows) erkannt');
-              try {colCount=parseInt(tst[0]); rowCount=parseInt(tst[1]);}
-              catch {}
-            }
-            else
-                {
-                  var arr      = gridTemplate.split('"');
-                  rowCount     = Math.round((arr.length-1)/2);
-                  var firstRow = arr[1];
-                  colCount     = firstRow.split(' ').length; 
-                }  
-     }    
 
   log('parse-Results:');
-  log('  - rowcount:'+rowCount);
-  log('  - colCount:'+colCount);
+  log('  - rowcount:' + rowCount);
+  log('  - colCount:' + colCount);
 
-  // Rastergröße auf die berechnete Anzahl von Zeilen und Spalten setzen
-  
-  parent.DOMelement.style.display = 'grid';
+  const style = parent.DOMelement.style;
+  style.display = 'grid';
 
-  if(colCount>0) parent.DOMelement.style.gridTemplateColumns  = 'repeat(' + (colCount) + ', 1fr )';
-  else           parent.DOMelement.style.gridTemplateColumns  = '1fr';
+  style.gridTemplateColumns = colCount > 0 ? `repeat(${colCount}, 1fr)` : '1fr';
 
-  if(rowCount>0) parent.DOMelement.style.gridTemplateRows     = 'repeat(' + (rowCount) + ', 1fr )';
-  else           parent.DOMelement.style.gridTemplateRows     = '1fr';
+  if (rowCount > 0) {
+    if (minRowHeight) {
+      style.gridTemplateRows = `repeat(${rowCount}, minmax(${minRowHeight}px, auto))`;
+    } else {
+      style.gridTemplateRows = `repeat(${rowCount}, 1fr)`;
+    }
+  } else {
+    style.gridTemplateRows = '1fr';
+  }
 
-  // dafür sorgen, dass das Client-Item sich ausdeht
-  if(params.stretch)  parent.DOMelement.style.alignItems ='stretch';
-  else
-  { parent.DOMelement.style.alignItems='center';
-    parent.DOMelement.style.justifyContent='center';
-  } 
+  // Scrollbar aktivieren, wenn maxHeight gesetzt ist
+  if (maxHeight) {
+  style.maxHeight = typeof maxHeight === 'number' ? `${maxHeight}px` : maxHeight;
+  style.overflowY = 'auto';
+} else if (minRowHeight && rowCount > 0) {
+  // Automatisch sinnvolle Höhe setzen, wenn keine maxHeight übergeben wurde
+  const geschätzteHöhe = rowCount * minRowHeight;
+  style.maxHeight = `${geschätzteHöhe}px`;
+  style.overflowY = 'auto';
+}
 
-  if(gridTemplate!='') 
-  {
-    log('...style.gridTemplateAreas = '+gridTemplate );
-    parent.DOMelement.style.gridTemplateAreas =   gridTemplate;
+
+  style.alignItems = params.stretch ? 'stretch' : 'center';
+  if (!params.stretch) style.justifyContent = 'center';
+
+  if (gridTemplate !== '') {
+    log('...style.gridTemplateAreas = ' + gridTemplate);
+    style.gridTemplateAreas = gridTemplate;
   }
 }
 

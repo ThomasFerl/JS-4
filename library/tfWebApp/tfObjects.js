@@ -434,11 +434,11 @@ export class TFObject
     this.DOMelement.tfObjInstance =  this;   
     this.DOMelement.data          =  this;   // obsolet
    
-          this.DOMelement.addEventListener('wheel', function(e) {if (this.callBack_onWheel) this.callBack_onWheel(e, this.dataBinding);}.bind(this));
-          this.DOMelement.addEventListener('click', function(e) {if (this.callBack_onClick) this.callBack_onClick(e, this.dataBinding);}.bind(this));
-          this.DOMelement.addEventListener('dblclick', function(e) {if (this.callBack_onDblClick) this.callBack_onDblClick(e, this.dataBinding);}.bind(this));
-          this.DOMelement.addEventListener('mousemove', function(e) {if (this.callBack_onMouseMove) this.callBack_onMouseMove(e, this.dataBinding);}.bind(this));
-          this.DOMelement.addEventListener('mouseleave', function(e) {if (this.callBack_onMouseOut) this.callBack_onMouseOut(e, this.dataBinding);}.bind(this));
+          this.DOMelement.addEventListener('wheel',      function(e) {utils.log('tfObjects.onWheel()');     if (this.callBack_onWheel)     this.callBack_onWheel    (e, this.dataBinding);}.bind(this));
+          this.DOMelement.addEventListener('click',      function(e) {utils.log('tfObjects.onClick()');     if (this.callBack_onClick)     this.callBack_onClick    (e, this.dataBinding);}.bind(this));
+          this.DOMelement.addEventListener('dblclick',   function(e) {utils.log('tfObjects.onDblClick()');  if (this.callBack_onDblClick)  this.callBack_onDblClick (e, this.dataBinding);}.bind(this));
+          this.DOMelement.addEventListener('mousemove',  function(e) {utils.log('tfObjects.onMouseMove()'); if (this.callBack_onMouseMove) this.callBack_onMouseMove(e, this.dataBinding);}.bind(this));
+          this.DOMelement.addEventListener('mouseleave', function(e) {utils.log('tfObjects.onMouseLeave()');if (this.callBack_onMouseOut)  this.callBack_onMouseOut (e, this.dataBinding);}.bind(this));
       
           if(this.popupMenu) { this.addPopupMenu(this.popupMenu)}
           else this.DOMelement.addEventListener('contextmenu', (e)=>{e.preventDefault();
@@ -1041,7 +1041,7 @@ set placeItems(value)
     if(this.DOMelement) v = this.DOMelement.style.overflow || this.getComputedStyleValue('overflow');  
     else                v = this.params.overflow;
 
-    console.log("get overflow: " + v);
+    utils.log("get overflow: " + v);
     if(v=='') v= "auto";
 
     return v;
@@ -1430,7 +1430,7 @@ getProperties()
   var dim = utils.getGridLayoutDimension(this);
   if(dim) properties.push( {level:4, label:'gridLayout',type:'INPUT',value:dim.gridColumnCount+'x'+dim.gridRowCount} );
 
- // console.log("get Properties: " + JSON.stringify(properties))
+ // utils.log("get Properties: " + JSON.stringify(properties))
   
   return properties;
 }
@@ -1442,9 +1442,9 @@ getConstructionProperties()
 
   for (const { label, value } of properties) { propObj[label] = value; }
 
-  console.log(' - getConstructionProperties:');
-  console.log('  ' + propObj.objName + "("+propObj.name+") -> ");
-  console.log(JSON.stringify(propObj));
+  utils.log(' - getConstructionProperties:');
+  utils.log('  ' + propObj.objName + "("+propObj.name+") -> ");
+  utils.log(JSON.stringify(propObj));
 
   // Rekursiv alle Kinder durchgehen
   var childs = [];
@@ -1452,13 +1452,13 @@ getConstructionProperties()
      for(var i=0; i<this.childList.length; i++) 
      {
        var child = this.childList[i];
-       console.log('dive in recursion for child: ' + child.objName + '('+child.name+') ....' ); 
+       utils.log('dive in recursion for child: ' + child.objName + '('+child.name+') ....' ); 
        childs.push(child.getConstructionProperties());
      }  
   
-  console.log('');
-  console.log('');   
-  console.log('---> Children: ' + JSON.stringify(childs));    
+  utils.log('');
+  utils.log('');   
+  utils.log('---> Children: ' + JSON.stringify(childs));    
   
   propObj.children = childs;   
   
@@ -1477,7 +1477,7 @@ setProperties( properties )
   for (let key in propertyObject) 
   if (key in this)
     { 
-      console.log('set property "'+key+'" to "'+propertyObject[key]+'"');
+      utils.log('set property "'+key+'" to "'+propertyObject[key]+'"');
       if(propertyObject[key] != null) this[key] = propertyObject[key];
     }    
 }
@@ -1602,8 +1602,8 @@ export class TFSlider extends TFObject
     
      // Eventhandler für Input
      this.slider.addEventListener("input", () => {
-      //console.log("Slider changed:", this.slider.value);
-      console.log(this);
+      //utils.log("Slider changed:", this.slider.value);
+      utils.log(this);
 
       if (this.onChange != null) {
         this.onChange(this.slider.value, this.dataBinding);
@@ -4050,7 +4050,7 @@ export class TFChart extends TFPanel
 // Internal helper to add a single point and handle osci-mode
 _addSinglePoint(seriesIndex, point) 
 { 
-  console.log(`addSinglePoint: ${JSON.stringify(point)}`);
+  utils.log(`addSinglePoint: ${JSON.stringify(point)}`);
 
   const dataset = this.chart.data.datasets[seriesIndex];
   if(!dataset) return;
@@ -4063,7 +4063,7 @@ _addSinglePoint(seriesIndex, point)
   // Begrenzung der maximalen Punkte
   if (this.maxPoints > 0 && this.chart.data.labels.length > this.maxPoints) 
     { 
-      console.log(`Oszi-Mode: ${this.chart.data.labels.length} > ${this.maxPoints}`);
+      utils.log(`Oszi-Mode: ${this.chart.data.labels.length} > ${this.maxPoints}`);
       this.chart.data.labels.shift();
       dataset.data.shift();
       dataset.backgroundColor.shift(); // Entferne die älteste Farbe
@@ -4160,7 +4160,7 @@ export class TForm
     this.callBack_onOKBtn   = null;
     this.callBack_onESCBtn  = null;
   
-    console.log("TForm.constructor(...) URLForm: " + URLForm );
+    utils.log("TForm.constructor(...) URLForm: " + URLForm );
 
     if(URLForm)  // falls URL für ein Formular übergeben wurde, dieses laden
     {

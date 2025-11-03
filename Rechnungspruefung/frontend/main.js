@@ -37,21 +37,56 @@ export async function run()
   var ws       = app.startWebApp(caption1,caption2).activeWorkspace;
 
   var wnd = dialogs.createWindow(null,'SpreadSheet', '50%' , '50%' , 'CENTER' );
+
+
+  // Variante 1. statische Spreadsheet-Definition
+  // ein "x" steht für eine Zelle. Eine Zahl vor dem x ist führt zum Cell-Verbund der entsprechenden Anzahl von Zellen....
+  //  
+  /*
   var sd  = {
-              head :   'x x x x x x x x x x', 
+              head :   '5x . . . . . . . 5x', 
               rows : [ 'x x x x x x x x x x',
-                       'x x x x x x x x x x',
-                       'x x x x x x x x x x',
-                       'x x x x x x x x x x',
-                       'x x x x x x x x x x']
+                       '2x . x x x x x x x x',
+                       '3x . . x x x x x x x',
+                       '4x . . . x x x x x x',
+                       '5x . . . . x x x x x',
+                       '6x . . . . . x x x x',
+                       '7x . . . . . . x x x',
+                       '8x . . . . . . . x x',
+                       '9x . . . . . . . . x', 
+                       '10x . . . . . . . . ' ]
             };
+
+
+*/
+
+// Variante 2. statische Spreadsheet-Definition
+// es wird der Head definiert
+// die Zeilen werdern n mal entsprechend der Definition innerhalb der eckigen Klammer erzeugt
+var sd  = {
+              head :   '5x . . . . . . . 5x', 
+              rows :  '100*[4x . . . x x x x x x]'
+            };
+
+
+
+
 
   var spr = new TFSreadSheet( wnd.hWnd , sd );
   var c = null;
-  for(var row=1; row<spr.rowCount; row++)
-      for(var col=1; col<spr.colCount; col++)  c=spr.cells[col][row].value = 'xyz' //spr.cells[col][row].value = col+'/'+row;   
+  for(var row=0; row<spr.rowCount; row++)
+      for(var col=0; col<spr.colCount; col++)
+         { 
+           c=spr.getCell(col,row);
+           if(c != null){
+              c.value = c.cellName;   
+              if(row==col) c.backgroundColor = 'rgba(0,0,0,0.1)';
+           }  
+         }  
   
-
+    c = spr.getCellbyName('R2C1');
+  if(c) c.value = 'Thomas Ferl';     
+  
 
 return;
 

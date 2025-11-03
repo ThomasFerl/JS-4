@@ -5,13 +5,49 @@ import { TFDateTime } from "./utils.js";
 
 class TFCell 
 {
-  constructor(aParent, l, t, w, h) 
+  constructor(aParent, l, t, w, h, cellName , onCellClick , onCellMove , onCellLeave ) 
   {
-    this.parent = aParent;
-    this.obj    = new TFPanel(aParent, l, t, w, h, { css: "cssSpreadSheetCell" });
-    this._value = null;
+    this.parent   = aParent;
+    this.rowNr    = t;
+    this.colNr    = l;
+    this.width    = w;
+    this.height   = h;
+    this.cellName = cellName || 'R'+t+'C'+l;
+    this.obj      = new TFPanel(aParent, l, t, w, h, { css: "cssSpreadSheetCell" });
+    this._value   = null;
+
+    this.onCellClick = onCellClick;
+    this.onCellMove  = onCellMove;
+    this.onCellLeave = onCellLeave;
+    
+    this.obj.callBack_onClick     = function(){ if(this.onCellClick) this.onCellClick(this) }.bind(this);
+    this.obj.callBack_onMouseMove = function(){ if(this.onCellMove)  this.onCellMove (this) }.bind(this);
+    this.obj.callBack_onMouseOut  = function(){ if(this.onCellLeave) this.onCellLeave(this) }.bind(this);
+
+
+   
+    // um die Eigenschaften vom TFPanel nicht einzeln "wrappen" zu müssen nutzen wir eine Proxy-Klasse
+    // ACHTUNG: Als Rückgabe gibt es jetzt keine TFCell sondern ein Proxy, dass sich wie ein TFCell verhält ....
+
+     return new Proxy(this, {
+      get(target, prop) {
+        if (prop in target.obj) {
+          return target.obj[prop];
+        }
+        return target[prop];
+      },
+      set(target, prop, value) {
+        if (prop in target.obj) {
+          target.obj[prop] = value;
+          return true;
+        }
+        target[prop] = value;
+        return true;
+      }
+    });
   }
-  
+
+
   set value(v) 
   {
     this._value = v;
@@ -22,6 +58,7 @@ class TFCell
   { 
     return this._value; 
   }
+
 }
 
 export class TFSreadSheet 
@@ -30,144 +67,143 @@ export class TFSreadSheet
   {
     this.parent = aParent;
 
-    this.head   = [];
-    this.body   = [];
+    this.head         = [];
+    this.rows         = [];
+    this.cellNames    = new Map();
+    this.selectedCell = null;
+    this.savedBorder  = {width:1,color:'black'};
 
-    // Koordinaten-Map und Proxy-Cache
-    this._cellByCoord = new Map();     // key: "x,y" -> TFCell
-    this._xProxyCache = new Map();     // key: x     -> Proxy für zweite Ebene
-
-    // Grid-Größe aus dem Plan ermitteln
+     // Grid-Größe aus dem Plan ermitteln
     const headPlan = (buildingPlan.head || "x").split(" ");
     
     let colCount = 0;
     for (let i = 0; i < headPlan.length; i++) colCount += ___numColumns(headPlan[i]);
+    
+
+    // ist buildingPlan ein String, dann muss dieswer geparst werden...
+    if(typeof buildingPlan.rows === "string")
+    { 
+       // z.B.: '10*[4x . . . x x x x x x]' 
+       var subStrArray = buildingPlan.rows.split('*');
+       this.rowCount   = parseInt( subStrArray[0] , 10) + 1;
+       var hlp = [];
+       for(var i=0; i<this.rowCount; i++) hlp.push(subStrArray[1].replace('[','').replace(']','') );
+
+       buildingPlan.rows = hlp;
+    } // isString
+    
+
     let rowCount = (buildingPlan.rows || []).length + 1;
 
     this.colCount   = colCount || 1;
     this.rowCount   = rowCount || 1;
     this.autoExpand = true; // <— wenn true, wächst das Grid bei Bedarf mit
 
-    utils.buildGridLayout(this.parent, `${this.colCount}x${this.rowCount}`);
+    utils.buildGridLayout(this.parent, `${this.colCount}x${this.rowCount}` , {minRowHeight:Math.round(utils.pixProEM(this.parent)*1.5) });  // 1.5em in Pixel 
 
     // HEAD (Zeile 1)
     let l = 1;
     for (let i = 0; i < headPlan.length; i++) 
     {
       const w    = ___numColumns(headPlan[i]);
-      const cell = new TFCell(this.parent, l, 1, w, 1);
-      this.head.push(cell);
-      this._cellByCoord.set(this._key(l, 1), cell);
-      l += w;
+      if(w>0){ 
+               const cell = new TFCell(this.parent, l, 1, w, 1 , '' , function( cell ){this.onCellClick( cell )}.bind(this) , 
+                                                                      function( cell ){this.onCellMove ( cell )}.bind(this) ,
+                                                                      function( cell ){this.onCellLeave( cell )}.bind(this) );
+               this.head.push(cell);
+               l += w;
+             }  
     }
 
     // BODY (ab Zeile 2)
-    const rows = buildingPlan.rows || [];
-    for (let j = 0; j < rows.length; j++) 
-    {
+    this.rows  = [];
+    this.cellNames.clear();
+    
+     const rows = buildingPlan.rows || [];
+     for (let j = 0; j < rows.length; j++) 
+     {
       const row = rows[j].split(" ");
       let   lx  = 1;
+      let  aRow = []; 
       for (let i = 0; i < row.length; i++) 
       {
         const w    = ___numColumns(row[i]);
-        const cell = new TFCell(this.parent, lx, j + 2, w, 1);
-        this.body.push(cell);
-        this._cellByCoord.set(this._key(lx, j + 2), cell);
-        lx += w;
-      }
-    }
+        if(w>0){
+                const cell = new TFCell(this.parent, lx, j + 2, w, 1 , '' ,  function( cell ){this.onCellClick( cell )}.bind(this) , 
+                                                                             function( cell ){this.onCellMove ( cell )}.bind(this) ,
+                                                                             function( cell ){this.onCellLeave( cell )}.bind(this) );
+                aRow.push(cell);
+                this.cellNames.set( cell.cellName , cell )
+                lx += w;
+              } 
+       }
+       this.rows.push(aRow)
+     }
+   
+  } 
 
-    // ---------- geschachtelter Proxy: table.cells[x][y] ----------
-    this.cells = new Proxy({}, { 
-      get: (_t1, xProp) => { debugger;
-        const x = this._toIndex(xProp);
-        if (x == null) return undefined;
+onCellClick( cell )
+{ 
+  if(cell==this.selectedCell) return;
+  
+  if(this.selectedCell!=null) 
+  {
+    this.selectedCell.obj.borderColor = this.savedBorder.color;
+    this.selectedCell.obj.borderWidth = this.savedBorder.width;
+    this.selectedCell.obj.margin      = 0;
+  }  
+ 
+  this.selectedCell                   = cell;
+  this.savedBorder.color              = cell.obj.borderColor;
+  this.savedBorder.width              = cell.obj.borderWidth;
 
-        // Unter-Proxy (2. Ebene) aus Cache holen/erzeugen
-        if (!this._xProxyCache.has(x)) {
-          const secondLevel = new Proxy({}, {
-            get: (_t2, yProp) => {
-              const y = this._toIndex(yProp);
-              if (y == null) return undefined;
-              const cell = this._getOrCreate(x, y);
-              return cell?.getValue();
-            },
-            set: (_t2, yProp, value) => {
-              const y = this._toIndex(yProp);
-              if (y == null) return false;
-              const cell = this._getOrCreate(x, y);
-              if (cell) cell.setValue(value);
-              return true;
-            },
-            has: (_t2, yProp) => {
-              const y = this._toIndex(yProp);
-              return y != null && this._cellByCoord.has(this._key(x, y));
-            },
-            ownKeys: () => {
-              // optional: alle vorhandenen y für dieses x
-              const ys = [];
-              for (const k of this._cellByCoord.keys()) {
-                const [kx, ky] = k.split(",").map(Number);
-                if (kx === x) ys.push(String(ky));
-              }
-              return ys;
-            },
-            getOwnPropertyDescriptor: (_t2, yProp) => {
-              const y = this._toIndex(yProp);
-              if (y != null && this._cellByCoord.has(this._key(x, y))) {
-                return { enumerable: true, configurable: true };
-              }
-              return undefined;
-            }
-          });
-          this._xProxyCache.set(x, secondLevel);
-        }
-        return this._xProxyCache.get(x);
-      }
-    });
-  }
+  this.selectedCell.obj.margin        = '2px';
+  this.selectedCell.obj.borderColor   = 'black';
+  this.selectedCell.obj.borderWidth   = '2px';
+  
+}
+  
 
-  // ---------- Öffentliche Helfer ----------
-  setCell(x, y, v) { this._getOrCreate(x, y)?.setValue(v); }
-  getCellValue(x, y) { return this._cellByCoord.get(this._key(x, y))?.getValue(); }
-  getCell(x, y) { return this._cellByCoord.get(this._key(x, y)) || null; }
 
-  // ---------- Interne Helfer ----------
-  _key(x, y) { return `${x},${y}`; }
-
-  _toIndex(prop) {
-    // akzeptiert Zahl oder stringifizierte Zahl (Proxy keys sind oft Strings)
-    const n = Number(prop);
-    return Number.isInteger(n) && n >= 1 ? n : null; // 1-basiert
-  }
-
-  _getOrCreate(x, y) {
-    // ggf. Grid erweitern
-    if ((x > this.colCount || y > this.rowCount) && this.autoExpand) {
-      this._expandGridTo(Math.max(x, this.colCount), Math.max(y, this.rowCount));
-    }
-    const k = this._key(x, y);
-    let cell = this._cellByCoord.get(k);
-    if (!cell) {
-      // neue 1x1-Zelle an Position (x,y) erzeugen
-      cell = new TFCell(this.parent, x, y, 1, 1);
-      this.body.push(cell);
-      this._cellByCoord.set(k, cell);
-    }
-    return cell;
-  }
-
-  _expandGridTo(newCols, newRows) {
-    if (newCols <= this.colCount && newRows <= this.rowCount) return;
-    this.colCount = Math.max(this.colCount, newCols);
-    this.rowCount = Math.max(this.rowCount, newRows);
-    // Grid neu setzen – vorhandene Panels behalten ihre l/t/w/h und bleiben positioniert
-    utils.buildGridLayout(this.parent, `${this.colCount}x${this.rowCount}`);
-  }
+onCellMove( cell )
+{
+ console.log('cellMove -> ' + cell.cellName)
+}
+  
+onCellLeave( cell )
+{
+  console.log('cellLeave -> ' + cell.cellName)
 }
 
-// Hilfsfunktion aus deinem Code
-function ___numColumns(st) {
+
+
+
+  getCell(col,row)
+  {
+    if(row<this.rows.length)
+    {
+      var aRow = this.rows[row];
+      if (col<aRow.length) return aRow[col];
+      else return null;
+    }
+    else return null;
+  }
+
+  getCellbyName(cellName)
+  { 
+    return this.cellNames.get(cellName);
+  }
+
+
+}  
+   
+
+// Hilfsfunktion...
+function ___numColumns(st) 
+{
+  if (st === '.') return 0;
+  if (st === ' ') return 0;
+  if (st ===  '') return 0;
   if (st === "x") st = "1x";
   const h = st.split("x")[0];
   return isNaN(h) ? 1 : parseInt(h, 10);
