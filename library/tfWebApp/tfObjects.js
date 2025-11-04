@@ -1517,7 +1517,7 @@ remove()
 
 destroy()
 {
-  this.remove;  
+  this.remove();  
 }
 
 }   //end class ...

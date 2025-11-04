@@ -1767,13 +1767,15 @@ export function buildGridLayout(parent, gridSizeOrTemplate, params) {
   var rowCount = 1;
   var colCount = 1;
   var gridSize = 1;
-  var gridTemplate = ''; debugger;
+  var gridTemplate = ''; 
 
   if (!params) params = { stretch: true };
   if (params.stretch==undefined) params.stretch = true;
 
   // Optional: Mindesthöhe pro Zeile (z. B. 30px)
-  const minRowHeight = params.minRowHeight || null;
+  const minRowHeight = params.rowHeight || null;
+  const maxRowHeight = params.rowHeight || null;
+
   const maxHeight = params.maxHeight || parent.heightPx +'px';
 
   if (!isNaN(gridSizeOrTemplate)) {
@@ -1811,7 +1813,7 @@ export function buildGridLayout(parent, gridSizeOrTemplate, params) {
 
   if (rowCount > 0) {
     if (minRowHeight) {
-      style.gridTemplateRows = `repeat(${rowCount}, minmax(${minRowHeight}px, auto))`;
+      style.gridTemplateRows = `repeat(${rowCount}, minmax(${minRowHeight}px, ${maxRowHeight}px))`;
     } else {
       style.gridTemplateRows = `repeat(${rowCount}, 1fr)`;
     }

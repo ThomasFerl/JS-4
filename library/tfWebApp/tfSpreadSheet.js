@@ -5,9 +5,10 @@ import { TFDateTime } from "./utils.js";
 
 class TFCell 
 {
-  constructor(aParent, l, t, w, h, cellName , onCellClick , onCellMove , onCellLeave ) 
+  constructor(aParent, inRow , l, t, w, h, cellName , onCellClick , onCellMove , onCellLeave ) 
   {
     this.parent   = aParent;
+    this.myRow    = inRow;
     this.rowNr    = t;
     this.colNr    = l;
     this.width    = w;
@@ -66,61 +67,85 @@ export class TFSreadSheet
   constructor(aParent, buildingPlan)
   {
     this.parent = aParent;
-
-    this.head         = [];
     this.rows         = [];
     this.cellNames    = new Map();
     this.selectedCell = null;
     this.savedBorder  = {width:1,color:'black'};
 
-     // Grid-Größe aus dem Plan ermitteln
-    const headPlan = (buildingPlan.head || "x").split(" ");
+    var headPlan      = [];
+
+    if (buildingPlan.hasOwnProperty("layout")) 
+    {
+      var layoutArr = buildingPlan.layout.split('x');
+      this.colCount = parseInt(layoutArr[0]);
+      this.rowCount = parseInt(layoutArr[1]);
+    }
+    else
+        {
+          // Grid-Größe aus dem Plan ermitteln
+          headPlan = (buildingPlan.head || "x").split(" ");
     
-    let colCount = 0;
-    for (let i = 0; i < headPlan.length; i++) colCount += ___numColumns(headPlan[i]);
+          let colCount = 0;
+          for (let i = 0; i < headPlan.length; i++) colCount += ___numColumns(headPlan[i]);
     
+          // ist buildingPlan ein String, dann muss dieswer geparst werden...
+          if(typeof buildingPlan.rows === "string")
+          { 
+            // z.B.: '10*[4x . . . x x x x x x]' 
+            var subStrArray = buildingPlan.rows.split('*');
+            this.rowCount   = parseInt( subStrArray[0] , 10) + 1;
+            var hlp = [];
+            for(var i=0; i<this.rowCount; i++) hlp.push(subStrArray[1].replace('[','').replace(']','') );
 
-    // ist buildingPlan ein String, dann muss dieswer geparst werden...
-    if(typeof buildingPlan.rows === "string")
-    { 
-       // z.B.: '10*[4x . . . x x x x x x]' 
-       var subStrArray = buildingPlan.rows.split('*');
-       this.rowCount   = parseInt( subStrArray[0] , 10) + 1;
-       var hlp = [];
-       for(var i=0; i<this.rowCount; i++) hlp.push(subStrArray[1].replace('[','').replace(']','') );
-
-       buildingPlan.rows = hlp;
-    } // isString
+            buildingPlan.rows = hlp;
+          } // isString
     
+          let rowCount = (buildingPlan.rows || []).length + 1;
 
-    let rowCount = (buildingPlan.rows || []).length + 1;
+          this.colCount   = colCount || 1;
+          this.rowCount   = rowCount || 1;
+    }      
+          
+    utils.buildGridLayout(this.parent, `${this.colCount}x${this.rowCount}` , {rowHeight:Math.round(utils.pixProEM(this.parent)*2) });  // 1.5em in Pixel 
 
-    this.colCount   = colCount || 1;
-    this.rowCount   = rowCount || 1;
-    this.autoExpand = true; // <— wenn true, wächst das Grid bei Bedarf mit
+    this.cellNames.clear();
 
-    utils.buildGridLayout(this.parent, `${this.colCount}x${this.rowCount}` , {minRowHeight:Math.round(utils.pixProEM(this.parent)*1.5) });  // 1.5em in Pixel 
+    if (buildingPlan.hasOwnProperty("layout"))
+    {
+      // Head
+      let aRow = []; 
+      for( let i=0; i<this.colCount; i++) this.createCell( aRow , i+1 , 1 , 1 , 1 );
+      this.rows.push(aRow);
+
+      // Body
+      for( let j=1; j<this.rowCount; j++) 
+      {
+        let aRow = []; 
+        for(let i=0; i<this.colCount; i++) this.createCell( aRow , i+1 , j+1 , 1 , 1 );
+        this.rows.push(aRow);
+      }  
+      return;
+    }   
+
 
     // HEAD (Zeile 1)
     let l = 1;
+    let aRow = []; 
     for (let i = 0; i < headPlan.length; i++) 
     {
       const w    = ___numColumns(headPlan[i]);
       if(w>0){ 
-               const cell = new TFCell(this.parent, l, 1, w, 1 , '' , function( cell ){this.onCellClick( cell )}.bind(this) , 
-                                                                      function( cell ){this.onCellMove ( cell )}.bind(this) ,
-                                                                      function( cell ){this.onCellLeave( cell )}.bind(this) );
-               this.head.push(cell);
+               this.createCell( aRow , l , 1 , w , 1 );
                l += w;
              }  
     }
+    this.rows.push(aRow);
+
+
 
     // BODY (ab Zeile 2)
-    this.rows  = [];
-    this.cellNames.clear();
-    
      const rows = buildingPlan.rows || [];
-     for (let j = 0; j < rows.length; j++) 
+     for (let j = 1; j < rows.length; j++) 
      {
       const row = rows[j].split(" ");
       let   lx  = 1;
@@ -129,18 +154,52 @@ export class TFSreadSheet
       {
         const w    = ___numColumns(row[i]);
         if(w>0){
-                const cell = new TFCell(this.parent, lx, j + 2, w, 1 , '' ,  function( cell ){this.onCellClick( cell )}.bind(this) , 
-                                                                             function( cell ){this.onCellMove ( cell )}.bind(this) ,
-                                                                             function( cell ){this.onCellLeave( cell )}.bind(this) );
-                aRow.push(cell);
-                this.cellNames.set( cell.cellName , cell )
+                this.createCell( aRow , lx , j+1 , w , 1 )
                 lx += w;
               } 
        }
        this.rows.push(aRow)
      }
    
-  } 
+} 
+
+
+createCell( inRow , col , row , width , height )
+{ 
+  const cell = new TFCell(this.parent, inRow , col , row , width , height , '' ,  function( cell ){this.onCellClick( cell )}.bind(this) , 
+                                                                                  function( cell ){this.onCellMove ( cell )}.bind(this) ,
+                                                                                  function( cell ){this.onCellLeave( cell )}.bind(this) );
+  inRow.push(cell);
+  this.cellNames.set( cell.cellName , cell );
+  return cell;
+}
+
+
+deleteCell( cell )
+{ 
+  if(cell==null) return;
+  if(cell==undefined) return;
+
+  let index = cell.myRow.indexOf(cell);
+  if (index !== -1) cell.myRow.splice(index, 1);
+
+  this.cellNames.delete(cell.cellName);
+
+  cell.obj.remove();
+}
+
+forEachCell( f )
+{
+  for(var i=0; i<this.rows.length; i++)
+      for(var j=0; j<this.rows[i].length; j++)    
+      {
+        var c=this.rows[i][j];
+        f(c);
+      }  
+}  
+
+
+
 
 onCellClick( cell )
 { 
@@ -163,8 +222,6 @@ onCellClick( cell )
   
 }
   
-
-
 onCellMove( cell )
 {
  console.log('cellMove -> ' + cell.cellName)
@@ -175,24 +232,62 @@ onCellLeave( cell )
   console.log('cellLeave -> ' + cell.cellName)
 }
 
+getCell(col,row)
+{
+    col=col-1;  
+    row=row-1;
+    var aRow = this.rows[row];
+    if ((aRow) && (aRow.length>col)) return aRow[col];
+    else                             return null;
+}   
 
 
 
-  getCell(col,row)
-  {
-    if(row<this.rows.length)
-    {
-      var aRow = this.rows[row];
-      if (col<aRow.length) return aRow[col];
-      else return null;
-    }
-    else return null;
-  }
-
-  getCellbyName(cellName)
-  { 
+getCellbyName(cellName)
+{ 
     return this.cellNames.get(cellName);
+}
+
+buildCluster( cellRange )
+{ 
+  for(var i=0; i<cellRange.length; i++) if(cellRange[i]==null) return null;
+
+  // aus dem Cell-Array wird die Dimension der Range ermittelt und als EINE Zelle betrachtet.
+  // All durch diesen Vorgang überlappten Zellen werden gelöscht...
+  var l=Number.MAX_SAFE_INTEGER;
+  var t=Number.MAX_SAFE_INTEGER;
+  var r=Number.MIN_SAFE_INTEGER;
+  var b=Number.MIN_SAFE_INTEGER;
+
+  for (var i=0; i<cellRange.length; i++)
+  {
+    var c=cellRange[i];
+    if(l>c.colNr) l=c.colNr;
+    if(t>c.rowNr) t=c.rowNr;
+    if(r<(c.colNr+c.width))  r=c.colNr+c.width;
+    if(b<(c.rowNr+c.height)) b=c.rowNr+c.height;
   }
+
+  var clusterStartCell = this.getCell(l,t);
+  var clusterStartRow  = clusterStartCell.myRow;
+  var deleteCells = [];
+  this.forEachCell(function(c){if((c.colNr>=l)&&(c.colNr<r)&&(c.rowNr>=t)&&(c.rowNr<b)) this.deleteCells.push(c)}.bind({deleteCells:deleteCells}))
+  
+  while(deleteCells.length > 0) 
+  {
+    var c=deleteCells[0];
+    deleteCells.splice(0,1);
+    this.deleteCell(c);
+  }  
+  // cluster-Zelle ausdehnen ....
+  return this.createCell( clusterStartRow , l , t , (r-l) , (b-t));
+
+
+
+
+}
+
+
 
 
 }  
