@@ -7,6 +7,7 @@ import * as app          from "./tfWebApp/tfWebApp.js";
 import * as sysadmin     from "./tfWebApp/tfSysAdmin.js";
 import * as forms        from "./forms.js";
 import * as pivot        from "./tfWebApp/pivot.js"
+import * as showResults  from "./showResults.js";
 
 
 // Anwendungsspezifische Einbindungen
@@ -16,13 +17,14 @@ import { TFEdit,
          TPropertyEditor,
          TFAnalogClock,
          TFWorkSpace,
-         TFLoader }      from "./tfWebApp/tfObjects.js";
+         TFLoader }              from "./tfWebApp/tfObjects.js";
 
-import { TFWindow }      from "./tfWebApp/tfWindows.js"; 
-import { TFChart }       from "./tfWebApp/tfObjects.js";
-import { TFDateTime }    from "./tfWebApp/utils.js";
-import { TFgui }         from "./tfWebApp/tfGUI.js";
-import { TFDataObject }  from "./tfWebApp/tfDbObjects.js";
+import { TFWindow }              from "./tfWebApp/tfWindows.js"; 
+import { TFChart }               from "./tfWebApp/tfObjects.js";
+import { TFDateTime }            from "./tfWebApp/utils.js";
+import { TFgui }                 from "./tfWebApp/tfGUI.js";
+import { TFDataObject }          from "./tfWebApp/tfDbObjects.js";
+import { setup_DefineResultGrid} from "./defineResultTable.js"
 
 
 
@@ -57,10 +59,42 @@ constructor()
    gui.btnNewBill.callBack_onClick    = function(){this.addNewBill()}.bind(this);
    gui.bntDeleteBill.callBack_onClick = function(){this.deleteBill()}.bind(this);
    gui.btnEnd.callBack_onClick        = function(){this.close()}.bind(gui);
-   gui.btnSetup.callBack_onClick      = function(){this.setupAdjustmentRules() }.bind(this);
+   gui.btnSetup.callBack_onClick      = function(){this.setup()}.bind(this); 
+   gui.btnShowResult.callBack_onClick = function(){this.showResults_in_spreadSheet()}.bind(this);
 
    this.updateView(); 
 }
+
+
+
+showResults_in_spreadSheet()
+{
+  if (!this.#selectedTable)
+  {
+    dialogs.showMessage('Bitte zuerst die entsprechende Rechnung auswählen !');
+    return;
+  }
+
+  showResults.spreadSheet( this.#selectedTable );
+}
+
+
+setup()
+{
+  // Wurde Tabelle gewählt ...
+  if (!this.#selectedTable)
+  {
+    dialogs.showMessage('Da diese Funktion auf die Daten einer Rechnungs-Datei zugreift, muss eine entsprechender Rechnungs-Datensatz selektiert werden !');
+    return;
+  }
+
+   var gui = new TFgui( null , forms.SetupDlg);
+       gui.btnChangeDataset.callBack_onClick = function(){this.setupAdjustmentRules(this.#selectedTable) }.bind(this);
+       gui.btnformatResult.callBack_onClick  = function(){ new setup_DefineResultGrid(this.#selectedTable) }.bind(this);
+       gui.btnClose.callBack_onClick         = function(){this.gui.close()}.bind({gui:gui});
+  
+}
+
 
 
 updateView()
@@ -683,20 +717,13 @@ showPivotDetails(fieldName1,value1,fieldName2,value2)
 
 setupAdjustmentRules()
 {
-  // Wurde Tabelle gewählt ...
-  if (!this.#selectedTable)
-  {
-    dialogs.showMessage('Bitte zuerst die Tabelle auswählen, für die die Anpassung vorgenommen werden soll !');
-    return;
-  }
-
   var gui = new TFgui( null , forms.setupAdjustment );
 
   this.___updateAdjustmentRules(gui.container , gui );
 
    gui.btnAdd.callBack_onClick      = function(){this.self.addMengenKorrektur( this.gui.container ); this.self.___updateAdjustmentRules(this.gui.container , this.gui )}.bind({self:this, gui:gui} );
    gui.btnDelete.callBack_onClick   = function(){this.self.delMengenKorrektur( this.gui );           this.self.___updateAdjustmentRules(this.gui.container , this.gui )}.bind({self:this, gui:gui} );
-   gui.btnClose.callBack_onClick    = function(){this.close()}.bind(gui);
+   gui.btnClose.callBack_onClick    = function(){this.gui.close()}.bind({gui:gui});
    
 
 }

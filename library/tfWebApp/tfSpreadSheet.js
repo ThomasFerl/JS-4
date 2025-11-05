@@ -232,15 +232,12 @@ onCellLeave( cell )
   console.log('cellLeave -> ' + cell.cellName)
 }
 
+
 getCell(col,row)
 {
-    col=col-1;  
-    row=row-1;
-    var aRow = this.rows[row];
-    if ((aRow) && (aRow.length>col)) return aRow[col];
-    else                             return null;
+  var n = 'R'+row+'C'+col;
+ return this.getCellbyName(n);
 }   
-
 
 
 getCellbyName(cellName)
