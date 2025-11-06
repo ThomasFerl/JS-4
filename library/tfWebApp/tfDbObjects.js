@@ -110,7 +110,9 @@ export class TFDataObject
       for(var key in this.#data) 
       {
           var content = this.#data[key];
-          if((content != '') || (!params.ignoreEmptyValues) ) fields[key] = content;
+          if(content == '')
+            if(params?.ignoreEmptyValues) fields[key] = '';
+          else fields[key] = content;
       }  
 
        var response = utils.webApiRequest('UPDATETABLE',{tableName:this.#tableName, ID_field:'ID', ID_value:this.ID, fields:fields} );

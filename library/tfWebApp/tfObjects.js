@@ -2285,6 +2285,16 @@ export class TFListBox extends TFObject
     }
   }
 
+
+  clear()
+  {
+    while(this.items.length>0) this.items.splice(0,1);
+    this.items = [];
+
+    while(this.listbox.length>0) this.listbox.remove(0);
+  }
+
+
   addItems( items )
   {
     this.items = items;
@@ -3067,6 +3077,23 @@ export class TFComboBox extends TFEdit
    else                   return this.params.items;
  }
 
+
+  getItems( what )
+  {
+    var result = [];
+    var h      = this.items;
+
+    for (var i = 0; i < h.length; i++)
+    {
+      var item = h[i];
+      if(what) result.push( item[what] )
+      else     result.push( item );  
+    }
+    return result;
+  }
+
+
+
 }
 
 
@@ -3164,10 +3191,24 @@ export class TFSelectBox extends TFEdit
     this.__render();
  } 
 
-getItems()
-{
-  return this.items;
-} 
+
+ getItems( what )
+  {
+    var result = [];
+    var h      = this.items;
+
+    for (var i = 0; i < h.length; i++)
+    {
+      var item = h[i];
+      if(what) result.push( item[what] )
+      else     result.push( item );  
+    }
+    return result;
+  }
+
+
+
+
 
 addItem( caption , value )
 {

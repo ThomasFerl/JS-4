@@ -46,8 +46,7 @@ tables.push(
       {fieldName:"PRODUKT"     , fieldType:"Text" } ,
       {fieldName:"DATAFIELD"   , fieldType:"Text" } ,
       {fieldName:"ADJUSTMENT"  , fieldType:"Text" } ,
-      {fieldName:"VALUE"       , fieldType:"REAL" } ,
-      
+      {fieldName:"VALUE"       , fieldType:"REAL" }   
    ]});
 
    
@@ -56,6 +55,25 @@ tables.push(
    tableFields:[
       {fieldName:"ID_ADJUSTMENT" , fieldType:"INT" } ,
       {fieldName:"TABLENAME"     , fieldType:"Text" } 
+   ]});
+
+   
+tables.push( 
+  {tableName:"rechnungsPos",
+   tableFields:[
+      {fieldName:"BEZ" , fieldType:"Text" } 
+   ]});
+
+
+
+tables.push( 
+  {tableName:"resultDefinition",
+   tableFields:[
+      {fieldName:"NAME"         , fieldType:"Text" } ,
+      {fieldName:"PRODUKTE"     , fieldType:"Text" } , 
+      {fieldName:"ORTE"         , fieldType:"Text" } ,
+      {fieldName:"RECHNUNGSPOS" , fieldType:"Text" } ,
+      {fieldName:"FIXEDVALUE"   , fieldType:"Text" } 
    ]});
 
 
@@ -89,6 +107,21 @@ module.exports.buildTables = function( dB )
     
 
   // mache irgendwas .....z.B. ein View erzeugen   
+
+  var response = dbUtils.fetchValue_from_Query( dB , 'Select count(*) from rechnungsPos');
+  if(!response.error)
+  {
+    if(response.result==0)
+    {
+      dbUtils.insertIntoTable_if_not_exist(dB ,  'rechnungsPos' , {BEZ:"AKTIV_GEFOERDERT"}     , 'BEZ' );
+      dbUtils.insertIntoTable_if_not_exist(dB ,  'rechnungsPos' , {BEZ:"VOBER_GEFOERDERT"}     , 'BEZ' );
+      dbUtils.insertIntoTable_if_not_exist(dB ,  'rechnungsPos' , {BEZ:"GEKUEND_GEFOERDERT"}   , 'BEZ' );
+      dbUtils.insertIntoTable_if_not_exist(dB ,  'rechnungsPos' , {BEZ:"AKTIV_UNGEFOERDERT"}   , 'BEZ' );
+      dbUtils.insertIntoTable_if_not_exist(dB ,  'rechnungsPos' , {BEZ:"VOBER_UNGEFOERDERT"}   , 'BEZ' );
+      dbUtils.insertIntoTable_if_not_exist(dB ,  'rechnungsPos' , {BEZ:"GEKUEND_UNGEFOERDERT"} , 'BEZ' );
+    }
+  }
+
   /*    
   var SQL =      "Create View lpspView as ";
       SQL = SQL +" SELECT lpspRaw.ID, lpspRaw.LPSP_NR, ";
