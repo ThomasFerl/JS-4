@@ -1,5 +1,4 @@
 
-import * as globals      from "./tfWebApp/globals.js";
 import * as utils        from "./tfWebApp/utils.js";    
 import * as dialogs      from "./tfWebApp/tfDialogs.js";
 import * as forms        from "./forms.js";

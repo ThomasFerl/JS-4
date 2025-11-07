@@ -1,6 +1,7 @@
 import * as globals   from "./globals.js";
 import { TFPanel }    from "./tfObjects.js";
 import * as utils     from "./utils.js";
+import * as dialogs   from "./tfDialogs.js";
 import { TFDateTime } from "./utils.js";
 
 class TFCell 
@@ -284,6 +285,11 @@ buildCluster( cellRange )
 
 }
 
+
+exportToExcel()
+{
+  dialogs.showMessage('not implemented yet ...');
+}
 
 
 

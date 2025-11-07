@@ -45,9 +45,7 @@ var sd  = {
 
 // Variante 3. einfaches Layout in der Form cols x rows
 // die Clusterung von Zellen erfolgt im Nachgang...
-  var sd = {layout:'10x10'}
-
-  var spr = new TFSreadSheet( wnd.hWnd , sd );
+  var spr = new TFSreadSheet( wnd.hWnd , {layout:'10x10'} );
 
   spr.forEachCell( (c)=>{c.value=c.cellName; if(c.left==c.top)c.backgroundColor = 'rgba(0,0,0,0.1)'})
   
@@ -80,40 +78,116 @@ var sd  = {
 
 export async function spreadSheet( content )
 { 
-  var wnd = dialogs.createWindow(null,'Auswertung Rechnung GLASCOM', '90%' , '90%' , 'CENTER' );
+  var wnd   = dialogs.createWindow(null,'Auswertung Rechnung GLASCOM', '90%' , '90%' , 'CENTER' );
+  var orte  = [];
+  var rd    = [];
+  var cells = [];
 
-// Zuerst die Liste ALLER Orte und Ortsteile ermitteln....
+// Zuerst die Liste ALLER Orte und Ortsteile ermitteln....  -> (Y-Achse)
 var orte = [];
 var response = utils.webApiRequest('FETCHRECORDS' , {sql:"Select Distinct ORT,ORTSTEIL  From "+content+" Order by ORT,ORTSTEIL"} ); 
 if (response.error) {dialogs.showMessage(response.errMsg); return }
-for (var i=0; i<response.result.length; i++)
-    {
-      var h='';
-      if(response.result[i].ORTSTEIL != 'null') h = response.result[i].ORT + ' / ' + response.result[i].ORTSTEIL;
-      else h = response.result[i].ORT;
-      orte.push({ort:response.result[i].ORT,ortsteil:response.result[i].ORTSTEIL,caption:h})  
-    } 
+else orte = response.result;
 
-var spreadSheet = new TFSreadSheet( wnd.hWnd , {layout:"21x"+(orte.length+2)} );
+// Liste aller Spalten-Definition 
+var response = utils.webApiRequest('FETCHRECORDS' , {sql:"Select *  From resultDefinition Order by ID"} ); 
+if (response.error) {dialogs.showMessage(response.errMsg); return }
+else rd = response.result;
 
+// Spreadsheet erzeugen 
+// es werden die ersten 2 Spalten und die obersten 3 Zeilen gruppiert (builCluster)
+var spreadSheet   = new TFSreadSheet( wnd.hWnd , {layout:(rd.length+2)+"x"+(orte.length+3)} );
+
+var c1            = spreadSheet.getCellbyName('R1C1');
+var c2            = spreadSheet.getCellbyName('R3C2');
+var c             = spreadSheet.buildCluster([c1,c2]);
+c.backgroundColor = 'rgba(200, 225, 248, 1)';
+
+var excelBtn      = dialogs.addButton(c.obj,'',1,1,'7em','3em',{caption:'Excel',glyph:'table-cells'})
+    excelBtn.callBack_onClick = function(){this.spreadSheet.exportToExcel()}.bind({spreadSheet:spreadSheet})
+
+// und nun Zellenweise durch die Matrix....
 for(var i=0; i<orte.length; i++)
 {
-   var c1             = spreadSheet.getCell(1,i+3);
-   var c2             = spreadSheet.getCell(3,i+3);
+  // die ersten drei Spalten "mergen"
+   var c1             = spreadSheet.getCell(1,i+4);
+   var c2             = spreadSheet.getCell(2,i+4);
    var c              = spreadSheet.buildCluster([c1,c2]);
-    c.paddingLeft     = '1em';
-    c.value           = orte[i].caption;
-    c.backgroundColor = 'rgba(198, 243, 181, 1)';
-    c.fontWeight      = 'bold';
-    c.justifyContent  = 'flex-start';
-}    
+   var h              = '';
+
+   if(orte[i].ORTSTEIL != null) h = orte[i].ORT + ' / ' + orte[i].ORTSTEIL;
+   else                         h = orte[i].ORT; 
+
+   c.paddingLeft      = '1em';
+   c.value            = h;
+   c.backgroundColor  = 'rgba(198, 243, 181, 1)';
+   c.fontWeight       = 'bold';
+   c.justifyContent   = 'flex-start';
+
+   //Zellen vorbereiten...
+   for(var j=0; j<rd.length; j++) 
+    {
+      c= spreadSheet.getCell(j+3 , i+4); 
+      if(c!=null)
+      {           
+        c.value = '';
+        cells.push({ORT:orte[i].ORT, ORTSTEIL:orte[i].ORTSTEIL, ORT_ORTSTEIL:h, resultDefinition:rd[j] , cell:c});
+      }  
+    }   
+}
+// Kopfzeile ...
+for(var j=0; j<rd.length; j++)
+{
+   c1                 = spreadSheet.getCell(j+3,1);
+   c2                 = spreadSheet.getCell(j+3,3);
+   c                  = spreadSheet.buildCluster([c1,c2]);
+   c.paddingLeft      = '1em';
+   c.value            = rd[j].NAME;
+   c.backgroundColor  = 'rgba(243, 239, 180, 1)';
+   c.fontWeight       = 'bold';
+   c.justifyContent   = 'flex-start';
+}   
 
 
+// Datenbereich: Durchlaufe für jeden Ort alle "ResultDefintionen" und prüfe, ob es für den gerade betrachteten Ort eine Definition gibt.
+// Falls JA und es ist KEIN fixer Wert, dann ermittle für die gewählten Produkte die Summe aller definiereten Rechnungspositionen 
+// d.h.: Eine Tabelle mit 10 Orten und 10 Spalten (resultDefinition) ergeben sich 100 sql's ... 
+cells.forEach((cell)=>{
+                        var cellContent          = '';
+                        var produktArray         = JSON.parse(cell.resultDefinition.PRODUKTE || '[]') || [];
+                        var sqlFilter_Produkt    = produktArray.map(p => `'${p.replace(/'/g, "''")}'`) // einfache Anführungszeichen escapen
+                                                                           .join(', ');
 
+                        var rPosArray            =  JSON.parse(cell.resultDefinition.RECHNUNGSPOS || '[]') || [];
+                        var sumExpr              = rPosArray.filter(f => !f.includes('alle Rechnungspositionen')) // ausschließen
+                                                            .map(f => `SUM(${f})`)                                // SQL-Ausdruck erzeugen
+                                                            .join(' + ');   
 
+                        var fixedValue           =  cell.resultDefinition.FIXEDVALUE || '';
+                        if(fixedValue=='0') fixedValue = '';
 
+                        var ortArray             = JSON.parse(cell.resultDefinition.ORTE || '[]') || [];
+                        // ist der aktuelle Ort / Ortsteil der betrachteten Zelle in der resultDefinition enthalten ?
+                        var istDieserOrtrelevant = ortArray.includes(cell.ORT_ORTSTEIL);
 
+                        if(istDieserOrtrelevant)
+                        {
+                           // existiert kein fixer Wert, muss "gerechnet" werden ...
+                           if(!fixedValue)  
+                           {
+                             var sql = "SELECT " + sumExpr + " FROM " + content + " WHERE produkt IN ("+sqlFilter_Produkt+") AND ORT='"+cell.ORT+"'";
+                             // Falls noch ein Ortsteil existiert : Statement ergänzen ...
+                             if(cell.ORTSTEIL !=null ) sql = sql + " AND ORTSTEIL = '"+cell.ORTSTEIL+"'"
+                             var response = utils.webApiRequest('FETCHVALUE' , {sql:sql});
+                             if (!response.error) cellContent = response.result;
+                             else                 cellContent = '!'; 
+                           }
+                           else cellContent = fixedValue; 
 
+                           cell.cell.value = cellContent;
+
+                        }    
+});
 
 }
 

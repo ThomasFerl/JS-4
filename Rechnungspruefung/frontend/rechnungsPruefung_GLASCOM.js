@@ -1,27 +1,14 @@
 
 import * as globals      from "./tfWebApp/globals.js";
-import * as graphics     from "./tfWebApp/tfGrafics.js";  
 import * as utils        from "./tfWebApp/utils.js";    
 import * as dialogs      from "./tfWebApp/tfDialogs.js";
-import * as app          from "./tfWebApp/tfWebApp.js"; 
-import * as sysadmin     from "./tfWebApp/tfSysAdmin.js";
 import * as forms        from "./forms.js";
 import * as pivot        from "./tfWebApp/pivot.js"
 import * as showResults  from "./showResults.js";
 
 
 // Anwendungsspezifische Einbindungen
-import { TFEdit, 
-         TForm,
-         TFPopUpMenu,
-         TPropertyEditor,
-         TFAnalogClock,
-         TFWorkSpace,
-         TFLoader }              from "./tfWebApp/tfObjects.js";
 
-import { TFWindow }              from "./tfWebApp/tfWindows.js"; 
-import { TFChart }               from "./tfWebApp/tfObjects.js";
-import { TFDateTime }            from "./tfWebApp/utils.js";
 import { TFgui }                 from "./tfWebApp/tfGUI.js";
 import { TFDataObject }          from "./tfWebApp/tfDbObjects.js";
 import { setup_DefineResultGrid} from "./defineResultTable.js"
