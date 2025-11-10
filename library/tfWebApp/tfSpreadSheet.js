@@ -50,6 +50,7 @@ class TFCell
   }
 
 
+
   set value(v) 
   {
     this._value = v;
@@ -60,6 +61,19 @@ class TFCell
   { 
     return this._value; 
   }
+
+  numValue()
+  {
+    if(this._value==undefined) return 0;
+    if(this._value==null) return 0;
+    if(this._value=='')   return 0;
+    if(this._value==' ')  return 0;
+
+    if(isNaN(this._value)) return 0;
+    
+    return parseFloat(this._value);
+  }
+
 
 }
 
@@ -280,10 +294,34 @@ buildCluster( cellRange )
   // cluster-Zelle ausdehnen ....
   return this.createCell( clusterStartRow , l , t , (r-l) , (b-t));
 
-
-
-
 }
+
+
+range(cell1,cell2)
+{
+  var l=cell1.colNr<cell2.colNr?cell1.colNr:cell2.colNr;
+  var r=cell2.colNr<cell1.colNr?cell1.colNr:cell2.colNr;
+
+  var t=cell1.rowNr<cell2.rowNr?cell1.rowNr:cell2.rowNr;
+  var b=cell2.rowNr<cell1.rowNr?cell1.rowNr:cell2.rowNr;
+
+  var rangeCells = [];
+  this.forEachCell( (c)=> {
+                            //console.log("cell "+c.cellName+"  col:"+c.colNr+"  bound("+l+"<-->"+r+")  row:"+c.rowNr+"  bound("+t+"<-->"+b+")");
+                            if((c.colNr>=l)&&(c.colNr<=r)&&(c.rowNr>=t)&&(c.rowNr<=b)) {console.log('hit'); rangeCells.push(c)}
+                          })
+ 
+  return rangeCells;  
+}
+
+summe(cell1,cell2)
+{
+  var sum = 0;
+  this.range(cell1,cell2).forEach(c=>{console.log('sum:'+sum+' c.value: '+c.value+' c.numValue() : '+c.numValue()); sum=sum+c.numValue()})
+  return sum;
+}
+
+
 
 
 exportToExcel()

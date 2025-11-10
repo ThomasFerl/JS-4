@@ -96,15 +96,17 @@ else rd = response.result;
 
 // Spreadsheet erzeugen 
 // es werden die ersten 2 Spalten und die obersten 3 Zeilen gruppiert (builCluster)
-var spreadSheet   = new TFSreadSheet( wnd.hWnd , {layout:(rd.length+2)+"x"+(orte.length+3)} );
+var spreadSheet   = new TFSreadSheet( wnd.hWnd , {layout:(rd.length+2)+"x"+(orte.length+3+1)} );
 
 var c1            = spreadSheet.getCellbyName('R1C1');
 var c2            = spreadSheet.getCellbyName('R3C2');
 var c             = spreadSheet.buildCluster([c1,c2]);
 c.backgroundColor = 'rgba(200, 225, 248, 1)';
 
-var excelBtn      = dialogs.addButton(c.obj,'',1,1,'7em','3em',{caption:'Excel',glyph:'table-cells'})
-    excelBtn.callBack_onClick = function(){this.spreadSheet.exportToExcel()}.bind({spreadSheet:spreadSheet})
+// Excel-Ausgabe ist kompliziert auf Grund des Zell-Verbundes
+// Knopf erstmal ausblenden ....
+//var excelBtn      = dialogs.addButton(c.obj,'',1,1,'7em','3em',{caption:'Excel',glyph:'table-cells'})
+//    excelBtn.callBack_onClick = function(){this.spreadSheet.exportToExcel()}.bind({spreadSheet:spreadSheet})
 
 // und nun Zellenweise durch die Matrix....
 for(var i=0; i<orte.length; i++)
@@ -188,6 +190,40 @@ cells.forEach((cell)=>{
 
                         }    
 });
+
+// Formatierung mit Tausenderpunkt 
+const fmt = new Intl.NumberFormat('de-DE');
+
+// Summenzeile:
+c1                 = spreadSheet.getCell(1, spreadSheet.rowCount );
+c2                 = spreadSheet.getCell(2, spreadSheet.rowCount );
+c                  = spreadSheet.buildCluster([c1,c2]);
+   c.paddingLeft      = '1em';
+   c.value            = 'Summe';
+   c.backgroundColor  = wnd.hWnd.backgroundColor;
+   c.fontWeight       = 'bold';
+   c.justifyContent   = 'flex-start';
+
+
+
+for(var j=0; j<rd.length; j++)
+{
+   c1                 = spreadSheet.getCell( j+3 , 4 );                       // erste Zeile mit Werten (1..3 sind Überschrift)
+   c2                 = spreadSheet.getCell( j+3 , spreadSheet.rowCount-1);   // letzte Zeile mit Werten 
+   
+   c                  = spreadSheet.getCell(j+3,spreadSheet.rowCount);        // letzte Zeile als Summe
+ 
+   c.backgroundColor  = 'rgba(21, 173, 165, 0.28)';
+   c.paddingLeft      = '1em';
+   c.fontWeight       = 'bold';
+   c.justifyContent   = 'flex-start';
+   
+   // Zu Testzwecke einfärben, um zu prüfen dass auch wirklich über den korrekten Bereich summiert wird ...
+   //spreadSheet.range(c1,c2).forEach(c=>c.backgroundColor='rgba(136, 255, 0, 0.19)');
+
+   c.value            = fmt.format( spreadSheet.summe(c1,c2) );
+}   
+
 
 }
 

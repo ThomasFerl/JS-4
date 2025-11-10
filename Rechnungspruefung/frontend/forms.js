@@ -278,7 +278,7 @@ export const rechnungspruefungMain = {
           gridWidth: 1,
           gridHeight: 1,
           gap: "",
-          left: 7,
+          left: 3,
           top: 1,
           width: 1,
           height: "3em",
