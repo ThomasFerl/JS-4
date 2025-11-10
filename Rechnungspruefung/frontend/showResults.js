@@ -107,6 +107,14 @@ c.backgroundColor = 'rgba(200, 225, 248, 1)';
 // Knopf erstmal ausblenden ....
 //var excelBtn      = dialogs.addButton(c.obj,'',1,1,'7em','3em',{caption:'Excel',glyph:'table-cells'})
 //    excelBtn.callBack_onClick = function(){this.spreadSheet.exportToExcel()}.bind({spreadSheet:spreadSheet})
+   
+var printBtn                  = dialogs.addButton(c.obj,'',1,1,'7em','3em',{caption:'Drucken',glyph:'print'})
+    printBtn.callBack_onClick = function(){
+                                            this.printButton.hide();
+                                            utils.printContent(this.wnd.hWnd)
+                                            this.printButton.show();
+                                          }.bind({wnd:wnd,printButton:printBtn})
+
 
 // und nun Zellenweise durch die Matrix....
 for(var i=0; i<orte.length; i++)
