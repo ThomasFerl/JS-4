@@ -1441,7 +1441,7 @@ export const rechnungspruefungAuswertung = {
               flexDirection: "row",
               gridLayout: "2x1",
               caption: "",
-              glyph: "file-excel",
+              glyph: "print",
               glyphColor: "",
               children: []
             },
