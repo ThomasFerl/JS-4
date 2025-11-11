@@ -6,7 +6,7 @@ import { TFDateTime } from "./utils.js";
 
 class TFCell 
 {
-  constructor(aParent, inRow , l, t, w, h, cellName , onCellClick , onCellMove , onCellLeave ) 
+  constructor(aParent, inRow , l, t, w, h, cellName , onCellClick , onCellDblClick ,  onCellMove , onCellLeave ) 
   {
     this.parent   = aParent;
     this.myRow    = inRow;
@@ -17,16 +17,17 @@ class TFCell
     this.cellName = cellName || 'R'+t+'C'+l;
     this.obj      = new TFPanel(aParent, l, t, w, h, { css: "cssSpreadSheetCell" });
     this._value   = null;
+    this.dataObj  = null;
 
-    this.onCellClick = onCellClick;
-    this.onCellMove  = onCellMove;
-    this.onCellLeave = onCellLeave;
+    this.onCellClick    = onCellClick;
+    this.onCellDblClick = onCellDblClick;
+    this.onCellMove     = onCellMove;
+    this.onCellLeave    = onCellLeave;
     
     this.obj.callBack_onClick     = function(){ if(this.onCellClick) this.onCellClick(this) }.bind(this);
+    this.obj.callBack_onDblClick  = function(){ if(this.onCellDblClick) this.onCellDblClick(this)}.bind(this);
     this.obj.callBack_onMouseMove = function(){ if(this.onCellMove)  this.onCellMove (this) }.bind(this);
     this.obj.callBack_onMouseOut  = function(){ if(this.onCellLeave) this.onCellLeave(this) }.bind(this);
-
-
    
     // um die Eigenschaften vom TFPanel nicht einzeln "wrappen" zu müssen nutzen wir eine Proxy-Klasse
     // ACHTUNG: Als Rückgabe gibt es jetzt keine TFCell sondern ein Proxy, dass sich wie ein TFCell verhält ....
@@ -82,11 +83,16 @@ export class TFSreadSheet
   constructor(aParent, buildingPlan)
   {
     this.parent = aParent;
-    this.rows         = [];
-    this.cellNames    = new Map();
-    this.selectedCell = null;
-    this.savedBorder  = {width:1,color:'black'};
+    this.rows           = [];
+    this.cellNames      = new Map();
+    this.selectedCell   = null;
+    this.savedBorder    = {width:1,color:'black'};
 
+    this.onCellClick    = null;
+    this.onCellDblClick = null;
+    this.onCellMove     = null;
+    this.onCellLeave    = null;
+    
     var headPlan      = [];
 
     if (buildingPlan.hasOwnProperty("layout")) 
@@ -181,9 +187,10 @@ export class TFSreadSheet
 
 createCell( inRow , col , row , width , height )
 { 
-  const cell = new TFCell(this.parent, inRow , col , row , width , height , '' ,  function( cell ){this.onCellClick( cell )}.bind(this) , 
-                                                                                  function( cell ){this.onCellMove ( cell )}.bind(this) ,
-                                                                                  function( cell ){this.onCellLeave( cell )}.bind(this) );
+  const cell = new TFCell(this.parent, inRow , col , row , width , height , '' ,  function( cell ){this.on_CellClick( cell )}.bind(this) ,
+                                                                                  function( cell ){this.on_CellDblClick( cell )}.bind(this) , 
+                                                                                  function( cell ){this.on_CellMove ( cell )}.bind(this) ,
+                                                                                  function( cell ){this.on_CellLeave( cell )}.bind(this) );
   inRow.push(cell);
   this.cellNames.set( cell.cellName , cell );
   return cell;
@@ -203,6 +210,7 @@ deleteCell( cell )
   cell.obj.remove();
 }
 
+
 forEachCell( f )
 {
   for(var i=0; i<this.rows.length; i++)
@@ -216,7 +224,7 @@ forEachCell( f )
 
 
 
-onCellClick( cell )
+on_CellClick( cell )
 { 
   if(cell==this.selectedCell) return;
   
@@ -235,16 +243,22 @@ onCellClick( cell )
   this.selectedCell.obj.borderColor   = 'black';
   this.selectedCell.obj.borderWidth   = '2px';
   
+  if(this.onCellClick) this.onCellClick( cell )
+}
+
+on_CellDblClick(cell)
+{
+  if(this.onCellDblClick) this.onCellDblClick( cell )
+}    
+  
+on_CellMove( cell )
+{
+  if(this.onCellMove) this.onCellMove( cell )
 }
   
-onCellMove( cell )
+on_CellLeave( cell )
 {
- console.log('cellMove -> ' + cell.cellName)
-}
-  
-onCellLeave( cell )
-{
-  console.log('cellLeave -> ' + cell.cellName)
+   if(this.onCellLeave) this.onCellLeave( cell )
 }
 
 

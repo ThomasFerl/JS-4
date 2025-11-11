@@ -95,6 +95,7 @@ export function startSession( sessionID , userName , userID , grants , admin )
  || (userName.toLocaleUpperCase()=='ADMIN')
  || (userName.toLocaleUpperCase()=='SYSADMIN')
  || (userName.toLocaleUpperCase()=='ADMINISTRATOR')
+ || (userName.toLocaleUpperCase()=='SYSDBA')
     ) session.admin = true; 
 
     console.log("Start Session: " + JSON.stringify(session));
