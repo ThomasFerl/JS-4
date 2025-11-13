@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Hello Word Add-in</title>
+  <script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
+  <script>
+    Office.onReady(() => {
+      // Kontakt einfügen
+      document.getElementById("insertBtn").onclick = async () => {
+        const response = await fetch("https://localhost:3000/api/contact");
+        const contact = await response.json();
+
+        await Word.run(async (context) => {
+          context.document.body.insertText(
+            `Hello Word – Kontakt: ${contact.name} (${contact.email})`,
+            Word.InsertLocation.end
+          );
+          await context.sync();
+        });
+      };
+
+      // Dokument speichern
+      document.getElementById("saveBtn").onclick = async () => {
+        await Word.run(async (context) => {
+          const text = context.document.body.text;
+          await context.sync();
+
+          await fetch("https://localhost:3000/api/saveDoc", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ content: text })
+          });
+          alert("Dokument gespeichert!");
+        });
+      };
+
+      // Parametrisierter Taxi-Satz
+      document.getElementById("taxiBtn").onclick = async () => {
+        const city = document.getElementById("cityInput").value || "München";
+        await Word.run(async (context) => {
+          context.document.body.insertText(
+            `Das Taxi steht in ${city} bereit.`,
+            Word.InsertLocation.end
+          );
+          await context.sync();
+        });
+      };
+    });
+  </script>
+</head>
+<body>
+  <h3>Mein erstes CRM-Add-in</h3>
+  <button id="insertBtn">Kontakt einfügen</button>
+  <button id="saveBtn">Dokument speichern</button>
+  <br/><br/>
+  <input id="cityInput" type="text" placeholder="Stadt eingeben"/>
+  <button id="taxiBtn">Taxi-Satz einfügen</button>
+</body>
+</html>
