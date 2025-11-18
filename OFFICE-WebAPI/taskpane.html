@@ -36,7 +36,7 @@
 
       // Parametrisierter Taxi-Satz
       document.getElementById("taxiBtn").onclick = async () => {
-        const city = document.getElementById("cityInput").value || "München";
+        const city =  document.getElementById("cityInput").value || "München";
         await Word.run(async (context) => {
           context.document.body.insertText(
             `Das Taxi steht in ${city} bereit.`,

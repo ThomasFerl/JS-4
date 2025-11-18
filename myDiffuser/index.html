@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>Diffuser Demo</title>
+</head>
+<body>
+  <canvas id="myCanvas" width="50" height="50" style="border:1px solid black;"></canvas>
+
+  <script type="module">
+    import { drawCircleToTensor }  from "./myShapes.js";
+    import { addNoise }            from "./myTensor.js";
+    import { tensorToCanvas }      from "./myTensor.js";
+    import { animateNoise }        from "./myTensor.js";
+    import { trainDummy }          from "./myTraining.js";
+    import { randomShapeToTensor } from "./myTrainingDataset.js";
+
+    // Original Kreis ins Tensor
+    // const tensor = drawCircleToTensor("myCanvas", 15);
+
+
+/* SINGE STEP
+
+    // Verrauschtes Bild erzeugen
+    const noisyTensor = addNoise(tensor, 0.5);
+
+    // Zurück ins Canvas schreiben
+    tensorToCanvas(noisyTensor, "myCanvas");
+*/
+
+/* multiple Steps ...
+   Animation starten: 10 Schritte, alle 500ms
+animateNoise(tensor, "myCanvas", 10, 500);
+
+*/
+
+
+  // Fake - Training starten ...
+  /*
+  const model = trainDummy(20, 0.01);
+
+  console.log("Training fertig, Gewichte:", model.weights.slice(0,10));
+*/
+
+// Beispiel: 5 zufällige Shapes erzeugen
+ 
+for (let i = 0; i < 5; i++) 
+{
+      const { tensor, label } = randomShapeToTensor("myCanvas");
+      console.log("Shape Label:", label, "Tensor Mitte:", tensor.get(25,25));
+}
+
+
+
+
+
+  </script>
+</body>
+</html>
