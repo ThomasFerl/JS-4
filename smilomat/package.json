@@ -1,0 +1,19 @@
+{
+  "name": "smilomat",
+  "version": "1.0.0",
+  "description": "Erkennt das Lächeln im Gesicht und vergibt HighScore",
+  "keywords": [
+    "faceAPI"
+  ],
+  "license": "ISC",
+  "author": "Thomas Ferl",
+  "type": "commonjs",
+  "main": "backend.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "express": "^5.1.0",
+    "face-api.js": "^0.22.2"
+  }
+}
