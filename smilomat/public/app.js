@@ -51,17 +51,13 @@ async function start()
       {
         let   smileProb  =    (detections[0].expressions.happy     *2   )
                             + (detections[0].expressions.neutral   *0.25) 
-                            + (detections[0].expressions.surprised *0.75)
-                         
-                            - (detections[0].expressions.sad       *0.5)
-                            - (detections[0].expressions.fearful   *1.5) 
-                            - (detections[0].expressions.disgusted *2.5)
-                            - (detections[0].expressions.angry     *2.5)
-        
-        //smileProb = smileProb / 5                    
+                            + (detections[0].expressions.surprised *0.75) 
+                            - (detections[0].expressions.sad       *0.5 )
+                            - (detections[0].expressions.fearful   *1.0 ) 
+                            - (detections[0].expressions.disgusted *2.5 )
+                            - (detections[0].expressions.angry     *2.5 ); 
 
-        if(smileProb>1) smileProb = 1;
-        console.log(smileProb);
+       // console.log(smileProb);
 
         // console.log(detections[0].expressions);
 
