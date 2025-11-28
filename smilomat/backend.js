@@ -1,17 +1,19 @@
+const fs = require('fs');
+const https = require('https');
 const express = require('express');
-const path = require('path');
 
 const app = express();
-const PORT = 4049;
 
-// Statische Dateien ausliefern (HTML, JS, Modelle)
-app.use(express.static(path.join(__dirname, 'public')));
+// statische Dateien (HTML, JS, CSS)
+app.use(express.static('public'));
 
-// Route für Smilomat
-app.get('/smilomat', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'smilomat.html'));
-});
+// Zertifikat laden
+const sslOptions  = {
+    key : fs.readFileSync('./SSL/privateKex.pem'  , 'utf8' ),     // Pfad zum privaten Schlüssel
+    cert: fs.readFileSync('./SSL/certificate.pem' , 'utf8' )    // Pfad zum Zertifikat
+   };
 
-app.listen(PORT, () => {
-  console.log(`Smilomat läuft auf http://localhost:${PORT}/smilomat`);
+// HTTPS-Server starten
+https.createServer(sslOptions, app).listen(4049, () => {
+  console.log('Smilomat läuft unter https://localhost:4049');
 });
