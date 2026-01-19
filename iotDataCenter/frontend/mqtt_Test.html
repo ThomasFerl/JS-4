@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+ <head>
+  <title>MQTT-TEST</title>
+  <link rel="stylesheet" href="./tfWebApp/style.css">
+
+  <script>
+   
+   var m = ""; 
+   function init()
+   {
+    import("./mqtt_Test.js").then( function(module) {m = module.main("MQTT-Test")} )
+    document.body.innerHTML = m ;
+   } 
+
+</script> 
+
+</head>
+  <body onload="init()"></body>
+</html>

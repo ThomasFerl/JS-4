@@ -1,0 +1,31 @@
+{
+  "name": "prototyp",
+  "version": "1.0.0",
+  "main": "backend.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "thomas ferl",
+  "license": "ISC",
+  "dependencies": {
+    "@influxdata/influxdb-client": "^1.35.0",
+    "axios": "^1.5.1",
+    "better-sqlite3": "^11.7.2",
+    "body-parser": "^1.20.3",
+    "chart.js": "^4.4.7",
+    "console": "^0.7.2",
+    "exceljs": "^4.4.0",
+    "express": "^4.19.2",
+    "express-ntlm": "^2.7.0",
+    "fs-extra": "^11.1.1",
+    "influxdb-client": "^0.0.1",
+    "mqtt": "^5.10.3",
+    "multer": "^1.4.5-lts.1",
+    "node-sql-parser": "^5.3.5",
+    "os": "^0.1.2",
+    "path": "^0.12.7",
+    "sql-parser": "^0.5.0"
+  },
+  "keywords": [],
+  "description": ""
+}
