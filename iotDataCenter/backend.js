@@ -98,10 +98,8 @@ mqttClient.on('error', (err) => { console.error('❌ MQTT-Fehler:', err); });
 mqttDist = new TMQTTDistributor({ mqttBroker: MQTT_BROKER_URL,
                                   topic     : defaultTopic 
                                 } , mqttOptions)
-
-                              
-
 mqttDist.start();
+                              
 
 
 //-----------------------------------------------------------------------------------------

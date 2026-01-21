@@ -44,7 +44,7 @@ tables.push(
                           {fieldName:"Pix3" , fieldType:"Text"} ,
                           {fieldName:"EMF" , fieldType:"Text"} ,
                           {fieldName:"GPS" , fieldType:"Text"} ,
-                          {fieldName:"TOPIC" , fieldType:"Text"}
+                          {fieldName:"ID_TOPIC" , fieldType:"INTEGER"}
                           
                          ]});
                        

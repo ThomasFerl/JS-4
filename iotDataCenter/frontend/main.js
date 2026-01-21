@@ -10,7 +10,7 @@ import {TdeviceDlg      }   from "./deviceDlg.js";
 import {TFDataViewer    }   from "./dataViewer.js";
 
 
-var mqttDistributor =  new TFDistributor( 'mqtt://10.102.13.99:4701' );     // Verbindung zum Broker herstellen
+var mqttDistributor =  new TFDistributor( 'mqtt://192.168.100.10:1883' );     // Verbindung zum Broker herstellen
 
 mqttDistributor.addSubscriber("$newDevice" , ()=>{dialogs.showMessage("new device")})
 
@@ -58,11 +58,16 @@ export function main(capt1)
   globals.sysMenu.push( {caption:'Benutzer' , action:function(){sysadmin.adminUser()} } );
   globals.sysMenu.push( {caption:'Berechtigungen' , action:function(){sysadmin.adminGrants()} } );
   globals.sysMenu.push( {caption:'Info' , action:function(){app.sysInfo()} } );
+  globals.sysMenu.push( {caption:'API-Test (nur in der Entwicklungsphase)' , action:function(){app.APItest()} } );
   globals.sysMenu.push( {caption:'Symbol-Bibliothek (nur in der Entwicklungsphase)' , action:function(){dialogs.browseSymbols()} } );
-  globals.sysMenu.push( {caption:'API-Test (nur in der Entwicklungsphase)' , action:()=>{app.APItest(apiEndpoints)} } );
+  globals.sysMenu.push( {caption:'GUI Builder (nur in der Entwicklungsphase)' , action:function(){app.guiBuilder()} } );
   globals.sysMenu.push( {caption:'Abbrechen' , action:function(){} } );
+
+
+
+
   
-  app.login( ()=>{  caption2 = 'Willkommen ' + globals.session.userName ; run() });
+  app.login( ()=>{  caption2 = 'Willkommen ' + globals.session.userName ; run() } , false);
   
 }  
 

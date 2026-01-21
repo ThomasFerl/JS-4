@@ -1,6 +1,6 @@
-const useHTTPS                = true;
+const useHTTPS                = false;
 
-export var debug              = false;
+export var debug              = true;
 export var webApp             = {activeWorkspace:null};
 export var Screen             = null;   // wird von der App gesetzt
 

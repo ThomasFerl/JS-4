@@ -6,11 +6,38 @@ const utils                = require('./nodeUtils');
 var   dB                   = null;
 var   maxAgePayloadHistory = globals.maxAgePayloadHistory || 365; // in Tagen
 
+
+const validTopics = ['smartmeter/strom/measure'   , 
+                     'ESP32/smartmeterGAS/Imp_01' ,
+                     'ESP32/smartmeterGAS/Imp_02' ,
+                     'ESP32/smartmeterGAS/Imp_03' ,
+                     'zigbee2mqtt/tempHum01'      ,
+                     'zigbee2mqtt/tempHum02'      ,
+                     'zigbee2mqtt/tempHum03'      ,
+                     'zigbee2mqtt/tempHum04'      ,
+                     'zigbee2mqtt/tempHum05'      ,
+                     'zigbee2mqtt/tempHum06'      ,
+                     'zigbee2mqtt/tempHum07'      ];
+
+
+
 module.exports.setup = (_dB ) => { dB = _dB; }
 
 
 module.exports.onMessage = (topic, payload) =>
 {
+   if(validTopics.includes(topic)==false) return;
+
+   utils.log('. ');
+   utils.log('-------------------mqttHandler.onMessage-----------------');
+   utils.log('onMessage -> Topic: '+topic+' / Payload: '+payload);
+
+   // 0. Prüfen, ob das Topic mit "$SYS" beginnt, da es sich dabei um interne Systemnachrichten handelt
+   if (topic.startsWith('$SYS')) { return; }
+
+   // 1. Prüfen, ob das Topic bereits in der Datenbank existiert
+   
+   
    utils.log('. '); 
    utils.log('-------------------mqttHandler.onMessage-----------------'); 
    utils.log('onMessage -> Topic: '+topic+' / Payload: '+payload);

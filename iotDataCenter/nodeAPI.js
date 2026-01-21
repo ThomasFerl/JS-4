@@ -1,4 +1,4 @@
-// const { TFLogging }= require('./logging.js');
+const { TFLogging }= require('./logging.js');
 const globals      = require('./backendGlobals.js');
 const utils        = require('./nodeUtils.js');
 const batchProc    = require('./batchProc.js');
@@ -16,7 +16,7 @@ var   batchProcesses  = new batchProc.TBatchQueue( batchProcedureHandler );
 //für diese Befehle wird kein GrantCheck() durchgeführt ...
 var sysCommands    = ['KEEPALIVE' , 'LSGRANTS' , 'GETUSERGRANTS' , 'GETVAR' , 'GETVARS' , 'USERLOGOUT' , 'CREATETABLE' , 'FETCHVALUE' , 'FETCHRECORD' , 'FETCHRECORDS',
                       'INSERTINTOTABLE' , 'UPDATETABLE' , 'DROP' , 'EXISTTABLE' , 'STRUCTURE' , 'AST' , 'LSUSER' , 'ADDUSER' ,  'EDITUSER' , 'ADDGRANT' , 'IDGRANT' , 
-                      'RESETUSERGRANTS' , 'ADDUSERGRANT' , 'SETUSERGRANTS' , 'GETUSERGRANTS' , 'SETVAR' , 'DELVAR' , 'JSN2EXCEL' ];
+                      'RESETUSERGRANTS' , 'ADDUSERGRANT' , 'SETUSERGRANTS' , 'GETUSERGRANTS' , 'SETVAR' , 'DELVAR' , 'JSN2EXCEL' , 'LSFORMS' , 'LOADFORM' , 'SAVEFORM' , 'DELFORM'];
 
 var startTime      = utils.seconds();
 utils.log('StartTime: '+startTime);
@@ -107,11 +107,27 @@ if( CMD=='GETIMAGEFILE')    {
                              return {isStream:true};
                             }
 
+if(CMD=='LSSYMBOLGROUPS') 
+  {
+     var spath = globals.symbolPath(); 
+     console.log('LSSYMBOLGROUPS: -> '+spath)
+     var response = utils.scanDir ( fs , path , spath , '*.*');
+     if (response.error) return response;
+     var grp = [];  
+     for (var i=0; i<response.result.length; i++) if(response.result[i].isDir) grp.push(response.result[i].name); 
+     return {error:false, errMsg:"", result:grp};  
+  } 
+
+if(CMD=='SYMBOLPATH') 
+  {
+    return utils.getSymbolPath(param.symbol);
+  } 
+  
 
 if( CMD=='LSSYMBOLS')       {
-                              console.log("LSSYMBOLS -> "+globals.symbolPath());
-                              
-                              var response = utils.scanDir ( fs , path , globals.symbolPath() );
+                              var spath = globals.symbolPath(param.path || ''); 
+                              console.log('LSSYMBOLS: -> '+spath)
+                              var response = utils.scanDir ( fs , path , spath , '*.*');
                               if (response.error) return response;
                               var sym = [];  
                               for (var i=0; i<response.result.length; i++) sym.push( path.basename(response.result[i].name, '.svg')); 
@@ -121,7 +137,8 @@ if( CMD=='LSSYMBOLS')       {
 
 
 if( CMD=='SYMBOL')         {
-                             var p = globals.symbolPath()+'/'+param.symbolName+'.svg';
+                             var p = globals.symbolPath(param.path || '');
+                                 p = path.join( p , param.symbolName+'.svg');
                              return utils.getTextFile( fs , p );
                            }
 
@@ -251,13 +268,6 @@ if(CMD=='GETUSERGRANTS')
 } 
 
 
-if(CMD=='SYMBOLPATH') 
-  {
-    return utils.getSymbolPath(param.symbol);
-  } 
-  
-
-
 if(CMD=='GETVAR') 
 {
   return session.getSessionVar( sessionID , param.varName ); 
@@ -306,6 +316,44 @@ if(CMD=='SHOWLOG')
   }  
 
 
+if(CMD=='LSFORMS') 
+  {
+     return dbUtils.fetchRecords_from_Query( etc , "Select FORMNAME from forms order by formName");
+  }  
+
+if(CMD=='LOADFORM') 
+  {
+     return dbUtils.fetchRecord_from_Query( etc , "Select * from forms Where formName='"+param.formName+"'" );
+  }  
+
+
+if(CMD=='SAVEFORM') 
+  {
+    console.log('SAVEFORM:');
+    console.log('========');
+    console.log('prüfe die Existenz des Formular "'+param.formName+'"');
+    var ID = dbUtils.fetchValue_from_Query( etc , "Select ID from forms Where formName='"+param.formName+"'" ).result;  
+
+    if(!ID)
+      {
+         console.log('Datensatz existiert nicht -> Neuanlage');
+         return dbUtils.insertIntoTable( etc , "forms" , {formName:param.formName, FormData:JSON.stringify(param.formData)});
+      }   
+       else
+       { 
+        console.log('Datensatz existiert bereits -> Akualisierung');
+        return dbUtils.updateTable(etc , 'forms' , 'ID' , ID , {formName:param.formName, FormData:JSON.stringify(param.formData)} );
+       } 
+
+  }  
+
+
+if(CMD=='DELFORM') 
+  {
+    return dbUtils.runSQL(etc , "Delete forms where formName='"+param.formName+"'" );
+  }  
+
+  
 //----------------------------------------------------------------
 if(CMD=='ADD_BATCHPROC')  // Befehl an den Batch-Process-Manager weiterleiten   
 // Dieser Endpunkt sorgt dafür, dass der in den parametern angegebene Befehl param.batchCmd mit den Parametern param.batchParam in die Warteschlange eingereiht wird... 

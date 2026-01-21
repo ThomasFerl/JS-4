@@ -121,7 +121,7 @@ if( CMD=='NEWDEVICE' )
 
     if( CMD == 'AVAILEABLETOPICS')
       {
-          return dbUtils.fetchRecords_from_Query(dB,"Select distinct descr from mqttTopics Where descr not in (Select Topic from devices ) order by ID desc");
+          return dbUtils.fetchRecords_from_Query(dB,"Select distinct topic from mqttTopics Where topic not in (Select Topic from devices ) order by ID desc");
       }
     
    

@@ -105,7 +105,7 @@ export class TdeviceDlg
       {
        var availeableTopics = [];
        var r = utils.webApiRequest('availeableTopics' , {} );
-       for(var i=0; i<r.result.length; i++) availeableTopics.push(r.result[i].descr)
+       for(var i=0; i<r.result.length; i++) availeableTopics.push(r.result[i].topic)
       }  
       
       var cpt = this.newDevice ? "neues Gerät hinzufügen" : "Gerät bearbeiten";

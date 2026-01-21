@@ -68,6 +68,22 @@ module.exports.structure = ( db , sqlStatement) =>
 }
 
 
+
+module.exports.schema = ( db , tableName) =>
+{
+  // Schema der Tabelle "meineTabelle" abfragen   
+  const stmt = db.prepare("PRAGMA table_info('"+tableName+"');");
+  const columns = stmt.all();
+  var   res     = [];
+  columns.forEach((column) => {res.push({fieldName:column.name , fieldTyp:column.type , notNull:column.notnull , defaultValue:column.dflt_value , primaryKey:column.pk}); });
+
+  return {error:false, errMsg:'OK',result:res}
+}
+
+
+
+
+
 function _fetchValue_from_Query( db , sql , params )
 {
   if(utils.debug)console.log('fetchValue_from_Query(' + _convertLikeWildcards(sql) +')');   // Vermeidung von Rekursion
