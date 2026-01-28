@@ -26,6 +26,7 @@ const userAPI     = require('./userAPI');
 const session     = require('./session');
 const dbUtils     = require('./dbUtils');
 const dbTables    = require('./dbTables');
+const etcTables   = require('./etcTables');
 
 
 const sslOptions  = {
@@ -44,6 +45,7 @@ const dB          = new Database( dBName  , { verbose: utils.log ,  readonly: fa
 
 // Datenstruktur lt. dBTables erzeugen ....
 dbTables.buildTables( dB );
+etcTables.buildTables( etc );
 
 // Datenstruktur auf ggf. vorhandene Änderungen prüfen ....
 // dbTables.checkdbTableStructure();
@@ -70,6 +72,7 @@ var mqttOptions = {
   reconnectPeriod: 1000,    
                   };
 
+/*
 const mqttClient = mqtt.connect(MQTT_BROKER_URL, mqttOptions);
 
 mqttClient.on('connect', () => {
@@ -86,7 +89,7 @@ mqttClient.on('message', async (topic, payload) => { mqttHandler.onMessage(topic
 // Fehlerbehandlung
 mqttClient.on('error', (err) => { console.error('❌ MQTT-Fehler:', err); });
 
-
+*/
 
 //-----------------------------------------------------------------------------------------
 //-----------------------------------------------------------------------------------------
@@ -95,12 +98,13 @@ mqttClient.on('error', (err) => { console.error('❌ MQTT-Fehler:', err); });
 //-----------------------------------------------------------------------------------------
 
 // MQTT - Distributor starten
+/*
 mqttDist = new TMQTTDistributor({ mqttBroker: MQTT_BROKER_URL,
                                   topic     : defaultTopic 
                                 } , mqttOptions)
 mqttDist.start();
                               
-
+*/
 
 //-----------------------------------------------------------------------------------------
 //-----------------------------------------------------------------------------------------

@@ -161,15 +161,15 @@ export class TdeviceDlg
 
 
 
-      this.form.callBack_onOKBtn  = function ( d) {debugger; this.saveDevice(d)}.bind(this);
-      this.form.callBack_onESCBtn = function () {this.dlgWnd.destroy() ; if(this.callBack_onDialogAbort!=null) this.callBack_onDialogAbort() }.bind(this);
+      this.form.callBack_onOKBtn  = function ( d) {this.saveDevice(d)}.bind(this);
+      this.form.callBack_onESCBtn = function ()   {this.dlgWnd.destroy() ; if(this.callBack_onDialogAbort!=null) this.callBack_onDialogAbort() }.bind(this);
   }
 
 
 
 
   saveDevice( deviceData )
-  { debugger;
+  { 
     /* daten kommen in der Form: [{"field":"ID","value":""},
                                   {"field":"BEZEICHNUNG","value":""},
                                   {"field":"TYP","value":"Tixi"}, .... {}]

@@ -126,7 +126,7 @@ export async function init()
     symbolsList      = [];
     symbolObjMapping = [];
     ready            = false;
-    
+
     // ermittle alle Symbol-gruppen
     const symbolGroups =  webApiRequest('LSSYMBOLGROUPS', {}).result;
 

@@ -954,7 +954,7 @@ export function showImage( url , caption )
 
   
   export async function browseSymbols(path , callBack_onSelection )
-  {  
+  { 
      var s=new TFSymbolBrowser();
      if(callBack_onSelection) s.callback_onOkClicked = callBack_onSelection;
      else s.callback_onOkClicked = (items)=>{alert(JSON.stringify(items))} 
@@ -971,7 +971,6 @@ export function _colorPicker(currentColor, callback_onColorChanged)
   ];
 
   let wnd = createWindow(null,"Farbauswahl","200px","200px","CENTER");
-  debugger;
   let inp = wnd.hWnd.DOMelement;
   inp.style.display               = 'grid';
   inp.style.gridTemplateColumns   = "repeat(8, 20px)";

@@ -184,7 +184,6 @@ export class TChanelDlg
              for(var i=0; i<response.result.length; i++) this.chanel[response.result[i].fieldName] = response.result[i].defaultValue || "";
              this.chanel.ID_Device = this.device.ID;
       }
-        debugger;
         var availeableTopics = [];
         var r = utils.webApiRequest('LSTOPICS' , {ID_Device:device.ID} );
         if(!r.error) 
