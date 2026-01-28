@@ -247,6 +247,13 @@ module.exports.insertIntoTable = ( db , tableName , fields ) =>
 }
 
 
+module.exports.insertBatchIntoTable = ( db , tableName , records ) =>
+{
+    return _insertBatchIntoTable( db , tableName , records );
+}
+
+
+
 function _insertBatchIntoTable(db, tableName, records) {
   try {
     const insert = db.transaction((records) => {
@@ -278,6 +285,53 @@ function _insertBatchIntoTable(db, tableName, records) {
 
 
 
+module.exports.updateBatchInTable = ( db , tableName , records , id ) =>
+{
+    return _updateBatchInTable( db , tableName , records , id );
+}
+
+
+function _updateBatchInTable(db, tableName, records, keyField = "ID") {
+  try {
+    const update = db.transaction((records) => {
+      for (const record of records) {
+
+        // Key muss existieren
+        if (!record || record[keyField] === undefined || record[keyField] === null) {
+          throw new Error(`Record missing keyField '${keyField}'`);
+        }
+
+        const fieldNames = Object.keys(record).filter(k => k !== keyField);
+
+        // Nichts zu updaten? -> überspringen
+        if (fieldNames.length === 0) continue;
+
+        const toSqlValue = (v) => {
+          if (v === undefined) return null;           // undefined → null
+          if (v === null) return null;
+          if (typeof v === "object") return JSON.stringify(v); // Objekt → JSON-String
+          if (typeof v === "boolean") return v ? 1 : 0;        // Boolean → Zahl
+          return v;                                   // Zahl oder String bleibt wie er ist
+        };
+
+        const setClause = fieldNames.map(f => `${f} = ?`).join(", ");
+        const values = fieldNames.map(f => toSqlValue(record[f]));
+        const keyValue = toSqlValue(record[keyField]);
+
+        const sql = `UPDATE ${tableName} SET ${setClause} WHERE ${keyField} = ?`;
+
+        console.log("SQL:", sql, "VALUES:", JSON.stringify([...values, keyValue]));
+        db.prepare(sql).run(...values, keyValue);
+      }
+    });
+
+    update(records);
+    return { error: false, errMsg: "OK", result: {} };
+  } catch (e) {
+    return { error: true, errMsg: e.message, result: {} };
+  }
+}
+
 
 /* Kurze Erklärung zum "..."  Spread-Operator:
 Im speziellen Fall von ...Object.values(record) wird der Spread-Operator verwendet, 
@@ -293,11 +347,6 @@ der Aufruf von run(...['value1', 'value2']) zu run('value1', 'value2') wird.
 */
 
 
-
-module.exports.insertBatchIntoTable = ( db , tableName , batch ) =>
-{
-    return _insertBatchIntoTable( db , tableName , batch );
-}
 
 
 
