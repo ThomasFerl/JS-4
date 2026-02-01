@@ -72,7 +72,7 @@ export class TFMQTTExplorer
         this.treeViewCaption.fontWeight = 'bold';
         this.treeViewCaption.color = 'white';
         this.treeViewCaption.textAlign = 'left';
-        this.treeViewCaption.setTextIndent('0.7em');
+        //this.treeViewCaption.setTextIndent('0.7em');
 
         var btn = new TFButton( helpContainer , 2,1,1,1, {caption:'.'} );
             btn.backgroundColor = 'gray';

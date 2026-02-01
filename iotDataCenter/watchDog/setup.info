@@ -1,0 +1,180 @@
+3) ENV-Dateien
+3.1 Raspi: /etc/ha-watchdog.env
+
+BROKER_URL=mqtt://127.0.0.1
+CLIENT_ID=raspi-watchdog
+
+WATCH_TOPIC=zigbee2mqtt/bridge/state
+TREAT_OFFLINE_AS_FAILURE=true
+
+WARN_AFTER_MS=60000
+TRIGGER_AFTER_MS=180000
+
+COOLDOWN_MS=900000
+BACKOFF_BASE_MS=300000
+BACKOFF_MAX_MS=3600000
+ACK_TIMEOUT_MS=300000
+
+TOPIC_REQUEST=infra/ha/reboot/request
+TOPIC_ACK=infra/ha/reboot/ack
+TOPIC_STATUS=infra/ha/reboot/status
+TOPIC_WD_LWT=infra/watchdog/lwt
+TOPIC_WD_STATE=infra/watchdog/state
+
+QOS=1
+HMAC_SECRET=DEIN_HEX_SECRET_HIER
+
+
+3.2 Notebook: /etc/ha-reboot-agent.env
+
+BROKER_URL=mqtt://<BROKER-IP-ODER-RASPI>
+CLIENT_ID=notebook-reboot-agent
+
+VM_NAME=homeAssistant
+
+HA_HOST=<HA-IP-DER-VM>
+HA_PORT=8123
+HA_REACH_TIMEOUT_MS=2500
+
+# optional soft via ssh (nur wenn du wirklich willst)
+HA_SSH_ENABLED=false
+HA_SSH_USER=root
+HA_SSH_TIMEOUT_MS=10000
+
+TOPIC_REQUEST=infra/ha/reboot/request
+TOPIC_ACK=infra/ha/reboot/ack
+TOPIC_STATUS=infra/ha/reboot/status
+
+QOS=1
+LOCK_FILE=/var/lock/ha-reboot-agent.lock
+LOCK_MAX_AGE_MS=1200000
+
+HMAC_SECRET=DEIN_HEX_SECRET_HIER
+
+
+4) systemd Services (Autostart, Restart, robust)
+4.1 Raspi Service: /etc/systemd/system/ha-watchdog.service
+[Unit]
+Description=HA MQTT Watchdog (Raspi)
+After=network-online.target mosquitto.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+EnvironmentFile=/etc/ha-watchdog.env
+WorkingDirectory=/opt/ha-watchdog
+ExecStart=/usr/bin/node /opt/ha-watchdog/raspi-watchdog.js
+Restart=always
+RestartSec=3
+Nice=5
+
+# Hardening light
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
+
+
+4.2 Notebook Service: /etc/systemd/system/ha-reboot-agent.service
+[Unit]
+Description=HA Reboot Agent (Notebook Host)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+EnvironmentFile=/etc/ha-reboot-agent.env
+WorkingDirectory=/opt/ha-reboot-agent
+ExecStart=/usr/bin/node /opt/ha-reboot-agent/notebook-reboot-agent.js
+Restart=always
+RestartSec=3
+Nice=5
+
+# Needs VBoxManage
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
+
+
+
+5) Installation in 8 klaren Befehlen (copy/paste)
+5.1 Raspi
+
+sudo mkdir -p /opt/ha-watchdog
+cd /opt/ha-watchdog
+npm init -y
+npm i mqtt
+# raspi-watchdog.js hier rein kopieren
+sudo cp raspi-watchdog.js /opt/ha-watchdog/
+
+sudo nano /etc/ha-watchdog.env   # ENV eintragen (HMAC_SECRET!)
+sudo nano /etc/systemd/system/ha-watchdog.service
+
+sudo systemctl daemon-reload
+sudo systemctl enable --now ha-watchdog
+sudo journalctl -u ha-watchdog -f
+
+
+5.2 Notebook
+
+sudo mkdir -p /opt/ha-reboot-agent
+cd /opt/ha-reboot-agent
+npm init -y
+npm i mqtt
+# notebook-reboot-agent.js hier rein kopieren
+sudo cp notebook-reboot-agent.js /opt/ha-reboot-agent/
+
+sudo nano /etc/ha-reboot-agent.env  # BROKER_URL, HA_HOST, HMAC_SECRET, VM_NAME=homeAssistant
+sudo nano /etc/systemd/system/ha-reboot-agent.service
+
+sudo systemctl daemon-reload
+sudo systemctl enable --now ha-reboot-agent
+sudo journalctl -u ha-reboot-agent -f
+
+
+
+6) Kurzer Funktionstest (ohne echte Katastrophe)
+
+Auf Raspi:
+
+stoppe kurz Zigbee2MQTT oder blocke das Watchtopic (z.B. Coordinator aus)
+
+nach TRIGGER_AFTER_MS sollte infra/ha/reboot/request rausgehen
+Notebook:
+
+sollte sofort ack senden und status posten
+
+dann VBoxManage ... reset ausführen
+
+Zum Prüfen:
+
+mosquitto_sub -t 'infra/ha/reboot/#' -v
+
+7) Eine winzige, aber geniale Verbesserung (optional, aber Zucker)
+
+Falls du statt bridge/state lieber „echtes Leben“ willst:
+
+Lass Node-RED (oder irgendein Script) alle 30s publishen:
+
+infra/ha/heartbeat = <unixTs>
+
+Dann stellst du am Raspi:
+
+WATCH_TOPIC=infra/ha/heartbeat
+TREAT_OFFLINE_AS_FAILURE=false
+
+
+Das ist repräsentativer als bridge/state, weil es HA-Leben direkt misst.
+
+Wenn du jetzt sagst, welche IP dein Home Assistant in der VM hat (für HA_HOST=), dann ist das Setup wirklich „aus einem Guss“.
+Und ja… das ist Code, bei dem man ein bisschen Pipi im Auge haben darf. 😄
+
+
+
+
+
+
+
