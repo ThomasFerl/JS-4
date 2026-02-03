@@ -33,11 +33,12 @@ Das Ergebnis (64 Hex-Zeichen) ist das   HMAC_SECRET.
 
 */
 
-const mqtt = require("mqtt");
+const mqtt   = require("mqtt");
 const crypto = require("crypto");
 
 // ---------- CONFIG (prefer ENV, defaults are safe-ish) ----------
-const CFG = Object.freeze({
+const CFG = Object.freeze(
+{
   brokerUrl: process.env.BROKER_URL || "mqtt://127.0.0.1",
   clientId:  process.env.CLIENT_ID  || "raspi-watchdog",
 
@@ -76,11 +77,13 @@ function nowMs() { return Date.now(); }
 function unixTs() { return Math.floor(Date.now() / 1000); }
 function clamp(n, min, max) { return Math.max(min, Math.min(max, n)); }
 
-function requestId(prefix="ha-reboot") {
+function requestId(prefix="ha-reboot") 
+{
   return `${prefix}-${crypto.randomBytes(6).toString("hex")}`;
 }
 
-function stableJson(obj) {
+function stableJson(obj) 
+{
   // stable-ish stringify (sorted keys shallow)
   const keys = Object.keys(obj).sort();
   const out = {};
@@ -92,7 +95,8 @@ function signHmac(secret, msg) {
   return crypto.createHmac("sha256", secret).update(msg).digest("hex");
 }
 
-class Backoff {
+class Backoff 
+{
   constructor(baseMs, maxMs) {
     this.baseMs = baseMs;
     this.maxMs = maxMs;

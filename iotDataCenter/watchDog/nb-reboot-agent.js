@@ -17,7 +17,6 @@ Wenn nicht erreichbar → direkt VM reset.
 
 
 
-
 */ 
 
 "use strict";
