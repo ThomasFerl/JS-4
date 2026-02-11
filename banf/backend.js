@@ -1,4 +1,4 @@
-const useHTTPS          = false;
+const useHTTPS          = true;
 const port              = '4040';
 
 const http        = require('http');
