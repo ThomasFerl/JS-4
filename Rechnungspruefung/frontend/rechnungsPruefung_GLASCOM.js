@@ -108,7 +108,7 @@ addNewBill()
 
   var gui  = new TFgui( null , forms.addBillDlg );
   var bill = new TFDataObject( "billArchive" );
-
+debugger;
   gui.dataBinding( bill );
 
    dialogs.addFileUploader( gui.dropZone , '*.*' , true , 'testUpload' , function(selectedFiles) {
@@ -117,7 +117,7 @@ addNewBill()
                                                                                                  }.bind({dropZone: gui.dropZone , gui:gui, self:this}) );
 
    // Formular wurde mit OK bestätigt...
-   gui.btnOk.callBack_onClick = function() {
+   gui.btnOk.callBack_onClick = function() { 
                                             if(this.self.#lastInsertID) // File via drag & drop in Dropzone verschooben ....
                                             {  
                                               this.gui.update('data');

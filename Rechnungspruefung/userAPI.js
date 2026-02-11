@@ -66,15 +66,19 @@ if( CMD=='DELBILL')
   // Archiv-File löschen....
   var fn = path.resolve(globals.archivePath , bill.ARCPATH);
   console.log('resolve: ' + fn);
-  fs.unlinkSync(fullPath, (err) => {
-  if (err) {
+ 
+  try {
+    fs.unlinkSync(fn);
+    console.log(`Datei erfolgreich gelöscht: ${fn}`);
+
+    // Datensatz löschen...
+    dbUtils.runSQL(dB,'Delete from billArchive Where ID='+bill.ID);
+
+} catch (err) {
     console.error(`Fehler beim Löschen der Datei: ${err.message}`);
-  } else {
-           console.log(`Datei erfolgreich gelöscht: ${fullPath}`);  
-           // Datensatz löschen...
-           dbUtils.runSQL(dB,'Delete from billArchive Where ID='+bill.ID);
-  }
-});
+}
+
+  
 
 
   return {error:false,errMsg:'OK',result:{}}

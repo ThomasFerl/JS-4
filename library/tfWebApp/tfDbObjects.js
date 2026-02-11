@@ -107,16 +107,29 @@ export class TFDataObject
     {
       var fields = {};
       var flag   = false;
+      var cnt    = 0;
       for(var key in this.#data) 
       {
           var content = this.#data[key];
           if(content == '')
-            if(params?.ignoreEmptyValues) fields[key] = '';
-          else fields[key] = content;
+          {  
+             if(!params?.ignoreEmptyValues) fields[key] = '';  // Wenn leerfeldwr NICHT ignoriert werden sollen, wird das leere Feld angehängt....
+          } 
+          else {
+                 if(key.toUpperCase()!='ID')
+                 { 
+                   cnt++; 
+                   fields[key] = content;
+                 }  
+               }  
       }  
-
-       var response = utils.webApiRequest('UPDATETABLE',{tableName:this.#tableName, ID_field:'ID', ID_value:this.ID, fields:fields} );
-       if(response.error){ dialogs.showMessage(response.errMsg); return false; }
+       
+      if(cnt>0)
+      {
+         var response = utils.webApiRequest('UPDATETABLE',{tableName:this.#tableName, ID_field:'ID', ID_value:this.ID, fields:fields} );
+         if(response.error){ dialogs.showMessage(response.errMsg); return false; }
+      }
+      else return false;   
     }
 
 

@@ -16,7 +16,7 @@ export var isCTRLpressed      = false;
 export var isSHIFTpressed     = false;
 export var isALTpressed       = false;
 
-export const isMediaCollector = true;
+export const isMediaCollector = false;
 
 export const movieFileExtensions = [
   'mp4', 'flv', 'm3u8', 'ts', 'mov', 'avi', 
