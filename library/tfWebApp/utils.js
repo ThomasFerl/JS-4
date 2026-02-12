@@ -1041,6 +1041,33 @@ export function log(s)
 
 
 
+export function strToFloat(str) 
+{
+  if (typeof str !== "string") return NaN;
+
+    // Leerzeichen entfernen
+    str = str.trim().replace(/\s+/g, "");
+
+    // Wenn beide Zeichen vorkommen: letzter Separator ist das Dezimalzeichen
+    if (str.includes(",") && str.includes(".")) {
+        if (str.lastIndexOf(",") > str.lastIndexOf(".")) {
+            // Komma ist Dezimaltrennzeichen
+            str = str.replace(/\./g, "").replace(",", ".");
+        } else {
+            // Punkt ist Dezimaltrennzeichen
+            str = str.replace(/,/g, "");
+        }
+    } 
+    // Nur Komma vorhanden → Komma ist Dezimaltrennzeichen
+    else if (str.includes(",")) {
+        str = str.replace(",", ".");
+    }
+
+    return parseFloat(str);
+}
+
+
+
 
 
 

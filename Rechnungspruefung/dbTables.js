@@ -73,7 +73,9 @@ tables.push(
       {fieldName:"PRODUKTE"     , fieldType:"Text" } , 
       {fieldName:"ORTE"         , fieldType:"Text" } ,
       {fieldName:"RECHNUNGSPOS" , fieldType:"Text" } ,
-      {fieldName:"FIXEDVALUE"   , fieldType:"Text" } 
+      {fieldName:"FIXEDVALUE"   , fieldType:"Text" } ,
+      {fieldName:"EURO"         , fieldType:"Text" } 
+
    ]});
 
 

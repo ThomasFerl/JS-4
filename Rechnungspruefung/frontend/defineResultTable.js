@@ -39,17 +39,16 @@ export class setup_DefineResultGrid
      
      var table    = dialogs.createTable( this.gridContainer , response.result ,["ID"]  , {}); 
          table.onRowClick = function( selectedRow , itemIndex , rowData ) 
-         {
-           if(this.selectedRecord.ID!=rowData.ID) this.selectedRecord=rowData;
-           else this.editRecord( rowData.ID )
-         }.bind(this);
+                             {
+                               if(this.selectedRecord.ID!=rowData.ID) this.selectedRecord=rowData;
+                               else this.editRecord( rowData.ID )
+                             }.bind(this);
    }
  }
  
 
-
 ___addSelectedItems( listBox , item , allItems )
-{ debugger;
+{ 
   if(item.includes("alle"))
   {
      listBox.clear();
@@ -57,6 +56,7 @@ ___addSelectedItems( listBox , item , allItems )
   }   
   else listBox.addItem  ( item , true);  
 }
+
 
 ___removeSelectedItems( listBox )
 {
@@ -92,6 +92,9 @@ ___removeSelectedItems( listBox )
 
             items.push( h );
           }   
+
+          items.push( 'sonstige Fix-Position' );
+
           gui.selectOrte.setItems( items );
         } 
         
@@ -118,6 +121,7 @@ ___removeSelectedItems( listBox )
     // Werte ins Form übertragen. Der hierfür gedachte Mechanismus binding / update() fuktioniert nur mit nativen Datentypen, 
     gui.editBezeichnung.value = this.dataObj.NAME;
     gui.editFixValue.value    = this.dataObj.FIXEDVALUE;
+    gui.editEuro.value        = this.dataObj.EURO;
 
     if(this.dataObj.PRODUKTE != '')
     JSON.parse(this.dataObj.PRODUKTE     || {}).forEach(element => { gui.listBoxProdukte.addItem(element)});;
@@ -135,6 +139,7 @@ ___removeSelectedItems( listBox )
                                                 this.dataObj.RECHNUNGSPOS = JSON.stringify(this.gui.listBoxPosi.getItems('value'));
                                                 this.dataObj.NAME         = this.gui.editBezeichnung.value;
                                                 this.dataObj.FIXEDVALUE   = this.gui.editFixValue.value;
+                                                this.dataObj.EURO         = this.gui.editEuro.value;
 
                                                 this.dataObj.save();
                                                 this.self.updateView();

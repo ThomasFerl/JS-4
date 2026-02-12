@@ -89,6 +89,11 @@ var response = utils.webApiRequest('FETCHRECORDS' , {sql:"Select Distinct ORT,OR
 if (response.error) {dialogs.showMessage(response.errMsg); return }
 else orte = response.result;
 
+// Zusatz-Zeile (= Pseudo-Ort) für "sonstige Fix-Position"   -   sorry für die Frickelei - diese Aufgabe stand zu Beginn des Projekts so nicht
+//                                                               um nicht alles neu zu konzipieren -> quick & ugly
+orte.push( {ORT:'sonstige Fix-Position', ORTSTEIL:''} );
+
+
 // Liste aller Spalten-Definition 
 var response = utils.webApiRequest('FETCHRECORDS' , {sql:"Select *  From resultDefinition Order by ID"} ); 
 if (response.error) {dialogs.showMessage(response.errMsg); return }
@@ -96,7 +101,7 @@ else rd = response.result;
 
 // Spreadsheet erzeugen 
 // es werden die ersten 2 Spalten und die obersten 3 Zeilen gruppiert (builCluster)
-var spreadSheet                = new TFSreadSheet( wnd.hWnd , {layout:(rd.length+2)+"x"+(orte.length+3+1)} );
+var spreadSheet                = new TFSreadSheet( wnd.hWnd , {layout:(rd.length+2)+"x"+(orte.length+3+1+1)} );   // z.B.: {layout:'4x7'}
     spreadSheet.onCellDblClick = (cell)=>{ showCellDetails(cell) } 
 
 
@@ -119,7 +124,7 @@ var printBtn                  = dialogs.addButton(c.obj,'',1,1,'7em','3em',{capt
 
 
 // und nun Zellenweise durch die Matrix....
-// ersten beiden Spalten "mergen" und Ort/Ortsteil abbilden
+// die ersten beiden Spalten "mergen" und Ort/Ortsteil abbilden
 for(var i=0; i<orte.length; i++)
 {
   // "mergen" vorbereiten
@@ -128,8 +133,8 @@ for(var i=0; i<orte.length; i++)
    var c              = spreadSheet.buildCluster([c1,c2]);
    var h              = '';
 
-   if(orte[i].ORTSTEIL != null) h = orte[i].ORT + ' / ' + orte[i].ORTSTEIL;
-   else                         h = orte[i].ORT; 
+   if(orte[i].ORTSTEIL) h = orte[i].ORT + ' / ' + orte[i].ORTSTEIL;
+   else                 h = orte[i].ORT; 
 
    c.paddingLeft      = '1em';
    c.value            = h;
@@ -138,6 +143,7 @@ for(var i=0; i<orte.length; i++)
    c.justifyContent   = 'flex-start';
 
    // Zellen vorbereiten...
+   // Jede Zelle via "dataObj" das Payload mit allen MetaDaten "angeheftet" - Dadurch kan via forEachCell() die Tabelle "bequem" befüllt werden ...
    // innerhalb der Zeile nun alle Spalten (=resultDefinition.length) durchlaufen und 
    for(var j=0; j<rd.length; j++) 
     {
@@ -166,7 +172,7 @@ for(var j=0; j<rd.length; j++)
 // Datenbereich: Durchlaufe für jeden Ort alle "ResultDefintionen" und prüfe, ob es für den gerade betrachteten Ort eine Definition gibt.
 // Falls JA und es ist KEIN fixer Wert, dann ermittle für die gewählten Produkte die Summe aller definiereten Rechnungspositionen 
 // d.h.: Eine Tabelle mit 10 Orten und 10 Spalten (resultDefinition) ergeben sich 100 sql's ... 
-spreadSheet.forEachCell((cell)=>{
+spreadSheet.forEachCell((cell)=>{  
             if(cell.dataObj != null)
             {              
                         var cellContent          = '';
@@ -208,9 +214,9 @@ spreadSheet.forEachCell((cell)=>{
 // Formatierung mit Tausenderpunkt 
 const fmt = new Intl.NumberFormat('de-DE');
 
-// Summenzeile:
-c1                 = spreadSheet.getCell(1, spreadSheet.rowCount );
-c2                 = spreadSheet.getCell(2, spreadSheet.rowCount );
+//----------------- Summenzeile:
+c1                 = spreadSheet.getCell(1, spreadSheet.rowCount-1 );
+c2                 = spreadSheet.getCell(2, spreadSheet.rowCount-1 );
 c                  = spreadSheet.buildCluster([c1,c2]);
    c.paddingLeft      = '1em';
    c.value            = 'Summe';
@@ -219,13 +225,12 @@ c                  = spreadSheet.buildCluster([c1,c2]);
    c.justifyContent   = 'flex-start';
 
 
-
 for(var j=0; j<rd.length; j++)
 {
-   c1                 = spreadSheet.getCell( j+3 , 4 );                       // erste Zeile mit Werten (1..3 sind Überschrift)
-   c2                 = spreadSheet.getCell( j+3 , spreadSheet.rowCount-1);   // letzte Zeile mit Werten 
-   
-   c                  = spreadSheet.getCell(j+3,spreadSheet.rowCount);        // letzte Zeile als Summe
+   var repDef         = rd[j];
+       c1             = spreadSheet.getCell( j+3 , 4 );                       // erste Zeile mit Werten (1..3 sind Überschrift)
+       c2             = spreadSheet.getCell( j+3 , spreadSheet.rowCount-2);   // letzte Zeile mit Werten 
+       c              = spreadSheet.getCell( j+3,spreadSheet.rowCount-1);       // letzte Zeile als Summe
  
    c.backgroundColor  = 'rgba(21, 173, 165, 0.28)';
    c.paddingLeft      = '1em';
@@ -237,6 +242,45 @@ for(var j=0; j<rd.length; j++)
 
    c.value            = fmt.format( spreadSheet.summe(c1,c2) );
 }   
+
+
+// ------------------- Euro-Zeile:
+
+c1                 = spreadSheet.getCell(1, spreadSheet.rowCount );
+c2                 = spreadSheet.getCell(2, spreadSheet.rowCount );
+c                  = spreadSheet.buildCluster([c1,c2]);
+
+c.paddingLeft      = '1em';
+c.value            = 'EURO';
+c.backgroundColor  = wnd.hWnd.backgroundColor;
+c.fontWeight       = 'bold';
+c.justifyContent   = 'flex-start';   
+
+for(var j=0; j<rd.length; j++)
+{
+   var repDef         = rd[j];
+       c1             = spreadSheet.getCell( j+3,spreadSheet.rowCount-1);       // letzte Zeile als Summe
+       c              = spreadSheet.getCell( j+3,spreadSheet.rowCount);       // letzte Zeile als Summe
+ 
+   c.backgroundColor  = 'rgba(21, 173, 165, 0.28)';
+   c.paddingLeft      = '1em';
+   c.fontWeight       = 'bold';
+   c.justifyContent   = 'flex-start';
+   
+   // Zu Testzwecke einfärben, um zu prüfen dass auch wirklich über den korrekten Bereich summiert wird ...
+   //spreadSheet.range(c1,c2).forEach(c=>c.backgroundColor='rgba(136, 255, 0, 0.19)');
+
+   // enthält diese Spalten-Definition eine monetäre Bewertung ?
+   var value = '-';
+   var f1    = utils.strToFloat(repDef.EURO);
+   var f2    = utils.strToFloat(c1.value); 
+   if(!isNaN(f1) && (!isNaN(f2))) value = fmt.format( f1*f2 ); 
+
+   c.value            = value;
+}   
+
+
+
 
 }
 
@@ -270,7 +314,7 @@ function showCellDetails(cell)
 // es werden die ersten 2 Spalten und die obersten 3 Zeilen gruppiert (builCluster)
 var spreadSheet   = new TFSreadSheet( wnd.hWnd , {layout:(rechnPos.length+2)+"x"+(produkte.length+3+1)} );
 
-// per Defauld alle Zellen als invalid betrachten.
+// per Default alle Zellen als invalid betrachten.
 // Erst wenn im Zuge der Werte-Berechnung gültige Zahlen in die Zellen kopiert werden, wird valid true, damit die spätere Summenbildung nur die passenden Zellen verwendet
 spreadSheet.forEachCell((cell)=>{cell.dataObj = {valid:false}} )
 
