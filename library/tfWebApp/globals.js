@@ -83,22 +83,14 @@ export function setBackgroundImage( img )
 export function initWebApp( w ) { webApp = w}
 
 export function startSession( sessionID , userName , userID , grants , admin )  
-{ 
+{  
   session.ID        = sessionID; 
   session.userName  = userName;
   session.userID    = userID;
   session.grants    = grants;
-  session.admin     = admin ||  hasAccess('admin') ||  hasAccess('sysadmin') ||  hasAccess('root') 
+  session.admin     = admin || hasAccess('sysadmin');
 
-  if(   
-    (userName.toLocaleUpperCase()=='ROOT')
- || (userName.toLocaleUpperCase()=='ADMIN')
- || (userName.toLocaleUpperCase()=='SYSADMIN')
- || (userName.toLocaleUpperCase()=='ADMINISTRATOR')
- || (userName.toLocaleUpperCase()=='SYSDBA')
-    ) session.admin = true; 
-
-    console.log("Start Session: " + JSON.stringify(session));
+  console.log("Start Session: " + JSON.stringify(session));
 
 }
 
@@ -109,7 +101,7 @@ export function hasAccess(grandName)
   for(var i=0; i<session.grants.length; i++)
     {
        var grant = session.grants[i];
-         if(grant.name==grandName) return grant.access;
+         if(grant.NAME==grandName) return grant.access;
     }
     return false;
 }

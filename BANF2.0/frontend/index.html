@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+ <head>
+  <title>emsBANF</title>
+  <link rel="stylesheet" href="./tfWebApp/style.css">
+
+  <script>
+   
+   var m = ""; 
+   function init()
+   {
+    import("./tfWebApp/tfWebApp.js").then( function(module) {m = module.run("BANF-Vorlage erstellen")} )
+    document.body.innerHTML = m ;
+   } 
+
+</script> 
+
+</head>
+  <body onload="init()"></body>
+</html>

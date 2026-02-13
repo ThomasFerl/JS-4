@@ -30,7 +30,7 @@ export async function run(caption1)
   if (window.location.search.includes('admin=true') || window.location.hash.includes('#admin')) 
   {
      const loginResult = await login();
-;
+
      if(loginResult.ok) 
      {
         globals.startSession( loginResult.session , loginResult.user , loginResult.userID , loginResult.grants );

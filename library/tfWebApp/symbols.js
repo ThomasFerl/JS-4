@@ -12,7 +12,13 @@ import { TFWindow   } from "./tfWindows.js";
 var symbolsList      = [];
 var symbolObjMapping = [];
 
-export var ready     = false;     
+
+ export async function waitOnLoad()
+ { 
+   for (const s of symbolsList) {await s.waitOnLoad(); }
+ }
+
+
 
 export function symbolGroups()
 {
@@ -26,10 +32,19 @@ class TFSymbols
 {
   constructor ( group ) 
   {
-    this.symbolIDs = [];
-    this.groupName = group || '';
-    this.loadSymbols( this.groupName );
+    this.symbolIDs   = [];
+    this.ready       = false;
+    this.groupName   = group || '';
+    this.loadPromise = this.loadSymbols( this.groupName ).then(()=>{this.ready=true});
   }
+
+  async waitOnLoad()
+  {
+    if(this.ready) return;
+    await this.loadPromise;
+  }
+
+
 
    
   async loadSymbols( group )
@@ -125,8 +140,7 @@ export async function init()
     // symbol-Liste löschen
     symbolsList      = [];
     symbolObjMapping = [];
-    ready            = false;
-
+    
     // ermittle alle Symbol-gruppen
     const symbolGroups =  webApiRequest('LSSYMBOLGROUPS', {}).result;
 
@@ -136,7 +150,6 @@ export async function init()
       symbolsList.push( s );
     } 
     
-     ready          = true;
 }
 
 
@@ -162,7 +175,7 @@ export function draw( container  , symbolName , size = null , symbolGroup=null )
   if(symbolGroup) 
     {
       for(var i=0; i<symbolsList.length; i++) 
-      if(symbolsList[i].groupName==group) return symbolsList[i].draw( container , symbolName , size )
+      if(symbolsList[i].groupName==symbolGroup) return symbolsList[i].draw( container , symbolName , size )
     }
     else
          for(var i=0; i<symbolObjMapping.length; i++) 
