@@ -1,5 +1,5 @@
 const useHTTPS          = true;
-const port              = '4070';
+const port              = '4040';
 
 const http        = require('http');
 const https       = require('https');
@@ -12,13 +12,15 @@ const bodyParser  = require('body-parser');
 const Database    = require('better-sqlite3');
 const fs          = require('fs-extra');
 const path        = require('path');
+const globals     = require('./backendGlobals');
 const utils       = require('./nodeUtils');
 const webAPI      = require('./nodeAPI');
-const globals     = require('./backendGlobals');
 const userAPI     = require('./userAPI');
 const session     = require('./session');
 const dbTables    = require('./dbTables');
 const etcTables   = require('./etcTables');
+
+const { decode } = require('querystring');
 
 const sslOptions  = {
     key : fs.readFileSync('./SSL/privateKex.pem'  , 'utf8' ),     // Pfad zum privaten Schlüssel
@@ -35,11 +37,13 @@ const dB          = new Database( dBName  , { verbose: utils.log ,  readonly: fa
 
 
 // Datenstruktur lt. dBTables erzeugen ....
-dbTables.buildTables ( dB  );
-etcTables.buildTables( etc );
+dbTables.buildTables( dB );
 
 // Datenstruktur auf ggf. vorhandene Änderungen prüfen ....
 // dbTables.checkdbTableStructure();
+
+
+etcTables.buildTables( etc );
 
 
 const webApp       = express();
@@ -47,6 +51,8 @@ const webApp       = express();
 globals.staticPath( path.join (__dirname, 'frontend' ));
 console.log("static Path: " + globals.staticPath() );
 console.log("symbol Path: " + globals.symbolPath() );
+                                      
+
 
 // NTLM-Middleware aktivieren
 
@@ -192,15 +198,31 @@ function userLogin( req , res )
 
 function userLoginx( req , res )
 {
-  var userName  = req.params.username;
-  var remoteIP  = req.connection.remoteAddress;
-  var passwd    = req.params.passwd;
+  var token  = req.params.token;
+  utils.log("userLoginx -> " + token);
 
-  var h         = JSON.stringify(session.userLogin(etc , remoteIP , userName , passwd ));
-    utils.log("return from login: " + h)
-    res.send( h );
+  const decoded    = atob(token);
+  const decodedArr = decoded.split(':');
+  var h            = JSON.stringify(session.userLogin(etc , req.connection.remoteAddress , decodedArr[0], decodedArr[1]));
+  
+  utils.log("return from login: " + h)
+  res.send( h );
 }  
 
+
+
+function ntlmLogin( req , res )
+{
+  var userName  = req.params.username;
+  var remoteIP  = req.connection.remoteAddress;
+  var passwd    = 'ntlmLogin'; 
+
+  console.log("ntlmLogin -> " + userName);
+
+  var h         = JSON.stringify(session.userLogin(etc , remoteIP , userName , passwd , true ));  //ntlmLogin=true
+    console.log("return from login: " + h)
+    res.send( h );
+} 
 
 
 
@@ -331,7 +353,9 @@ webApp.use( ( req , res , next ) =>
 webApp.use( express.static( globals.staticPath()  ) );
 
 webApp.get('/userLogin'                    ,  userLogin );
-webApp.get('/userLoginx/:username/:passwd' ,  userLoginx );
+webApp.get('/userLoginx/:token'            ,  userLoginx );
+webApp.get('/ntlmLogin/:username'          ,  ntlmLogin );
+
 webApp.get('/DEBUG'                        ,  handleDebug );
 webApp.get('/ntlm'                         ,  handleNTLM );
 webApp.get('/x'                            ,  handleRequest );

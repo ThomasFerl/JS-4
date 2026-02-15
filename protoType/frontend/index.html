@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
  <head>
-  <title>tfWebApp #1st Step</title>
+  <title>emsBANF</title>
   <link rel="stylesheet" href="./tfWebApp/style.css">
 
   <script>
@@ -9,7 +9,7 @@
    var m = ""; 
    function init()
    {
-    import("./main.js").then( function(module) {m = module.main("tfWebApp","#1st Step")} )
+    import("./tfWebApp/tfWebApp.js").then( function(module) {m = module.run("BANF-Vorlage erstellen")} )
     document.body.innerHTML = m ;
    } 
 

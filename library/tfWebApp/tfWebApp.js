@@ -15,6 +15,18 @@ import { TFGuiBuilder } from "./tfGuiBuilder.js";
 import * as main        from "./../main.js";  
 
 
+function buildSysMenu()
+{
+  globals.sysMenu.push( {caption:'Benutzer'                                         , action:function(){sysadmin.adminUser()} } );
+  globals.sysMenu.push( {caption:'Berechtigungen'                                   , action:function(){sysadmin.adminGrants()} } );
+  globals.sysMenu.push( {caption:'Info'                                             , action:function(){sysInfo()} } );
+  globals.sysMenu.push( {caption:'API-Test (nur in der Entwicklungsphase)'          , action:function(){APItest()} } );
+  globals.sysMenu.push( {caption:'Symbol-Bibliothek (nur in der Entwicklungsphase)' , action:function(){dialogs.browseSymbols()} } );
+  globals.sysMenu.push( {caption:'GUI Builder (nur in der Entwicklungsphase)'       , action:function(){guiBuilder()} } );
+  globals.sysMenu.push( {caption:'Abbrechen'                                        , action:function(){} } );
+}
+
+
 export async function run(caption1)
 { 
   symbols.init();
@@ -25,107 +37,72 @@ export async function run(caption1)
   // Damit die Session und Grant-Logik funktioniert, muss der UserName auch lokal hinterlegt sein
   // Dieser hat jedoch kein Passwort und soll sich auf normalem Wege nicht anmelden können
 
-  // Falls aber EXPLIZIT ein Login-Dialog gewünscht ist, um z.B. den AdminUser zu aktivieren,
-  // dann muss in der URL hinter dem "/" /?admin=true angehängt werden
-  if (window.location.search.includes('admin=true') || window.location.hash.includes('#admin')) 
+
+  // Wenn NTLM Anmeldung gewünscht:
+  if (globals.useNTLM)
   {
-     const loginResult = await login();
-;
-     if(loginResult.ok) 
-     {
-        globals.startSession( loginResult.session , loginResult.user , loginResult.userID , loginResult.grants );
+     // Zuerst anfragen, ob User in NT-Domäne ist und wir seinen Namen verwenden können
+     // über /ntlm werden die Daten des Users abgerufen .....
+     // und in globals.userName gespeichert
+     var usrName  = '';
+     var response = utils.webRequest( globals.getServer() + '/ntlm' );
+     if(!response.error) usrName = response.result.username; 
 
-        if(globals.session.admin)
-        {
-           globals.sysMenu.push( {caption:'Benutzer'                                         , action:function(){sysadmin.adminUser()} } );
-           globals.sysMenu.push( {caption:'Berechtigungen'                                   , action:function(){sysadmin.adminGrants()} } );
-           globals.sysMenu.push( {caption:'Info'                                             , action:function(){sysInfo()} } );
-           globals.sysMenu.push( {caption:'API-Test (nur in der Entwicklungsphase)'          , action:function(){APItest()} } );
-           globals.sysMenu.push( {caption:'Symbol-Bibliothek (nur in der Entwicklungsphase)' , action:function(){dialogs.browseSymbols()} } );
-           globals.sysMenu.push( {caption:'GUI Builder (nur in der Entwicklungsphase)'       , action:function(){guiBuilder()} } );
-           globals.sysMenu.push( {caption:'Abbrechen'                                        , action:function(){} } );
-        }
-        
-         // auf daas fertige Laden der Symbole warten ....
-         const loader = new TFLoader({ title: "lade starte Web-Anwendung …" , note:"hab's gleich geschafft ..." });
-         loader.while( symbols.waitOnLoad() ).then( ()=> {main.main(caption1 , 'Willkommen ' + globals.session.userName )} );
-     } 
-      
-     return;
-  }
-
-  // Zuerst anfragen, ob User in NT-Domäne ist und wir seinen Namen verwenden können
-  // über /ntlm werden die Daten des Users abgerufen .....
-  // und in globals.userName gespeichert
-  var usrName  = '';
-  var response = utils.webRequest( globals.getServer() + '/ntlm' );
-  if(!response.error) usrName = response.result.username; 
-
-  // Wenn Username gesetzt, dann nahtlos fortsetzen ohne Login-Dialog
-  if (usrName) 
-  { 
-    // ntlm-Anmeldung am Server um Session zu erhalten...
-    var url      = globals.getServer()+'/ntlmLogin/'+usrName;
-    var response = utils.webRequest( url );
-    if(!response.error)
-      if(!response.result.error)
-       {
+    // Wenn Username gesetzt, dann nahtlos fortsetzen ohne Login-Dialog
+    if (usrName) 
+    { 
+       // ntlm-Anmeldung am Server um Session zu erhalten...
+       var url      = globals.getServer()+'/ntlmLogin/'+usrName;
+       var response = utils.webRequest( url );
+       if(!response.error)
+       if(!response.result.error)
+       { 
          globals.startSession( response.result.session ,
                                usrName ,
                                response.result.userID ,
                                response.result.grants 
                              );
 
-        if(globals.session.admin)
-        {
-           globals.sysMenu.push( {caption:'Benutzer'                                         , action:function(){sysadmin.adminUser()} } );
-           globals.sysMenu.push( {caption:'Berechtigungen'                                   , action:function(){sysadmin.adminGrants()} } );
-           globals.sysMenu.push( {caption:'Info'                                             , action:function(){sysInfo()} } );
-           globals.sysMenu.push( {caption:'API-Test (nur in der Entwicklungsphase)'          , action:function(){APItest()} } );
-           globals.sysMenu.push( {caption:'Symbol-Bibliothek (nur in der Entwicklungsphase)' , action:function(){dialogs.browseSymbols()} } );
-           globals.sysMenu.push( {caption:'GUI Builder (nur in der Entwicklungsphase)'       , action:function(){guiBuilder()} } );
-           globals.sysMenu.push( {caption:'Abbrechen'                                        , action:function(){} } );
-        }
+        if(globals.session.admin) buildSysMenu();
+      
+        // auf daas fertige Laden der Symbole warten ....
+        const loader = new TFLoader({ title: "lade starte Web-Anwendung …" , note:"hab's gleich geschafft ..." });
+        
+        loader.while( symbols.waitOnLoad() ).then(()=> { debugger;
+                                                         var ws =  startWebApp((caption1 , 'Willkommen ' + globals.session.userName )).intialWorkSpace;
+                                                         main.main(ws);
+                                                       });
+        return
+     }                                                
+    }
+  }  
+  else {
+         // kein NTLM -> es erfolgt ein Login-Dialog  
+         const loginResult = await login();
 
-       }                  
+         if(loginResult.ok) 
+         {  
+            globals.startSession( loginResult.session , loginResult.userName , loginResult.user , loginResult.grants , loginResult.admin );
 
-       // auf daas fertige Laden der Symbole warten ....
-      const loader = new TFLoader({ title: "lade starte Web-Anwendung …" , note:"hab's gleich geschafft ..." });
-      loader.while( symbols.waitOnLoad() ).then(()=> {main.main(caption1 , 'Willkommen ' + globals.session.userName )});
+            if(globals.session.admin) buildSysMenu();
 
-    return;
-  }
-
-  // andernfalls erfolgt ein Login-Dialog  
-  const loginResult = await login();
-
-     if(loginResult.ok) 
-     {
-        globals.startSession( loginResult.session , loginResult.userName , loginResult.user , loginResult.grants , loginResult.admin );
-
-        if(globals.session.admin)
-        {
-           globals.sysMenu.push( {caption:'Benutzer'                                         , action:function(){sysadmin.adminUser()} } );
-           globals.sysMenu.push( {caption:'Berechtigungen'                                   , action:function(){sysadmin.adminGrants()} } );
-           globals.sysMenu.push( {caption:'Info'                                             , action:function(){sysInfo()} } );
-           globals.sysMenu.push( {caption:'API-Test (nur in der Entwicklungsphase)'          , action:function(){APItest()} } );
-           globals.sysMenu.push( {caption:'Symbol-Bibliothek (nur in der Entwicklungsphase)' , action:function(){dialogs.browseSymbols()} } );
-           globals.sysMenu.push( {caption:'GUI Builder (nur in der Entwicklungsphase)'       , action:function(){guiBuilder()} } );
-           globals.sysMenu.push( {caption:'Abbrechen'                                        , action:function(){} } );
-        }
-
-       // auf daas fertige Laden der Symbole warten ....
-       const loader = new TFLoader({ title: "lade starte Web-Anwendung …" , note:"hab's gleich geschafft ..." });
-       loader.while( symbols.waitOnLoad() ).then();
-
-       main.main(caption1 , 'Willkommen ' + globals.session.userName);
-     } 
+            // auf daas fertige Laden der Symbole warten ....
+            const loader = new TFLoader({ title: "lade starte Web-Anwendung …" , note:"hab's gleich geschafft ..." });
+            loader.while( symbols.waitOnLoad() ).then(()=> { 
+                                                             var ws = startWebApp((caption1 , 'Willkommen ' + globals.session.userName )).intialWorkSpace;
+                                                             main.main(ws);
+                                                          });
+          } 
+        }   
   
 }  
 
 
 export function login() { return new Promise((resolve, reject) => 
- {
+{   
+  // GUI muss manuell erstellt werden, da zu diesem Zeitpunkt noch keine session existiert 
+  // und daher die tfObjects noch nicht funktionieren...
+
   if (globals.Screen==null) globals.setScreen( new TFScreen() ) ;
 
   globals.Screen.body.style.display         = 'flex';
@@ -201,7 +178,9 @@ export function login() { return new Promise((resolve, reject) =>
                               var pwd = this.pwd.text;
                               if (!usr) return;
                               if (!pwd) pwd='empty';
-                              var url = globals.getServer()+globals.loginEndpoint+usr+"/"+pwd;
+                              
+                              var url      = buildLoginURL(usr,pwd);
+
                               var response = utils.webRequest( url );
 
                               if(!response.error)
@@ -234,6 +213,14 @@ export function login() { return new Promise((resolve, reject) =>
 
                           
 })}
+
+
+export function buildLoginURL(usr,pwd)
+{
+  const token = btoa(`${usr}:${pwd}`);
+  return globals.getServer()+globals.loginEndpoint+token;
+}
+
 
 
 export function startWebApp(caption1,caption2)
@@ -405,17 +392,16 @@ export class TFWebApp
 
     // initiale Arbeitsfläche
     this.workSpaces      = [];
-    this.newWorkSpace("main" , caption1 , caption2 );
+    this.intialWorkSpace = this.newWorkSpace("main" , caption1 , caption2 );
    
-    this.body  = globals.Screen.body;
+    this.body            = globals.Screen.body;
    
-   this.windows         = [];
-   this.zIndex          =  0;
-   this.clientWidth     =  globals.Screen.width;
-   this.clientHeight    =  globals.Screen.height;
-   this.active          =  true;
-
-   this.keyHandler      = null;
+    this.windows         =  [];
+    this.zIndex          =  0;
+    this.clientWidth     =  globals.Screen.width;
+    this.clientHeight    =  globals.Screen.height;
+    this.active          =  true;
+    this.keyHandler      =  null;
 
    
    window.addEventListener('focus'  , function() { utils.log('Focus') ; this.active = true; }.bind(this) );

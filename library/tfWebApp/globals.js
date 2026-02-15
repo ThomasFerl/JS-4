@@ -1,5 +1,5 @@
-const useHTTPS                = true;
-
+export const useHTTPS         = true;
+export const useNTLM          = true;
 export var debug              = true;
 export var webApp             = {activeWorkspace:null};
 export var Screen             = null;   // wird von der App gesetzt
@@ -80,7 +80,10 @@ export function setBackgroundImage( img )
   if(Screen) Screen.setBackgroundImage(backgroundImage);
 }
 
+
 export function initWebApp( w ) { webApp = w}
+
+
 
 export function startSession( sessionID , userName , userID , grants , admin )  
 {  
@@ -91,17 +94,18 @@ export function startSession( sessionID , userName , userID , grants , admin )
   session.admin     = admin || hasAccess('sysadmin');
 
   console.log("Start Session: " + JSON.stringify(session));
-
 }
 
 
 
 export function hasAccess(grandName)
 {
-  for(var i=0; i<session.grants.length; i++)
+  if(!grants) return false;
+  
+   for(var i=0; i<session.grants.length; i++)
     {
        var grant = session.grants[i];
-         if(grant.NAME==grandName) return grant.access;
+         if(grant.NAME==grandName) return grant.ACCESS;
     }
     return false;
 }
