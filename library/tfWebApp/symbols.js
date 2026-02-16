@@ -93,12 +93,12 @@ list()
 
 
 draw(container, symbolName, size = null) 
-{
+{ 
   const id = 'icon-' + symbolName;
   if (!this.symbolIDs.includes(symbolName)) {
-    console.warn("Symbol nicht vorhanden:", symbolName);
-    return false;
-  }
+                                              console.warn("Symbol nicht vorhanden:", symbolName);
+                                              return false;
+                                             }
 
   container.innerHTML = '';
 

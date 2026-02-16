@@ -29,7 +29,7 @@ export class TFDataObject
            {
              var response = utils.webApiRequest('STRUCTURE',{tableName:tableName});
              if(response.error) {showMessage('Fehler beim Abfragen der Tabllenstruktur: '+response.errMsg); return; }
-             for(var i=0; i<response.result.length; i++) this.#defineField( response.result[i]['name'] , '' );
+             for(var i=0; i<response.result.length; i++) this.#defineField( response.result[i]['NAME'] , '' );
            }
             else {
                    var response = this.load_from_dB( ID );

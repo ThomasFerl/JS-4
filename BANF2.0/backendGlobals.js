@@ -3,6 +3,7 @@ const path          = require('path');
 var   ___staticPath = '';
 
 module.exports.staticPath           = (pathName) => {if(pathName) ___staticPath = pathName; return ___staticPath;};
+
 module.exports.symbolPath           = (grp) => {
                                                  var p = path.join(___staticPath , 'tfWebApp' , 'symbols');
                                                  if(grp) return  path.join( p , grp);

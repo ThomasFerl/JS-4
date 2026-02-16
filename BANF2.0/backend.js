@@ -20,6 +20,8 @@ const session     = require('./session');
 const dbTables    = require('./dbTables');
 const etcTables   = require('./etcTables');
 
+const { decode } = require('querystring');
+
 const sslOptions  = {
     key : fs.readFileSync('./SSL/privateKex.pem'  , 'utf8' ),     // Pfad zum privaten Schlüssel
     cert: fs.readFileSync('./SSL/certificate.pem' , 'utf8' )    // Pfad zum Zertifikat
@@ -196,13 +198,15 @@ function userLogin( req , res )
 
 function userLoginx( req , res )
 {
-  var userName  = req.params.username;
-  var remoteIP  = req.connection.remoteAddress;
-  var passwd    = req.params.passwd;
+  var token  = req.params.token;
+  utils.log("userLoginx -> " + token);
 
-  var h         = JSON.stringify(session.userLogin(etc , remoteIP , userName , passwd ));
-    utils.log("return from login: " + h)
-    res.send( h );
+  const decoded    = atob(token);
+  const decodedArr = decoded.split(':');
+  var h            = JSON.stringify(session.userLogin(etc , req.connection.remoteAddress , decodedArr[0], decodedArr[1]));
+  
+  utils.log("return from login: " + h)
+  res.send( h );
 }  
 
 
@@ -219,7 +223,6 @@ function ntlmLogin( req , res )
     console.log("return from login: " + h)
     res.send( h );
 } 
-
 
 
 function handleUpload( req , res )
@@ -349,7 +352,7 @@ webApp.use( ( req , res , next ) =>
 webApp.use( express.static( globals.staticPath()  ) );
 
 webApp.get('/userLogin'                    ,  userLogin );
-webApp.get('/userLoginx/:username/:passwd' ,  userLoginx );
+webApp.get('/userLoginx/:token'            ,  userLoginx );
 webApp.get('/ntlmLogin/:username'          ,  ntlmLogin );
 
 webApp.get('/DEBUG'                        ,  handleDebug );

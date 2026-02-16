@@ -93,15 +93,7 @@ module.exports.buildTables = function( dB )
 
   // ggf einen Initial-User anlegen:
   if(!dbUtils.fetchValue_from_Query(dB,'Select * from user').result) 
-  { 
-     dbUtils.insertIntoTable( dB , 'user'     , {USERNAME:'sysdba',PASSWD:'masterkey',FIRSTNAME:'Initial',LASTNAME:'sysAdmin',EMAIL:'',JOBFUNCTION:'InitialUser'});
-     dbUtils.runSQL         ( dB , "Delete from grantObj" );
-     dbUtils.runSQL         (dB  , "Delete from userGrnts" );
-     dbUtils.insertIntoTable( dB , 'grantObj' , {NAME:'sysadmin',CAPTION:'Systemadministrator',KIND:'sys'});
-     dbUtils.insertIntoTable( dB , 'userGrants',{ID_USER:'1',ID_GRANT:'1'});
-  }   
-
-
+     dbUtils.insertIntoTable( dB , 'user' , {USERNAME:'sysdba',PASSWD:'masterkey',FIRSTNAME:'Initial',LASTNAME:'sysAdmin',EMAIL:'',JOBFUNCTION:'InitialUser'})
 
 }  
 

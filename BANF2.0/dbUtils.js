@@ -27,6 +27,17 @@ function _extractTableNames(sqlStatement)
 }
 
 
+function normalizeRowsUpper(rows) 
+{
+  return rows.map( (row) => {
+                               const newRow = {};
+                               for (const key in row) newRow[key.toUpperCase()] = row[key];
+                               return newRow;
+                        });
+}
+
+
+
 module.exports.extractTableNames = (sqlStatement) =>
 {
   return _extractTableNames(sqlStatement);
@@ -104,9 +115,9 @@ function _fetchRecord_from_Query ( db , sql ,  params)
         if(params)  var record  = query.get(params);
         else        var record  = query.get();
 
-        if (record === undefined) return {error:true, errMsg:"record not found", result:{} }
+        if (record === undefined) return {error:false, errMsg:"record not found", result:{} }
         
-         return {error:false, errMsg:'OK', result:record};
+         return {error:false, errMsg:'OK', result:normalizeRowsUpper([record])[0] };
        } 
       catch(e) { return {error:true, errMsg:e.message, result:{} }; } 
 }
@@ -127,7 +138,8 @@ function _fetchRecords_from_Query( db , sql , params )
       else        var records  = stmt.all();
       
       if(utils.debug)console.log("records:" + JSON.stringify(records));
-      return {error:false, errMsg:'OK', result:records};
+      
+      return {error:false, errMsg:'OK', result:normalizeRowsUpper(records)};
      } 
     catch(e) { return {error:true, errMsg:e.message, result:[] }; } 
 }

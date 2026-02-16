@@ -28,7 +28,7 @@ function buildSysMenu()
 
 
 export async function run(caption1)
-{ 
+{
   symbols.init();
 
   // Die Anmeldung ist ein Alptraum...
