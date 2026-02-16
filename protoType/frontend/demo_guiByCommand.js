@@ -1,27 +1,15 @@
-
-import * as globals      from "./tfWebApp/globals.js";
 import * as graphics     from "./tfWebApp/tfGrafics.js";  
 import * as utils        from "./tfWebApp/utils.js";    
 import * as dialogs      from "./tfWebApp/tfDialogs.js";
 import * as app          from "./tfWebApp/tfWebApp.js"; 
-import * as sysadmin     from "./tfWebApp/tfSysAdmin.js";
-
 
 // Anwendungsspezifische Einbindungen
-import { TFEdit, 
-         TForm,
-         TFPopUpMenu,
+import { TForm,
          TPropertyEditor,
-         TFAnalogClock,
-         TFWorkSpace }   from "./tfWebApp/tfObjects.js";
+         TFAnalogClock } from "./tfWebApp/tfObjects.js";
 
-import { TFWindow }      from "./tfWebApp/tfWindows.js"; 
 import { TFChart }       from "./tfWebApp/tfObjects.js";
-import { TFDateTime }    from "./tfWebApp/utils.js";
 
-
-var caption1  = '';
-var caption2  = '';
 
 var testContainer1 = null;
 var testContainer2 = null;
@@ -236,7 +224,7 @@ var   btn11 = dialogs.addButton( menuContainer , "" , 11 , 1 , 1 , 1 , "draw.io"
 
     
       dialogs.addButton( panels[8] , '' , 1 , 1 , 100 , 32 , 'API-Test' )
-             .callBack_onClick = ()=> { apiTest(); };
+             .callBack_onClick = ()=> { app.APItest([]); };
 
 
       dialogs.addButton( panels[9] , '' , 1 , 1 , 100 , 32 , 'Datei-Manager' ) 

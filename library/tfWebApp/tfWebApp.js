@@ -37,10 +37,16 @@ export async function run(caption1)
   // Damit die Session und Grant-Logik funktioniert, muss der UserName auch lokal hinterlegt sein
   // Dieser hat jedoch kein Passwort und soll sich auf normalem Wege nicht anmelden können
 
+  //ABER:
+  // Sollte die URL sowas wie "admin"  enthalten, wird die NTLM-Logik uzmgangen und ein normaler Anmelde-Dialog gestartet
+  // damit dann der Admin die Chance sich zu authentifizieren....
 
-  // Wenn NTLM Anmeldung gewünscht:
-  if (globals.useNTLM)
-  {
+ const params = new URLSearchParams(window.location.search); 
+ const adminMode = params.get("admin") === "true";
+
+  // Wenn NTLM Anmeldung gewünscht - ABER kein Admin-Mode:
+  if (globals.useNTLM && !adminMode)
+  { 
      // Zuerst anfragen, ob User in NT-Domäne ist und wir seinen Namen verwenden können
      // über /ntlm werden die Daten des Users abgerufen .....
      // und in globals.userName gespeichert
@@ -66,10 +72,10 @@ export async function run(caption1)
         if(globals.session.admin) buildSysMenu();
       
         // auf daas fertige Laden der Symbole warten ....
-        const loader = new TFLoader({ title: "lade starte Web-Anwendung …" , note:"hab's gleich geschafft ..." });
+        const loader = new TFLoader({ title: "lade starte Web-Anwendung …" , note:"einen Moment bitte noch ..." });
         
-        loader.while( symbols.waitOnLoad() ).then(()=> { debugger;
-                                                         var ws =  startWebApp((caption1 , 'Willkommen ' + globals.session.userName )).intialWorkSpace;
+        loader.while( symbols.waitOnLoad() ).then(()=> { 
+                                                         var ws =  startWebApp(caption1 , 'Willkommen ' + globals.session.userName ).intialWorkSpace;
                                                          main.main(ws);
                                                        });
         return
@@ -82,14 +88,14 @@ export async function run(caption1)
 
          if(loginResult.ok) 
          {  
-            globals.startSession( loginResult.session , loginResult.userName , loginResult.user , loginResult.grants , loginResult.admin );
+            globals.startSession( loginResult.session , loginResult.user , loginResult.userID , loginResult.grants );
 
             if(globals.session.admin) buildSysMenu();
 
             // auf daas fertige Laden der Symbole warten ....
-            const loader = new TFLoader({ title: "lade starte Web-Anwendung …" , note:"hab's gleich geschafft ..." });
+            const loader = new TFLoader({ title: "lade starte Web-Anwendung …" , note:"einen Moment bitte noch ..." });
             loader.while( symbols.waitOnLoad() ).then(()=> { 
-                                                             var ws = startWebApp((caption1 , 'Willkommen ' + globals.session.userName )).intialWorkSpace;
+                                                             var ws = startWebApp(caption1 , 'Willkommen ' + globals.session.userName ).intialWorkSpace;
                                                              main.main(ws);
                                                           });
           } 
@@ -379,7 +385,7 @@ export function APItest( endPoints )
 
 
 export class TFWebApp
-{
+{ 
   constructor(caption1,caption2)
   {
     if(caption1) this.caption1 = caption1;

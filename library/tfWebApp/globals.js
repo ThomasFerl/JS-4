@@ -91,7 +91,7 @@ export function startSession( sessionID , userName , userID , grants , admin )
   session.userName  = userName;
   session.userID    = userID;
   session.grants    = grants;
-  session.admin     = admin || hasAccess('sysadmin');
+  session.admin     = hasAccess('sysadmin');
 
   console.log("Start Session: " + JSON.stringify(session));
 }
@@ -100,7 +100,7 @@ export function startSession( sessionID , userName , userID , grants , admin )
 
 export function hasAccess(grandName)
 {
-  if(!grants) return false;
+  if(!session.grants) return false;
   
    for(var i=0; i<session.grants.length; i++)
     {

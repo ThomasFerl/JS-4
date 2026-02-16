@@ -12,49 +12,56 @@ const dbUtils      = require('./dbUtils');
 const grants       = require('./nodeGrants');
 
 
-module.exports.userLogin=function( etcDB , remoteIP , userName , passwd , ntlmLogin )
-{ 
-  console.log("login from (user) :" + userName + " from remote IP: " + remoteIP + " with passwd:" + passwd + "   ntlmLogin:" + ntlmLogin );
+module.exports.userLogin = function(etcDB, remoteIP, userName, passwd, ntlmLogin) 
+{
+  etc = etcDB;
 
-  etc          = etcDB; 
-  var response = dbUtils.fetchRecord_from_Query( etc , "select * from user Where username='"+userName+"'" );
+  console.log(`login from user: ${userName} from IP: ${remoteIP} ntlmLogin: ${ntlmLogin}`);
 
-  //console.log('response from DB:' + JSON.stringify(response));
+   // 1. User holen (prepared statement)
+  const response = dbUtils.fetchRecord_from_Query( etcDB , "SELECT * FROM user WHERE username = ?", [userName] );
 
-   
-  if (response.error)
+  if (response.error) return response;
+
+  usr = response.result;
+
+  // 2. User existiert nicht
+  if (!usr) 
   {
-    console.log('ubekannter Benutzer');
+    console.log("unknown user");
 
-    //wenn wir uns im ntlm-Modus befinden, wird der User angelegt....
-    if(ntlmLogin)
-    {
-      console.log('create new user: ' + userName);
-      response = dbUtils.insertIntoTable( etc , "user" , {username:userName,passwd:'mtlmLogin'} );
-      if (response.error) return response;
-      usr.ID         = response.result.lastInsertRowid; 
-      usr.USERNAME   = userName;
-      usr.PASSWD     = 'mtlmLogin';
-    }
-    else
-    {
-      console.log('unknwon user');
-      return {error:true, errMsg:"unknwon user", session:{}, grants:[]}
-    }
+    // Bei NICHT-ntlm - Anmeldungen ist hier Schluss, wenn kein gültiger Username reinkam
+    if (!ntlmLogin)  return { error: true, errMsg: "unknown user", session: {}, grants: [] };
+ 
+    // 3. NTLM → User automatisch anlegen
+    console.log("create new user:", userName);
+
+    const insert = dbUtils.insertIntoTable(etcDB, "user", { USERNAME: userName, PASSWD: 'ntlm' } );
+    
+    if (insert.error) return insert;
+
+    usr = {
+             ID       : insert.result.lastInsertRowid,
+             USERNAME : userName,
+             PASSWD   : 'ntlm'
+         };
+
+    return newSession(userName, remoteIP);
   }
-  else usr=response.result;
-  
-  if(!ntlmLogin)
-  {
-    if (usr.PASSWD!=passwd)
-    {
-      console.log('wrong password');
-      return {error:true, errMsg:"wrong password", session:{}, grants:[]}
-    }  
-    return newSession( userName , remoteIP );
-  }  
 
- }
+
+  // 4. Passwortprüfung nur bei Nicht-NTLM
+  if (!ntlmLogin) 
+  {
+    const valid = passwd == usr.PASSWD;
+    if (!valid) {
+                 console.log("wrong password");
+                 return { error: true, errMsg: "wrong password", session: {}, grants: [] };
+               }
+  }
+
+  return newSession(userName, remoteIP);
+};
 
 
  module.exports.userLogout=function( sessionID , reason )
@@ -84,23 +91,37 @@ function currentTimestamp()
 
 function newSession( user , remoteIP )   //  username als String oder user als Objekt sind möglich ...
 {
-  if(!utils.isJSON(user)) var user = dbUtils.fetchRecord_from_Query( etc , "select * from user Where username='"+user+"'" ).result;
+  console.clear();
+  console.log('function newSession( '+user+' , ' +remoteIP+' ) ');
   
+  // Kommt User als JSON oder TEXT
+  if(!utils.isJSON(user))
+  {
+    console.log('user als STRING übergeben -> Datenbankabfrage ...');
+    var response = dbUtils.fetchRecord_from_Query( etc , "select * from user Where username='"+user+"'" );
+    console.log('response: ' + response);
+    console.log('response (stringifyed) : ' + JSON.stringify(response));
+    user = response.result;
+  }  
+  else console.log('user als JSON übergeben -> ' + JSON.stringify(user)); 
+
+  // userID numerisch machen
   var userID  = user.ID*1;
 
    // nach letzter Session dieses Useres suchen und dessen sessionsVars laden....
+   console.log('nach letzter Session dieses Useres suchen und dessen sessionsVars laden....');
    response = dbUtils.fetchRecord_from_Query( etc, "select * from session where ID_user="+userID+" order by dt_end desc Limit 1");
-   console.log('newSession for ' + user.username + "  load last sessionVars:"+JSON.stringify( response) )  
+   console.log('newSession for ' + user.USERNAME + "  load last sessionVars:"+JSON.stringify( response) )  
    var lastSessionVars =  null;
    if(!response.error)
      if(response.result) 
      { 
-       try   {lastSessionVars = JSON.parse(response.result.vars)}
+       try   {lastSessionVars = JSON.parse(response.result.VARS)}
        catch {}
   }
 
-   if(lastSessionVars) console.log('newSession for ' + user.username + "  load last sessionVars:"+JSON.stringify(lastSessionVars) )  
-   else              { console.log('newSession for ' + user.username + "  no sessionVars found" ) ; lastSessionVars = {number:"42"} }
+   if(lastSessionVars) console.log('newSession for ' + user.USERNAME + "  load last sessionVars:"+JSON.stringify(lastSessionVars) )  
+   else              { console.log('newSession for ' + user.USERNAME + "  no sessionVars found" ) ; lastSessionVars = {number:"42"} }
 
   // neue Session speichern ....
   response = dbUtils.insertIntoTable( etc , "session" , { ID_user:userID,dt_begin:currentTimestamp(),ip:remoteIP } );

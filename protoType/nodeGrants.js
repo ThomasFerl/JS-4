@@ -15,7 +15,7 @@ module.exports.lsGrants = ( db ) =>
   {
     var g = response.result[i];
     console.log("grantObj["+i+"] : "+JSON.stringify(g));  
-    allGrants.push( g.name.toUpperCase() );
+    allGrants.push( g.NAME.toUpperCase() );
   }  
 
   return response;
@@ -35,7 +35,7 @@ module.exports.addGrant = ( db , grant ) =>
   // ist grant bereits eine ID ?
   if(!isNaN(grant)) return {error:false, errMsg:"alredy a ID", result:grant }
   
-  var response = this.idGrant( db , grant.name );
+  var response = this.idGrant( db , grant.NAME );
     
   if(!response.error)
   {
@@ -45,7 +45,7 @@ module.exports.addGrant = ( db , grant ) =>
     }  
   }
   
-  response = dbUtils.insertIntoTable( db , 'grantObj' , {name:grant.name,caption:grant.caption,kind:grant.kind} );
+  response = dbUtils.insertIntoTable( db , 'grantObj' , {name:grant.NAME,caption:grant.CAPTION,kind:grant.KIND} );
 
   if(response.error) return response;
 
@@ -60,7 +60,7 @@ module.exports.addGrant = ( db , grant ) =>
 module.exports.editGrant = ( db , grant ) =>
   {
     
-    return dbUtils.updateTable( db , 'grantObj' , 'ID' , grant.ID , {name:grant.name,caption:grant.caption,kind:grant.kind} );
+    return dbUtils.updateTable( db , 'grantObj' , 'ID' , grant.ID , {name:grant.NAME,caption:grant.CAPTION,kind:grant.KIND} );
   
   }
 
