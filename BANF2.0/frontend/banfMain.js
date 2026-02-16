@@ -4,13 +4,12 @@ import * as globals      from "./tfWebApp/globals.js";
 import * as utils        from "./tfWebApp/utils.js";    
 import * as dialogs      from "./tfWebApp/tfDialogs.js";
 
-import * as app          from "./tfWebApp/tfWebApp.js"; 
-import * as sysadmin     from "./tfWebApp/tfSysAdmin.js";
-
 import { TBanf       }   from "./banf.js";
 import { TBanfHead   }   from "./banfHead.js";
-import { TFDateTime  }   from "./tfWebApp/utils.js";    
-import { TFEdit } from "./tfWebApp/tfObjects.js";
+import { TFCatalog   }   from "./tfWebApp/tfCatalog.js";
+import { TFDateTime  }   from "./tfWebApp/utils.js";  
+
+import { TFEdit }        from "./tfWebApp/tfObjects.js";
 
 
 import * as forms                from "./forms.js";
@@ -101,7 +100,8 @@ export function run(ws)
       
 
   var btn2 = dialogs.addButton( menuContainerBottom , "" , 3 , 1 , 1 , 1 , {glyph:"pen-to-square"} )
-      btn2.callBack_onClick = function() { editBanf() };
+      btn2.callBack_onClick = ()=>{new TFCatalog(menuContainerBottom , "lieferant" , "V" , "Lieeferanten-Katalog").show()  }; //
+      //function() { editBanf() };
       btn2.heightPx = 44;
       btn2.widthPx  = 47;
     

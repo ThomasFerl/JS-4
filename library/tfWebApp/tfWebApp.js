@@ -1,6 +1,6 @@
-import * as globals     from "./globals.js";
-import * as utils       from "./utils.js";
-import * as dialogs     from "./tfDialogs.js";
+import * as globals      from "./globals.js";
+import * as utils        from "./utils.js";
+import * as dialogs      from "./tfDialogs.js";
 import * as sysadmin     from "./tfSysAdmin.js";
 import * as symbols      from "./symbols.js";
 
