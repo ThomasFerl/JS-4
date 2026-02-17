@@ -174,6 +174,12 @@ if( CMD=='INSERTINTOTABLE')
   else                      return dbUtils.insertIntoTable( dB , param.tableName , param.fields );
 
 
+if( CMD=='INSERTINTOCATALOG') 
+  if(param.etc)             return dbUtils.insertIntoTable_if_not_exist( etc , param.tableName , param.field ,  Object.keys(param.field)[0] );  
+  else                      return dbUtils.insertIntoTable_if_not_exist( dB  , param.tableName , param.field ,  Object.keys(param.field)[0] );
+
+
+
 if( CMD=='UPDATETABLE')     
   if(param.etc)             return dbUtils.updateTable( etc , param.tableName , param.ID_field , param.ID_value , param.fields );
   else                      return dbUtils.updateTable( dB , param.tableName , param.ID_field , param.ID_value , param.fields );

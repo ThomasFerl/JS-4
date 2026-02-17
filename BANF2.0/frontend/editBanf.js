@@ -1,79 +1,33 @@
 
+
 import * as globals      from "./tfWebApp/globals.js";
-import * as utils        from "./tfWebApp/utils.js";
+import * as utils        from "./tfWebApp/utils.js";    
 import * as dialogs      from "./tfWebApp/tfDialogs.js";
+
+import { TFCatalog   }   from "./tfWebApp/tfCatalog.js";
+import { TFDateTime  }   from "./tfWebApp/utils.js";  
+
 import * as forms                from "./forms.js";
 import { TFgui }                 from "./tfWebApp/tfGUI.js";
 import { TFDataObject }          from "./tfWebApp/tfDbObjects.js";
-import { TFCatalog}              from "./tfWebApp/tfCatalog.js";
 
-
-import { TForm,
-         TFPanel }       from "./tfWebApp/tfObjects.js";
 
 
 export class TBanf 
 {
-    #data          = {};
-    #original      = {};
-    #dirtyFields   = new Set();
-
-    
     constructor(dbBanf = {}) 
     { 
-     // Prüfung: enthält dbBanf **nur** das Feld "ID"
-     const keys = Object.keys(dbBanf);
+      this.banf = {};
+      
+      if (!dbBanf) this.banf = new TFDataObject( "banf" );
+      else    
+          {// Prüfung: enthält dbBanf **nur** das Feld "ID"
+           const keys = Object.keys(dbBanf);
+           if (keys.length === 1 && keys[0] === "ID") this.banf = new TFDataObject( "banf" , dbBanf.ID );
+           else                                       this.banf = new TFDataObject( "banf" , dbBanf.ID , dbBanf );
+          }  
+    }
 
-     if (keys.length === 1 && keys[0] === "ID") 
-     {
-      const response = this.load_from_dB(dbBanf.ID);
-      if (!response.error) dbBanf = response.result;
-     }
-       
-     for (const field in dbBanf) 
-     {
-             const value = dbBanf[field];
-             this.#defineField(field, value || '');
-             console.log("THIS->" + utils.JSONstringify(this));
-     }
-
-     this.banfHead = utils.webApiRequest('BANFHEAD' , {ID:this.ID_HEAD}).result;
-    }  
-  
-   
-    #defineField(fieldName, defaultValue) 
-    {
-      // "ERZEUGEN" des Feldnamen innerhalb des lokalen "Data-Containers" 
-      this.#data    [fieldName] = defaultValue || '';
-      this.#original[fieldName] = defaultValue || '';
-     
-      Object.defineProperty(this, fieldName, {
-                                               get: () => this.#data[fieldName],
-                                               set: (val) => {
-                                                               this.#data[fieldName] = val;
-                                                               if (val !== this.#original[fieldName]) this.#dirtyFields.add(fieldName);
-                                                               else                                   this.#dirtyFields.delete(fieldName);
-                                                             },
-                                              enumerable: true
-                                            });
-    }
-  
-    get isDirty() {return this.#dirtyFields.size > 0;}
-    
-  
-    getChangedFields() {return Array.from(this.#dirtyFields);}
-    
-  
-    markClean() 
-    {
-      this.#dirtyFields.clear();
-      Object.assign(this.#original, this.#data);
-    }
-  
-    load_from_dB(id) 
-    {
-      return  utils.webApiRequest('BANF',{ID:id} );
-    }
 
     load_lookUpTables()
     { 
@@ -91,27 +45,12 @@ export class TBanf
 
     load(id) 
     {
-       var response = this.load_from_dB(id); 
-       if(response.error){return false;}
-               
-      this.#data = response.result;                                    
-      this.markClean();
-      
-      return true;
+     return this.banf.load();
     }
   
     save() 
     { 
-      var response = utils.webApiRequest('SAVEBANF',{banf:this.#data} );
-      if(response.error)
-      {
-        dialogs.showMessage(response.errMsg);
-        return false;
-      }
-                        
-      if(!this.#data.ID) this.#data.ID = response.result.lastInsertRowid;                                   
-      this.markClean();
-      return true;
+      return this.banf.save();
     }
    
 
@@ -120,9 +59,91 @@ edit( callback_if_ready )
   this.load_lookUpTables();
 
   var caption = this.ID ? 'Banf-Position bearbeiten' : 'Banf-Position anlegen';
-  var w       =    dialogs.createWindow( null,caption,"50%","94%","CENTER");  
-  var _w      =    w.hWnd;
+  var gui     = new TFgui( null , forms.inpBANF , {caption:caption});
 
+ gui.labelBanfBez.caption     = '';
+ gui.labelBanfDetails.caption = '';
+
+
+   // Vorbefüllung der Select-Felder mit den zugehörigen Katalogen und die Verbindung der Katalog-Schaltfläche mit dem Katalog-Dialog
+   gui.selMengenEinheit.setItems(this.lookUp_mengenEinheit.asListBoxItems());
+   gui.btnSelectEinheit.callBack_onClick = async function(){
+                                                             await this.self.lookUp_mengenEinheit.show();
+                                                             this.gui.selMengenEinheit.setItems(this.self.lookUp_mengenEinheit.asListBoxItems() );
+                                                           }.bind({self:this, gui:gui});
+
+
+  gui.editWarengruppe.setItems(this.lookUp_warenGruppe.asListBoxItems());
+  gui.btnWarengrp.callBack_onClick =  async function(){
+                                                        await this.self.lookUp_warenGruppe.show();
+                                                        this.gui.editWarengruppe.setItems(this.self.lookUp_warenGruppe.asListBoxItems() );
+                                                      }.bind({self:this, gui:gui});
+
+
+ gui.selLieferant.setItems(this.lookUp_lieferant.asListBoxItems());
+ gui.btnLieferant.callBack_onClick =  async function(){
+                                                        await this.self.lookUp_lieferant.show();
+                                                        this.gui.selLieferant.setItems(this.self.lookUp_lieferant.asListBoxItems() );
+                                                      }.bind({self:this, gui:gui});
+
+
+gui.selWerk.setItems(this.lookUp_werk.asListBoxItems());
+gui.btnWerk.callBack_onClick =  async function(){
+                                                  await this.self.lookUp_werk.show();
+                                                  this.gui.selWerk.setItems(this.self.lookUp_werk.asListBoxItems() );
+                                                }.bind({self:this, gui:gui});
+
+
+gui.selEinkGrp.setItems(this.lookUp_einkaeuferGruppe.asListBoxItems());
+gui.btnEinkGrp.callBack_onClick =  async function(){
+                                                  await this.self.lookUp_einkaeuferGruppe.show();
+                                                  this.gui.selEinkGrp.setItems(this.self.lookUp_einkaeuferGruppe.asListBoxItems() );
+                                                }.bind({self:this, gui:gui});                                                
+
+
+gui.selEinkOrg.setItems(this.lookUp_einkaufsOrganisation.asListBoxItems());
+gui.btnEinkOrg.callBack_onClick =  async function(){
+                                                      await this.self.lookUp_einkaufsOrganisation.show();
+                                                      this.gui.selEinkOrg.setItems(this.self.lookUp_einkaufsOrganisation.asListBoxItems() );
+                                                    }.bind({self:this, gui:gui});  
+
+
+gui.selSachkonto.setItems(this.lookUp_sachkonto.asListBoxItems());
+gui.btnSachkonto.callBack_onClick =  async function(){
+                                                      await this.self.lookUp_sachkonto.show();
+                                                      this.gui.selSachkonto.setItems(this.self.lookUp_sachkonto.asListBoxItems() );
+                                                    }.bind({self:this, gui:gui});  
+
+
+gui.selAuftrag.setItems(this.lookUp_auftrag.asListBoxItems());
+gui.btnAuftrag.callBack_onClick =  async function(){
+                                                      await this.self.lookUp_auftrag.show();
+                                                      this.gui.selAuftrag.setItems(this.self.lookUp_auftrag.asListBoxItems() );
+                                                    }.bind({self:this, gui:gui});  
+
+
+   gui.dataBinding(  this.banf );
+   //gui.translateForGUI = function(fieldName , value , guiElement ) { debugger; return value };
+   gui.update('form');
+
+
+
+
+   gui.btnOk.callBack_onClick = function()
+                                { 
+                                  this.gui.update('data');    
+                                  this.banf.save();
+                                  this.gui.close();  
+                                  if(this.callBack) this.callBack() ;
+                                }.bind({gui:gui,banf:this.banf,callBack:callback_if_ready})
+ }                                
+
+ 
+
+
+
+
+/*
   _w.buildGridLayout_templateColumns('1fr');
   _w.buildGridLayout_templateRows   ('4em 1fr');
 
@@ -196,3 +217,7 @@ edit( callback_if_ready )
  }
 }
 
+
+*/
+
+}

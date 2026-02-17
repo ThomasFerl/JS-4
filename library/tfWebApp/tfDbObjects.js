@@ -154,14 +154,15 @@ export class TFCatalogObject
       this.ID         = ID || 'ID';
     }  
 
-    items() 
+    stringList() 
     {
       var i =[];
       for(var j=0; j<this.catalog.length; j++) i.push(this.catalog[j][this.field]);
       return i;
     }  
 
-    listtBoxitems()
+
+    listBoxitems()
     {
       var i =[];
       for(var j=0; j<this.catalog.length; j++) i.push({value:this.catalog[j][this.ID], caption:this.catalog[j][this.field]});
@@ -169,6 +170,30 @@ export class TFCatalogObject
     }
 
 
+
+    addItem( itemText )
+    {
+      var payload  = {[this.field]:itemText};
+      utils.webApiRequest( 'INSERTINTOCATALOG' , {tableName:this.tableName, field:payload } );
+    }
+
+
+    async removeItem( items , askBeforeDelete ) 
+    { 
+      var msg = '';
+      var ok  = false;
+
+      if(items.length > 1) msg = 'Sollen die gewählten Einträge gelöscht werden ?';
+      else                 msg = 'Soll dieser Eintrag gelöscht werden ?' 
+
+      if(askBeforeDelete) ok = await dialogs.askModal("Katalogeintrag löschen" , msg );
+      else                ok = true;   
+
+      if(ok)
+            { for(var i=0; i<items.length; i++)
+                      utils.webApiRequest( 'DROP' , {tableName:this.tableName , ID_field:this.ID , ID_value:items[i].value} )
+           }
+   }
 
 
    
@@ -189,7 +214,7 @@ export class TFCatalogObject
     {
       this.catalog = [];
       this.load();
-      return this.items();
+      return this.listBoxitems();
     }
 
 }

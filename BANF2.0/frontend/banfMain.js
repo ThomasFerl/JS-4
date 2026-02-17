@@ -4,22 +4,12 @@ import * as globals      from "./tfWebApp/globals.js";
 import * as utils        from "./tfWebApp/utils.js";    
 import * as dialogs      from "./tfWebApp/tfDialogs.js";
 
-import { TBanf       }   from "./banf.js";
+
+import { TBanf       }   from "./editBanf.js";
 import { TBanfHead   }   from "./banfHead.js";
-import { TFCatalog   }   from "./tfWebApp/tfCatalog.js";
 import { TFDateTime  }   from "./tfWebApp/utils.js";  
 
 import { TFEdit }        from "./tfWebApp/tfObjects.js";
-
-
-import * as forms                from "./forms.js";
-import { TFgui }                 from "./tfWebApp/tfGUI.js";
-import { TFDataObject }          from "./tfWebApp/tfDbObjects.js";
-
-
-var caption1  = '';
-var caption2  = '';
-
 
 var menuContainerTop    = null;
 var menuContainerBottom = null;
@@ -39,13 +29,12 @@ export function run(ws)
    var l  = dialogs.setLayout( ws.handle , {gridCount:27,head:2} )
   
     menuContainerTop                 = l.head;
-
     menuContainerTop.backgroundColor = 'gray';
     menuContainerTop.buildGridLayout_templateColumns('14em 1em 14em 1em 14em 14em 21em 2em 1fr');
     menuContainerTop.buildGridLayout_templateRows('1fr');
 
     var btn11 = dialogs.addButton( menuContainerTop , "" , 1 , 1 , 1 , 1 , {caption:"neue Banf vorbereiten",glyph:"circle-plus"}  )
-    btn11.callBack_onClick = function() { addBanfHead() };
+    btn11.callBack_onClick = function() { editBanf.newRecord() };
     btn11.heightPx = 40;
     btn11.marginTop   = 4;
 
@@ -100,8 +89,7 @@ export function run(ws)
       
 
   var btn2 = dialogs.addButton( menuContainerBottom , "" , 3 , 1 , 1 , 1 , {glyph:"pen-to-square"} )
-      btn2.callBack_onClick = ()=>{new TFCatalog(menuContainerBottom , "lieferant" , "V" , "Lieeferanten-Katalog").show()  }; //
-      //function() { editBanf() };
+      btn2.callBack_onClick = function() { editBanf() };
       btn2.heightPx = 44;
       btn2.widthPx  = 47;
     
@@ -172,29 +160,6 @@ function selectBanf(p)
 
 
 function addBanf()
-{  
-   var gui   = new TFgui( null , forms.inpBANF);
-   var banf  = new TFDataObject( "banf" );
- 
-   gui.dataBinding( banf );
-   gui.update('form');
-
-   gui.btnOk.callBack_onClick = function()
-                                { debugger;
-                                  this.gui.update('data');    
-                                  this.banf.save();
-                                  this.gui.close();        
-                                }.bind({gui:gui,banf:banf})
-
-
-
-}
-
-
-
-
-
-function _addBanf()
 {
   if(!selectedBanfHead) {dialogs.showMessage('Bitte zuerst eine BANF-Vorlage erstellen/auswählen !'); return;}
  
@@ -228,6 +193,7 @@ function _addBanf()
         var b = new TBanf(aBanf);
         b.edit( function(){ updateView() } );
 }
+
 
 function editBanf()
 { 

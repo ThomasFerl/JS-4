@@ -611,6 +611,60 @@ export function ask( title , msg , callBackIfYes , callBackIfNo )
 }
 
 
+export function askModal(title, msg) 
+{
+  return new Promise(resolve => {
+
+    const w = createWindow(null, "Rückfrage", "50%", "40%", "CENTER").hWnd;
+    w.overflow = "hidden";
+
+    utils.buildGridLayout_templateColumns(w, "1fr");
+    utils.buildGridLayout_templateRows(w, "4em 1fr 1em 4em");
+
+    const titleDiv = addPanel(w, "", 1, 1, 1, 1);
+    titleDiv.margin = "2px";
+    titleDiv.backgroundColor = "rgb(200, 207, 197 , 0.77)";
+    titleDiv.DOMelement.innerHTML = `<h2><center>${title}</center></h2>`;
+
+    const msgDivCont = addPanel(w, "cssContainerPanel", 1, 2, 1, 1);
+    msgDivCont.margin = "4px";
+    utils.buildGridLayout_templateColumns(msgDivCont, "1fr 7em");
+    utils.buildGridLayout_templateRows(msgDivCont, "1fr");
+
+    const msgDivGlyph = addPanel(msgDivCont, "cssContainerPanel", 2, 1, 1, 1);
+    msgDivGlyph.DOMelement.innerHTML =
+      `<i class="fa-solid fa-circle-question fa-flip fa-2xl"></i>`;
+
+    const msgDiv = addPanel(msgDivCont, "cssContainerPanel", 1, 1, 1, 1);
+    msgDiv.DOMelement.innerHTML = msg;
+
+    const btnDiv = addPanel(w, "cssContainerPanel", 1, 4, 1, 1);
+    btnDiv.margin = "4px";
+    btnDiv.overflow = "hidden";
+    btnDiv.backgroundColor = "rgba(0,0,0,0.14)";
+    utils.buildGridLayout_templateColumns(btnDiv, "1fr 100px 50px 100px 1fr");
+    utils.buildGridLayout_templateRows(btnDiv, "1fr 1fr 1fr");
+
+    const btnYes = addButton(btnDiv, "", 2, 2, 1, 1, "Ja");
+    btnYes.height = "2em";
+    btnYes.callBack_onClick = () => {
+      w.parent.destroy();
+      resolve(true);
+    };
+
+    const btnNo = addButton(btnDiv, "", 4, 2, 1, 1, "Nein");
+    btnNo.height = "2em";
+    btnNo.callBack_onClick = () => {
+      w.parent.destroy();
+      resolve(false);
+    };
+  });
+}
+
+
+
+
+
 export function showMessage( msg , options , callBack )
 { 
   var button = [];

@@ -44,6 +44,8 @@ export class TFgui
       this.dataBindings        = [];
       this.dataObject          = {};
       this.window              = {};
+
+      var _caption             = params?.caption || ''
       
       var formData             = null; 
       if (typeof guiNameOrguiObject === 'string') formData  = utils.loadForm(guiNameOrguiObject);
@@ -51,7 +53,7 @@ export class TFgui
 
       if(aParent==null)
         { 
-          this.window       = dialogs.createWindow(null, '' , formData.width, formData.height , 'CENTER');
+          this.window       = dialogs.createWindow(null, _caption , formData.width, formData.height , 'CENTER');
           this.dashBoard    = this.window.hWnd;
           this.params.autoSizeWindow = false; // Fenster ist bereits in gewünschter Größe
       }
