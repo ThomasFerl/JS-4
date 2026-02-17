@@ -9,101 +9,50 @@ import { TBanf       }   from "./editBanf.js";
 import { TBanfHead   }   from "./banfHead.js";
 import { TFDateTime  }   from "./tfWebApp/utils.js";  
 
-import { TFEdit }        from "./tfWebApp/tfObjects.js";
+import * as forms        from "./forms.js";
+import { TFgui }         from "./tfWebApp/tfGUI.js";
 
-var menuContainerTop    = null;
-var menuContainerBottom = null;
-var dashBoardTop        = null;
-var dashBoardBottom     = null;
-var userSelection       = null;
+const banfAdmin         = globals.hasAccess('banfAdmin');
 
 var selectedBanf        = null;
 var selectedBanfHead    = null;
 var selectedUser        = '';
+var gui                 = {};
 
 
 
 export function run(ws)
  { 
-   //  document.document.requestFullscreen();
-   var l  = dialogs.setLayout( ws.handle , {gridCount:27,head:2} )
-  
-    menuContainerTop                 = l.head;
-    menuContainerTop.backgroundColor = 'gray';
-    menuContainerTop.buildGridLayout_templateColumns('14em 1em 14em 1em 14em 14em 21em 2em 1fr');
-    menuContainerTop.buildGridLayout_templateRows('1fr');
+    gui = new TFgui( ws.handle , forms.BanfMainWnd );
+   
+    gui.btnAddBanfHead.callBack_onClick    = function() { addBanfHead() };
+    gui.btnEditBanfHead.callBack_onClick   = function() { editBanfHead() };
+    gui.btnDeleteBanfHead.callBack_onClick = function() { delBanfHead() };
+    gui.btnFreigabe.callBack_onClick       = function() { exportBanf() };
 
-    var btn11 = dialogs.addButton( menuContainerTop , "" , 1 , 1 , 1 , 1 , {caption:"neue Banf vorbereiten",glyph:"circle-plus"}  )
-    btn11.callBack_onClick = function() { editBanf.newRecord() };
-    btn11.heightPx = 40;
-    btn11.marginTop   = 4;
-
-    var btn21 = dialogs.addButton( menuContainerTop , "" , 3 , 1 , 1 , 1 , {caption:"Banf bearbeiten",glyph:"pencil"}  )
-    btn21.callBack_onClick = function() { editBanfHead() };
-    btn21.heightPx = 40;
-    btn21.margin   = 4;
-
-    var btn31 = dialogs.addButton( menuContainerTop , "cssAbortBtn01" , 5 , 1 , 1 , 1 , {caption:"Banf löschen",glyph:"circle-minus"}  )
-    btn31.callBack_onClick = function() { delBanfHead() };
-    btn31.heightPx = 40;
-    btn31.margin   = 4;
-
-    if(globals.hasAccess('banfAdmin'))
-    {  
-      var response = utils.webApiRequest('LSBANFUSER' , {} );
-      response.result.unshift("alle Benutzer");
-      userSelection = new TFEdit( menuContainerTop ,  7 , 1 , 1 , 1 , {caption:"Benutzer" , labelPosition:"top" , lookUp:true , items:response.result} );
-      userSelection.callBack_onChange = function( v ) {  };
-
-      var btn41 = dialogs.addButton( menuContainerTop , "" , 8 , 1 , 1 , 1 , {glyph:"check"}  );
-      btn41.height ="2em";
-      btn41.marginTop = "1em";
-      btn41.callBack_onClick = function() {
-                                            selectedUser = userSelection.value || ""; 
+    //nur der BANF-Admin darf alle BANFs aller Benutzer sehen, normale User nur ihre eigenen BANFs
+    if(!banfAdmin)
+    {
+         gui.selectUser.hide()
+         gui.btnSelectUser.hide();
+    } else  
+          {  
+             var response = utils.webApiRequest('LSBANFUSER' , {} );
+             gui.selectUser.clearItems();
+             gui.selectUser.addItem("alle Benutzer");
+             gui.selectUser.addItems(response.result);
+             gui.selectUser.callBack_onChange   = function( v ) {  };
+             gui.btnSelectUser.callBack_onClick = function() 
+                                          {
+                                            selectedUser = gui.selectUser.value || ""; 
                                             if(selectedUser.toUpperCase() == 'ALLE BENUTZER') { selectedUser = "" }
                                             updateViewHead();
-                                         }  
+                                         };  
       }
 
-    // Dashboad horizontal aufteilen: 1/3 für Kopf-Datensätze und 2/3 für Banf-Datensätze
-    var h1          = l.dashBoard;
-    h1.buildGridLayout_templateColumns('1fr');
-    h1.buildGridLayout_templateRows('1fr 1fr 1fr');
-    dashBoardTop    = dialogs.addPanel( h1 , "cssContainerPanel" , 1 , 1 , 1 , 1 );
-    
-    // das untere Panel benötigt noch einen Menü-Container von 4em
-    var h2 = dialogs.addPanel( h1 , "cssContainerPanel" , 1 , 2 , 1 , 2 );
-    h2.buildGridLayout_templateColumns('1fr');
-    h2.buildGridLayout_templateRows('4em 1fr'); 
-    menuContainerBottom = dialogs.addPanel( h2 , "cssContainerPanel" , 1 , 1 , 1 , 1 );
-    menuContainerBottom.backgroundColor = 'gray';
-    menuContainerBottom.buildGridLayout_templateColumns('4em 0.4em 4em 0.4em 4em 1fr 4em 0.4em');
-    menuContainerBottom.buildGridLayout_templateRows('1fr');
-
-    dashBoardBottom    = dialogs.addPanel( h2 , "" , 1 , 2 , 1 , 1 );
-   
-  var btn1 = dialogs.addButton( menuContainerBottom , "" , 1 , 1 , 1 , 1 , {glyph:"plus"}  )
-      btn1.callBack_onClick = function() { addBanf() };
-      btn1.heightPx = 44;
-      btn1.widthPx  = 47;
-      
-
-  var btn2 = dialogs.addButton( menuContainerBottom , "" , 3 , 1 , 1 , 1 , {glyph:"pen-to-square"} )
-      btn2.callBack_onClick = function() { editBanf() };
-      btn2.heightPx = 44;
-      btn2.widthPx  = 47;
-    
-
-  var btn3 = dialogs.addButton( menuContainerBottom , "cssAbortBtn01" , 5 , 1 , 1 , 1 , {glyph:"minus"}   )
-      btn3.callBack_onClick = function() { delBanf() };
-      btn3.heightPx = 44;
-      btn3.widthPx  = 47;
-
-  var btn3 = dialogs.addButton( menuContainerBottom , "" , 7 , 1 , 1 , 1 , {caption:"Export" , glyph:"hand-holding"}   )
-      btn3.callBack_onClick = function() { exportBanf() };
-      btn3.heightPx = 44;
-      btn3.widthPx  = 47;
-     
+      gui.btnAddBanf.callBack_onClick    = function() { addBanf() };
+      gui.btnEditBanf.callBack_onClick   = function() { editBanf() };
+      gui.btnDeleteBanf.callBack_onClick = function() { delBanf() };
 
       updateViewHead();
       updateView()
@@ -112,31 +61,31 @@ export function run(ws)
 
 function updateView()
 {
-  dashBoardBottom.innerHTML = ""; // clear the dashboard
+  gui.gridContainerBanf.innerHTML = ""; // clear the dashboard
   if(!selectedBanfHead) return;
 
   var response = utils.webApiRequest('LSBANF' , {ID_HEAD:selectedBanfHead.ID} );
   if(response.error) {dialogs.showMessage(response.errMsg);return; }
-  var grid = dialogs.createTable( dashBoardBottom , response.result , ['ID','ID_HEAD','OWNER','AUFTRAG','SACHKONTO','ANFORDERER'] , [] );
-  grid.onRowClick=function( selectedRow , itemIndex , jsonData ) { selectBanf(jsonData) };
-  grid.onRowDblClick=function( selectedRow , itemIndex , jsonData ) { editBanf(jsonData) };
+  var grid = dialogs.createTable( gui.gridContainerBanf , response.result , ['ID','ID_HEAD','OWNER','AUFTRAG','SACHKONTO','ANFORDERER'] , [] );
+  grid.onRowClick    =function( selectedRow , itemIndex , jsonData ) { selectBanf(jsonData) };
+  grid.onRowDblClick =function( selectedRow , itemIndex , jsonData ) { editBanf(jsonData) };
 }
 
 
 function updateViewHead()
 {
-  dashBoardTop.innerHTML = ""; // clear the dashboard
+  gui.gridContainerBanfHead.innerHTML = ""; // clear the dashboard
   var param = {};
   
   // falls normaler User, dann nur meine eigenen BANFs
-  if (userSelection==null) param.OWNER = globals.session.userName;
+  if (!banfAdmin) param.OWNER = globals.session.userName;
   else if(selectedUser) param.OWNER = selectedUser;
       
   var response = utils.webApiRequest('LSBANFHEAD' ,param );
   if(response.error) {dialogs.showMessage(response.errMsg);return; }
-  var grid = dialogs.createTable( dashBoardTop , response.result , ['ID','OWNER'] , [] );
-  grid.onRowClick=function( selectedRow , itemIndex , jsonData ) { selectBanfHead(jsonData) };
-  grid.onRowDblClick=function( selectedRow , itemIndex , jsonData ) { editBanfHead(jsonData) };
+  var grid = dialogs.createTable( gui.gridContainerBanfHead , response.result , ['ID','OWNER'] , [] );
+  grid.onRowClick    =function( selectedRow , itemIndex , jsonData ) { selectBanfHead(jsonData) };
+  grid.onRowDblClick =function( selectedRow , itemIndex , jsonData ) { editBanfHead(jsonData) };
   updateView();
 }
 
