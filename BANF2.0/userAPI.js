@@ -159,7 +159,15 @@ if( CMD=='BANFHEAD')
        
         return {error:false,errMsg:"OK",result:lookUp};
         
-      }  
+      } 
+      
+      if( CMD=='LSEXPORTFIELDS')
+      {
+        console.log('run LSEXPORTFIELDS  ');
+        var sql = "Select FIELDNAME from ExportFields Order by POS";
+        return dbUtils.fetchRecords_from_Query(dB,sql);        
+      } 
+      
 
 
 }

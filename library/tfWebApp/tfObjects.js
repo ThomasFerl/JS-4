@@ -2312,6 +2312,8 @@ export class TFListBox extends TFObject
     for (var i = 0; i < this.items.length; i++)
     {
       var item = this.items[i];
+      if(typeof item == 'string') item = {value:item , text:item}
+     
       var option = document.createElement('option');
       option.value = item.value || item.text || item.caption;
       option.textContent = item.text || item.caption;

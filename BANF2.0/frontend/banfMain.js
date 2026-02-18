@@ -7,6 +7,7 @@ import * as dialogs      from "./tfWebApp/tfDialogs.js";
 
 import { TBanf       }   from "./editBanf.js";
 import { TBanfHead   }   from "./banfHead.js";
+import { TBanfExport }   from "./banfExport.js";
 import { TFDateTime  }   from "./tfWebApp/utils.js";  
 
 import * as forms        from "./forms.js";
@@ -36,11 +37,10 @@ export function run(ws)
     {
          gui.selectUser.hide()
          gui.btnSelectUser.hide();
-         gui.btnFreigabe.hide();
+         gui.btnFreigabe.callBack_onClick       = function() { startWorkflow() };
     } else  
           {  
              gui.btnFreigabe.callBack_onClick       = function() { exportBanf() };
-debugger;
              var response = utils.webApiRequest('LSBANFUSER' , {} );
              gui.selectUser.addItem("alle Benutzer");
              gui.selectUser.addItems(response.result); 
@@ -95,9 +95,21 @@ function updateViewHead()
 
 function exportBanf()
 {
-    dialogs.showMessage('Export-Funktion ist noch nicht implementiert! Erst wenn die Feld-Reihenfolge definiert ist, werden die Daten entsprechend in der Zwischenablage aufbereitet.');
+    //dialogs.showMessage('Export-Funktion ist noch nicht implementiert! Erst wenn die Feld-Reihenfolge definiert ist, werden die Daten entsprechend in der Zwischenablage aufbereitet.');
+    
+    if(!selectedBanfHead) {dialogs.showMessage('Bitte zuerst eine BANF-Vorlage auswählen!'); return;}
+    
+    var b = new TBanfExport( selectedBanfHead );
+    if(!b.ok) {dialogs.showMessage('Fehler beim Laden der Export-Funktion!'); return;}
+
+    b.exportToClipboard();
 }
 
+
+function startWorkflow()
+{
+  dialogs.showMessage('workflow zum Starten des Freigabeprozesses ist noch nicht vollständig implementiert! ');
+}
 
 function selectBanfHead(p)
 { 

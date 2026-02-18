@@ -37,6 +37,14 @@ tables.push(
        ]});
         
  
+tables.push( 
+      {tableName: "exportFields",
+       tableFields: [
+         {fieldName: "POS"       , fieldType: "INT"     },
+         {fieldName: "FIELDNAME" , fieldType: "Text"    },
+         {fieldName: "CAPTION"   , fieldType: "Text"    }
+       ]});
+
 
 tables.push( 
       {tableName: "mengeneinheit",
