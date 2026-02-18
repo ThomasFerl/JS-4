@@ -12,7 +12,7 @@ import { TFDateTime  }   from "./tfWebApp/utils.js";
 import * as forms        from "./forms.js";
 import { TFgui }         from "./tfWebApp/tfGUI.js";
 
-const banfAdmin         = globals.hasAccess('banfAdmin');
+let banfAdmin           = false;
 
 var selectedBanf        = null;
 var selectedBanfHead    = null;
@@ -23,27 +23,30 @@ var gui                 = {};
 
 export function run(ws)
  { 
+    banfAdmin = globals.hasAccess('banfAdmin');
+
     gui = new TFgui( ws.handle , forms.BanfMainWnd );
    
     gui.btnAddBanfHead.callBack_onClick    = function() { addBanfHead() };
     gui.btnEditBanfHead.callBack_onClick   = function() { editBanfHead() };
     gui.btnDeleteBanfHead.callBack_onClick = function() { delBanfHead() };
-    gui.btnFreigabe.callBack_onClick       = function() { exportBanf() };
 
     //nur der BANF-Admin darf alle BANFs aller Benutzer sehen, normale User nur ihre eigenen BANFs
     if(!banfAdmin)
     {
          gui.selectUser.hide()
          gui.btnSelectUser.hide();
+         gui.btnFreigabe.hide();
     } else  
           {  
+             gui.btnFreigabe.callBack_onClick       = function() { exportBanf() };
+debugger;
              var response = utils.webApiRequest('LSBANFUSER' , {} );
-             gui.selectUser.clearItems();
              gui.selectUser.addItem("alle Benutzer");
-             gui.selectUser.addItems(response.result);
+             gui.selectUser.addItems(response.result); 
              gui.selectUser.callBack_onChange   = function( v ) {  };
              gui.btnSelectUser.callBack_onClick = function() 
-                                          {
+                                          { debugger;
                                             selectedUser = gui.selectUser.value || ""; 
                                             if(selectedUser.toUpperCase() == 'ALLE BENUTZER') { selectedUser = "" }
                                             updateViewHead();
@@ -116,7 +119,7 @@ function addBanf()
   
   try { maxPos = parseInt(maxPos); } catch(e) { maxPos = 0; }
   if(isNaN(maxPos)) { maxPos = 0; }
-  maxPos = maxPos + 10;
+  maxPos = (Math.floor(maxPos/10)*10) + 10;
   var maxPosText = maxPos.toString();
   
   var   aBanf = { 
@@ -139,16 +142,17 @@ function addBanf()
                  OWNER                : globals.session.userName
                };
 
-        var b = new TBanf(aBanf);
-        b.edit( function(){ updateView() } );
+        var b          = new TBanf(aBanf);
+            b.banfHead = selectedBanfHead;  
+            b.edit( function(){ updateView() } );
 }
 
 
 function editBanf()
 { 
  if(!selectedBanf) {dialogs.showMessage('Bitte zuerst eine Banf-Position auswählen!'); return;}
- 
- var b = new TBanf( selectedBanf );
+ var b          = new TBanf( {ID:selectedBanf.ID} );
+     b.banfHead = selectedBanfHead;
      b.edit( function(){ updateView() } );
 } 
 

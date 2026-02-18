@@ -144,14 +144,12 @@ export class TFCatalogObject
 {
     constructor( tableName , field, ID ) 
     {
-      // Wird die ID übergben, wird der Datensatz geladen und gleichzeitig die Struktur ermittelt.
-      // Wird nur der Tabellen-Name übergeben, wird NUR die Tabellenstruktur ermittelt - Die Daten müssen dan via "load(id)" nachgeladen werden...
       if(!tableName) {dialogs.showMessage("Ein 'TFDataObject' benötigt zwingend einen Tabellen-Namen ! "); return; }
       
       this.tableName  = tableName;
       this.field      = field;
       this.catalog    = [];
-      this.ID         = ID || 'ID';
+      this.ID         = ID || '';
     }  
 
     stringList() 
@@ -165,7 +163,10 @@ export class TFCatalogObject
     listBoxitems()
     {
       var i =[];
-      for(var j=0; j<this.catalog.length; j++) i.push({value:this.catalog[j][this.ID], caption:this.catalog[j][this.field]});
+
+      if(this.ID != '') for(var j=0; j<this.catalog.length; j++) i.push({value:this.catalog[j][this.ID]   , caption:this.catalog[j][this.field]});
+      else              for(var j=0; j<this.catalog.length; j++) i.push({value:this.catalog[j][this.field], caption:this.catalog[j][this.field]});
+
       return i;
     }
 
@@ -190,16 +191,22 @@ export class TFCatalogObject
       else                ok = true;   
 
       if(ok)
-            { for(var i=0; i<items.length; i++)
-                      utils.webApiRequest( 'DROP' , {tableName:this.tableName , ID_field:this.ID , ID_value:items[i].value} )
-           }
+      {  
+          if(this.ID != '')  for(var i=0; i<items.length; i++)  utils.webApiRequest( 'DROP' , {tableName:this.tableName , ID_field:this.ID    , ID_value:items[i].value} )
+          else               for(var i=0; i<items.length; i++)  utils.webApiRequest( 'DROP' , {tableName:this.tableName , ID_field:this.field , ID_value:items[i].value} )
+     }
    }
 
 
    
     load()
     {
-      var response = utils.webApiRequest('FETCHRECORDS',{sql:"Select "+this.ID+", "+this.field+" from "+this.tableName} ); 
+      var response = {};
+      if(this.ID != '') response = utils.webApiRequest('FETCHRECORDS',{sql:"Select "+this.ID+", "+this.field+" from "+this.tableName} ); 
+      else              response = utils.webApiRequest('FETCHRECORDS',{sql:"Select "+this.field+" from "+this.tableName+" Order by " + this.field} ); 
+      
+      
+      
       if(response.error) {
                            dialogs.showMessage('Fehler beim Abfragen des Kataloges "'+this.tableName+'" : '+response.errMsg ); 
                            return false; 

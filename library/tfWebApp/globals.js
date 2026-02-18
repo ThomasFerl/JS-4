@@ -99,7 +99,7 @@ export function startSession( sessionID , userName , userID , grants , admin )
 
 
 export function hasAccess(grandName)
-{
+{ 
   if(!session.grants) return false;
   
    for(var i=0; i<session.grants.length; i++)

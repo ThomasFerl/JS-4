@@ -32,7 +32,7 @@ export class TFgui
     if (direction.toUpperCase() == 'DATA') 
      {
        this.dataBindings.forEach(binding => {
-        this.dataObject[binding.key] = this.translateForData(binding.key, binding.guiElement.value);
+        this.dataObject[binding.key] = this.translateForData(binding.key, binding.guiElement);
       });
     }
   }
@@ -92,7 +92,7 @@ export class TFgui
 
  // wird überschrieben, wenn ein Datenfeld abgeleitet, umgerechnet oder getypCastet werden soll...
  this.translateForGUI  = function ( fieldName , value , guiElement ) { guiElement.value = value; return value };
- this.translateForData = function ( fieldName , value , guiElement ) { return value };
+ this.translateForData = function ( fieldName ,         guiElement ) { console.log('transformForData -> '+fieldName+" := "+guiElement.name+"("+guiElement.value+")" ); return guiElement.value };
 
       
  // proxy-Klasse für bequemen Zugriff einrichten ....

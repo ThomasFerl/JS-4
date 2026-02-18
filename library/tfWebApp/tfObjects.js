@@ -2262,6 +2262,16 @@ export class TFListBox extends TFObject
 
   }
 
+  getItemByIndex( ndx )
+  { 
+    if( (ndx>-1) && (ndx<this.items.length) )
+      {
+        var item = this.items[ndx];
+        return item;
+      } 
+    else return  {caption:'',value:''};
+  }
+
 
   getItems( what )
   {
@@ -3179,6 +3189,21 @@ export class TFSelectBox extends TFEdit
  setItems( items )
  {
    this.items = [];
+   if(items!=null) 
+   {
+     for(var i=0; i<items.length; i++)
+     {
+        var item = items[i];
+        if(typeof item == 'string') this.items.push( {caption:item , value:item} );
+        else                        this.items.push( item );
+     }     
+    }  
+    this.__render();
+ } 
+
+
+ addItems( items )
+ {
    if(items!=null) 
    {
      for(var i=0; i<items.length; i++)

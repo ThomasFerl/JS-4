@@ -389,11 +389,16 @@ export const Katalog = {
 
 export class TFCatalog
 {
- constructor( aParent , tableName , fieldName , ID , aCaption )
+  // aCaption: ist das Datenfeld, welches den in der Select-Box den Text anzeigt
+  // ID      : ist das dazugehörige ID-Feld, welches intern weitergegeben wird
+  // Manchmal kann es sinnvoll sein, nur mit Caption zu arbeiten.
+  // In diesem Fall wird das ID-Feld einfach leer gelassen....
+ constructor( aParent , tableName , fieldName , ID , aCaption )  
  {
-   this.parent  = aParent || globals.webApp.activeWorkspace;
-   this.caption = aCaption || tableName;
-   this.catalog = new TFCatalogObject( tableName , fieldName , ID );
+   this.selected = '';  
+   this.parent   = aParent || globals.webApp.activeWorkspace;
+   this.caption  = aCaption || tableName;
+   this.catalog  = new TFCatalogObject( tableName , fieldName , ID );
    
    // falls das Laden nicht funktioniert - ABSPRUNG 
    if(!this.catalog.load()) { return false;}
@@ -436,10 +441,14 @@ async show()
         }.bind({ self: this, gui: gui });
 
         // Das Herzstück: resolve() beim Schließen aufrufen
-        gui.btnClose.callBack_onClick = function() {
-            this.gui.close();
-            resolve(); // Hier wird das await beendet
-        }.bind({ gui: gui });
+        gui.btnClose.callBack_onClick = function() 
+        { 
+          var lb             = this.gui.listBox;
+          var ndx            = lb.itemIndex;
+          this.self.selected = lb.getItemByIndex(ndx).caption;
+          this.gui.close();
+          resolve(); // Hier wird das await beendet
+        }.bind({ self:this, gui: gui });
       });
 }
 
