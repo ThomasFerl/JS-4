@@ -5,11 +5,12 @@ import * as utils        from "./tfWebApp/utils.js";
 import * as dialogs      from "./tfWebApp/tfDialogs.js";
 
 import { TFCatalog   }   from "./tfWebApp/tfCatalog.js";
-import { TFDateTime  }   from "./tfWebApp/utils.js";  
+
 
 import * as forms                from "./forms.js";
 import { TFgui }                 from "./tfWebApp/tfGUI.js";
 import { TFDataObject }          from "./tfWebApp/tfDbObjects.js";
+import { TFComboBox }            from "./tfWebApp/tfObjects.js";
 
 
 
@@ -63,9 +64,30 @@ edit( callback_if_ready )
 
   var caption = this.banf.ID ? 'Banf-Position bearbeiten' : 'Banf-Position anlegen';
   var gui     = new TFgui( null , forms.inpBANF , {caption:caption});
-    
- gui.labelBanfBez.caption     = this.banfHead.NAME;
- gui.labelBanfDetails.caption = this.banfHead.BESCHREIBUNG;
+
+//----Nachträglich (außerhalb des GUI-Builders noch zwei Eingabefelder hinzufügen----
+// um an den Container heranzukommen, muss über die parent_Eigenschaft eines beliebigen GUI-Element des gleichen Containers zugegriffen werden
+  var container     = gui.editPos.parent;
+  var editField_K   = new TFComboBox( container , 7 , 3 , 2  , 1 , {caption:'Feld K' } )
+  editField_K.items = [ 'X','Z','F' ];
+
+   var editField_P   = new TFComboBox( container , 9 , 3 , 2  , 1 , {caption:'Feld P' } )
+  editField_P.items = [ 'B' ];
+
+
+  var editField_M   = new TFComboBox( container , 11 , 3 , 2  , 1 , {caption:'Material' } )
+  editField_M.items = [ '80.000.000.100' ,  '80.000.000.300' ];
+  
+  
+  //-----------------------------------------------------------------------------------
+
+
+
+
+
+
+  gui.labelBanfBez.caption     = this.banfHead.NAME;
+  gui.labelBanfDetails.caption = this.banfHead.BESCHREIBUNG;
 
 
    // Vorbefüllung der Select-Felder mit den zugehörigen Katalogen und die Verbindung der Katalog-Schaltfläche mit dem Katalog-Dialog
@@ -133,7 +155,13 @@ gui.btnAuftrag.callBack_onClick =  async function(){
                                                     }.bind({self:this, gui:gui});  
 
 
-   gui.dataBinding(  this.banf );
+  gui.dataBinding(  this.banf );
+
+  // die manuellen Felder auch manuell ins Binding ...
+  gui.addBinding( 'FELD_K'   , editField_K );
+  gui.addBinding( 'FELD_P'   , editField_P );
+  gui.addBinding( 'MATERIAL' , editField_M );
+
    gui.update('GUI');
 
 

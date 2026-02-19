@@ -20,6 +20,12 @@ export class TFgui
   }
 
 
+  addBinding(fieldName, guiElement)
+  {
+    this.dataBindings.push( {key:fieldName, guiElement:guiElement} );
+  }
+
+
   update(direction)
   { 
     if (direction.toUpperCase() == 'GUI') 

@@ -14,10 +14,11 @@ export class TBanfExport
 {
     constructor( banfHead )
     { 
-      this.allFields     = [];
-      this.activeFields  = []; 
-      this.banfList      = [];
-      this.ok            = false;
+      this.allFields      = [];
+      this.activeFields   = []; 
+      this.lbActiveFields = null; 
+      this.banfList       = [];
+      this.ok             = false;
 
       var response = utils.webApiRequest('LSBANF' , {ID_HEAD:banfHead.ID} );
       if(response.error) {dialogs.showMessage(response.errMsg);return; }
@@ -40,18 +41,20 @@ export class TBanfExport
      exportToClipboard()
      {
        var gui     = new TFgui( null , forms.banfExport , {caption:"BANF via Zwischenablage exportieren ..."} );
+       this.lbActiveFields = gui.listBoxDestination;
 
        gui.listBoxSource.addItems( this.allFields );
-       gui.listBoxDestination.addItems( this.activeFields );
+       this.lbActiveFields.addItems( this.activeFields );
    
-       gui.listBoxDestination.callBack_onKeyDown = function(e){ 
-                                                               if (e.altKey && e.key === "ArrowUp")   { this.gui.listBoxDestination.moveUp()  ; e.preventDefault(); this.self.___updateDatabase()}
-                                                               if (e.altKey && e.key === "ArrowDown") { this.gui.listBoxDestination.moveDown(); e.preventDefault(); this.self.___updateDatabase()}
-                                                              }.bind({self:this,gui:gui})
+       this.lbActiveFields.callBack_onKeyDown = function(e){ 
+                                                               if (e.altKey && e.key === "ArrowUp")   { this.self.lbActiveFields.moveUp()  ; e.preventDefault(); this.self.___updateDatabase()}
+                                                               if (e.altKey && e.key === "ArrowDown") { this.self.lbActiveFields.moveDown(); e.preventDefault(); this.self.___updateDatabase()}
+                                                            }.bind({self:this})
 
-       gui.btnPlus.callBack_onClick     = function() { this.self.___addSelectedItems   ( this.gui.listBoxDestination , this.gui.listBoxSource.selectedItems ) ;  this.self.___updateDatabase()}.bind({gui:gui,self:this});
-       gui.btnMinus.callBack_onClick    = function() { this.self.___removeSelectedItems( this.gui.listBoxDestination ) ;  this.self.___updateDatabase()}.bind({gui:gui,self:this});
+       gui.btnPlus.callBack_onClick     = function() { this.self.___addSelectedItems   ( this.self.lbActiveFields , this.gui.listBoxSource.selectedItems ) ;  this.self.___updateDatabase()}.bind({gui:gui,self:this});
+       gui.btnMinus.callBack_onClick    = function() { this.self.___removeSelectedItems( this.self.lbActiveFields ) ;                                         this.self.___updateDatabase()}.bind({self:this});
        gui.btnAbort.callBack_onClick    = function() { this.gui.close() }.bind({gui:gui});
+       
        gui.btnExport.callBack_onClick   = function()
        { 
          var exportData = [];
@@ -81,10 +84,6 @@ ___addSelectedItems( listBox , selectedItems )
 { 
   for(var i=0; i<selectedItems.length; i++)  
   listBox.addItem  ( selectedItems[i]  , true );  
-
-  this.activeFields  = [];
-  for(var i=0; i<listBox.items.length; i++) this.activeFields.push( listBox.getItemByIndex(i).value );
-
 }
 
 
@@ -97,6 +96,9 @@ ___removeSelectedItems( listBox )
 
 ___updateDatabase()
 {
+  this.activeFields  = [];
+  for(var i=0; i<this.lbActiveFields.items.length; i++) this.activeFields.push( this.lbActiveFields.items[i].value );
+  
   utils.webApiRequest('SAVEEXPORTFIELDS' , {fieldList:this.activeFields} );
 }
 

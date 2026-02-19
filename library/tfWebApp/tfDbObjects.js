@@ -36,7 +36,7 @@ export class TFDataObject
       else{
            if(!ID) 
            {
-             var response = utils.webApiRequest('STRUCTURE',{tableName:tableName, etc:this.etc});
+             var response = utils.webApiRequest('STRUCTURE',{tableName:this.#tableName, etc:this.etc});
              if(response.error) {dialogs.showMessage('Fehler beim Abfragen der Tabllenstruktur: '+response.errMsg); return; }
              for(var i=0; i<response.result.length; i++) this.#defineField( response.result[i]['NAME'] , '' );
            }

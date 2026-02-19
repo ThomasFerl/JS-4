@@ -40,10 +40,12 @@ const dB          = new Database( dBName  , { verbose: utils.log ,  readonly: fa
 dbTables.buildTables( dB );
 
 // Datenstruktur auf ggf. vorhandene Änderungen prüfen ....
-// dbTables.checkdbTableStructure();
+dbTables.checkTableStructure( dB );
 
 
+// das Gleiche für die etc-Datenbank
 etcTables.buildTables( etc );
+//etcTables.checkTableStructure( etc );
 
 
 const webApp       = express();

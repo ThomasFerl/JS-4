@@ -24,7 +24,10 @@ tables.push(
        {fieldName: "BEMERKUNG"          , fieldType: "Text"    },
        {fieldName: "SACHKONTO"          , fieldType: "Text"    },
        {fieldName: "AUFTRAG"            , fieldType: "Text"    },
-       {fieldName: "OWNER"              , fieldType: "Text"    }
+       {fieldName: "OWNER"              , fieldType: "Text"    },
+       {fieldName: "FELD_K"             , fieldType: "Text"    },
+       {fieldName: "FELD_P"             , fieldType: "Text"    },
+       {fieldName: "MATERIAL"           , fieldType: "Text"    }
     ]});
 
   tables.push( 
@@ -99,6 +102,38 @@ tables.push(
 
 
 
+module.exports.checkSingleTableStructure = function( dB , table)
+{
+   // Tabellenstruktur von dB abfragen
+   var response = dbUtils.fetchRecords_from_Query( dB , "PRAGMA table_info('"+table.tableName+"')" );
+
+  for(var i=1; i<10;i++) console.log('.');
+
+   console.log('check table structure ('+table.tableName+') -> ' + JSON.stringify(response));
+
+   if(!response.error)
+   {
+    // durchlaufe die Felder von table und suche das Datenfeld in response.result. 
+    // Wenn nicht gefunden, dann Alter Table add Column ... ausführen...
+    table.tableFields.forEach( field => {
+                                          var exist = response.result.find( f => f.NAME.toUpperCase() == field.fieldName.toUpperCase() );
+                                          if(!exist)
+                                             {
+                                               utils.log('Table '+table.tableName+': field '+field.fieldName+' not exist - try to add this ...');  
+                                               dbUtils.runSQL( dB , 'Alter Table '+table.tableName+' Add Column '+field.fieldName+' '+field.fieldType );
+                                             }  
+                                        });
+   } 
+}
+
+
+
+module.exports.checkTableStructure = function( dB )
+{
+    tables.forEach( table => { this.checkSingleTableStructure( dB , table ) } );
+}
+
+
 
 module.exports.buildTables = function( dB )
 {
@@ -126,6 +161,14 @@ module.exports.buildTables = function( dB )
       }
     }
    } 
+
+
+
+
+
+
+
+
     
 
 }  

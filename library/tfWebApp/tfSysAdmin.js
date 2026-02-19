@@ -29,7 +29,7 @@ const UserDialog = {
   left: 4,
   top: 31,
   width: "70%",
-  height: "70%",
+  height: "90%",
   zIndex: "auto",
   margin: "0px",
   marginLeft: "0px",
@@ -389,7 +389,7 @@ const UserDetails = {
   left: 4,
   top: 31,
   width: "80%",
-  height: "70%",
+  height: "80%",
   zIndex: "auto",
   margin: "0px",
   marginLeft: "0px",
@@ -1390,7 +1390,7 @@ export class TFUserList
       this.gui.btnAddUser.callBack_onClick  = function(){this.newUser()}.bind(this);
       this.gui.btnEditUser.callBack_onClick = function(){this.editUser()}.bind(this);
       //this.gui.btnDeleteUser.
-      this.gui.btnClose.callBack_onClick    = function(){this.userListWnd.close()}.bind(this);
+      this.gui.btnClose.callBack_onClick    = function(){this.gui.close()}.bind(this);
       
       this.updateView_user();
     }
@@ -1463,7 +1463,7 @@ edit( callback_if_ready )
       gui.btnAbort.callBack_onClick = function() { this.gui.close(); }.bind( {gui:gui} )
 
       gui.btnOk.callBack_onClick     = function(values) 
-                                       { debugger;
+                                       {
                                           this.gui.update('data');    
                                           this.self.grant.save();
                                           this.gui.close();
