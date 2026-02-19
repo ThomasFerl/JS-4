@@ -2,206 +2,1381 @@ import * as globals      from "./globals.js";
 import * as utils        from "./utils.js";
 import * as dialogs      from "./tfDialogs.js";
 
-import {TForm}          from "./tfObjects.js";
+
+import { TFgui }         from "./tfGUI.js";
+import { TFDataObject }  from "./tfDbObjects.js";
+
+const UserDialog = {
+  objName: "TFPanel",
+  name: "dashBoard",
+  dataFieldName: "",
+  css: "cssPanel",
+  backgroundColor: "rgb(204, 204, 204)",
+  color: "rgb(0, 0, 0)",
+  borderColor: "rgb(87, 86, 86)",
+  borderWidth: "1.11111px",
+  borderRadius: "2px",
+  opacity: "1",
+  blur: 0,
+  placeItems: "stretch normal",
+  justifyContent: "left",
+  alignItems: "stretch",
+  gridLeft: null,
+  gridTop: null,
+  gridWidth: null,
+  gridHeight: null,
+  gap: "",
+  left: 4,
+  top: 31,
+  width: "70%",
+  height: "70%",
+  zIndex: "auto",
+  margin: "0px",
+  marginLeft: "0px",
+  marginRight: "0px",
+  marginTop: "0px",
+  marginBottom: "0px",
+  padding: "0px",
+  paddingTop: "0px",
+  paddingLeft: "0px",
+  paddingRight: "0px",
+  paddingBottom: "0px",
+  overflow: "hidden",
+  visible: true,
+  display: "grid",
+  position: "relative",
+  flexDirection: "row",
+  gridLayout: "10x10",
+  children: [
+    {
+      objName: "TFPanel",
+      name: "TFPanel190",
+      dataFieldName: "",
+      css: ".cssContainerPanel",
+      backgroundColor: "rgb(136, 136, 136)",
+      color: "rgb(0, 0, 0)",
+      borderColor: "rgb(0, 0, 0)",
+      borderWidth: "1.11111px",
+      borderRadius: "0px",
+      opacity: "1",
+      blur: "blur(0px)",
+      placeItems: "stretch normal",
+      justifyContent: "normal",
+      alignItems: "stretch",
+      gridLeft: 1,
+      gridTop: 1,
+      gridWidth: 10,
+      gridHeight: 1,
+      gap: "",
+      left: 1,
+      top: 1,
+      width: 10,
+      height: 1,
+      zIndex: "auto",
+      margin: "0px",
+      marginLeft: "0px",
+      marginRight: "0px",
+      marginTop: "0px",
+      marginBottom: "0px",
+      padding: "7px",
+      paddingTop: "7px",
+      paddingLeft: "7px",
+      paddingRight: "7px",
+      paddingBottom: "7px",
+      overflow: "hidden",
+      visible: true,
+      display: "grid",
+      position: "relative",
+      flexDirection: "row",
+      gridLayout: "7x5",
+      children: [
+        {
+          objName: "TFButton",
+          name: "btnAddUser",
+          dataFieldName: "",
+          css: "cssButton01",
+          backgroundColor: "rgb(95, 138, 35)",
+          color: "rgb(255, 255, 255)",
+          borderColor: "rgb(0, 0, 0)",
+          borderWidth: "1.11111px",
+          borderRadius: "0px",
+          opacity: "1",
+          blur: "blur(0px)",
+          placeItems: "stretch normal",
+          justifyContent: "center",
+          alignItems: "stretch",
+          gridLeft: 1,
+          gridTop: 2,
+          gridWidth: 1,
+          gridHeight: 3,
+          gap: "",
+          left: 1,
+          top: 2,
+          width: 1,
+          height: 3,
+          zIndex: "auto",
+          margin: "0px 0px 0px 4px",
+          marginLeft: "4px",
+          marginRight: "0px",
+          marginTop: "0px",
+          marginBottom: "0px",
+          padding: "0px",
+          paddingTop: "0px",
+          paddingLeft: "0px",
+          paddingRight: "0px",
+          paddingBottom: "0px",
+          overflow: "visible",
+          visible: true,
+          display: "grid",
+          position: "static",
+          flexDirection: "row",
+          gridLayout: "2x1",
+          caption: "neuer Benutzer",
+          glyph: "",
+          glyphColor: "",
+          children: []
+        },
+        {
+          objName: "TFButton",
+          name: "btnEditUser",
+          dataFieldName: "",
+          css: "cssButton01",
+          backgroundColor: "rgb(95, 138, 35)",
+          color: "rgb(255, 255, 255)",
+          borderColor: "rgb(0, 0, 0)",
+          borderWidth: "1.11111px",
+          borderRadius: "0px",
+          opacity: "1",
+          blur: "blur(0px)",
+          placeItems: "stretch normal",
+          justifyContent: "center",
+          alignItems: "stretch",
+          gridLeft: 2,
+          gridTop: 2,
+          gridWidth: 1,
+          gridHeight: 3,
+          gap: "",
+          left: 2,
+          top: 2,
+          width: 1,
+          height: 3,
+          zIndex: "auto",
+          margin: "0px 0px 0px 4px",
+          marginLeft: "4px",
+          marginRight: "0px",
+          marginTop: "0px",
+          marginBottom: "0px",
+          padding: "0px",
+          paddingTop: "0px",
+          paddingLeft: "0px",
+          paddingRight: "0px",
+          paddingBottom: "0px",
+          overflow: "visible",
+          visible: true,
+          display: "grid",
+          position: "static",
+          flexDirection: "row",
+          gridLayout: "2x1",
+          caption: "Benutzer bearbeiten",
+          glyph: "",
+          glyphColor: "",
+          children: []
+        },
+        {
+          objName: "TFButton",
+          name: "btnDeleteUser",
+          dataFieldName: "",
+          css: "cssButton01",
+          backgroundColor: "rgb(128, 0, 0)",
+          color: "rgb(255, 255, 255)",
+          borderColor: "rgb(0, 0, 0)",
+          borderWidth: "1.11111px",
+          borderRadius: "0px",
+          opacity: "1",
+          blur: "blur(0px)",
+          placeItems: "stretch normal",
+          justifyContent: "center",
+          alignItems: "stretch",
+          gridLeft: 3,
+          gridTop: 2,
+          gridWidth: 1,
+          gridHeight: 3,
+          gap: "",
+          left: 3,
+          top: 2,
+          width: 1,
+          height: 3,
+          zIndex: "auto",
+          margin: "0px 0px 0px 4px",
+          marginLeft: "4px",
+          marginRight: "0px",
+          marginTop: "0px",
+          marginBottom: "0px",
+          padding: "0px",
+          paddingTop: "0px",
+          paddingLeft: "0px",
+          paddingRight: "0px",
+          paddingBottom: "0px",
+          overflow: "visible",
+          visible: true,
+          display: "grid",
+          position: "static",
+          flexDirection: "row",
+          gridLayout: "2x1",
+          caption: "Benutzer löschen",
+          glyph: "",
+          glyphColor: "",
+          children: []
+        },
+        {
+          objName: "TFButton",
+          name: "btnClose",
+          dataFieldName: "",
+          css: "cssButton01",
+          backgroundColor: "rgb(102, 102, 102)",
+          color: "rgb(255, 255, 255)",
+          borderColor: "rgb(0, 0, 0)",
+          borderWidth: "1.11111px",
+          borderRadius: "0px",
+          opacity: "1",
+          blur: "blur(0px)",
+          placeItems: "stretch normal",
+          justifyContent: "center",
+          alignItems: "stretch",
+          gridLeft: 7,
+          gridTop: 2,
+          gridWidth: 1,
+          gridHeight: 3,
+          gap: "",
+          left: 7,
+          top: 2,
+          width: 1,
+          height: 3,
+          zIndex: "auto",
+          margin: "0px 0px 0px 4px",
+          marginLeft: "4px",
+          marginRight: "0px",
+          marginTop: "0px",
+          marginBottom: "0px",
+          padding: "0px",
+          paddingTop: "0px",
+          paddingLeft: "0px",
+          paddingRight: "0px",
+          paddingBottom: "0px",
+          overflow: "visible",
+          visible: true,
+          display: "grid",
+          position: "static",
+          flexDirection: "row",
+          gridLayout: "2x1",
+          caption: "Beenden",
+          glyph: "",
+          glyphColor: "",
+          children: []
+        }
+      ]
+    },
+    {
+      objName: "TFPanel",
+      name: "filterPanel",
+      dataFieldName: "",
+      css: ".cssContainerPanel",
+      backgroundColor: "rgb(221, 221, 221)",
+      color: "rgb(0, 0, 0)",
+      borderColor: "rgb(0, 0, 0)",
+      borderWidth: "1.11111px",
+      borderRadius: "0px",
+      opacity: "1",
+      blur: "blur(0px)",
+      placeItems: "stretch normal",
+      justifyContent: "normal",
+      alignItems: "stretch",
+      gridLeft: 1,
+      gridTop: 2,
+      gridWidth: 10,
+      gridHeight: 1,
+      gap: "",
+      left: 1,
+      top: 2,
+      width: 10,
+      height: 1,
+      zIndex: "auto",
+      margin: "1px",
+      marginLeft: "1px",
+      marginRight: "1px",
+      marginTop: "1px",
+      marginBottom: "1px",
+      padding: "7px",
+      paddingTop: "7px",
+      paddingLeft: "7px",
+      paddingRight: "7px",
+      paddingBottom: "7px",
+      overflow: "hidden",
+      visible: true,
+      display: "grid",
+      position: "relative",
+      flexDirection: "row",
+      gridLayout: "1x1",
+      children: []
+    },
+    {
+      objName: "TFPanel",
+      name: "gridContainer",
+      dataFieldName: "",
+      css: ".cssContainerPanel",
+      backgroundColor: "rgb(204, 204, 204)",
+      color: "rgb(0, 0, 0)",
+      borderColor: "rgb(0, 0, 0)",
+      borderWidth: "1.11111px",
+      borderRadius: "0px",
+      opacity: "1",
+      blur: "blur(0px)",
+      placeItems: "stretch normal",
+      justifyContent: "normal",
+      alignItems: "stretch",
+      gridLeft: 1,
+      gridTop: 3,
+      gridWidth: 10,
+      gridHeight: 8,
+      gap: "",
+      left: 1,
+      top: 3,
+      width: 10,
+      height: 8,
+      zIndex: "auto",
+      margin: "1px",
+      marginLeft: "1px",
+      marginRight: "1px",
+      marginTop: "1px",
+      marginBottom: "1px",
+      padding: "7px",
+      paddingTop: "7px",
+      paddingLeft: "7px",
+      paddingRight: "7px",
+      paddingBottom: "7px",
+      overflow: "hidden",
+      visible: true,
+      display: "grid",
+      position: "relative",
+      flexDirection: "row",
+      gridLayout: "1x1",
+      children: []
+    }
+  ]
+}
 
 
+const UserDetails = {
+  objName: "TFPanel",
+  name: "dashBoard",
+  dataFieldName: "",
+  css: "cssPanel",
+  backgroundColor: "rgb(237, 237, 237)",
+  color: "rgb(0, 0, 0)",
+  borderColor: "rgb(87, 86, 86)",
+  borderWidth: "1.11111px",
+  borderRadius: "2px",
+  opacity: "1",
+  blur: 0,
+  placeItems: "stretch normal",
+  justifyContent: "left",
+  alignItems: "stretch",
+  gridLeft: null,
+  gridTop: null,
+  gridWidth: null,
+  gridHeight: null,
+  gap: "",
+  left: 4,
+  top: 31,
+  width: "80%",
+  height: "70%",
+  zIndex: "auto",
+  margin: "0px",
+  marginLeft: "0px",
+  marginRight: "0px",
+  marginTop: "0px",
+  marginBottom: "0px",
+  padding: "0px",
+  paddingTop: "0px",
+  paddingLeft: "0px",
+  paddingRight: "0px",
+  paddingBottom: "0px",
+  overflow: "hidden",
+  visible: true,
+  display: "grid",
+  position: "relative",
+  flexDirection: "row",
+  gridLayout: "10x20",
+  children: [
+    {
+      objName: "TFPanel",
+      name: "TFPanel1795",
+      dataFieldName: "",
+      css: ".cssContainerPanel",
+      backgroundColor: "rgb(51, 51, 51)",
+      color: "rgb(0, 0, 0)",
+      borderColor: "rgb(0, 0, 0)",
+      borderWidth: "1.11111px",
+      borderRadius: "0px",
+      opacity: "1",
+      blur: 0,
+      placeItems: "stretch normal",
+      justifyContent: "normal",
+      alignItems: "stretch",
+      gridLeft: 6,
+      gridTop: 1,
+      gridWidth: 5,
+      gridHeight: 1,
+      gap: "",
+      left: 6,
+      top: 1,
+      width: 5,
+      height: 1,
+      zIndex: "auto",
+      margin: "2px",
+      marginLeft: "2px",
+      marginRight: "2px",
+      marginTop: "2px",
+      marginBottom: "2px",
+      padding: "7px",
+      paddingTop: "7px",
+      paddingLeft: "7px",
+      paddingRight: "7px",
+      paddingBottom: "7px",
+      overflow: "hidden",
+      visible: true,
+      display: "grid",
+      position: "relative",
+      flexDirection: "row",
+      gridLayout: "1x1",
+      children: [
+        {
+          objName: "TFLabel",
+          name: "TFLabel1182",
+          dataFieldName: "",
+          css: "cssLabel",
+          backgroundColor: "rgba(0, 0, 0, 0)",
+          color: "rgb(255, 255, 255)",
+          borderColor: "rgb(0, 0, 0)",
+          borderWidth: "0px",
+          borderRadius: "0px",
+          opacity: "1",
+          blur: 0,
+          placeItems: "center",
+          justifyContent: "center",
+          alignItems: "center",
+          gridLeft: 1,
+          gridTop: 1,
+          gridWidth: 1,
+          gridHeight: 1,
+          gap: "",
+          left: 1,
+          top: 1,
+          width: 1,
+          height: 1,
+          zIndex: "auto",
+          margin: "0px",
+          marginLeft: "0px",
+          marginRight: "0px",
+          marginTop: "0px",
+          marginBottom: "0px",
+          padding: "0px",
+          paddingTop: "0px",
+          paddingLeft: "0px",
+          paddingRight: "0px",
+          paddingBottom: "0px",
+          overflow: "hidden",
+          visible: true,
+          display: "grid",
+          position: "static",
+          flexDirection: "row",
+          gridLayout: "1x1",
+          caption: "Berechtigungen",
+          textAlign: "center",
+          font: "Arial",
+          fontWeight: "bold",
+          fontSize: "1em",
+          children: []
+        }
+      ]
+    },
+    {
+      objName: "TFListCheckbox",
+      name: "cbListboxGrants",
+      dataFieldName: "PASSWD",
+      css: "cssObject",
+      backgroundColor: "rgb(204, 204, 204)",
+      color: "rgb(0, 0, 0)",
+      borderColor: "rgb(0, 0, 0)",
+      borderWidth: "0px",
+      borderRadius: "0px",
+      shadow: "",
+      opacity: "1",
+      blur: 0,
+      placeItems: "center normal",
+      justifyContent: "center",
+      alignItems: "center",
+      gridLeft: 6,
+      gridTop: 2,
+      gridWidth: 5,
+      gridHeight: 19,
+      gap: "",
+      left: 6,
+      top: 2,
+      width: 5,
+      height: 19,
+      zIndex: "auto",
+      margin: "2px",
+      marginLeft: "2px",
+      marginRight: "2px",
+      marginTop: "2px",
+      marginBottom: "2px",
+      padding: "0px",
+      paddingTop: "0px",
+      paddingLeft: "0px",
+      paddingRight: "0px",
+      paddingBottom: "0px",
+      overflow: "auto",
+      visible: true,
+      display: "block",
+      position: "static",
+      flexDirection: "column",
+      gridLayout: "0x0",
+      children: []
+    },
+    {
+      objName: "TFPanel",
+      name: "TFPanel2206",
+      dataFieldName: "",
+      css: ".cssContainerPanel",
+      backgroundColor: "rgb(136, 136, 136)",
+      color: "rgb(0, 0, 0)",
+      borderColor: "rgb(0, 0, 0)",
+      borderWidth: "1.11111px",
+      borderRadius: "0px",
+      opacity: "1",
+      blur: 0,
+      placeItems: "stretch normal",
+      justifyContent: "normal",
+      alignItems: "stretch",
+      gridLeft: 1,
+      gridTop: 19,
+      gridWidth: 5,
+      gridHeight: 2,
+      gap: "",
+      left: 1,
+      top: 19,
+      width: 5,
+      height: 2,
+      zIndex: "auto",
+      margin: "2px",
+      marginLeft: "2px",
+      marginRight: "2px",
+      marginTop: "2px",
+      marginBottom: "2px",
+      padding: "7px",
+      paddingTop: "7px",
+      paddingLeft: "7px",
+      paddingRight: "7px",
+      paddingBottom: "7px",
+      overflow: "hidden",
+      visible: true,
+      display: "grid",
+      position: "relative",
+      flexDirection: "row",
+      gridLayout: "5x5",
+      children: [
+        {
+          objName: "TFButton",
+          name: "btnOk",
+          dataFieldName: "",
+          css: "cssButton01",
+          backgroundColor: "rgb(95, 138, 35)",
+          color: "rgb(255, 255, 255)",
+          borderColor: "rgb(0, 0, 0)",
+          borderWidth: "1.11111px",
+          borderRadius: "0px",
+          opacity: "1",
+          blur: 0,
+          placeItems: "stretch normal",
+          justifyContent: "center",
+          alignItems: "stretch",
+          gridLeft: 2,
+          gridTop: 2,
+          gridWidth: 1,
+          gridHeight: 3,
+          gap: "",
+          left: 2,
+          top: 2,
+          width: 1,
+          height: 3,
+          zIndex: "auto",
+          margin: "0px 0px 0px 4px",
+          marginLeft: "4px",
+          marginRight: "0px",
+          marginTop: "0px",
+          marginBottom: "0px",
+          padding: "0px",
+          paddingTop: "0px",
+          paddingLeft: "0px",
+          paddingRight: "0px",
+          paddingBottom: "0px",
+          overflow: "visible",
+          visible: true,
+          display: "grid",
+          position: "static",
+          flexDirection: "row",
+          gridLayout: "2x1",
+          caption: "Ok",
+          glyph: "",
+          glyphColor: "",
+          children: []
+        },
+        {
+          objName: "TFButton",
+          name: "btnAbort",
+          dataFieldName: "",
+          css: "cssButton01",
+          backgroundColor: "rgb(128, 0, 0)",
+          color: "rgb(255, 255, 255)",
+          borderColor: "rgb(0, 0, 0)",
+          borderWidth: "1.11111px",
+          borderRadius: "0px",
+          opacity: "1",
+          blur: 0,
+          placeItems: "stretch normal",
+          justifyContent: "center",
+          alignItems: "stretch",
+          gridLeft: 4,
+          gridTop: 2,
+          gridWidth: 1,
+          gridHeight: 3,
+          gap: "",
+          left: 4,
+          top: 2,
+          width: 1,
+          height: 3,
+          zIndex: "auto",
+          margin: "0px 0px 0px 4px",
+          marginLeft: "4px",
+          marginRight: "0px",
+          marginTop: "0px",
+          marginBottom: "0px",
+          padding: "0px",
+          paddingTop: "0px",
+          paddingLeft: "0px",
+          paddingRight: "0px",
+          paddingBottom: "0px",
+          overflow: "visible",
+          visible: true,
+          display: "grid",
+          position: "static",
+          flexDirection: "row",
+          gridLayout: "2x1",
+          caption: "Abbruch",
+          glyph: "",
+          glyphColor: "",
+          children: []
+        }
+      ]
+    },
+    {
+      objName: "TFEdit",
+      name: "editUsername",
+      dataFieldName: "USERNAME",
+      css: "cssContainerPanel",
+      backgroundColor: "rgba(0, 0, 0, 0)",
+      color: "rgb(0, 0, 0)",
+      borderColor: "rgb(0, 0, 0)",
+      borderWidth: "0px",
+      borderRadius: "0px",
+      shadow: "",
+      opacity: "1",
+      blur: 0,
+      placeItems: "center normal",
+      justifyContent: "center",
+      alignItems: "center",
+      gridLeft: 1,
+      gridTop: 2,
+      gridWidth: 5,
+      gridHeight: 1,
+      gap: "",
+      left: 1,
+      top: 2,
+      width: 5,
+      height: 1,
+      zIndex: "auto",
+      margin: "3px",
+      marginLeft: "3px",
+      marginRight: "3px",
+      marginTop: "3px",
+      marginBottom: "3px",
+      padding: "0px",
+      paddingTop: "0px",
+      paddingLeft: "0px",
+      paddingRight: "0px",
+      paddingBottom: "0px",
+      overflow: "hidden",
+      visible: true,
+      display: "grid",
+      position: "static",
+      flexDirection: "row",
+      gridLayout: "2x1",
+      caption: "Benutzername",
+      captionLength: "10",
+      value: "",
+      editLength: "auto",
+      appendix: "",
+      appendixLength: "1",
+      typ: "text",
+      children: []
+    },
+    {
+      objName: "TFEdit",
+      name: "editPassword",
+      dataFieldName: "PASSWD",
+      css: "cssContainerPanel",
+      backgroundColor: "rgba(0, 0, 0, 0)",
+      color: "rgb(0, 0, 0)",
+      borderColor: "rgb(0, 0, 0)",
+      borderWidth: "0px",
+      borderRadius: "0px",
+      shadow: "",
+      opacity: "1",
+      blur: "blur(0px)",
+      placeItems: "center normal",
+      justifyContent: "center",
+      alignItems: "center",
+      gridLeft: 1,
+      gridTop: 4,
+      gridWidth: 5,
+      gridHeight: 1,
+      gap: "",
+      left: 1,
+      top: 4,
+      width: 5,
+      height: 1,
+      zIndex: "auto",
+      margin: "3px",
+      marginLeft: "3px",
+      marginRight: "3px",
+      marginTop: "3px",
+      marginBottom: "3px",
+      padding: "0px",
+      paddingTop: "0px",
+      paddingLeft: "0px",
+      paddingRight: "0px",
+      paddingBottom: "0px",
+      overflow: "hidden",
+      visible: true,
+      display: "grid",
+      position: "static",
+      flexDirection: "row",
+      gridLayout: "2x1",
+      caption: "Passwort",
+      captionLength: "10",
+      value: "",
+      editLength: "auto",
+      appendix: "",
+      appendixLength: "1",
+      typ: "text",
+      children: []
+    },
+    {
+      objName: "TFEdit",
+      name: "editFirstName",
+      dataFieldName: "FIRSTNAME",
+      css: "cssContainerPanel",
+      backgroundColor: "rgba(0, 0, 0, 0)",
+      color: "rgb(0, 0, 0)",
+      borderColor: "rgb(0, 0, 0)",
+      borderWidth: "0px",
+      borderRadius: "0px",
+      shadow: "",
+      opacity: "1",
+      blur: "blur(0px)",
+      placeItems: "center normal",
+      justifyContent: "center",
+      alignItems: "center",
+      gridLeft: 1,
+      gridTop: 6,
+      gridWidth: 5,
+      gridHeight: 1,
+      gap: "",
+      left: 1,
+      top: 6,
+      width: 5,
+      height: 1,
+      zIndex: "auto",
+      margin: "3px",
+      marginLeft: "3px",
+      marginRight: "3px",
+      marginTop: "3px",
+      marginBottom: "3px",
+      padding: "0px",
+      paddingTop: "0px",
+      paddingLeft: "0px",
+      paddingRight: "0px",
+      paddingBottom: "0px",
+      overflow: "hidden",
+      visible: true,
+      display: "grid",
+      position: "static",
+      flexDirection: "row",
+      gridLayout: "2x1",
+      caption: "Vorname",
+      captionLength: "10",
+      value: "",
+      editLength: "auto",
+      appendix: "",
+      appendixLength: "1",
+      typ: "text",
+      children: []
+    },
+    {
+      objName: "TFEdit",
+      name: "editLastName",
+      dataFieldName: "LASTNAME",
+      css: "cssContainerPanel",
+      backgroundColor: "rgba(0, 0, 0, 0)",
+      color: "rgb(0, 0, 0)",
+      borderColor: "rgb(0, 0, 0)",
+      borderWidth: "0px",
+      borderRadius: "0px",
+      shadow: "",
+      opacity: "1",
+      blur: "blur(0px)",
+      placeItems: "center normal",
+      justifyContent: "center",
+      alignItems: "center",
+      gridLeft: 1,
+      gridTop: 8,
+      gridWidth: 5,
+      gridHeight: 1,
+      gap: "",
+      left: 1,
+      top: 8,
+      width: 5,
+      height: 1,
+      zIndex: "auto",
+      margin: "3px",
+      marginLeft: "3px",
+      marginRight: "3px",
+      marginTop: "3px",
+      marginBottom: "3px",
+      padding: "0px",
+      paddingTop: "0px",
+      paddingLeft: "0px",
+      paddingRight: "0px",
+      paddingBottom: "0px",
+      overflow: "hidden",
+      visible: true,
+      display: "grid",
+      position: "static",
+      flexDirection: "row",
+      gridLayout: "2x1",
+      caption: "Nachname",
+      captionLength: "10",
+      value: "",
+      editLength: "auto",
+      appendix: "",
+      appendixLength: "1",
+      typ: "text",
+      children: []
+    },
+    {
+      objName: "TFEdit",
+      name: "editEmail",
+      dataFieldName: "EMAIL",
+      css: "cssContainerPanel",
+      backgroundColor: "rgba(0, 0, 0, 0)",
+      color: "rgb(0, 0, 0)",
+      borderColor: "rgb(0, 0, 0)",
+      borderWidth: "0px",
+      borderRadius: "0px",
+      shadow: "",
+      opacity: "1",
+      blur: "blur(0px)",
+      placeItems: "center normal",
+      justifyContent: "center",
+      alignItems: "center",
+      gridLeft: 1,
+      gridTop: 10,
+      gridWidth: 5,
+      gridHeight: 1,
+      gap: "",
+      left: 1,
+      top: 10,
+      width: 5,
+      height: 1,
+      zIndex: "auto",
+      margin: "3px",
+      marginLeft: "3px",
+      marginRight: "3px",
+      marginTop: "3px",
+      marginBottom: "3px",
+      padding: "0px",
+      paddingTop: "0px",
+      paddingLeft: "0px",
+      paddingRight: "0px",
+      paddingBottom: "0px",
+      overflow: "hidden",
+      visible: true,
+      display: "grid",
+      position: "static",
+      flexDirection: "row",
+      gridLayout: "2x1",
+      caption: "e-mail",
+      captionLength: "10",
+      value: "",
+      editLength: "auto",
+      appendix: "",
+      appendixLength: "1",
+      typ: "text",
+      children: []
+    },
+    {
+      objName: "TFEdit",
+      name: "editJobFunction",
+      dataFieldName: "JOBFUNCTION",
+      css: "cssContainerPanel",
+      backgroundColor: "rgba(0, 0, 0, 0)",
+      color: "rgb(0, 0, 0)",
+      borderColor: "rgb(0, 0, 0)",
+      borderWidth: "0px",
+      borderRadius: "0px",
+      shadow: "",
+      opacity: "1",
+      blur: "blur(0px)",
+      placeItems: "center normal",
+      justifyContent: "center",
+      alignItems: "center",
+      gridLeft: 1,
+      gridTop: 12,
+      gridWidth: 5,
+      gridHeight: 1,
+      gap: "",
+      left: 1,
+      top: 12,
+      width: 5,
+      height: 1,
+      zIndex: "auto",
+      margin: "3px",
+      marginLeft: "3px",
+      marginRight: "3px",
+      marginTop: "3px",
+      marginBottom: "3px",
+      padding: "0px",
+      paddingTop: "0px",
+      paddingLeft: "0px",
+      paddingRight: "0px",
+      paddingBottom: "0px",
+      overflow: "hidden",
+      visible: true,
+      display: "grid",
+      position: "static",
+      flexDirection: "row",
+      gridLayout: "2x1",
+      caption: "Job-Funktion",
+      captionLength: "10",
+      value: "",
+      editLength: "auto",
+      appendix: "",
+      appendixLength: "1",
+      typ: "text",
+      children: []
+    }
+  ]
+}
+
+
+const grantDlg = {
+  objName: "TFPanel",
+  name: "dashBoard",
+  dataFieldName: "",
+  css: "cssPanel",
+  backgroundColor: "rgb(204, 204, 204)",
+  color: "rgb(0, 0, 0)",
+  borderColor: "rgb(87, 86, 86)",
+  borderWidth: "1.11111px",
+  borderRadius: "2px",
+  opacity: "1",
+  blur: 0,
+  placeItems: "stretch normal",
+  justifyContent: "left",
+  alignItems: "stretch",
+  gridLeft: null,
+  gridTop: null,
+  gridWidth: null,
+  gridHeight: null,
+  gap: "",
+  left: 262,
+  top: 208,
+  width: "70%",
+  height: "70%",
+  zIndex: "auto",
+  margin: "0px",
+  marginLeft: "0px",
+  marginRight: "0px",
+  marginTop: "0px",
+  marginBottom: "0px",
+  padding: "0px",
+  paddingTop: "0px",
+  paddingLeft: "0px",
+  paddingRight: "0px",
+  paddingBottom: "0px",
+  overflow: "hidden",
+  visible: true,
+  display: "grid",
+  position: "relative",
+  flexDirection: "row",
+  gridLayout: "10x14",
+  children: [
+    {
+      objName: "TFPanel",
+      name: "TFPanel132",
+      dataFieldName: "",
+      css: ".cssContainerPanel",
+      backgroundColor: "rgb(153, 153, 153)",
+      color: "rgb(0, 0, 0)",
+      borderColor: "rgb(87, 86, 86)",
+      borderWidth: "1.11111px",
+      borderRadius: "0px",
+      opacity: "1",
+      blur: 0,
+      placeItems: "stretch normal",
+      justifyContent: "normal",
+      alignItems: "stretch",
+      gridLeft: 1,
+      gridTop: 13,
+      gridWidth: 10,
+      gridHeight: 2,
+      gap: "",
+      left: 1,
+      top: 13,
+      width: 10,
+      height: 2,
+      zIndex: "auto",
+      margin: "0px",
+      marginLeft: "0px",
+      marginRight: "0px",
+      marginTop: "0px",
+      marginBottom: "0px",
+      padding: "7px",
+      paddingTop: "7px",
+      paddingLeft: "7px",
+      paddingRight: "7px",
+      paddingBottom: "7px",
+      overflow: "hidden",
+      visible: true,
+      display: "grid",
+      position: "relative",
+      flexDirection: "row",
+      gridLayout: "7x5",
+      children: [
+        {
+          objName: "TFButton",
+          name: "btnOk",
+          dataFieldName: "",
+          css: "cssButton01",
+          backgroundColor: "rgb(95, 138, 35)",
+          color: "rgb(255, 255, 255)",
+          borderColor: "rgb(0, 0, 0)",
+          borderWidth: "1.11111px",
+          borderRadius: "0px",
+          opacity: "1",
+          blur: "blur(0px)",
+          placeItems: "stretch normal",
+          justifyContent: "center",
+          alignItems: "stretch",
+          gridLeft: 2,
+          gridTop: 2,
+          gridWidth: 2,
+          gridHeight: 3,
+          gap: "",
+          left: 2,
+          top: 2,
+          width: 2,
+          height: 3,
+          zIndex: "auto",
+          margin: "0px 0px 0px 4px",
+          marginLeft: "4px",
+          marginRight: "0px",
+          marginTop: "0px",
+          marginBottom: "0px",
+          padding: "0px",
+          paddingTop: "0px",
+          paddingLeft: "0px",
+          paddingRight: "0px",
+          paddingBottom: "0px",
+          overflow: "visible",
+          visible: true,
+          display: "grid",
+          position: "static",
+          flexDirection: "row",
+          gridLayout: "2x1",
+          caption: "OK",
+          glyph: "",
+          glyphColor: "",
+          children: []
+        },
+        {
+          objName: "TFButton",
+          name: "btnAbort",
+          dataFieldName: "",
+          css: "cssButton01",
+          backgroundColor: "rgb(128, 0, 0)",
+          color: "rgb(255, 255, 255)",
+          borderColor: "rgb(0, 0, 0)",
+          borderWidth: "1.11111px",
+          borderRadius: "0px",
+          opacity: "1",
+          blur: "blur(0px)",
+          placeItems: "stretch normal",
+          justifyContent: "center",
+          alignItems: "stretch",
+          gridLeft: 5,
+          gridTop: 2,
+          gridWidth: 2,
+          gridHeight: 3,
+          gap: "",
+          left: 5,
+          top: 2,
+          width: 2,
+          height: 3,
+          zIndex: "auto",
+          margin: "0px 0px 0px 4px",
+          marginLeft: "4px",
+          marginRight: "0px",
+          marginTop: "0px",
+          marginBottom: "0px",
+          padding: "0px",
+          paddingTop: "0px",
+          paddingLeft: "0px",
+          paddingRight: "0px",
+          paddingBottom: "0px",
+          overflow: "visible",
+          visible: true,
+          display: "grid",
+          position: "static",
+          flexDirection: "row",
+          gridLayout: "2x1",
+          caption: "Abbruch",
+          glyph: "",
+          glyphColor: "",
+          children: []
+        }
+      ]
+    },
+    {
+      objName: "TFEdit",
+      name: "editName",
+      dataFieldName: "NAME",
+      css: "cssContainerPanel",
+      backgroundColor: "rgba(0, 0, 0, 0)",
+      color: "rgb(0, 0, 0)",
+      borderColor: "rgb(0, 0, 0)",
+      borderWidth: "0px",
+      borderRadius: "0px",
+      shadow: "",
+      opacity: "1",
+      blur: "blur(0px)",
+      placeItems: "center normal",
+      justifyContent: "center",
+      alignItems: "center",
+      gridLeft: 2,
+      gridTop: 3,
+      gridWidth: 8,
+      gridHeight: 1,
+      gap: "",
+      left: 2,
+      top: 3,
+      width: 8,
+      height: 1,
+      zIndex: "auto",
+      margin: "3px",
+      marginLeft: "3px",
+      marginRight: "3px",
+      marginTop: "3px",
+      marginBottom: "3px",
+      padding: "0px",
+      paddingTop: "0px",
+      paddingLeft: "0px",
+      paddingRight: "0px",
+      paddingBottom: "0px",
+      overflow: "hidden",
+      visible: true,
+      display: "grid",
+      position: "static",
+      flexDirection: "row",
+      gridLayout: "2x1",
+      caption: "Name",
+      captionLength: "10",
+      value: "",
+      editLength: "auto",
+      appendix: "",
+      appendixLength: "1",
+      typ: "text",
+      children: []
+    },
+    {
+      objName: "TFEdit",
+      name: "editCaption",
+      dataFieldName: "CAPTION",
+      css: "cssContainerPanel",
+      backgroundColor: "rgba(0, 0, 0, 0)",
+      color: "rgb(0, 0, 0)",
+      borderColor: "rgb(0, 0, 0)",
+      borderWidth: "0px",
+      borderRadius: "0px",
+      shadow: "",
+      opacity: "1",
+      blur: "blur(0px)",
+      placeItems: "center normal",
+      justifyContent: "center",
+      alignItems: "center",
+      gridLeft: 2,
+      gridTop: 6,
+      gridWidth: 8,
+      gridHeight: 1,
+      gap: "",
+      left: 2,
+      top: 6,
+      width: 8,
+      height: 1,
+      zIndex: "auto",
+      margin: "3px",
+      marginLeft: "3px",
+      marginRight: "3px",
+      marginTop: "3px",
+      marginBottom: "3px",
+      padding: "0px",
+      paddingTop: "0px",
+      paddingLeft: "0px",
+      paddingRight: "0px",
+      paddingBottom: "0px",
+      overflow: "hidden",
+      visible: true,
+      display: "grid",
+      position: "static",
+      flexDirection: "row",
+      gridLayout: "2x1",
+      caption: "Beschreibung",
+      captionLength: "10",
+      value: "",
+      editLength: "auto",
+      appendix: "",
+      appendixLength: "0",
+      typ: "text",
+      children: []
+    },
+    {
+      objName: "TFEdit",
+      name: "editKind",
+      dataFieldName: "KIND",
+      css: "cssContainerPanel",
+      backgroundColor: "rgba(0, 0, 0, 0)",
+      color: "rgb(0, 0, 0)",
+      borderColor: "rgb(0, 0, 0)",
+      borderWidth: "0px",
+      borderRadius: "0px",
+      shadow: "",
+      opacity: "1",
+      blur: "blur(0px)",
+      placeItems: "center normal",
+      justifyContent: "center",
+      alignItems: "center",
+      gridLeft: 2,
+      gridTop: 9,
+      gridWidth: 8,
+      gridHeight: 1,
+      gap: "",
+      left: 2,
+      top: 9,
+      width: 8,
+      height: 1,
+      zIndex: "auto",
+      margin: "3px",
+      marginLeft: "3px",
+      marginRight: "3px",
+      marginTop: "3px",
+      marginBottom: "3px",
+      padding: "0px",
+      paddingTop: "0px",
+      paddingLeft: "0px",
+      paddingRight: "0px",
+      paddingBottom: "0px",
+      overflow: "hidden",
+      visible: true,
+      display: "grid",
+      position: "static",
+      flexDirection: "row",
+      gridLayout: "2x1",
+      caption: "Intern",
+      captionLength: "10",
+      value: "",
+      editLength: "auto",
+      appendix: "",
+      appendixLength: "1",
+      typ: "text",
+      children: []
+    }
+  ]
+}
 
 export class TFUser 
 {
-    #data          = {};
-    #original      = {};
-    #dirtyFields   = new Set();
-
-    
-    constructor(dbUser = {}) 
+    constructor( id ) 
     { 
       this.userGrants = []; 
-     // Prüfung: enthält dbUser **nur** das Feld "ID"
-     const keys = Object.keys(dbUser);
+      var response    = {};
+      if(id) response = utils.webApiRequest('LSUSERGRANTS',{userId:id} );
+      else   response = utils.webApiRequest('LSGRANTS',{} );
 
-     if (keys.length === 1 && keys[0] === "ID") 
-     {
-      var response = this.load_from_dB(dbUser.ID);
-      if (!response.error) dbUser = response.result;
-
-      response = utils.webApiRequest('getUserGrants' , JSON.stringify({userName:dbUser.username}));
       if(!response.error) this.userGrants = response.result;
-     }
-     else
-         {
-           if (this.userGrants.length==0)
-           {
-            var response = utils.webApiRequest('getUserGrants' , JSON.stringify({userName:dbUser.username}));
-            if(!response.error) this.userGrants = response.result;
-           }
-         }
-       
-     for (const field in dbUser) 
-     {
-             const value = dbUser[field];
-             this.#defineField(field, value || '');
-             console.log("THIS->" + utils.JSONstringify(this));
-     }
 
+      this.user       = new TFDataObject( "etc.user" , id || '' );
     }  
-  
+
    
-    #defineField(fieldName, defaultValue) 
-    {
-      // "ERZEUGEN" des Feldnamen innerhalb des lokalen "Data-Containers" 
-      this.#data    [fieldName] = defaultValue || '';
-      this.#original[fieldName] = defaultValue || '';
-     
-      Object.defineProperty(this, fieldName, {
-                                               get: () => this.#data[fieldName],
-                                               set: (val) => {
-                                                               this.#data[fieldName] = val;
-                                                               if (val !== this.#original[fieldName]) this.#dirtyFields.add(fieldName);
-                                                               else                                   this.#dirtyFields.delete(fieldName);
-                                                             },
-                                              enumerable: true
-                                            });
-    }
-  
-    get isDirty() {return this.#dirtyFields.size > 0;}
-    
-  
-    getChangedFields() {return Array.from(this.#dirtyFields);}
-
-    hasAccess(grantName)
-    {
-      for(var i=0; i<this.userGrants.length; i++)
-      {
-        var g = this.userGrants[i];
-        if(g.name == grantName) { return g.access }
-      }
-      return false;
-    } 
-
-
-    setAccess( grantName , checked)
-    { 
-      for(var i=0; i<this.userGrants.length; i++)
-      {
-        var g = this.userGrants[i];
-        if(g.name == grantName) { g.access=checked; return true;}
-      }
-      return false;
-    }
-
-    
-  
-    markClean() 
-    {
-      this.#dirtyFields.clear();
-      Object.assign(this.#original, this.#data);
-    }
-  
-    load_from_dB(id) 
-    {
-      return  utils.webApiRequest('USER',{userID:id} );
-    }
-
-    load(id) 
-    {
-       var response = this.load_from_dB(id); 
-       if(response.error){return false;}
-               
-      this.#data = response.result;                                    
-      this.markClean();
-      
-      return true;
-    }
-  
-    save() // ggf werden Berechtigungen mitgeliefert ...
-    { 
-      if(!this.ID || this.ID==0 || this.ID=='')
-      { 
-         var response = utils.webApiRequest('ADDUSER',this.#data );
-         if(response.error)
-         {
-           dialogs.showMessage(response.errMsg);
-           return false;
-         }
-         this.ID = response.result.lastInsertRowid;
-      } 
-      
-       utils.webApiRequest('EDITUSER',this.#data );
-      
-       if(this.userGrants.length>0)
-        utils.webApiRequest('setUserGrants' , JSON.stringify( {ID_user:this.ID , grants:this.userGrants} ) );
-    }
-   
-
 edit( callback_if_ready )
 {
-  var caption = this.ID ? 'Benutzer bearbeiten' : 'Benutzer anlegen';
-  
-  var wWidth  = '49%';
-  if(globals.session.admin) wWidth = '77%';
+  var caption = this.user.ID ? 'Benutzer bearbeiten' : 'Benutzer anlegen';
+  var gui     = new TFgui( null , UserDetails , {caption:caption});
+      gui.dataBinding(  this.user );
+      gui.update('GUI');
 
-  var w       =    dialogs.createWindow( null,caption,wWidth,"60%","CENTER");  
-  var _w      =    w.hWnd;
-
-  _w.buildGridLayout_templateRows('1fr');
-
-  if(globals.session.admin) _w.buildGridLayout_templateColumns('1fr 1fr');
-  else                      _w.buildGridLayout_templateColumns('1fr');
-
-  var hlpContainer = dialogs.addPanel(_w,'cssContainerPanel',1,1,1,1);
-
-  
-              // aParent     , aData      , aLabels , aAppendix , aExclude , aInpType , URLForm )
-  var inp = new TForm( hlpContainer    , this.#data , {}      , {}        , ['ID']             , {}       , '' );  
-      inp.setInputType('passwd' , "Password" , {} );
-      inp.render( true ); 
-      
-
-
-  if(globals.session.admin)
-  {   // Falls Admin -> rechte Seite mit Berechtigungs-Objekten einblenden ...
-      var grantDiv            = dialogs.addPanel( _w , "cssContainerPanel" ,  2 , 1 , 1 , 1 );
-      grantDiv.margin         = '4px';
-      grantDiv.padding        = '4px';
-
-
-      grantDiv.buildGridLayout_templateColumns('1fr');
-      grantDiv.buildGridLayout_templateRows('2em 1fr');
-      var captDiv             = dialogs.addPanel( grantDiv , "cssContainerPanel" ,  1 , 1 , 1 , 1 );
-      captDiv.backgroundColor = "black";
-      var lbl                 = dialogs.addLabel(captDiv , '' , 1,1,"100%",'100%', 'Berechtigungen');
-      lbl.fontSize            = '1em';
-      lbl.justifyContent      = 'center';
-      lbl.color               = 'white';
-
-      var cbItems  = []; 
-      for(var i=0; i<globals.session.grants.length; i++) 
+      var cbItems  = [];
+      for(var i=0; i<this.userGrants.length; i++) 
       {
-         var g = globals.session.grants[i];
-         cbItems.push({text:g.caption || g.name, checked:this.hasAccess(g.name) , name:g.name , id_grant:g.ID});
+         var g = this.userGrants[i];
+         cbItems.push({text:g.CAPTION || g.NAME, checked:g.HASGRANT==1 , name:g.NAME , id_grant:g.ID});
       } 
-      var grants   = dialogs.addPanel( grantDiv , "cssContainerPanel" ,  1 , 2 , 1 , 1 );
-          
-          
-      var cb       = dialogs.addListCheckbox(grants , cbItems);
-    }    
- 
-    inp.callBack_onESCBtn = function() { this.wnd.close(); }.bind( {self:this, wnd:w} )
+      
+      gui.cbListboxGrants.addItems(cbItems);
+   
+      gui.btnAbort.callBack_onClick = function() { this.gui.close(); }.bind( {gui:gui} )
 
-    inp.callBack_onOKBtn  = function(values) { 
-                                               for(var i=0; i<values.length; i++) this.self.#data[values[i].field] = values[i].value 
-                                               
-                                               if(this.cbGrant!=null)
-                                                 for(var i=0; i<this.cbGrant.items.length; i++)
-                                                    this.self.setAccess(this.cbGrant.items[i].name , this.cbGrant.items[i].checked);
-                                                 
-                                               this.self.save();  
-                                               this.wnd.close(); 
-                                               if(this.callback) this.callback();
-                                             }.bind( {self:this, wnd:w, inp:inp , cbGrant:cb || null ,  callback:callback_if_ready} )
+      gui.btnOk.callBack_onClick     = function(values) 
+                                       { 
+                                          this.gui.update('data');    
+                                          this.self.user.save();
+                                          this.gui.close();
+
+                                          var saveGrants = []; 
+                                          for(var i=0; i<this.self.userGrants.length; i++) 
+                                            if(this.gui.cbListboxGrants.getCheckBox( i )) saveGrants.push(this.self.userGrants[i].ID)
+
+                                          utils.webApiRequest('SETUSERGRANTSXT',{ID_user:this.self.user.ID , grants:saveGrants} );
+    
+                                          if(this.callBack) this.callBack() ;
+                                       }.bind({self:this,gui:gui,callBack:callback_if_ready})        
+                                        
   }
-}
 
+
+
+}
 
 
 export class TFUserList
@@ -211,47 +1386,12 @@ export class TFUserList
       this.userList = [];
       this.selected = null;
 
-      this.userListWnd = dialogs.createWindow( null,'Benutzerverwaltung','77%','87%','CENTER');
-      this.userListWnd.buildGridLayout_templateColumns('1fr');
-      this.userListWnd.buildGridLayout_templateRows   ('4em 1fr');
-
-      // ----------------ButtonPanel + Button-----------------------------------------
-      this.menuPanel    = dialogs.addPanel(this.userListWnd.hWnd,'',1,1,1,1);
-      this.menuPanel.buildGridLayout_templateColumns('10em 10em 10em 10em 1fr 10em');
-      this.menuPanel.buildGridLayout_templateRows   ('1fr');
-
-      this.btnAddUser    = dialogs.addButton(this.menuPanel,'',1,1,1,1,{caption:'neu',glyph:'user-plus'});
-      this.btnAddUser.height='3em';
-      this.btnAddUser.callBack_onClick = function(){this.newUser()}.bind(this);
+      this.gui                              = new TFgui( null , UserDialog , {caption:"Benutzerverwaltung"});
+      this.gui.btnAddUser.callBack_onClick  = function(){this.newUser()}.bind(this);
+      this.gui.btnEditUser.callBack_onClick = function(){this.editUser()}.bind(this);
+      //this.gui.btnDeleteUser.
+      this.gui.btnClose.callBack_onClick    = function(){this.userListWnd.close()}.bind(this);
       
-      this.btnEditUser   = dialogs.addButton(this.menuPanel,'',2,1,1,1,{caption:'bearbeiten',glyph:'user-pen'});
-      this.btnEditUser.height='3em';
-      this.btnEditUser.callBack_onClick = function(){this.editUser()}.bind(this);
-
-      this.btnDeleteUser = dialogs.addButton(this.menuPanel,'',3,1,1,1,{caption:'löschen',glyph:'user-minus'});
-      this.btnDeleteUser.height='3em';
-      this.btnDeleteUser.backgroundColor = "red";
-
-
-      this.btnCloseWnd     = dialogs.addButton(this.menuPanel,'',6,1,1,1,'schließen');
-      this.btnCloseWnd.callBack_onClick = function(){this.userListWnd.close()}.bind(this);
-      this.btnCloseWnd.height='3em';
-      
-      //-------------------------------------------------------------------------------
-
-      // Hilfscontainer zur Platzaufteilung                    
-      var hlpContainer = dialogs.addPanel(this.userListWnd.hWnd,'cssContainerPanel',1,2,1,1);
-          hlpContainer.buildGridLayout_templateColumns('1fr');
-          hlpContainer.buildGridLayout_templateRows('2em 1fr');
-
-      this.filterPanel      = dialogs.addPanel(hlpContainer,'',1,1,1,1);
-      this.userListGridView = dialogs.addPanel(hlpContainer,'cssContainerPanel',1,2,1,1);
-     
-      var response = utils.webApiRequest('LSUSER' , {} );
-      if(response.error) {dialogs.showMessage(response.errMsg);return; }
-      
-      for(var i=0; i<response.result.length; i++)  this.userList.push( new TFUser(response.result[i]) ); 
-
       this.updateView_user();
     }
 
@@ -264,8 +1404,12 @@ export class TFUserList
     
     updateView_user()
     { 
-        this.userListGridView.innerHTML = '';
-        var g = dialogs.createTable(this.userListGridView , this.userList , ['ID' , 'passwd' , 'userGrants'] , [] );
+      var response = utils.webApiRequest('LSUSER' , {} );
+      if(response.error) {dialogs.showMessage(response.errMsg);return; }
+      this.userList = response.result;   
+
+        this.gui.gridContainer.innerHTML = '';
+        var g = dialogs.createTable(this.gui.gridContainer , this.userList , ['ID' , 'PASSWD' , 'userGrants'] , [] );
         g.onRowClick=function( selectedRow , itemIndex , jsonData ) { this.selectedUser(jsonData) }.bind(this);
     } 
     
@@ -277,34 +1421,24 @@ export class TFUserList
         dialogs.showMessage('Nur Administratoren dürfen neue Benutzer anlegen!'); 
         return;
       }  
-
-    var aUser = {
-        ID           : 0,
-        username     : '',
-        passwd       : '',
-        firstname    : '',
-        lastname     : '',
-        email        : '',
-        jobfunction  : ''
-      };
-        
-        var u = new TFUser(aUser);
-        u.edit(function(){this.updateView_user()}.bind(this));
+        var u = new TFUser();
+            u.edit( function(){this.updateView_user()}.bind(this) );
     } 
 
 
     editUser()
     { 
-     if(!this.selected) {dialogs.showMessage('Bitte zuerst einen Benutzer auswählen!'); return;}
-
-    if((!globals.session.admin) && (this.selected.username != globals.session.userName) )
+      if(!globals.session.admin) 
       {
-        dialogs.showMessage('Als "Nicht-Administrator dürfen Sie nur Ihren eigen Datensatz bearbeitenn !');
+        dialogs.showMessage('Nur Administratoren dürfen neue Benutzer bearbeiten !'); 
         return;
       }  
 
-     this.selected.edit(function(){this.updateView_user()}.bind(this));
-    } 
+     if(!this.selected) {dialogs.showMessage('Bitte zuerst einen Benutzer auswählen!'); return;}
+
+      var u = new TFUser( this.selected.ID );
+          u.edit( function(){this.updateView_user()}.bind(this) );
+     } 
 
     
 }
@@ -312,114 +1446,34 @@ export class TFUserList
 
 export class TFGrant
 {
-    #data          = {};
-    #original      = {};
-    #dirtyFields   = new Set();
-
-    
-    constructor(dbGrant = {}) 
+    constructor( id ) 
     { 
-     // Prüfung: enthält dbUser **nur** das Feld "ID"
-     const keys = Object.keys(dbGrant);
-
-     if (keys.length === 1 && keys[0] === "ID") 
-     {
-      const response = this.load_from_dB(dbGrant.ID);
-      if (!response.error) dbGrant = response.result;
-     }
-       
-     for (const field in dbGrant) 
-     {
-             const value = dbGrant[field];
-             this.#defineField(field, value || '');
-             console.log("THIS->" + utils.JSONstringify(this));
-     }
-
+      this.grant  = new TFDataObject( "etc.grantObj" , id || '' );
     }  
-  
-   
-    #defineField(fieldName, defaultValue) 
-    {
-      // "ERZEUGEN" des Feldnamen innerhalb des lokalen "Data-Containers" 
-      this.#data    [fieldName] = defaultValue || '';
-      this.#original[fieldName] = defaultValue || '';
-     
-      Object.defineProperty(this, fieldName, {
-                                               get: () => this.#data[fieldName],
-                                               set: (val) => {
-                                                               this.#data[fieldName] = val;
-                                                               if (val !== this.#original[fieldName]) this.#dirtyFields.add(fieldName);
-                                                               else                                   this.#dirtyFields.delete(fieldName);
-                                                             },
-                                              enumerable: true
-                                            });
-    }
-  
-    get isDirty() {return this.#dirtyFields.size > 0;}
-    
-  
-    getChangedFields() {return Array.from(this.#dirtyFields);}
-    
-  
-    markClean() 
-    {
-      this.#dirtyFields.clear();
-      Object.assign(this.#original, this.#data);
-    }
-  
-    load_from_dB(id) 
-    {
-      return  utils.webApiRequest('GRANT',{grantID:id} );
-    }
 
-    load(id) 
-    {
-       var response = this.load_from_dB(id); 
-       if(response.error){return false;}
-               
-      this.#data = response.result;                                    
-      this.markClean();
-      
-      return true;
-    }
-  
-    save() 
-    { 
-      if(!this.ID || this.ID==0 || this.ID=='')
-      { 
-         var response = utils.webApiRequest('ADDGRANT',this.#data );
-         if(response.error)
-         {
-           dialogs.showMessage(response.errMsg);
-           return false;
-         }
-         this.ID = response.result.lastInsertRowid;
-      }   
-      else utils.webApiRequest('EDITGRAND',this.#data );
-      return true;
-    }
    
-
 edit( callback_if_ready )
 {
-  var caption = this.ID ? 'Berechtigungs-Objekt bearbeiten' : 'Berechtigungs-Objekt anlegen';
-  var w       =    dialogs.createWindow( null,caption,"49%","49%","CENTER");  
-  var _w      =    w.hWnd;
+  var caption = this.grant.ID ? 'Berechtigungsobjekt bearbeiten' : 'Berechtigungsobjekt anlegen';
+  var gui     = new TFgui( null , grantDlg , {caption:caption});
 
-  
-              // aParent     , aData      , aLabels , aAppendix , aExclude , aInpType , URLForm )
-  var inp = new TForm( _w    , this.#data , {}      , {}        , ['ID']             , {}       , '' );    
-      inp.render( true ); 
+      gui.dataBinding(  this.grant );
+      gui.update('GUI');
 
-      inp.callBack_onESCBtn = function() { this.wnd.close(); }.bind( {self:this, wnd:w} )
-      inp.callBack_onOKBtn  = function(values) {
-                                               for(var i=0; i<values.length; i++) 
-                                               { this.self.#data[values[i].field] = values[i].value }
-                                               this.self.save();  
-                                               this.wnd.close(); 
-                                               if(this.callback) this.callback();
-                                             }.bind( {self:this, wnd:w, inp:inp , callback:callback_if_ready} )
- }
+      gui.btnAbort.callBack_onClick = function() { this.gui.close(); }.bind( {gui:gui} )
+
+      gui.btnOk.callBack_onClick     = function(values) 
+                                       { debugger;
+                                          this.gui.update('data');    
+                                          this.self.grant.save();
+                                          this.gui.close();
+                                          if(this.callBack) this.callBack() ;
+                                       }.bind({self:this,gui:gui,callBack:callback_if_ready})        
+                                        
+  }
+
+
+
 }
 
 
@@ -482,8 +1536,8 @@ export class TFGrantList
 
         var response = utils.webApiRequest('LSGRANTS' , {} );
         if(response.error) {dialogs.showMessage(response.errMsg);return; }
-        for(var i=0; i<response.result.length; i++)  this.grantList.push( new TFGrant(response.result[i]) ); 
-  
+        this.grantList = response.result;
+        
         var g = dialogs.createTable(this.userListGridView , this.grantList , ['ID'] , [] );
         g.onRowClick=function( selectedRow , itemIndex , jsonData ) { this.selectedGrant(jsonData) }.bind(this);
     } 
@@ -491,28 +1545,21 @@ export class TFGrantList
     
     newGrant()
     {
-    var aGrant = {
-        ID       : 0,
-        name     : '',
-        caption  : '',
-        kind     : ''
-        };
-        
-        var u = new TFGrant(aGrant);
-        u.edit(function(){this.updateView_grants()}.bind(this));
+      var u = new TFGrant('');
+          u.edit(function(){this.updateView_grants()}.bind(this));
     } 
 
 
     editGrant()
     { 
-     if(!this.selected) {dialogs.showMessage('Bitte zuerst einen Benutzer auswählen!'); return;}
+     if(!this.selected) {dialogs.showMessage('Bitte zuerst Berechtigungs-Objekt auswählen!'); return;}
 
-     this.selected.edit(function(){ this.updateView_grants()}.bind(this));
+     var u = new TFGrant(this.selected.ID);
+         u.edit(function(){this.updateView_grants()}.bind(this));
     } 
 
     
 }
-
 
 
 export function adminUser()

@@ -169,5 +169,18 @@ if( CMD=='BANFHEAD')
       } 
       
 
+      if( CMD=='SAVEEXPORTFIELDS')
+      {
+        console.log('run SAVE EXPORTFIELDS  ');
+        var fields = param.fieldList;
+        if (fields?.length==0) return {error:true,errMsg:"missing fieldList",result:{}};
+
+        dbUtils.runSQL(dB , 'Delete from ExportFields');
+        for(var i=0; i<fields.length; i++) dbUtils.insertIntoTable( dB , "ExportFields" , {POS:i+1,FIELDNAME:fields[i],CAPTION:fields[i]} )
+        
+        return {error:false,errMsg:"OK",result:{}};
+      } 
+      
+
 
 }

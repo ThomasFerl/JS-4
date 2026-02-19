@@ -1,5 +1,6 @@
 const utils        = require('./nodeUtils');
 const dbUtils      = require('./dbUtils');
+const { error } = require('console');
 
 
 var allGrants      = [];
@@ -169,4 +170,15 @@ module.exports.getUserGrants = ( db , userName) =>
 
   return response;
   
+}
+
+
+module.exports.setUserGrantXt = ( db , userId , grants  ) =>
+{
+  dbUtils.runSQL( db , 'delete from userGrants Where ID_USER='+userId);
+  
+  for(var i=0; i<grants.length; i++)
+  dbUtils.insertIntoTable( db , 'userGrants'  , {ID_USER:userId , ID_GRANT:grants[i] } )
+
+  return {error:false,errMsg:'OK',result:{}}
 }

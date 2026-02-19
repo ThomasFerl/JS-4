@@ -46,7 +46,7 @@ export function run(ws)
              gui.selectUser.addItems(response.result); 
              gui.selectUser.callBack_onChange   = function( v ) {  };
              gui.btnSelectUser.callBack_onClick = function() 
-                                          { debugger;
+                                          { 
                                             selectedUser = gui.selectUser.value || ""; 
                                             if(selectedUser.toUpperCase() == 'ALLE BENUTZER') { selectedUser = "" }
                                             updateViewHead();

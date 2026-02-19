@@ -2259,8 +2259,54 @@ export class TFListBox extends TFObject
     option.textContent = item.text || item.caption;
     option.selected = item.selected || false;
     this.listbox.appendChild(option);
-
   }
+
+
+moveUp() 
+{
+  const lb = this.listbox;
+  const i  = lb.selectedIndex;
+  if (i <= 0) return; // nichts zu tun
+
+  // --- swappen ---
+  const tmp         = this.items[i];
+  this.items[i]     = this.items[i - 1];
+  this.items[i - 1] = tmp;
+
+  const opt = lb.options[i];
+  lb.remove(i);
+  lb.add(opt, i - 1);
+
+  // --- Auswahl & Scroll korrigieren ---
+  lb.selectedIndex =  i - 1;
+  lb.scrollTop     = (i - 1) * lb.options[i - 1].offsetHeight;
+}
+
+moveDown() 
+{
+  const lb = this.listbox;
+  const i  = lb.selectedIndex;
+  if (i < 0 || i >= lb.options.length - 1) return;
+
+  // --- Swappen ----
+  const tmp         = this.items[i];
+  this.items[i]     = this.items[i + 1];
+  this.items[i + 1] = tmp;
+
+  // --- DOM-Option verschieben ---
+  const opt = lb.options[i];
+  lb.remove(i);
+  lb.add(opt, i + 1);
+
+  // --- Auswahl & Scroll korrigieren ---
+  lb.selectedIndex = i + 1;
+  lb.scrollTop = (i + 1) * lb.options[i + 1].offsetHeight;
+}
+
+
+
+
+
 
   getItemByIndex( ndx )
   { 

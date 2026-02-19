@@ -238,6 +238,22 @@ if( CMD=='LSGRANTS' )
 }
 
 
+if( CMD=='LSUSERGRANTS' ) 
+{
+ var sql = "SELECT g.ID, g.Name, g.Caption, g.kind, " + 
+           "CASE WHEN ug.ID_User IS NOT NULL THEN 1 ELSE 0 END AS hasGrant FROM grantObj g LEFT JOIN UserGrants ug ON ug.ID_Grant = g.ID AND ug.ID_User = "+param.userId+" ORDER BY g.Name";
+ 
+  return dbUtils.fetchRecords_from_Query( etc ,sql );
+}
+
+
+if( CMD=='SETUSERGRANTSXT' ) 
+{
+  return grants.setUserGrantXt( etc , param.ID_user, param.grants );
+}
+
+
+
 if( CMD=='ADDGRANT' ) 
 {
  return grants.addGrant( etc , param.grantName );

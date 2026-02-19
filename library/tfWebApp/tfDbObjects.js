@@ -18,7 +18,16 @@ export class TFDataObject
       // Wird nur der Tabellen-Name übergeben, wird NUR die Tabellenstruktur ermittelt - Die Daten müssen dan via "load(id)" nachgeladen werden...
       if(!tableName) {dialogs.showMessage("Ein 'TFDataObject' benötigt zwingend einen Tabellen-Namen ! "); return; }
       
-      this.#tableName = tableName;
+      this.etc = false;
+      if (tableName.includes(".")) 
+        { 
+          const parts     = tableName.split("."); 
+          this.#tableName = parts[1]; // rechter Teil etc = true; }
+          this.etc        = parts[0].toUpperCase()=='ETC';
+        }
+        else this.#tableName = tableName;  
+
+      
       
       if(dataContainer)
       {
@@ -27,13 +36,13 @@ export class TFDataObject
       else{
            if(!ID) 
            {
-             var response = utils.webApiRequest('STRUCTURE',{tableName:tableName});
-             if(response.error) {showMessage('Fehler beim Abfragen der Tabllenstruktur: '+response.errMsg); return; }
+             var response = utils.webApiRequest('STRUCTURE',{tableName:tableName, etc:this.etc});
+             if(response.error) {dialogs.showMessage('Fehler beim Abfragen der Tabllenstruktur: '+response.errMsg); return; }
              for(var i=0; i<response.result.length; i++) this.#defineField( response.result[i]['NAME'] , '' );
            }
             else {
                    var response = this.load_from_dB( ID );
-                   if(response.error) {showMessage('Fehler beim Abfragen des Datensatzes mit der ID='+ID+' : '+response.errMsg); return; }
+                   if(response.error) {dialogs.showMessage('Fehler beim Abfragen des Datensatzes mit der ID='+ID+' : '+response.errMsg); return; }
                    for(var key in response.result) this.#defineField( key , response.result[key] || '' );
                  }
            }
@@ -72,7 +81,7 @@ export class TFDataObject
   
     load_from_dB(id) 
     {
-      return  utils.webApiRequest('FETCHRECORD',{sql:"Select * from "+this.#tableName+" Where ID="+id} );
+      return  utils.webApiRequest('FETCHRECORD',{ sql:"Select * from "+this.#tableName+" Where ID="+id , etc:this.etc } );
     }
 
     load(id) 
@@ -90,12 +99,12 @@ export class TFDataObject
     { 
       if((this.ID=='') || (this.ID=='0') )
       {  
-        var response = utils.webApiRequest('INSERTINTOTABLE',{tableName:this.#tableName, fields:this.#data} );
+        var response = utils.webApiRequest('INSERTINTOTABLE',{tableName:this.#tableName, fields:this.#data  , etc:this.etc } );
         if(response.error){ dialogs.showMessage(response.errMsg); return false; }
         else this.#data.ID = response.result.lastInsertRowid;    
       }
       else {  
-             var response = utils.webApiRequest('UPDATETABLE',{tableName:this.#tableName, ID_field:'ID', ID_value:this.ID, fields:this.#data} );
+             var response = utils.webApiRequest('UPDATETABLE',{tableName:this.#tableName, ID_field:'ID', ID_value:this.ID, fields:this.#data ,  etc:this.etc } );
              if(response.error){ dialogs.showMessage(response.errMsg); return false; }
       }    
         
@@ -126,7 +135,7 @@ export class TFDataObject
        
       if(cnt>0)
       {
-         var response = utils.webApiRequest('UPDATETABLE',{tableName:this.#tableName, ID_field:'ID', ID_value:this.ID, fields:fields} );
+         var response = utils.webApiRequest('UPDATETABLE',{tableName:this.#tableName, ID_field:'ID', ID_value:this.ID, fields:fields,  etc:this.etc} );
          if(response.error){ dialogs.showMessage(response.errMsg); return false; }
       }
       else return false;   
