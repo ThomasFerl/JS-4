@@ -13,3 +13,6 @@ module.exports.ignoreSession        = true;
 
 module.exports.__Port_webSocket     =  4444;
 module.exports.maxAgePayloadHistory =  365;  // 1 Jahr
+
+module.exports.smtpServer           = "emsmailserver.e-ms.de";
+module.exports.smtpPort             = "25";

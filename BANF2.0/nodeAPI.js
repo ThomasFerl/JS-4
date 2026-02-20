@@ -1,11 +1,13 @@
 const { TFLogging }= require('./logging.js');
 const globals      = require('./backendGlobals.js');
 const utils        = require('./nodeUtils.js');
+const {TFEmail}    = require('./tfEmail.js');
 const batchProc    = require('./batchProc.js');
 const dbUtils      = require('./dbUtils');
 const grants       = require('./nodeGrants');
 const session      = require('./session');
 const userAPI      = require('./userAPI');
+const { error } = require('console');
 
 var   dB              = {}; // lokale Kopie der Arbeits-Datenbank - wird via startBackend() initialisiert ....   
 var   etc             = {}; // lokale Kopie der Konfigurations-Datenbank - wird via startBackend() initialisiert ....  
@@ -216,7 +218,11 @@ if( CMD=='SCHEMA')          return dbUtils.schema( dB , param.tableName )
     
 if( CMD=='AST' )            return dbUtils.extractTableNames( param.sql );
 
-if( CMD=='LSUSER')          return dbUtils.fetchRecords_from_Query( etc , 'Select * from user' );
+if( CMD=='LSUSER')
+  {
+    if(param.forGrantObj) return dbUtils.fetchRecords_from_Query( etc , "Select * from user Where ID in (Select ID_User from userGrants Where ID_Grant in (Select ID from grantObj Where NAME='"+param.forGrantObj+"'))" );  
+    else                  return dbUtils.fetchRecords_from_Query( etc , "Select * from user" );  
+  }          
 
 if( CMD=='ADDUSER') 
 {
@@ -368,6 +374,19 @@ if(CMD=='SAVEFORM')
        } 
 
   }  
+
+
+if(CMD=='SENDMAIL')
+{
+    console.log('send e-mail:');
+    console.log('============');
+    console.log(JSON.stringify(param.mail));
+
+    const mail = new TFEmail(param.mail); 
+    try { await mail.send(); return {error:false,errMsg:"",result:{}}}
+    catch (err) {            return {error:true, errMsg:err.message, result:{} }}
+}  
+
 
 
 if(CMD=='DELFORM') 

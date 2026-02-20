@@ -13,6 +13,7 @@ import { TFDateTime  }   from "./tfWebApp/utils.js";
 import * as forms        from "./forms.js";
 import { TFgui }         from "./tfWebApp/tfGUI.js";
 
+
 let banfAdmin           = false;
 
 var selectedBanf        = null;
@@ -52,6 +53,7 @@ export function run(ws)
                                             updateViewHead();
                                          };  
       }
+
 
       gui.btnAddBanf.callBack_onClick    = function() { addBanf() };
       gui.btnEditBanf.callBack_onClick   = function() { editBanf() };
@@ -95,9 +97,7 @@ function updateViewHead()
 
 function exportBanf()
 {
-    //dialogs.showMessage('Export-Funktion ist noch nicht implementiert! Erst wenn die Feld-Reihenfolge definiert ist, werden die Daten entsprechend in der Zwischenablage aufbereitet.');
-    
-    if(!selectedBanfHead) {dialogs.showMessage('Bitte zuerst eine BANF-Vorlage auswählen!'); return;}
+   if(!selectedBanfHead) {dialogs.showMessage('Bitte zuerst eine BANF-Vorlage auswählen!'); return;}
     
     var b = new TBanfExport( selectedBanfHead );
     if(!b.ok) {dialogs.showMessage('Fehler beim Laden der Export-Funktion!'); return;}
@@ -108,8 +108,59 @@ function exportBanf()
 
 function startWorkflow()
 {
-  dialogs.showMessage('workflow zum Starten des Freigabeprozesses ist noch nicht vollständig implementiert! ');
+  if(!selectedBanfHead) {dialogs.showMessage('Bitte zuerst eine BANF-Vorlage auswählen!'); return;}
+debugger;
+// für die spätere mail - Details zur BANF-Vorlage ermitteln...
+var banf = {
+             bezeichnung: selectedBanfHead.NAME + ' ('+selectedBanfHead.BESCHREIBUNG+')' , 
+             owner      : selectedBanfHead.OWNER,
+             posAnz     : 4
+           }
+  var gui = new TFgui( null , forms.sendBanf , {caption:'Banf-Vorlage versenden'});
+
+  var response = utils.webApiRequest('LSUSER', {forGrantObj:"banfAdmin"} );
+  if (response.error) {dialogs.showMessage(response.errMsg); return; }
+  if (response.result.length==0)  {dialogs.showMessage("Es wurde noch keinem Benutzer die Rolle 'banfAdmin' zugewiesen !" ); return; }
+
+  for(var i=0; i<response.result.length; i++)
+  {
+    var u = response.result[i];
+    if(u.EMAIL)
+    gui.selectAdress.addItem( {caption:u.FIRSTNAME+' '+u.LASTNAME, value:u.EMAIL} )
+  }
+
+  if (gui.selectAdress.items.length==0)  {dialogs.showMessage("Es existiert kein banfAdmin mit gültiger e-mail-Addresse !" ); return; }
+
+
+  gui.btnSend.callBack_onClick = function()
+  {
+    for(var i=0; i<this.gui.selectAdress.items.length; i++)
+    {
+      var usr = this.gui.selectAdress.items[i];
+      if(usr.checked)
+      {
+        var mail = {
+                    from        : "banfProcess@e-ms.de",
+                    to          : usr.value,
+                    subject     : "Eine BANF-Vorlage wurde Ihnen zugewiesen",
+                    text        : "",
+                    html        : HTMLTemplateElement( usr.caption,
+                                                       this.banf.owner,
+                                                       this.banf.bezeichnung,
+                                                       this.gui.editHint,
+                                                       this.banf.posAnz,
+                                                       'https:\\emssvrservice02:4040' 
+                                                      ),
+                    attachments : []
+                  }                                                     
+          utils.webApiRequest('SENDMAIL', {mail:mail} );           
+          this.gui.close(); 
+         }
+      }
+  }.bind({gui:gui ,  banf:banf})
 }
+
+
 
 function selectBanfHead(p)
 { 
@@ -224,4 +275,46 @@ function __deleteHead(banfHead)
   if(response.error) {dialogs.showMessage(response.errMsg) }
   selectedBanfHead = null;
   updateViewHead();
+}
+
+
+function HTMLTemplateElement( empfaengerName,
+                              erstellerName,
+                              beschreibung,
+                              hinweis, 
+                              positionsAnzahl,
+                              link )
+{
+  var html = `
+  <html>
+  <body style="font-family: Arial, sans-serif; font-size: 14px;">
+    <h2>Neue BANF - Anforderung</h2>
+
+    <p>Hallo ${empfaengerName},</p>
+
+    <p>Soeben wurde eine BANF-Vorlage von <b>${erstellerName}</b> erstellt.</p>
+
+    <p><b>Beschreibung:</b></p>
+
+    ${beschreibung}
+
+    <p>Diese Vorlage besitzt ${positionsAnzahl} Positionen</p>
+
+    <p><b>Bitte beachten Sie den folgenden Hinweis:</b></p>
+    <p>${hinweis}</p>
+    <p></p>
+    <p></p>
+
+    <p>Dieser <a href=${link}>Link</a> führt Sie direkt zur BANF-Vorlage:</p>
+
+    <hr>
+    <p style="font-size: 12px; color: #777;">
+      Diese Nachricht wurde automatisch vom BANF-Vorbereitungsprozess erzeugt.
+    </p>
+  </body>
+</html>
+`;
+ 
+ return html;
+
 }
