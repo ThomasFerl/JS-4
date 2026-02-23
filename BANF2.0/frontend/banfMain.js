@@ -64,20 +64,20 @@ export function run(ws)
 }      
 
 
-function updateView()
+async function updateView()
 {
   gui.gridContainerBanf.innerHTML = ""; // clear the dashboard
   if(!selectedBanfHead) return;
 
   var response = utils.webApiRequest('LSBANF' , {ID_HEAD:selectedBanfHead.ID} );
-  if(response.error) {dialogs.showMessage(response.errMsg);return; }
-  var grid = dialogs.createTable( gui.gridContainerBanf , response.result , ['ID','ID_HEAD','OWNER','AUFTRAG','SACHKONTO','ANFORDERER'] , [] );
+  if(response.error) {await dialogs.showMessageSync(response.errMsg);return; }
+  var grid = dialogs.createTable( gui.gridContainerBanf , response.result , ['ID','ID_HEAD','OWNER','AUFTRAG','SACHKONTO','ANFORDERER'] , [{STATE:"Status"}] );
   grid.onRowClick    =function( selectedRow , itemIndex , jsonData ) { selectBanf(jsonData) };
   grid.onRowDblClick =function( selectedRow , itemIndex , jsonData ) { editBanf(jsonData) };
 }
 
 
-function updateViewHead()
+async function updateViewHead()
 {
   gui.gridContainerBanfHead.innerHTML = ""; // clear the dashboard
   var param = {};
@@ -87,7 +87,7 @@ function updateViewHead()
   else if(selectedUser) param.OWNER = selectedUser;
       
   var response = utils.webApiRequest('LSBANFHEAD' ,param );
-  if(response.error) {dialogs.showMessage(response.errMsg);return; }
+  if(response.error) {await dialogs.showMessageSync(response.errMsg);return; }
   var grid = dialogs.createTable( gui.gridContainerBanfHead , response.result , ['ID','OWNER'] , [] );
   grid.onRowClick    =function( selectedRow , itemIndex , jsonData ) { selectBanfHead(jsonData) };
   grid.onRowDblClick =function( selectedRow , itemIndex , jsonData ) { editBanfHead(jsonData) };
@@ -95,20 +95,51 @@ function updateViewHead()
 }
 
 
-function exportBanf()
-{
-   if(!selectedBanfHead) {dialogs.showMessage('Bitte zuerst eine BANF-Vorlage auswählen!'); return;}
+async function exportBanf()
+{ 
+    if(!selectedBanfHead) {await dialogs.showMessageSync('Bitte zuerst eine BANF-Vorlage auswählen!'); return;}
     
     var b = new TBanfExport( selectedBanfHead );
-    if(!b.ok) {dialogs.showMessage('Fehler beim Laden der Export-Funktion!'); return;}
+    if(!b.ok) {await dialogs.showMessageSync('Fehler beim Laden der Export-Funktion!'); return;}
 
-    b.exportToClipboard();
-}
+    // Adresse des Banf-Owners ermitteln ....
+     var mailAddr =  utils.webApiRequest('FETCHVALUE', {etc:true, sql:"Select EMAIL from User Where USERNAME='"+selectedBanfHead.OWNER+"'"} ).result;
+
+    try 
+    {
+       await b.exportToClipboard();
+       utils.webApiRequest('UPDATETABLE', {tableName:"banfHead" , ID_field:"ID" , ID_value:selectedBanfHead.ID  , fields:{STATE:"exportiert"}} );   
+       updateViewHead(); 
+
+       if(!mailAddr) await dialogs.showMessageSync("Eine Bestätigungs-Mail kann nicht versendet werden, da dem Bentzer '"+selectedBanfHead.OWNER+"' noch keine Mail-Addresse zugewiesen wurde.");
+       else{
+              var mail = {
+                            from        : "banfProcess@e-ms.de",
+                            to          : mailAddr,
+                            subject     : "Ihre BANF-Vorlage wurde an da SAP übergeben",
+                            text        : "",
+                            html        : HTMLTemplateElement_export(
+                                                                      selectedBanfHead.OWNER ,
+                                                                      globals.session.userName,
+                                                                      selectedBanfHead.DATUM,
+                                                                      selectedBanfHead.NAME + " (" + selectedBanfHead.BESCHREIBUNG + ")" ,
+                                                                      new TFDateTime(new Date()).formatDateTime('dd.mm.yyyy hh:mn:ss')
+                                                                    ),
+                            attachments : []
+                    }
+               utils.webApiRequest('SENDMAIL'   , {mail:mail} );        
+           }   
+     }
+     catch(err) 
+     {
+        console.log("Export abgebrochen:", err); 
+     }
+}     
 
 
-function startWorkflow()
+async function startWorkflow()
 {
-  if(!selectedBanfHead) {dialogs.showMessage('Bitte zuerst eine BANF-Vorlage auswählen!'); return;}
+  if(!selectedBanfHead) {await dialogs.showMessageSync('Bitte zuerst eine BANF-Vorlage auswählen!'); return;}
 debugger;
 // für die spätere mail - Details zur BANF-Vorlage ermitteln...
 var banf = {
@@ -119,8 +150,8 @@ var banf = {
   var gui = new TFgui( null , forms.sendBanf , {caption:'Banf-Vorlage versenden'});
 
   var response = utils.webApiRequest('LSUSER', {forGrantObj:"banfAdmin"} );
-  if (response.error) {dialogs.showMessage(response.errMsg); return; }
-  if (response.result.length==0)  {dialogs.showMessage("Es wurde noch keinem Benutzer die Rolle 'banfAdmin' zugewiesen !" ); return; }
+  if (response.error) {await dialogs.showMessageSync(response.errMsg); return; }
+  if (response.result.length==0)  {await dialogs.showMessageSync("Es wurde noch keinem Benutzer die Rolle 'banfAdmin' zugewiesen !" ); return; }
 
   for(var i=0; i<response.result.length; i++)
   {
@@ -129,7 +160,7 @@ var banf = {
     gui.selectAdress.addItem( {caption:u.FIRSTNAME+' '+u.LASTNAME, value:u.EMAIL} )
   }
 
-  if (gui.selectAdress.items.length==0)  {dialogs.showMessage("Es existiert kein banfAdmin mit gültiger e-mail-Addresse !" ); return; }
+  if (gui.selectAdress.items.length==0)  {await dialogs.showMessageSync("Es existiert kein banfAdmin mit gültiger e-mail-Addresse !" ); return; }
 
 
   gui.btnSend.callBack_onClick = function()
@@ -144,22 +175,25 @@ var banf = {
                     to          : usr.value,
                     subject     : "Eine BANF-Vorlage wurde Ihnen zugewiesen",
                     text        : "",
-                    html        : HTMLTemplateElement( usr.caption,
-                                                       this.banf.owner,
-                                                       this.banf.bezeichnung,
-                                                       this.gui.editHint,
-                                                       this.banf.posAnz,
-                                                       'https:\\emssvrservice02:4040' 
-                                                      ),
+                    html        : HTMLTemplateElement_send(
+                                                            this.banf.owner,
+                                                            this.banf.bezeichnung,
+                                                            this.gui.editHint.value,
+                                                            this.banf.posAnz,
+                                                            'https://emssvrservice02:4040' 
+                                                          ),
                     attachments : []
                   }                                                     
-          utils.webApiRequest('SENDMAIL', {mail:mail} );           
+          utils.webApiRequest('SENDMAIL', {mail:mail} );        
+          
+          utils.webApiRequest('UPDATETABLE', {tableName:"banfHead" , ID_field:"ID" , ID_value:selectedBanfHead.ID  , fields:{STATE:"versandt"}} );   
+          updateViewHead(); 
+          
           this.gui.close(); 
          }
       }
   }.bind({gui:gui ,  banf:banf})
 }
-
 
 
 function selectBanfHead(p)
@@ -174,9 +208,9 @@ function selectBanf(p)
 }
 
 
-function addBanf()
+async function addBanf()
 {
-  if(!selectedBanfHead) {dialogs.showMessage('Bitte zuerst eine BANF-Vorlage erstellen/auswählen !'); return;}
+  if(!selectedBanfHead) {await dialogs.showMessageSync('Bitte zuerst eine BANF-Vorlage erstellen/auswählen !'); return;}
  
   var maxPos = utils.webApiRequest('MAXPOS' , {ID_HEAD:selectedBanfHead.ID} ).result;
   
@@ -211,30 +245,31 @@ function addBanf()
 }
 
 
-function editBanf()
+async function editBanf()
 { 
- if(!selectedBanf) {dialogs.showMessage('Bitte zuerst eine Banf-Position auswählen!'); return;}
+ if(!selectedBanf) {await dialogs.showMessageSync('Bitte zuerst eine Banf-Position auswählen!'); return;}
  var b          = new TBanf( {ID:selectedBanf.ID} );
      b.banfHead = selectedBanfHead;
      b.edit( function(){ updateView() } );
 } 
 
 
-function __deleteBanfPosition(banf)
+async function __deleteBanfPosition(banf)
 { 
   var response = utils.webApiRequest('DELETEBANF' , {ID:banf.ID} );
-  if(response.error) {dialogs.showMessage(response.errMsg) }
+  if(response.error) {await dialogs.showMessageSync(response.errMsg) }
   selectedBanf = null;
   updateView();
 }
 
 
 
-function delBanf()
+async function delBanf()
 {
-  if(!selectedBanf) {dialogs.showMessage('Bitte zuerst die zu löschende Position auswählen!'); return;}
+  if(!selectedBanf) {await dialogs.showMessageSync('Bitte zuerst die zu löschende Position auswählen!'); return;}
  
-  dialogs.ask('Banf-Position löschen','Wollen Sie die Banf-Position: "'+selectedBanf.POSITIONSTEXT+'"  wirklich löschen?', function yes(){__deleteBanfPosition(this)}.bind(selectedBanf) );
+  var response = await dialogs.askSync('Banf-Position löschen','Wollen Sie die Banf-Position: "'+selectedBanf.POSITIONSTEXT+'"  wirklich löschen?' );
+  if(response.yes) __deleteBanfPosition(selectedBanf);
 }
 
 
@@ -254,31 +289,32 @@ function addBanfHead()
   
 }
 
-function editBanfHead()
+async function editBanfHead()
 { 
- if(!selectedBanfHead) {dialogs.showMessage('Bitte zuerst eine BANF auswählen!'); return;}
+ if(!selectedBanfHead) {await dialogs.showMessageSync('Bitte zuerst eine BANF auswählen!'); return;}
  
  var b = new TBanfHead( selectedBanfHead );
      b.edit( function(){ updateViewHead() } );
 } 
 
-function delBanfHead()
+async function delBanfHead()
 { 
-  if(!selectedBanfHead) {dialogs.showMessage('Bitte zuerst eine BANF auswählen!'); return;}
+  if(!selectedBanfHead) {await dialogs.showMessageSync('Bitte zuerst eine BANF auswählen!'); return;}
   
-  dialogs.ask('Banf löschen','Wollen Sie die Banf-Vorlage "'+selectedBanfHead.NAME+'"  wirklich löschen?', function yes(){__deleteHead(this)}.bind(selectedBanfHead) ); 
+  var response = await dialogs.askSync('Banf löschen','Wollen Sie die Banf-Vorlage "'+selectedBanfHead.NAME+'"  wirklich löschen?' ); 
+  if(response.yes) __deleteHead(selectedBanfHead); 
 }
 
-function __deleteHead(banfHead)
+async function __deleteHead(banfHead)
 {
   var response = utils.webApiRequest('DELETEBANFHEAD' , {ID:banfHead.ID} );
-  if(response.error) {dialogs.showMessage(response.errMsg) }
+  if(response.error) {await dialogs.showMessageSync(response.errMsg) }
   selectedBanfHead = null;
   updateViewHead();
 }
 
 
-function HTMLTemplateElement( empfaengerName,
+function HTMLTemplateElement_send( empfaengerName,
                               erstellerName,
                               beschreibung,
                               hinweis, 
@@ -301,12 +337,43 @@ function HTMLTemplateElement( empfaengerName,
     <p>Diese Vorlage besitzt ${positionsAnzahl} Positionen</p>
 
     <p><b>Bitte beachten Sie den folgenden Hinweis:</b></p>
-    <p>${hinweis}</p>
+    <p style="font-style: italic; color: #777; font-size: 1em;">${hinweis}</p>
     <p></p>
     <p></p>
 
-    <p>Dieser <a href=${link}>Link</a> führt Sie direkt zur BANF-Vorlage:</p>
+    <p>Dieser <a href=" ${link}">Link</a> führt Sie direkt zur BANF-Vorlage:</p>
 
+    <hr>
+    <p style="font-size: 12px; color: #777;">
+      Diese Nachricht wurde automatisch vom BANF-Vorbereitungsprozess erzeugt.
+    </p>
+  </body>
+</html>
+`;
+ 
+ return html;
+
+}
+
+
+function HTMLTemplateElement_export( empfaengerName,
+                                     exportUser,
+                                     banfDatum,
+                                     banfBeschreibung,
+                                     dt )
+{
+  var html = `
+  <html>
+  <body style="font-family: Arial, sans-serif; font-size: 14px;">
+    <h2>BANF wurde an SAP übergeben</h2>
+
+    <p>Hallo ${empfaengerName},</p>
+    <p></p>
+    <p>Soeben wurde Ihre BANF-Vorlage <b>${banfBeschreibung}</b></p>
+    <p>vom ${banfDatum} von <b>${exportUser}</b> an SAP übergeben.</p>
+    <p></p>
+    <p><b>Export-Zeitpunkt:</b>${dt}</p>
+    <p></p>
     <hr>
     <p style="font-size: 12px; color: #777;">
       Diese Nachricht wurde automatisch vom BANF-Vorbereitungsprozess erzeugt.

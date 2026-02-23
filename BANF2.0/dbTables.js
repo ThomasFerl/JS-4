@@ -37,6 +37,7 @@ tables.push(
           {fieldName: "BESCHREIBUNG"       , fieldType: "Text"    },
           {fieldName: "DATUM"              , fieldType: "numeric" },
           {fieldName: "OWNER"              , fieldType: "Text"    },
+          {fieldName: "STATE"              , fieldType: "Text"    },
        ]});
         
  
@@ -100,6 +101,11 @@ tables.push(
             {fieldName: "v"      , fieldType: "Text"    }
           ]});       
 
+tables.push( 
+         {tableName: "material",
+          tableFields: [
+            {fieldName: "v"      , fieldType: "Text"    }
+          ]});       
 
 
 module.exports.checkSingleTableStructure = function( dB , table)

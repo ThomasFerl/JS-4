@@ -11,6 +11,29 @@ export function processMessages(wait) { return new Promise(resolve => setTimeout
 
 export function wait( ms ) { return new Promise(resolve => setTimeout(resolve, ms));  }
 
+export function newPromise(fn) 
+{ 
+  return (...args) => { 
+                        return new Promise( (resolve, reject) => { 
+                                                                   fn(...args, (result, error) => { 
+                                                                                                    if (error) reject(error); 
+                                                                                                    else       resolve(result); 
+                                                                                                  }); 
+                                                                 }); 
+                      }; 
+}
+
+
+export function newPromiseObj(obj, methodName) 
+{ 
+  return (...args) => { 
+                        return new Promise((resolve, reject) => { 
+                                                                  try { const result = obj[methodName](...args); resolve(result); } 
+                                                                  catch (err) { reject(err); } 
+                                                                }); 
+                      }; 
+}
+
 
 export function buildRandomID( offset )
 {

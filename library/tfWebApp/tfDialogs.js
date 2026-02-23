@@ -611,10 +611,10 @@ export function ask( title , msg , callBackIfYes , callBackIfNo )
 }
 
 
-export function askModal(title, msg) 
+export function askSync(title, msg) 
 {
-  return new Promise(resolve => {
-
+  return new Promise(resolve => 
+  {
     const w = createWindow(null, "Rückfrage", "50%", "40%", "CENTER").hWnd;
     w.overflow = "hidden";
 
@@ -661,7 +661,8 @@ export function askModal(title, msg)
   });
 }
 
-
+// Namens-Kompatibiltät zu älteren Versionen....
+export function askModal(title , msg) { return this.askSync(title , msg) }
 
 
 
@@ -715,6 +716,60 @@ export function showMessage( msg , options , callBack )
               b.callBack_onClick = function() { this.wnd.destroy();  if(callBack) callBack(this.btn.attachment) }.bind({wnd:w.parent,btn:b});
   }      
 
+}
+
+
+export function showMessageSync( msg , options ) 
+{
+  return new Promise((resolve, reject) => 
+  {
+    var button = [];
+    var glyph  = '';
+    if(options) {
+      if(options.button) button = options.button; 
+      if(options.glyph)  glyph  = options.glyph;
+    }
+
+    glyph = glyph || "circle-info";
+    if(button.length == 0) button.push('OK');
+
+    var w = createWindow(null, "Benachrichtigung", "50%", "35%", "CENTER").hWnd;
+    w.overflow = 'hidden';
+
+    w.buildGridLayout_templateColumns('1fr');
+    w.buildGridLayout_templateRows('0.4em 1fr 0.7em 4em 0.4em');
+
+    var div = addPanel(w, "", 1, 2, 1, 1);
+    div.backgroundColor = "rgba(76, 186, 52, 0.04)";
+    div.margin = '4px';
+
+    if(glyph) div.buildGridLayout_templateColumns('1fr 7em');
+    else      div.buildGridLayout_templateColumns('1fr');
+    div.buildGridLayout_templateRows('1fr');
+
+    var msgDiv = addPanel(div, "cssContainerPanel", 1, 1, 1, 1);
+    msgDiv.backgroundColor = "rgb(247,244,247)";
+    msgDiv.DOMelement.innerHTML = '<center>' + msg + '</center>';
+
+    if(glyph) {
+      var imgDiv = addPanel(div, "cssContainerPanel", 2, 1, 1, 1);
+      utils.drawSymbol(glyph, imgDiv, "gray", "77%");
+    }
+
+    var btnDiv = addPanel(w, "cssContainerPanel", 1, 4, 1, 1);
+    btnDiv.backgroundColor = "rgba(0,0,0,0.14)";
+
+    for (let i = 0; i < button.length; i++) {
+      let b = addButton(btnDiv, "", 1, 1, 100, 47, { caption: button[i] });
+      b.backgroundColor = "gray";
+      b.attachment = i;
+
+      b.callBack_onClick = function() {
+        this.wnd.destroy();
+        resolve(this.btn.attachment);   // <-- Promise wird hier aufgelöst
+      }.bind({ wnd: w.parent, btn: b });
+    }
+  });
 }
 
 

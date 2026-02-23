@@ -37,45 +37,79 @@ export class TBanfExport
     }
 
     
+  exportToClipboard() 
+  {
+   return new Promise((resolve, reject) => 
+   {
+    const gui = new TFgui(null, forms.banfExport, { caption: "BANF via Zwischenablage exportieren ..." });
 
-     exportToClipboard()
-     {
-       var gui     = new TFgui( null , forms.banfExport , {caption:"BANF via Zwischenablage exportieren ..."} );
-       this.lbActiveFields = gui.listBoxDestination;
+    this.lbActiveFields = gui.listBoxDestination;
 
-       gui.listBoxSource.addItems( this.allFields );
-       this.lbActiveFields.addItems( this.activeFields );
-   
-       this.lbActiveFields.callBack_onKeyDown = function(e){ 
-                                                               if (e.altKey && e.key === "ArrowUp")   { this.self.lbActiveFields.moveUp()  ; e.preventDefault(); this.self.___updateDatabase()}
-                                                               if (e.altKey && e.key === "ArrowDown") { this.self.lbActiveFields.moveDown(); e.preventDefault(); this.self.___updateDatabase()}
-                                                            }.bind({self:this})
+    gui.listBoxSource.addItems(this.allFields);
+    this.lbActiveFields.addItems(this.activeFields);
 
-       gui.btnPlus.callBack_onClick     = function() { this.self.___addSelectedItems   ( this.self.lbActiveFields , this.gui.listBoxSource.selectedItems ) ;  this.self.___updateDatabase()}.bind({gui:gui,self:this});
-       gui.btnMinus.callBack_onClick    = function() { this.self.___removeSelectedItems( this.self.lbActiveFields ) ;                                         this.self.___updateDatabase()}.bind({self:this});
-       gui.btnAbort.callBack_onClick    = function() { this.gui.close() }.bind({gui:gui});
-       
-       gui.btnExport.callBack_onClick   = function()
-       { 
-         var exportData = [];
-         for(var i=0; i< this.self.banfList.length; i++)
-         {
-           var banf = this.self.banfList[i];
-           var exportItem = [];      
-           for(var j=0; j<this.self.activeFields.length; j++)
-             { var fieldName = this.self.activeFields[j];
-                  exportItem.push( banf[fieldName] );
-             }
-           exportData.push( exportItem.join('\t') );
-         }
+    this.lbActiveFields.callBack_onKeyDown = function(e) 
+    {
+      if (e.altKey && e.key === "ArrowUp") {
+                                            this.self.lbActiveFields.moveUp();
+                                            e.preventDefault();
+                                            this.self.___updateDatabase();
+                                           }
 
-         // Text in exportData -> Zwischenablage
-         var exportText = exportData.join('\n');
-         utils.copyStringToClipboard( exportText );
-         dialogs.showMessage("Die BANF-Daten wurden in die Zwischenablage kopiert. Von dort können sie z.B. in Excel eingefügt werden.");   
-       }.bind({self:this});
-     }   
+      if (e.altKey && e.key === "ArrowDown") {
+                                              this.self.lbActiveFields.moveDown();
+                                              e.preventDefault();
+                                              this.self.___updateDatabase();
+                                             }
+    }.bind({ self: this });
 
+    gui.btnPlus.callBack_onClick = function() {
+                                                this.self.___addSelectedItems( this.self.lbActiveFields, this.gui.listBoxSource.selectedItems );
+                                               this.self.___updateDatabase();
+                                             }.bind({ gui: gui, self: this });
+
+    gui.btnMinus.callBack_onClick = function() {
+                                                 this.self.___removeSelectedItems(this.self.lbActiveFields);
+                                                 this.self.___updateDatabase();
+                                               }.bind({ self: this });
+
+    // ❗ Abbrechen → Promise beenden
+    gui.btnAbort.callBack_onClick = function() {
+                                                 this.gui.close();
+                                                 reject("aborted");
+                                               }.bind({ gui: gui });
+
+    // ❗ Export → Promise beenden
+    gui.btnExport.callBack_onClick = function() {
+                                                  const exportData = [];
+
+                                                  for (let i = 0; i < this.self.banfList.length; i++) 
+                                                  {
+                                                     const banf = this.self.banfList[i];
+                                                     const exportItem = [];
+
+                                                     for (let j = 0; j < this.self.activeFields.length; j++) 
+                                                     {
+                                                        const fieldName = this.self.activeFields[j];
+                                                        exportItem.push(banf[fieldName]);
+                                                     }
+                                                     exportData.push(exportItem.join("\t"));
+                                                  }
+
+                                                  const exportText = exportData.join("\n");
+                                                  utils.copyStringToClipboard(exportText);
+
+                                                  dialogs.showMessage("Die BANF-Daten wurden in die Zwischenablage kopiert. Von dort können sie z.B. in Excel eingefügt werden." );
+                                                  gui.close();
+                                                  resolve("exported");
+                                               }.bind({ self: this });
+  });
+}
+
+     
+     
+     
+    
 
 
 

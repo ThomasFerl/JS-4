@@ -101,7 +101,7 @@ edit( callback_if_ready )
   var _w      =    w.hWnd;
   
               // aParent      , aData      , aLabels , aAppendix , aExclude , aInpType , URLForm )
-  var inp = new TForm( _w     , this.#data , {}      , {}        , ['ID','OWNER']       , {}       , '' );    
+  var inp = new TForm( _w     , this.#data , {}      , {}        , ['ID','OWNER', 'STATE']       , {}       , '' );    
       inp.setLabel('NAME','Name');
       inp.setLabel('BESCHREIBUNG','Beschreibung');
       inp.setLabel('DATUM','Datum');
