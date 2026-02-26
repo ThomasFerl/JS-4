@@ -13,6 +13,8 @@ import { TFDateTime  }   from "./tfWebApp/utils.js";
 import * as forms        from "./forms.js";
 import { TFgui }         from "./tfWebApp/tfGUI.js";
 
+import * as symbols from "./tfWebApp/symbols.js";
+
 
 let banfAdmin           = false;
 
@@ -31,7 +33,10 @@ export function run(ws)
    
     gui.btnAddBanfHead.callBack_onClick    = function() { addBanfHead() };
     gui.btnEditBanfHead.callBack_onClick   = function() { editBanfHead() };
-    gui.btnDeleteBanfHead.callBack_onClick = function() { delBanfHead() };
+    //gui.btnDeleteBanfHead.callBack_onClick = function() { delBanfHead() };
+    gui.btnDeleteBanfHead.callBack_onClick = function() { dialogs.showMessage(symbols.usedSymbols.join(" ")); console.log(symbols.usedSymbols)};
+
+
 
     //nur der BANF-Admin darf alle BANFs aller Benutzer sehen, normale User nur ihre eigenen BANFs
     if(!banfAdmin)
@@ -60,7 +65,34 @@ export function run(ws)
       gui.btnDeleteBanf.callBack_onClick = function() { delBanf() };
 
       updateViewHead();
-      updateView()
+      updateView();
+
+// ggf. bei Neuanmeldung ein mail senden ....
+// Da die email vorhanden sein muss, um entsprechende Workflows zu gewährleisten,
+// Wird geprüft, ob der gerade angemeldete Anwender bereits eine mailAdresse besitzt
+// Fall nicht, wird diese Mail generiert - selbst wenn es sich nicht wirklich um eine 
+// NeuAnmeldung handelt ...
+debugger;
+
+var usr = utils.webApiRequest('USER',{userId:globals.session.userID}).result;
+if(usr.EMAIL=='')
+{
+  var mailAddr = utils.webApiRequest('SYSADMINMAILADDR',{}).result;
+  
+  if(mailAddr)
+    for(var i=0; i<mailAddr.length; i++)
+    {
+      var mail = {
+             from        : "banfProcess@e-ms.de",
+             to          :  mailAddr[i].EMAIL,
+             subject     : "Bitte e-Mail für BANF-Tool-Benutzer nachpflegen",
+             text        : "",
+             html        : HTMLTemplateElement_newUser( usr ),
+            attachments : []
+             }                                                     
+          utils.webApiRequest('SENDMAIL', {mail:mail} );        
+    }     
+  }
 }      
 
 
@@ -140,7 +172,7 @@ async function exportBanf()
 async function startWorkflow()
 {
   if(!selectedBanfHead) {await dialogs.showMessageSync('Bitte zuerst eine BANF-Vorlage auswählen!'); return;}
-debugger;
+
 // für die spätere mail - Details zur BANF-Vorlage ermitteln...
 var banf = {
              bezeichnung: selectedBanfHead.NAME + ' ('+selectedBanfHead.BESCHREIBUNG+')' , 
@@ -202,6 +234,7 @@ function selectBanfHead(p)
   updateView()
 }
 
+
 function selectBanf(p)
 { 
   selectedBanf = p;
@@ -213,7 +246,6 @@ async function addBanf()
   if(!selectedBanfHead) {await dialogs.showMessageSync('Bitte zuerst eine BANF-Vorlage erstellen/auswählen !'); return;}
  
   var maxPos = utils.webApiRequest('MAXPOS' , {ID_HEAD:selectedBanfHead.ID} ).result;
-  
   try { maxPos = parseInt(maxPos); } catch(e) { maxPos = 0; }
   if(isNaN(maxPos)) { maxPos = 0; }
   maxPos = (Math.floor(maxPos/10)*10) + 10;
@@ -236,7 +268,11 @@ async function addBanf()
                  BEMERKUNG            : "",
                  SACHKONTO            : "",
                  AUFTRAG              : "",
-                 OWNER                : globals.session.userName
+                 OWNER                : globals.session.userName,
+                 FELD_P               : "B",
+                 FELD_K               : "X",
+                 MATERIAL             : ""
+
                };
 
         var b          = new TBanf(aBanf);
@@ -263,15 +299,13 @@ async function __deleteBanfPosition(banf)
 }
 
 
-
 async function delBanf()
 {
   if(!selectedBanf) {await dialogs.showMessageSync('Bitte zuerst die zu löschende Position auswählen!'); return;}
  
   var response = await dialogs.askSync('Banf-Position löschen','Wollen Sie die Banf-Position: "'+selectedBanf.POSITIONSTEXT+'"  wirklich löschen?' );
-  if(response.yes) __deleteBanfPosition(selectedBanf);
+  if(response==true) __deleteBanfPosition(selectedBanf);
 }
-
 
 
 function addBanfHead()
@@ -289,6 +323,7 @@ function addBanfHead()
   
 }
 
+
 async function editBanfHead()
 { 
  if(!selectedBanfHead) {await dialogs.showMessageSync('Bitte zuerst eine BANF auswählen!'); return;}
@@ -297,13 +332,15 @@ async function editBanfHead()
      b.edit( function(){ updateViewHead() } );
 } 
 
+
 async function delBanfHead()
 { 
   if(!selectedBanfHead) {await dialogs.showMessageSync('Bitte zuerst eine BANF auswählen!'); return;}
   
   var response = await dialogs.askSync('Banf löschen','Wollen Sie die Banf-Vorlage "'+selectedBanfHead.NAME+'"  wirklich löschen?' ); 
-  if(response.yes) __deleteHead(selectedBanfHead); 
+  if(response==true) __deleteHead(selectedBanfHead); 
 }
+
 
 async function __deleteHead(banfHead)
 {
@@ -377,6 +414,31 @@ function HTMLTemplateElement_export( empfaengerName,
     <hr>
     <p style="font-size: 12px; color: #777;">
       Diese Nachricht wurde automatisch vom BANF-Vorbereitungsprozess erzeugt.
+    </p>
+  </body>
+</html>
+`;
+ 
+ return html;
+
+}
+
+
+function HTMLTemplateElement_newUser( usr )
+{
+  var html = `
+  <html>
+  <body style="font-family: Arial, sans-serif; font-size: 14px;">
+    <h2>Neuanmeldung an BANF - Vorbereitungs - Tool</h2>
+
+    <p>Hallo,</p>
+
+    <p>Soeben wurde eine Neuanmeldung von <b>${usr.USERNAME}</b> registriert.</p>
+    <p>Für diesen Anwender wurde noch keine eMail-Addresse hinterlegt, so dass Mailbenachrichtigungen nicht versendet werden können.</p>
+    <p></p>
+    <hr>
+    <p style="font-size: 12px; color: #777;">
+      Diese Nachricht wurde automatisch vom BANF-Vorbereitungsprozess analle Administratoren des Systems versendet.
     </p>
   </body>
 </html>

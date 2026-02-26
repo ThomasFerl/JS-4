@@ -35,6 +35,17 @@ export function newPromiseObj(obj, methodName)
 }
 
 
+export function dimension( value )
+// liefert Werte für 1..10      = 0
+//                   10..100    = 10
+//                   100..1000  = 100 
+{
+   var potenz = Math.trunc(Math.log10(value));
+   return 10**potenz;
+}
+
+
+
 export function buildRandomID( offset )
 {
   var timestamp = Date.now(); 

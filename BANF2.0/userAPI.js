@@ -53,7 +53,7 @@ if( CMD=='LSBANF')
   {
     console.log('run LSBANF stringify(param) => '+ JSON.stringify(param));
     var sql = "SELECT * FROM banf WHERE ID_HEAD = " + param.ID_HEAD 
-    sql += " ORDER BY POSITIONSTEXT ASC";
+    sql += " ORDER BY CAST(POSITIONSTEXT AS INTEGER) ASC";
     return dbUtils,dbUtils.fetchRecords_from_Query(dB,sql);
   }
 
@@ -69,7 +69,7 @@ if( CMD=='LSBANF')
   if( CMD=='MAXPOS') 
     {
       console.log('run MAXPOS stringify(param) => '+ JSON.stringify(param));
-      var sql = "SELECT max(POSITIONSTEXT) FROM banf WHERE ID_HEAD = " + param.ID_HEAD 
+      var sql = "SELECT POSITIONSTEXT FROM banf WHERE ID_HEAD = " + param.ID_HEAD + "  ORDER BY CAST(POSITIONSTEXT AS INTEGER) DESC LIMIT 1"
       return dbUtils,dbUtils.fetchValue_from_Query(dB,sql);
     }  
 

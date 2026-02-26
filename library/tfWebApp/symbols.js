@@ -12,6 +12,10 @@ import { TFWindow   } from "./tfWindows.js";
 var symbolsList      = [];
 var symbolObjMapping = [];
 
+// hilft bi der Entwicklun, eine Liste der tatsächlich benötigten Symbiole zu ermitteln,
+// damit nicht alle zg Tausend Symbole umsonst geladen werden, Speicher fressen und Wartezeit generieren ....
+export var usedSymbols      = [];
+
 
  export async function waitOnLoad()
  { 
@@ -31,7 +35,7 @@ export function symbolGroups()
 class TFSymbols 
 {
   constructor ( group ) 
-  {
+  { 
     this.symbolIDs   = [];
     this.ready       = false;
     this.groupName   = group || '';
@@ -48,7 +52,7 @@ class TFSymbols
 
    
   async loadSymbols( group )
-  {
+  { 
     const listResponse = await webApiRequestAsync('LSSYMBOLS', {path:group});
     const svgs         = listResponse.result || [];
 
@@ -99,6 +103,8 @@ draw(container, symbolName, size = null)
                                               console.warn("Symbol nicht vorhanden:", symbolName);
                                               return false;
                                              }
+
+  if(usedSymbols.indexOf(symbolName)<0) usedSymbols.push(symbolName);
 
   container.innerHTML = '';
 

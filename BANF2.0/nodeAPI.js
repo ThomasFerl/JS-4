@@ -224,7 +224,26 @@ if( CMD=='LSUSER')
     else                  return dbUtils.fetchRecords_from_Query( etc , "Select * from user" );  
   }          
 
-if( CMD=='ADDUSER') 
+
+if( CMD=='USER')
+  {
+    if(param.userName) return dbUtils.fetchRecord_from_Query( etc , "Select * from user Where USERNAME='"+param.userName+"'" );  
+    if(param.userId)   return dbUtils.fetchRecord_from_Query( etc , "Select * from user Where ID='"+param.userID+"'" );  
+
+    return {error:true, errMsg:'wrong parameter', result:{}}
+    
+  }          
+
+
+  if( CMD=='SYSADMINMAILADDR')
+  {
+    return dbUtils.fetchRecords_from_Query( etc , "Select Distinct EMAIL from user Where ID in (Select ID_USER from userGrants where ID_Grant in(Select ID from grantObj Where Name='sysadmin'))" );  
+  } 
+  
+
+
+
+  if( CMD=='ADDUSER') 
 {
  var sql    = "insert into user( username , firstName , lastName , jobFunction , passwd , email) values(?,?,?,?,?,?)";
  var params = [ param.username , param.firstname , param.lastname , param.jobfunction , param.passwd , param.email ];
