@@ -11,6 +11,7 @@ tables.push(
     tableFields: [
        {fieldName: "ID_HEAD"            , fieldType: "numeric" },      
        {fieldName: "POSITIONSTEXT"      , fieldType: "Text"    },
+       {fieldName: "KURZTEXT"           , fieldType: "Text"    },
        {fieldName: "MENGE"              , fieldType: "numeric" },
        {fieldName: "MENGENEINHEIT"      , fieldType: "Text"    },
        {fieldName: "PREIS"              , fieldType: "numeric" },

@@ -228,7 +228,7 @@ if( CMD=='LSUSER')
 if( CMD=='USER')
   {
     if(param.userName) return dbUtils.fetchRecord_from_Query( etc , "Select * from user Where USERNAME='"+param.userName+"'" );  
-    if(param.userId)   return dbUtils.fetchRecord_from_Query( etc , "Select * from user Where ID='"+param.userID+"'" );  
+    if(param.userId)   return dbUtils.fetchRecord_from_Query( etc , "Select * from user Where ID='"+param.userId+"'" );  
 
     return {error:true, errMsg:'wrong parameter', result:{}}
     

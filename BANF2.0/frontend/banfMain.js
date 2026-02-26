@@ -438,7 +438,7 @@ function HTMLTemplateElement_newUser( usr )
     <p></p>
     <hr>
     <p style="font-size: 12px; color: #777;">
-      Diese Nachricht wurde automatisch vom BANF-Vorbereitungsprozess analle Administratoren des Systems versendet.
+      Diese Nachricht wurde automatisch vom BANF-Vorbereitungsprozess an alle Administratoren des Systems versendet.
     </p>
   </body>
 </html>
