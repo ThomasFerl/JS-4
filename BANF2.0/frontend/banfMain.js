@@ -33,9 +33,8 @@ export function run(ws)
    
     gui.btnAddBanfHead.callBack_onClick    = function() { addBanfHead() };
     gui.btnEditBanfHead.callBack_onClick   = function() { editBanfHead() };
-    //gui.btnDeleteBanfHead.callBack_onClick = function() { delBanfHead() };
-    gui.btnDeleteBanfHead.callBack_onClick = function() { dialogs.showMessage(symbols.usedSymbols.join(" ")); console.log(symbols.usedSymbols)};
-
+    gui.btnDeleteBanfHead.callBack_onClick = function() { delBanfHead() };
+    
 
 
     //nur der BANF-Admin darf alle BANFs aller Benutzer sehen, normale User nur ihre eigenen BANFs
@@ -196,7 +195,7 @@ var banf = {
 
 
   gui.btnSend.callBack_onClick = function()
-  {
+  { debugger;
     for(var i=0; i<this.gui.selectAdress.items.length; i++)
     {
       var usr = this.gui.selectAdress.items[i];
@@ -207,7 +206,7 @@ var banf = {
                     to          : usr.value,
                     subject     : "Eine BANF-Vorlage wurde Ihnen zugewiesen",
                     text        : "",
-                    html        : HTMLTemplateElement_send(
+                    html        : HTMLTemplateElement_send( usr.caption,
                                                             this.banf.owner,
                                                             this.banf.bezeichnung,
                                                             this.gui.editHint.value,
