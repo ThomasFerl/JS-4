@@ -434,6 +434,28 @@ if(CMD=='ADD_BATCHPROC')  // Befehl an den Batch-Process-Manager weiterleiten
   //----------------------------------------------------------------
   //----------------------------------------------------------------
 
+ // Dieser Endpunkt sorgt dafür, dass ein via DropZone "geUploadetes" File an seinen endgültigen Speicherort auf dem Server verschoben wird
+ // Nach erfolgreichem Verschieben, wird die Datei in der der Tabelle "Archiv" gespeichert.
+ // Bei Erfolg gibts eine ID zum Archiv-Datensatz zurück 
+ if(CMD=='ARCHIVEFILE') 
+ {
+    return dbUtils.doArchive( fs , path , dB , param.filePath , param.orgFileName , param.arcFileName , param.owner , param.description) 
+ }
+
+
+ if(CMD=='BUILDURL') 
+ {
+   var table = param.source || 'archive';
+   var field = param.sourceField || 'FILEPATH';
+   var id    = param.id || 0; 
+
+   var response = dbUtils.fetchValue_from_Query(dB , 'Select '+field+' from ' +table+ ' Where ID='+id );
+  
+
+
+  return dbUtils.doArchive( fs , path , dB , param.filePath , param.orgFileName , param.arcFileName , param.owner , param.description) 
+ }
+
   
 
 return  await userAPI.handleCommand( sessionID , cmd , param , req ,  res , fs , path )

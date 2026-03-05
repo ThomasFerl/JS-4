@@ -202,7 +202,7 @@ export class TFCatalogObject
       if(ok)
       {  
           if(this.ID != '')  for(var i=0; i<items.length; i++)  utils.webApiRequest( 'DROP' , {tableName:this.tableName , ID_field:this.ID    , ID_value:items[i].value} )
-          else               for(var i=0; i<items.length; i++)  utils.webApiRequest( 'DROP' , {tableName:this.tableName , ID_field:this.field , ID_value:items[i].value} )
+          else               for(var i=0; i<items.length; i++)  utils.webApiRequest( 'DROP' , {tableName:this.tableName , ID_field:this.field , ID_value:"'"+items[i].value+"'"} )
      }
    }
 

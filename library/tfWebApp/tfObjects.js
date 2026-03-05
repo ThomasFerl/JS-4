@@ -2051,12 +2051,13 @@ export class TFileUploadPanel
     if (!params) params = {};
 
     this.panel = new TFPanel(parent, 1, 1, '100%' , '100%' , { css: 'cssDropZoneJ4' });
+    parent.buildBlockLayout();
     this.panel.position = 'relative';
     this.panel.display = 'flex';
     this.panel.alignItems = 'center';
     this.panel.justifyContent = 'center';
     this.panel.DOMelement.style.border = '2px dashed gray';
-    this.panel.DOMelement.style.minHeight = '100px';
+    //this.panel.DOMelement.style.minHeight = '100px';
     this.panel.DOMelement.style.cursor = 'pointer';
     
     this.label = new TFLabel(this.panel, 1, 1, '75%','75%', { caption: params.label || 'Datei(en) hierher ziehen oder klicken' });
@@ -2353,20 +2354,11 @@ moveDown()
 
   addItems( items )
   {
-    this.items = items;
+    this.items = [];
     this.listbox.innerHTML = ''; // Clear existing options
-    for (var i = 0; i < this.items.length; i++)
-    {
-      var item = this.items[i];
-      if(typeof item == 'string') item = {value:item , text:item}
-     
-      var option = document.createElement('option');
-      option.value = item.value || item.text || item.caption;
-      option.textContent = item.text || item.caption;
-      option.selected = item.selected || false;
-      this.listbox.appendChild(option);
-    }
+    for (var i = 0; i < items.length; i++) this.addItem( items[i] , false );
   }
+
 
   set itemIndex( ndx )
   {

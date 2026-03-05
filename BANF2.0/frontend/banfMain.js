@@ -71,7 +71,6 @@ export function run(ws)
 // Wird geprüft, ob der gerade angemeldete Anwender bereits eine mailAdresse besitzt
 // Fall nicht, wird diese Mail generiert - selbst wenn es sich nicht wirklich um eine 
 // NeuAnmeldung handelt ...
-debugger;
 
 var usr = utils.webApiRequest('USER',{userId:globals.session.userID}).result;
 if(usr.EMAIL=='')
@@ -102,7 +101,7 @@ async function updateView()
 
   var response = utils.webApiRequest('LSBANF' , {ID_HEAD:selectedBanfHead.ID} );
   if(response.error) {await dialogs.showMessageSync(response.errMsg);return; }
-  var grid = dialogs.createTable( gui.gridContainerBanf , response.result , ['ID','ID_HEAD','OWNER','AUFTRAG','SACHKONTO','ANFORDERER'] , [{STATE:"Status"}] );
+  var grid = dialogs.createTable( gui.gridContainerBanf , response.result , ['ID','ID_HEAD','OWNER','AUFTRAG','SACHKONTO','ANFORDERER','ATTACHMENTS','FELD_K','FELD_P'] , [{STATE:"Status"}] );
   grid.onRowClick    =function( selectedRow , itemIndex , jsonData ) { selectBanf(jsonData) };
   grid.onRowDblClick =function( selectedRow , itemIndex , jsonData ) { editBanf(jsonData) };
 }

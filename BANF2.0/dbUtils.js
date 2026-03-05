@@ -1,5 +1,9 @@
-const { Parser } = require('node-sql-parser');
-const utils      = require('./nodeUtils');
+const { Parser }       = require('node-sql-parser');
+const { TFDateTime }   = require('./nodeUtils.js');
+
+const utils            = require('./nodeUtils');
+const globals          = require('./backendGlobals');
+
 
 
 // für Widcards beim "like" sind auch "*" erlaubt.
@@ -454,6 +458,46 @@ module.exports.migrate = ( db , fs , path , param ) =>
 
 
 }
+
+
+
+
+module.exports.doArchive = async function( fs , path , dB , filePath , orgFileName , arcFileName , owner , description ) 
+{
+  var   result   = {error:true, errMsg:'unknown Error', result:{}};
+
+  // original-File archivieren....
+const source = filePath; // ist aktuell der Pfad zum temporären Upload-Ordner
+const dest   = path.join(__dirname, globals.archivePath , arcFileName );    // z. B. Archivordner
+
+// Datei kopieren
+try {
+  fs.renameSync(source, dest);
+  // erfolgreich kopiert -> ArchivEintrag in DB
+  var newRecord = _insertIntoTable(dB,'archive',
+                                          { ORGFILENAME :orgFileName,
+                                            FILEPATH    :dest,
+                                            FILENAME    :path.basename(dest),
+                                            FILEEXT     :path.extname(orgFileName),
+                                            OWNER       :owner,
+                                            DESCRIPTION :description
+                                          });
+  
+} catch (err) {
+                // Datenbankleiche löschen
+                console.error('Fehler beim Archivieren der zu archivierenden Datei:', err);
+                result.errMsg = err;
+                return result; 
+}
+
+result.error  = false;
+result.errMsg = 'OK';
+result.result.lastInsertRowid = newRecord.result.lastInsertRowid;
+
+return result;
+
+}
+
 
 
 

@@ -9,6 +9,9 @@ module.exports.symbolPath           = (grp) => {
                                                  if(grp) return  path.join( p , grp);
                                                  else    return p;
                                             };
+
+module.exports.archivePath          = 'archive';
+                                            
 module.exports.ignoreSession        = true;
 
 module.exports.__Port_webSocket     =  4444;

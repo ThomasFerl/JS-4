@@ -72,7 +72,7 @@ export async function run(caption1)
         if(globals.session.admin) buildSysMenu();
       
         // auf daas fertige Laden der Symbole warten ....
-        const loader = new TFLoader({ title: "lade starte Web-Anwendung …" , note:"einen Moment bitte noch ..." });
+        const loader = new TFLoader({ title: "starte Web-Anwendung …" , note:"einen Moment bitte noch ..." });
         
         loader.while( symbols.waitOnLoad() ).then(()=> { 
                                                          var ws =  startWebApp(caption1 , 'Willkommen ' + globals.session.userName ).intialWorkSpace;

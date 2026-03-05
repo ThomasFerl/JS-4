@@ -10,16 +10,19 @@ import { TFgui }                 from "./tfWebApp/tfGUI.js";
 
 const excludeFields = ['ID','ID_HEAD','OWNER','AUFTRAG','SACHKONTO'];
 
+
 export class TBanfExport
 {
     constructor( banfHead )
     { 
       this.allFields      = [];
+      this.allFields.push('Leerfeld');
       this.activeFields   = []; 
       this.lbActiveFields = null; 
       this.banfList       = [];
       this.ok             = false;
-
+      this.defExportList  = globals.hasAccess('defExportList');
+      
       var response = utils.webApiRequest('LSBANF' , {ID_HEAD:banfHead.ID} );
       if(response.error) {dialogs.showMessage(response.errMsg);return; }
       this.banfList = response.result;
@@ -46,8 +49,18 @@ export class TBanfExport
     this.lbActiveFields = gui.listBoxDestination;
 
     gui.listBoxSource.addItems(this.allFields);
+
+    if(this.activeFields.length>0)
     this.lbActiveFields.addItems(this.activeFields);
 
+    if(!this.defExportList)
+    {
+      gui.btnPlus.hide();
+      gui.btnMinus.hide();
+      gui.TFLabel1175.hide();
+    }  
+    else
+    {  
     this.lbActiveFields.callBack_onKeyDown = function(e) 
     {
       if (e.altKey && e.key === "ArrowUp") {
@@ -61,10 +74,10 @@ export class TBanfExport
                                               e.preventDefault();
                                               this.self.___updateDatabase();
                                              }
-    }.bind({ self: this });
+   }.bind({ self: this });
 
     gui.btnPlus.callBack_onClick = function() {
-                                                this.self.___addSelectedItems( this.self.lbActiveFields, this.gui.listBoxSource.selectedItems );
+                                               this.self.___addSelectedItems( this.self.lbActiveFields, this.gui.listBoxSource.selectedItems );
                                                this.self.___updateDatabase();
                                              }.bind({ gui: gui, self: this });
 
@@ -72,6 +85,7 @@ export class TBanfExport
                                                  this.self.___removeSelectedItems(this.self.lbActiveFields);
                                                  this.self.___updateDatabase();
                                                }.bind({ self: this });
+}  // Berechtigung zum Definieren der Exportfelder 
 
     // ❗ Abbrechen → Promise beenden
     gui.btnAbort.callBack_onClick = function() {
@@ -91,7 +105,8 @@ export class TBanfExport
                                                      for (let j = 0; j < this.self.activeFields.length; j++) 
                                                      {
                                                         const fieldName = this.self.activeFields[j];
-                                                        exportItem.push(banf[fieldName]);
+                                                        if(fieldName.toUpperCase()=='LEERFELD')  exportItem.push('');
+                                                        else                                     exportItem.push(banf[fieldName]);
                                                      }
                                                      exportData.push(exportItem.join("\t"));
                                                   }
@@ -117,7 +132,8 @@ export class TBanfExport
 ___addSelectedItems( listBox , selectedItems )
 { 
   for(var i=0; i<selectedItems.length; i++)  
-  listBox.addItem  ( selectedItems[i]  , true );  
+    if(selectedItems[i].value.toUpperCase()=='LEERFELD')  listBox.addItem  ( selectedItems[i]  , false );  
+    else                                                  listBox.addItem  ( selectedItems[i]  , true );   
 }
 
 

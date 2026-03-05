@@ -18,8 +18,11 @@ export class TBanf
 {
     constructor(dbBanf = {}) 
     { 
-      this.banf     = {};
-      this.banfHead = {};
+      this.attachments = [];
+      this.banf        = {};
+      this.banfHead    = {};
+      this.editKurztext= {value:""}; // brauchen wir global
+
       if (!dbBanf) this.banf = new TFDataObject( "banf" );
       else    
           {// Prüfung: enthält dbBanf **nur** das Feld "ID"
@@ -59,6 +62,44 @@ export class TBanf
     }
    
 
+saveAttachements()
+{ 
+  // prüfen, ob Attachements vorhanden sind
+  if(this.attachments.length==0) return '';
+
+  var attachIDs = [];
+
+  // Die einzelnen Einträge vom temp. UploadPuffer ins Archiv verschieben und in dB registrieren ...
+  for(var i=0; i<this.attachments.length; i++)
+  {
+    var attachment = this.attachments[i];
+    var response   = utils.webApiRequest( 'ARCHIVEFILE' ,{filePath      :attachment.savedPath , 
+                                                          orgFileName   :attachment.originalName , 
+                                                          arcFileName   :attachment.savedName ,
+                                                          owner         :globals.session.userName,
+                                                          description   :"Attachment zur BANF-Vorlage " + this.editKurztext.value 
+                                                        }) 
+
+    if (!response.error) attachIDs.push(response.result.lastInsertRowid);
+
+  }    
+  
+  if (attachIDs.length==0) return '';
+  else                     return attachIDs.join('|');
+
+}
+
+
+
+showAttachment(id)
+{
+  var url = globals.getServer()+'/archiv/'+id;
+  window.open( url , 'Attachment zur BANF-Vorlage', 'width=800,height=600,menubar=no,toolbar=no,location=no,status=no' );
+}
+
+
+
+
 edit( callback_if_ready )
 {
   this.load_lookUpTables();
@@ -66,11 +107,25 @@ edit( callback_if_ready )
   var caption = this.banf.ID ? 'Banf-Position bearbeiten' : 'Banf-Position anlegen';
   var gui     = new TFgui( null , forms.inpBANF , {caption:caption});
 
-  gui.editFeld_K.setItems( [ 'X','Z','F' ] );
-  gui.editFeld_P.setItems( [ 'B' ] );
+  this.editKurztext = gui.editKurztext;
+
+  gui.editFeld_K.setItems( [ 'F','Z','X' ] );
+  gui.editFeld_P.setItems( [ ' ','B' ] );
   
   gui.labelBanfBez.caption     = this.banfHead.NAME;
   gui.labelBanfDetails.caption = this.banfHead.BESCHREIBUNG;
+
+// Container für Anlagen ....
+//      addFileUploader( parent         , fileTyp , multiple , destDir         , onUpload )  
+dialogs.addFileUploader( gui.dropBoxPanel , '*.*'   , true     , 'tmpUploads' , function (selectedFiles)
+                                                                                {
+                                                                                  this.self.attachments.push(selectedFiles.result);
+                                                                                  this.gui.listboxAttachment.addItem(selectedFiles.result.originalName,true)
+                                                                                }.bind({self:this, gui:gui})  );
+    
+
+
+
 
 
    // Vorbefüllung der Select-Felder mit den zugehörigen Katalogen und die Verbindung der Katalog-Schaltfläche mit dem Katalog-Dialog
@@ -152,13 +207,36 @@ gui.btnAuftrag.callBack_onClick =  async function(){
 
   gui.update('GUI');
 
+// Listbox mit Attachments füllen ...
+this.attachments = [];
+var response = utils.webApiRequest('FETCHRECORDS',{sql:"Select * from archive where ID in("+this.banf.ATTACHMENTS.replaceAll('|', ',')+")"});
+if (!response.error) for(var i=0; i<response.result.length; i++)
+                     {
+                       gui.listboxAttachment.addItem( {value:response.result[i].ID, caption:response.result[i].ORGFILENAME} )
+                       this.attachments.push(response.result[i]);
+                     }  
+
+ // Doppelklick-Event hinzufügen ...
+ gui.listboxAttachment.callBack_onClick = function(){
+                                                      var ndx = this.gui.listboxAttachment.itemIndex;
+                                                      if(ndx>=0) this.self.showAttachment(this.self.attachments[ndx].ID)
+                                                    }.bind({gui:gui, self:this})
+
+
+
+
+
+
+
    gui.btnOk.callBack_onClick = function()
                                 { 
+                                  debugger;
                                   this.gui.update('data');    
+                                  this.banf.ATTACHMENTS = this.self.saveAttachements();
                                   this.banf.save();
                                   this.gui.close();  
                                   if(this.callBack) this.callBack() ;
-                                }.bind({gui:gui,banf:this.banf,callBack:callback_if_ready})
+                                }.bind({self:this, gui:gui, banf:this.banf, callBack:callback_if_ready })
     
  
    gui.btnAbort.callBack_onClick = function(){this.gui.close()}.bind({gui:gui})

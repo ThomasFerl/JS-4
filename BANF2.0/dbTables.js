@@ -6,6 +6,20 @@ var tables  = [];
 var content = [];
 
 
+  tables.push( 
+      {tableName: "archive",
+       tableFields: [
+          {fieldName: "FILENAME"           , fieldType: "Text"    },
+          {fieldName: "FILEPATH"           , fieldType: "Text"    },
+          {fieldName: "FILEEXT"            , fieldType: "Text"    },
+          {fieldName: "ORGFILENAME"        , fieldType: "TEXT"    },
+          {fieldName: "OWNER"              , fieldType: "Text"    },
+          {fieldName: "DESCRIPTION"        , fieldType: "Text"    },
+       ]});
+        
+
+
+
 tables.push( 
    {tableName: "banf",
     tableFields: [
@@ -28,7 +42,8 @@ tables.push(
        {fieldName: "OWNER"              , fieldType: "Text"    },
        {fieldName: "FELD_K"             , fieldType: "Text"    },
        {fieldName: "FELD_P"             , fieldType: "Text"    },
-       {fieldName: "MATERIAL"           , fieldType: "Text"    }
+       {fieldName: "MATERIAL"           , fieldType: "Text"    },
+       {fieldName: "ATTACHMENTS"        , fieldType: "Text"    }
     ]});
 
   tables.push( 

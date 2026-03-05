@@ -21,6 +21,7 @@ const webAPI      = require('./nodeAPI');
 const globals     = require('./backendGlobals');
 const userAPI     = require('./userAPI');
 const session     = require('./session');
+const dbUtils     = require('./dbUtils');
 const dbTables    = require('./dbTables');
 const etcTables   = require('./etcTables');
 
@@ -290,6 +291,43 @@ function handleNTLM( req , res )
 }
 
 
+function handleArchiveRequest( req , res )
+{
+  var archivEintrag = dbUtils.fetchRecord_from_Query( dB , 'select * from archive where ID='+ req.params.id).result;
+  if(archivEintrag.FILEPATH)
+  {
+    var filePath = archivEintrag.FILEPATH;
+    var ext      = archivEintrag.FILEEXT.toLowerCase().replace('.', '');
+
+    // Content-Type manuell mappen
+    const mimeMap = {
+        'doc' : 'application/msword',
+        'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'xls' : 'application/vnd.ms-excel',
+        'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'jpg' : 'image/jpeg',
+        'jpeg': 'image/jpeg',
+        'png' : 'image/png',
+        'pdf' : 'application/pdf'
+    };
+
+    const contentType = mimeMap[ext] || 'application/octet-stream';
+
+    // Header setzen
+    res.set(  {
+               'Content-Type'       : contentType,
+                // Sorgt dafür, dass der Browser den Originalnamen beim Speichern vorschlägt
+               'Content-Disposition': `inline; filename="${archivEintrag.ORGFILENAME}"`
+              });
+
+    // Datei senden
+    res.sendFile(dateiPfad, (err) => {
+                                        if (err) res.status(404).send("Archiv-Eintrag nicht vorhanden !");
+                                     });
+ };
+}
+
+
 
 function handle_backDoor_Request( reqStr , res)
 {
@@ -346,6 +384,7 @@ webApp.get('/ntlm'                         ,  handleNTLM );
 
 webApp.get('/x'                            ,  handleRequest );
 
+webApp.get('/archiv/:id'                   ,  handleArchiveRequest );
 
 webApp.post('/xpost'                       ,  handleRequest );
 webApp.post('/upload', upload.single('file'), handleUpload );
