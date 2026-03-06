@@ -304,10 +304,10 @@ export class TFObject
     if (!params) this.params = {};
     else         this.params = params;
 
-    this.params.left   = left  || 1;
-    this.params.top    = top   || 1;
-    this.params.width  = width || 1;
-    this.params.height = height|| 1;
+    this.params.left    = left  || 1;
+    this.params.top     = top   || 1;
+    this.params.width   = width || 1;
+    this.params.height  = height|| 1;
     if(!this.params.stretch) this.params.stretch =true;
 
     if(this.params.popupMenu) this.popupMenu = this.params.popupMenu;
@@ -319,7 +319,10 @@ export class TFObject
 
     this.isDropTarget = false;
     if( this.params.dropTarget) this.isDropTarget   = this.params.dropTarget;  
-  
+
+    this.require      = false;
+    if( this.params.require) this.require   = this.params.require;  
+
     this.isTFObject   = true;
     this.objName      = this.constructor.name;  
     this.name         = countObj(this.objName);
@@ -1371,6 +1374,8 @@ getProperties()
   properties.push( {level:1, label:'objName',type:'INPUT',value:this.objName} );
   properties.push( {level:1, label:'name',type:'INPUT',value:this.name} );
   properties.push( {level:1, label:'dataFieldName',type:'INPUT',value:this.dataFieldName || ''} );
+  properties.push( {level:1, label:'require',type:'SELECT',value:this.require, items:['true','false']} ); 
+ 
 
   properties.push( {level:1, label:'css',type:'LOOKUP',value:this.css || '' , items:utils.getAvailableCSSClasses() || [] } );
   
@@ -2334,7 +2339,9 @@ moveDown()
 
   removeItem( item )
   {
-    var ndx = this.items.indexOf(item);
+    var ndx = -1;
+    if(Number.isInteger(item)) ndx = item;
+    else ndx = this.items.indexOf(item);
     if(ndx>=0)
     {
       this.items.splice(ndx, 1);

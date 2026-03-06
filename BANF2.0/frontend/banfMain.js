@@ -20,6 +20,7 @@ let banfAdmin           = false;
 
 var selectedBanf        = null;
 var selectedBanfHead    = null;
+var numPosition         = 0;
 var selectedUser        = '';
 var gui                 = {};
 
@@ -98,9 +99,10 @@ async function updateView()
 {
   gui.gridContainerBanf.innerHTML = ""; // clear the dashboard
   if(!selectedBanfHead) return;
-
+  numPosition = 0;
   var response = utils.webApiRequest('LSBANF' , {ID_HEAD:selectedBanfHead.ID} );
   if(response.error) {await dialogs.showMessageSync(response.errMsg);return; }
+  numPosition = response.result.length;
   var grid = dialogs.createTable( gui.gridContainerBanf , response.result , ['ID','ID_HEAD','OWNER','AUFTRAG','SACHKONTO','ANFORDERER','ATTACHMENTS','FELD_K','FELD_P'] , [{STATE:"Status"}] );
   grid.onRowClick    =function( selectedRow , itemIndex , jsonData ) { selectBanf(jsonData) };
   grid.onRowDblClick =function( selectedRow , itemIndex , jsonData ) { editBanf(jsonData) };
@@ -175,37 +177,65 @@ async function startWorkflow()
 var banf = {
              bezeichnung: selectedBanfHead.NAME + ' ('+selectedBanfHead.BESCHREIBUNG+')' , 
              owner      : selectedBanfHead.OWNER,
-             posAnz     : 4
+             posAnz     : numPosition
            }
   var gui = new TFgui( null , forms.sendBanf , {caption:'Banf-Vorlage versenden'});
 
+  // Steuerung der selektiven Sichtbarkeit von Controls ....
+  gui.TFLabel768.hide();
+  gui.selectAdress.hide();
+
+  gui.cbModeSelection.callBack_onChange = function()
+  {
+    if(this.gui.cbModeSelection.checked)
+    {
+      this.gui.TFLabel768.show();
+      this.gui.selectAdress.show();
+      this.gui.TFPanel1199.hide();
+      this.gui.TFLabel1592.hide();
+    }
+    else
+        {
+          this.gui.TFLabel768.hide();
+          this.gui.selectAdress.hide();
+          this.gui.TFPanel1199.show();
+           this.gui.TFLabel1592.show();
+        }  
+
+  }.bind({gui:gui, self:this})
+
+
   var response = utils.webApiRequest('LSUSER', {forGrantObj:"banfAdmin"} );
   if (response.error) {await dialogs.showMessageSync(response.errMsg); return; }
-  if (response.result.length==0)  {await dialogs.showMessageSync("Es wurde noch keinem Benutzer die Rolle 'banfAdmin' zugewiesen !" ); return; }
 
-  for(var i=0; i<response.result.length; i++)
-  {
-    var u = response.result[i];
-    if(u.EMAIL)
-    gui.selectAdress.addItem( {caption:u.FIRSTNAME+' '+u.LASTNAME, value:u.EMAIL} )
-  }
+    if (response.result.length==0)  {await dialogs.showMessageSync("Es wurde noch keinem Benutzer die Rolle 'banfAdmin' zugewiesen !" ); return; }
 
-  if (gui.selectAdress.items.length==0)  {await dialogs.showMessageSync("Es existiert kein banfAdmin mit gültiger e-mail-Addresse !" ); return; }
+    for(var i=0; i<response.result.length; i++)
+    {
+      var u = response.result[i];
+      if(u.EMAIL) gui.selectAdress.addItem( {caption:u.FIRSTNAME+' '+u.LASTNAME, value:u.EMAIL} )
+    }
+
+    if (gui.selectAdress.items.length==0)  {await dialogs.showMessageSync("Es existiert kein banfAdmin mit gültiger e-mail-Addresse !" ); return; }
 
 
   gui.btnSend.callBack_onClick = function()
-  { debugger;
-    for(var i=0; i<this.gui.selectAdress.items.length; i++)
-    {
-      var usr = this.gui.selectAdress.items[i];
-      if(usr.checked)
+  { 
+    if(gui.cbModeSelection.checked)
+    { 
+      var num = 0;
+      for(var i=0; i<this.gui.selectAdress.items.length; i++)
       {
-        var mail = {
-                    from        : "banfProcess@e-ms.de",
-                    to          : usr.value,
-                    subject     : "Eine BANF-Vorlage wurde Ihnen zugewiesen",
-                    text        : "",
-                    html        : HTMLTemplateElement_send( usr.caption,
+        var usr = this.gui.selectAdress.items[i];
+        if(usr.checked)
+        {
+         num++; 
+         var mail = {
+                     from        : "banfProcess@e-ms.de",
+                     to          : usr.value,
+                     subject     : "Eine BANF-Vorlage wurde Ihnen zugewiesen",
+                     text        : "",
+                     html        : HTMLTemplateElement_send( usr.caption,
                                                             this.banf.owner,
                                                             this.banf.bezeichnung,
                                                             this.gui.editHint.value,
@@ -213,15 +243,37 @@ var banf = {
                                                             'https://emssvrservice02:4040' 
                                                           ),
                     attachments : []
-                  }                                                     
+                   }                                                     
           utils.webApiRequest('SENDMAIL', {mail:mail} );        
-          
-          utils.webApiRequest('UPDATETABLE', {tableName:"banfHead" , ID_field:"ID" , ID_value:selectedBanfHead.ID  , fields:{STATE:"versandt"}} );   
-          updateViewHead(); 
-          
-          this.gui.close(); 
-         }
+        }
       }
+    } // bei dezidierter Zusendung ...
+  else
+      {
+         var mail = {
+                     from        : "banfProcess@e-ms.de",
+                     to          : "banfPool@e-ms.de",
+                     subject     : "Eine BANF-Vorlage wurde dem Sammel-Postfach hinzugefügt",
+                     text        : "",
+                     html        : HTMLTemplateElement_send4All( 
+                                                             this.banf.owner,
+                                                             this.banf.bezeichnung,
+                                                             this.gui.editHint.value,
+                                                             this.banf.posAnz,
+                                                            'https://emssvrservice02:4040' 
+                                                          ),
+                    attachments : []
+                   }                                                     
+          utils.webApiRequest('SENDMAIL', {mail:mail} );        
+      } // bei Versand an ein Sammelkonto
+
+  if (num==0) {dialogs.showMessage("In diesem Modus ist die Auswahl mindestens eines Mitarbeiters erforderlich !"); return;}
+
+  // Aktualisierung der Ansicht infolge Statuswechsel ...    
+  utils.webApiRequest('UPDATETABLE', {tableName:"banfHead" , ID_field:"ID" , ID_value:selectedBanfHead.ID  , fields:{STATE:"versandt"}} );       
+  updateViewHead(); 
+  this.gui.close();     
+
   }.bind({gui:gui ,  banf:banf})
 }
 
@@ -389,6 +441,50 @@ function HTMLTemplateElement_send( empfaengerName,
  return html;
 
 }
+
+
+function HTMLTemplateElement_send4All(
+                              erstellerName,
+                              beschreibung,
+                              hinweis, 
+                              positionsAnzahl,
+                              link )
+{
+  var html = `
+  <html>
+  <body style="font-family: Arial, sans-serif; font-size: 14px;">
+    <h2>Neue BANF - Anforderung</h2>
+
+    <p>Hallo Zusammen,</p>
+
+    <p>Soeben wurde eine BANF-Vorlage von <b>${erstellerName}</b> erstellt.</p>
+
+    <p><b>Beschreibung:</b></p>
+
+    ${beschreibung}
+
+    <p>Diese Vorlage besitzt ${positionsAnzahl} Positionen</p>
+
+    <p><b>Bitte beachten Sie den folgenden Hinweis:</b></p>
+    <p style="font-style: italic; color: #777; font-size: 1em;">${hinweis}</p>
+    <p></p>
+    <p></p>
+
+    <p>Dieser <a href=" ${link}">Link</a> führt Sie direkt zur BANF-Vorlage:</p>
+
+    <hr>
+    <p style="font-size: 12px; color: #777;">
+      Diese Nachricht wurde automatisch vom BANF-Vorbereitungsprozess erzeugt.
+    </p>
+  </body>
+</html>
+`;
+ 
+ return html;
+
+}
+
+
 
 
 function HTMLTemplateElement_export( empfaengerName,

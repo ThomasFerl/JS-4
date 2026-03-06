@@ -26,6 +26,24 @@ export class TFgui
   }
 
 
+  checkRequireFields()
+  { 
+    var missingFields = [];
+    var missingList   = [];
+
+    this.dataBindings.forEach(binding => { if((binding.guiElement.value=="") && (binding.guiElement.require)) 
+                                             {
+                                               missingFields.push(binding);  
+                                               missingList.push(binding.key);
+                                              }
+                                         }  );
+
+    return {missingFields:missingFields, missingList:missingList.join('\n')}
+
+  }
+  
+
+
   update(direction)
   { 
     if (direction.toUpperCase() == 'GUI') 
@@ -50,7 +68,7 @@ export class TFgui
       this.dataBindings        = [];
       this.dataObject          = {};
       this.window              = {};
-
+      
       var _caption             = params?.caption || ''
       
       var formData             = null; 

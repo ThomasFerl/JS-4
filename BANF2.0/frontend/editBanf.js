@@ -45,8 +45,8 @@ export class TBanf
       this.lookUp_werk                 = new TFCatalog( null , 'WERK'                 , 'V' , '' , 'Werk' );
 
       this.lookUp_lieferant            = new TFCatalog( null , 'LIEFERANT'            , 'V' , '' , 'Lieferanten' );
-      this.lookUp_sachkonto            = new TFCatalog( null , 'SACHKONTO'            , 'V' , '' , 'Sachkonten' );
-      this.lookUp_auftrag              = new TFCatalog( null , 'AUFTRAG'              , 'V' , '' , 'Auftrags-Nummern' );
+      //this.lookUp_sachkonto            = new TFCatalog( null , 'SACHKONTO'            , 'V' , '' , 'Sachkonten' );
+      //this.lookUp_auftrag              = new TFCatalog( null , 'AUFTRAG'              , 'V' , '' , 'Auftrags-Nummern' );
       this.lookUp_material             = new TFCatalog( null , 'MATERIAL'             , 'V' , '' , 'Material' );
     }
     
@@ -107,6 +107,22 @@ edit( callback_if_ready )
   var caption = this.banf.ID ? 'Banf-Position bearbeiten' : 'Banf-Position anlegen';
   var gui     = new TFgui( null , forms.inpBANF , {caption:caption});
 
+ // Pflichtfelder - Die Anforderung kam erst nacgh dem Design -> daher Property im Code anpassen und nicht im GUI-Builder ...
+ gui.editPos.require          = true;
+ gui.editKurztext.require     = true;
+ gui.editMenge.require        = true;
+ gui.selMengenEinheit.require = true;
+ gui.editPreis.require        = true;
+ gui.editWarengruppe.require  = true;
+ gui.editLiefertermin.require = true;
+ gui.selLieferant.require     = true;
+ gui.selWerk.require          = true;
+ gui.selEinkGrp.require       = true;
+ gui.selEinkOrg.require       = true;
+ gui.editAnforderer.require   = true;
+ gui.selSachkonto.require     = true;
+ gui.selAuftrag.require       = true;
+ 
   this.editKurztext = gui.editKurztext;
 
   gui.editFeld_K.setItems( [ 'F','Z','X' ] );
@@ -187,19 +203,27 @@ gui.btnEinkOrg.callBack_onClick =  async function(){
                                                     }.bind({self:this, gui:gui});  
 
 
-gui.selSachkonto.setItems(this.lookUp_sachkonto.asListBoxItems());
+//gui.selSachkonto.setItems(this.lookUp_sachkonto.asListBoxItems());
 gui.btnSachkonto.callBack_onClick =  async function(){
+                                                      var url = "https://intranet.e-ms.de/ZentraleDienste/US/_layouts/15/WopiFrame.aspx?sourcedoc=%7BEA33CE1B-6028-4B6C-9B4D-0CA075B88D59%7D&file=Kontierungshandbuch%20S4.xlsx&action=default";
+                                                       window.open( url , 'Attachment zur BANF-Vorlage', 'width=800,height=600,menubar=no,toolbar=no,location=no,status=no' );
+                                                     /*
                                                       await this.self.lookUp_sachkonto.show();
                                                       this.gui.selSachkonto.setItems(this.self.lookUp_sachkonto.asListBoxItems() );
                                                       this.gui.selSachkonto.value =  this.self.lookUp_sachkonto.selected;
+                                                     */ 
                                                     }.bind({self:this, gui:gui});  
 
 
-gui.selAuftrag.setItems(this.lookUp_auftrag.asListBoxItems());
+//gui.selAuftrag.setItems(this.lookUp_auftrag.asListBoxItems());
 gui.btnAuftrag.callBack_onClick =  async function(){
+                                                     var url = "https://intranet.e-ms.de/ZentraleDienste/US/_layouts/15/WopiFrame.aspx?sourcedoc=%7BEA33CE1B-6028-4B6C-9B4D-0CA075B88D59%7D&file=Kontierungshandbuch%20S4.xlsx&action=default";
+                                                     window.open( url , 'Attachment zur BANF-Vorlage', 'width=800,height=600,menubar=no,toolbar=no,location=no,status=no' );
+                                                     /*                                                   
                                                       await this.self.lookUp_auftrag.show();
                                                       this.gui.selAuftrag.setItems(this.self.lookUp_auftrag.asListBoxItems() );
                                                       this.gui.selAuftrag.value =  this.self.lookUp_auftrag.selected;
+                                                     */ 
                                                     }.bind({self:this, gui:gui});  
 
 
@@ -207,31 +231,41 @@ gui.btnAuftrag.callBack_onClick =  async function(){
 
   gui.update('GUI');
 
-// Listbox mit Attachments füllen ...
+// Listbox mit Attachments füllen falls vorhanden...
 this.attachments = [];
-var response = utils.webApiRequest('FETCHRECORDS',{sql:"Select * from archive where ID in("+this.banf.ATTACHMENTS.replaceAll('|', ',')+")"});
-if (!response.error) for(var i=0; i<response.result.length; i++)
-                     {
-                       gui.listboxAttachment.addItem( {value:response.result[i].ID, caption:response.result[i].ORGFILENAME} )
-                       this.attachments.push(response.result[i]);
-                     }  
+if(this.banf.ATTACHMENTS)
+{     
+  var response = utils.webApiRequest('FETCHRECORDS',{sql:"Select * from archive where ID in("+this.banf.ATTACHMENTS.replaceAll('|', ',')+")"});
+  if (!response.error) for(var i=0; i<response.result.length; i++)
+                       {
+                         gui.listboxAttachment.addItem( {value:response.result[i].ID, caption:response.result[i].ORGFILENAME} )
+                         this.attachments.push(response.result[i]);
+                       }  
+}                       
 
- // Doppelklick-Event hinzufügen ...
- gui.listboxAttachment.callBack_onClick = function(){
-                                                      var ndx = this.gui.listboxAttachment.itemIndex;
-                                                      if(ndx>=0) this.self.showAttachment(this.self.attachments[ndx].ID)
-                                                    }.bind({gui:gui, self:this})
+   // Doppelklick-Event hinzufügen ...
+   gui.listboxAttachment.callBack_onDblClick = function ()
+                                                     {
+                                                        var ndx = this.gui.listboxAttachment.itemIndex;
+                                                        if(ndx>=0) this.self.showAttachment(this.self.attachments[ndx].ID)
+                                                     }.bind({gui:gui, self:this})
 
-
-
-
-
-
+   gui.btnDeleteAttachment.callBack_onClick = function()
+                                                     {
+                                                        var ndx = this.gui.listboxAttachment.itemIndex;
+                                                        if(ndx<0) {dialogs.showMessage('Nichts zum löschen ausgewählt !'); return }
+                                                        this.gui.listboxAttachment.removeItem(ndx);
+                                                        this.self.attachments.splice(ndx,1);
+                                                      }.bind({gui:gui, self:this})
 
    gui.btnOk.callBack_onClick = function()
                                 { 
-                                  debugger;
                                   this.gui.update('data');    
+                                  debugger;
+                                  // alle Pflichtfelder befüllt ?
+                                  var check = this.gui.checkRequireFields();
+                                  if (check.missingFields.length>0){dialogs.showMessage("Bitte alle Pflichtfelder ausfüllen ! Aktuell fehlt: "+check.missingList); return;}
+                                  
                                   this.banf.ATTACHMENTS = this.self.saveAttachements();
                                   this.banf.save();
                                   this.gui.close();  
