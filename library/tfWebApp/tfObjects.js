@@ -2617,6 +2617,7 @@ export class TFEdit extends TFObject
         params.justifyEditField = params.justifyEdit     || 'right';
         params.type             = params.type            || 'text';
         params.lookUp           = params.lookUp          || false;
+        params.readOnly         = params.readOnly        || false;
       
     
     super(parent , left , top , width , height , params );
@@ -2751,13 +2752,13 @@ if(gridTemplate.apx)
   set text( txt )
   {
     if(this.lookUp) this.lookUp.setValue(txt);
-    else                   this.input.value = txt;
+    else            this.input.value = txt;
   }
 
   get text()
   {
     if(this.lookUp) return this.lookUp.getValue();
-    else                   return this.input.value;
+    else            return this.input.value;
   }
 
 
@@ -2765,13 +2766,27 @@ if(gridTemplate.apx)
   set value( txt )
   {
     if(this.lookUp) this.lookUp.setValue(txt);
-    else                   this.input.value = txt;
+    else            this.input.value = txt;
   }
 
   get value()
   {
     if(this.lookUp) return this.lookUp.getValue();
-    else                   return this.input.value;
+    else            return this.input.value;
+  }
+
+
+  set readOnly( value )
+  {
+    if(this.lookUp) this.lookUp.readOnly = value;
+    else            this.input.readOnly  = value;
+  }
+
+
+  get readOnly()
+  {
+    if(this.lookUp) return this.lookUp.readOnly;
+    else            return this.input.readOnly;
   }
 
 
@@ -3081,7 +3096,8 @@ this.parent.appendChild(this.container);
     this.renderOptions(this.input.value);
   }
 
-  focus() {
+  focus() 
+  {
     this.input.focus();
   }
 
@@ -3094,6 +3110,20 @@ this.parent.appendChild(this.container);
   {
     return !this.input.disabled;
   }
+
+
+  set readOnly( value )
+  {
+    this.input.readOnly = value;
+  }
+  
+  get readObly() 
+  {
+    return this.input.readOnly;
+  }
+
+
+
 
   setOptions(list) 
   {

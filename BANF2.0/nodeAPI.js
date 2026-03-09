@@ -439,7 +439,8 @@ if(CMD=='ADD_BATCHPROC')  // Befehl an den Batch-Process-Manager weiterleiten
  // Bei Erfolg gibts eine ID zum Archiv-Datensatz zurück 
  if(CMD=='ARCHIVEFILE') 
  {
-    return dbUtils.doArchive( fs , path , dB , param.filePath , param.orgFileName , param.arcFileName , param.owner , param.description) 
+  console.log('ARCHIVEFILE command received with params: '+JSON.stringify(param) ); 
+  return dbUtils.doArchive( fs , path , dB , param.filePath , param.orgFileName , param.arcFileName , param.owner , param.description) 
  }
 
 

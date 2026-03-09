@@ -63,7 +63,7 @@ export class TBanf
    
 
 saveAttachements()
-{ 
+{ debugger;
   // prüfen, ob Attachements vorhanden sind
   if(this.attachments.length==0) return '';
 
@@ -73,11 +73,11 @@ saveAttachements()
   for(var i=0; i<this.attachments.length; i++)
   {
     var attachment = this.attachments[i];
-    var response   = utils.webApiRequest( 'ARCHIVEFILE' ,{filePath      :attachment.savedPath , 
-                                                          orgFileName   :attachment.originalName , 
-                                                          arcFileName   :attachment.savedName ,
+    var response   = utils.webApiRequest( 'ARCHIVEFILE' ,{filePath      :attachment.FILEPATH , 
+                                                          orgFileName   :attachment.ORGFILENAME , 
+                                                          arcFileName   :attachment.FILENAME ,
                                                           owner         :globals.session.userName,
-                                                          description   :"Attachment zur BANF-Vorlage " + this.editKurztext.value 
+                                                          description   :"Attachment zur BANF-Vorlage "
                                                         }) 
 
     if (!response.error) attachIDs.push(response.result.lastInsertRowid);
@@ -123,20 +123,65 @@ edit( callback_if_ready )
  gui.selSachkonto.require     = true;
  gui.selAuftrag.require       = true;
  
-  this.editKurztext = gui.editKurztext;
+ // Alias...
+  this.editKurztext           = gui.editKurztext;
 
-  gui.editFeld_K.setItems( [ 'F','Z','X' ] );
+
+  // Abhängigkeit: Wenn Feld_K == 'A'  -> Audftrags- und Sachkonto sind Pflichtfelder...
+  //               Wenn Feld_K == 'F'  -> AuftragsNr ist KEIN Pflichtfeld und Sachkonto wird auf '759000' vorgegeben...
+   gui.editFeld_K.setItems( [ 'A' ,'F' ] );
+   gui.editFeld_K.callBack_onChange = function()
+                                      {
+                                        if(this.gui.editFeld_K.value=='F')
+                                        {
+                                          this.gui.selAuftrag.require    = true;
+                                          this.gui.selSachkonto.require  = true;
+                                          this.gui.selSachkonto.readOnly = false;
+                                          this.gui.selSachkonto.value    = '';
+                                        }  
+
+                                        if(this.gui.editFeld_K.value=='A')
+                                        {
+                                          this.gui.selAuftrag.require   = false;
+                                          this.gui.selSachkonto.require = false;
+                                          this.gui.selSachkonto.value   = '759000';
+                                          this.gui.selSachkonto.readOnly = true;
+                                        }  
+
+
+                                      }.bind({self:this, gui:gui});
+  
+/*
+
+   gui.selAuftrag.require = true;
+
+
+  
+
+
   gui.editFeld_P.setItems( [ ' ','B' ] );
   
+*/
+
   gui.labelBanfBez.caption     = this.banfHead.NAME;
   gui.labelBanfDetails.caption = this.banfHead.BESCHREIBUNG;
+
+
+
+
 
 // Container für Anlagen ....
 //      addFileUploader( parent         , fileTyp , multiple , destDir         , onUpload )  
 dialogs.addFileUploader( gui.dropBoxPanel , '*.*'   , true     , 'tmpUploads' , function (selectedFiles)
-                                                                                {
-                                                                                  this.self.attachments.push(selectedFiles.result);
-                                                                                  this.gui.listboxAttachment.addItem(selectedFiles.result.originalName,true)
+                                                                                { 
+                                                                                  this.self.attachments.push({FILENAME   :selectedFiles.result.savedName,  
+                                                                                                              FILEPATH   :selectedFiles.result.savedPath,             
+                                                                                                              ORGFILENAME:selectedFiles.result.originalName,     
+                                                                                                              DESCRIPTION: "Attachment zur BANF-Vorlage " + this.gui.editKurztext.value
+                                                                                                            } );
+
+                                                                                  this.gui.listboxAttachment.addItem(selectedFiles.result.originalName,true);
+
                                                                                 }.bind({self:this, gui:gui})  );
     
 

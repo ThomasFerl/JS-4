@@ -470,7 +470,15 @@ module.exports.doArchive = async function( fs , path , dB , filePath , orgFileNa
 const source = filePath; // ist aktuell der Pfad zum temporären Upload-Ordner
 const dest   = path.join(__dirname, globals.archivePath , arcFileName );    // z. B. Archivordner
 
-// Datei kopieren
+console.log("doArchive ");
+console.log("orgFileName: " + orgFileName );  
+console.log("FILEPATH   : " + dest );
+console.log("FILENAME   : " + path.basename(dest) );      
+console.log("FILEEXT    : " + path.extname(orgFileName) );
+console.log("OWNER      : " + owner );
+console.log("description: " + description );  
+
+// Datei kopieren 
 try {
   fs.renameSync(source, dest);
   // erfolgreich kopiert -> ArchivEintrag in DB
